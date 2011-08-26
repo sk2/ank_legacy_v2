@@ -1,7 +1,7 @@
 K 25
 svn:wc:ra_dav:version-url
 V 48
-/trc/!svn/ver/8620/trunk/sknight/ANK_v2/examples
+/trc/!svn/ver/8623/trunk/sknight/ANK_v2/examples
 END
 example.py
 K 25
@@ -21,9 +21,15 @@ svn:wc:ra_dav:version-url
 V 55
 /trc/!svn/ver/8620/trunk/sknight/ANK_v2/examples/dev.py
 END
-airports.dat
+Simple.gml
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/trc/!svn/ver/8623/trunk/sknight/ANK_v2/examples/Simple.gml
+END
+test.graphml
 K 25
 svn:wc:ra_dav:version-url
 V 61
-/trc/!svn/ver/7606/trunk/sknight/ANK_v2/examples/airports.dat
+/trc/!svn/ver/8623/trunk/sknight/ANK_v2/examples/test.graphml
 END
