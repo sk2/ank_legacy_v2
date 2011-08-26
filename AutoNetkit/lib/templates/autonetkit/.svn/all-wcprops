@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/trc/!svn/ver/7589/trunk/sknight/ANK_v2/AutoNetkit/lib/templates/autonetkit
+END
+interfacelist.mako
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/trc/!svn/ver/7589/trunk/sknight/ANK_v2/AutoNetkit/lib/templates/autonetkit/interfacelist.mako
+END
+taplist.mako
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/trc/!svn/ver/7589/trunk/sknight/ANK_v2/AutoNetkit/lib/templates/autonetkit/taplist.mako
+END
+loopbacklist.mako
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/trc/!svn/ver/7589/trunk/sknight/ANK_v2/AutoNetkit/lib/templates/autonetkit/loopbacklist.mako
+END

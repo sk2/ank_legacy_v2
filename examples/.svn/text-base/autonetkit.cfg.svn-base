@@ -1,0 +1,9 @@
+[Logging]
+console = info
+file = debug             
+             
+[Lab]
+netkit_dir = lab_ank
+
+[Zoo]
+zoo_dir = /Users/sk2/zoo/networks/yed/merged_geocode/
