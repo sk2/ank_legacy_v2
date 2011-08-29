@@ -17,6 +17,8 @@ LOG = logging.getLogger("ANK")
 import shutil
 import glob
 
+import getpass
+
 import AutoNetkit as ank
 from AutoNetkit import config
 settings = config.settings
@@ -25,7 +27,14 @@ import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
 # Check can write to template cache directory
-template_cache_dir ="/tmp/mako_modules"
+#TODO: make function to provide cache directory
+ank_dir = os.environ['HOME'] + os.sep + ".autonetkit"
+if not os.path.exists(ank_dir):
+    os.mkdir(ank_dir)
+template_cache_dir = ank_dir + os.sep + "cache"
+if not os.path.exists(template_cache_dir):
+    os.mkdir(template_cache_dir)
+
 if (os.path.exists(template_cache_dir)
     and not os.access(template_cache_dir, os.W_OK)):
     LOG.info("Unable to write to cache dir %s, "
