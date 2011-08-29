@@ -132,8 +132,8 @@ class Netkit:
                 # Machine is running Linux. Send test command (ignore result)
                 shell.sendline("ls") 
             elif i == 1:
-                LOG.warn("Specified Netkit host is running Mac OS X.\
-                    Please specify a Linux Netkit host.")
+                LOG.warn("Specified Netkit host is running Mac OS X, "
+                    "please specify a Linux Netkit host.")
                 return None 
             else:
                 LOG.warn("Provided Netkit host is not running Linux")
@@ -149,8 +149,8 @@ class Netkit:
        
         #Check length of netkit env var is nonzero
         shell = self.shell
-        shell.sendline("[ -n \"${NETKIT_HOME}\" ] "
-            "&& echo 'Present' || echo 'Absent'")
+        chk_cmd = 'hash lstart 2>&- && echo "Present" || echo >&2 "Absent"\n'
+        shell.sendline(chk_cmd)
         i = shell.expect (["Present", "Absent"])    
         if i == 0:        
             LOG.debug("Netkit env var present")

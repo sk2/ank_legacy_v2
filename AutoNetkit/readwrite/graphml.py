@@ -42,6 +42,11 @@ def load_graphml(network, net_file, default_asn = 1):
         input_graph = nx.read_graphml(net_file)
         nx.write_gpickle(input_graph, pickle_file)
 
+    # set label if unset
+    for node in input_graph.nodes_iter():
+        if 'label' not in input_graph.node[node]:
+            input_graph.node[node]['label'] = node
+
     # check each node has an ASN allocated
     for node, data in input_graph.nodes_iter(data=True):
         if not 'asn' in data:

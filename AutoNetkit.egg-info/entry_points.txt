@@ -1,0 +1,3 @@
+[console_scripts]
+autonetkit = AutoNetkit.demo:main
+

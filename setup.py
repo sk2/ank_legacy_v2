@@ -23,7 +23,6 @@ setup (
                  'AutoNetkit.deploy',
                  'AutoNetkit.readwrite', 'AutoNetkit.plotting'],
      package_data = {'': ['settings.cfg', 'lib/templates/*/*.mako',
-                          'lib/templates/linux/hostname.mako222',
                           'lib/shadow', 'lib/autonetkit.cfg',
                           'lib/authorized_keys', 'plugins/*', 'plugins/*.py',
                           'algorithms/*.py', 'plotting/*.py', 'deploy/*.py',
