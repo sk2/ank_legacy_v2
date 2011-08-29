@@ -1,3 +1,0 @@
-
-nameserver ${nameserver}
-search ${domain}
