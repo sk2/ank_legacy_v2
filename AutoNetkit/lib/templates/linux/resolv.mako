@@ -1,0 +1,3 @@
+
+nameserver ${nameserver}
+search ${domain}
