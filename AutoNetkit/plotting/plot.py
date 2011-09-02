@@ -10,6 +10,11 @@ __all__ = ['plot']
 import networkx as nx
 import AutoNetkit as ank
 import logging
+import os
+
+from AutoNetkit import config
+settings = config.settings
+
 LOG = logging.getLogger("ANK")
 
 #TODO: add option to show plots, or save them
@@ -22,6 +27,10 @@ def cmap_index(network, subgraph, attr='asn'):
 
 def plot(network, show=False, save=True):
     """ Plot the network """
+    plot_dir = config.plot_dir
+    if not os.path.isdir(plot_dir):
+        os.mkdir(plot_dir)
+
     graph = network.graph
     pos = nx.spring_layout(graph)
 
@@ -49,7 +58,8 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
 
     # If none, filename based on title
     if not filename:
-        filename = "{0}.pdf".format(title)
+        plot_dir = config.plot_dir
+        filename = plot_dir + os.sep + "%s.pdf" % title
         # Remove any spaces etc from filename
         filename.replace(" ", "_")
 
@@ -62,9 +72,8 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
     if not node_color:
         node_color = "#336699"
     font_color = "k"
-    edge_color = "gray"
+    edge_color = "#348ABD"
     title_color = "k"
-    caption_color = 'gray'
 
     # Easier reference
     plt.clf()
@@ -76,7 +85,7 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
     ax.set_axis_off() 
 
     nx.draw_networkx_nodes(graph, pos, 
-                           node_size = 50, 
+                           node_size = 120, 
                            alpha = 0.8, linewidths = (0,0),
                            node_color = node_color,
                            cmap=plt.cm.jet)
@@ -88,9 +97,9 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
     if not labels:
         labels = {}
         for n, data in graph.nodes(data = True):
-            label = data.get('label')
+            label = "\n" + data.get('label')
             if title == 'Network' and 'lo_ip' in data:
-                label += "\n\n%s" % data['lo_ip']
+                label += " (%s)" % data['lo_ip'].ip
             labels[n] = label 
 
 
@@ -98,7 +107,7 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
 
     nx.draw_networkx_labels(graph, pos, 
                             labels=labels,
-                            font_size = 8,
+                            font_size = 12,
                             font_color = font_color)
 
     ax.text(0.02, 0.98, title, horizontalalignment='left',

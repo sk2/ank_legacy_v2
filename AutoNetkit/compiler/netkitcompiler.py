@@ -45,7 +45,6 @@ lookup = TemplateLookup(directories=[ template_dir ],
                         #cache_enabled=True,
                        )
 
-import re
 import os
 
 #TODO: add more detailed exception handling to catch writing errors
