@@ -3,13 +3,13 @@
 
 .. moduleauthor:: Simon Knight
 
-
 Main functions for AutoNetkit
 
 """
-
 import pprint   
 from itertools import groupby
+import AutoNetkit as ank
+from AutoNetkit import deprecated 
 
 # NetworkX Modules
 import networkx as nx   
@@ -19,10 +19,6 @@ pp = pprint.PrettyPrinter(indent=4)
 # AutoNetkit Modules
 import logging
 LOG = logging.getLogger("ANK")
-
-#TODO: look at caching - store state, eg read-only (once move into later config
-# stages. From then on, store the as_graphs, etc rather than regenerate each
-# time
 
 #TODO: update docstrings now not returning graphs as using self.graph
 
@@ -48,25 +44,27 @@ to pass through to the netx graph methods for quick access
 # TODO: abstract eBGP etc to be subgraph by property,
 # with eBGP just being split on the 'asn' property
 
-class Network: 
+class Network(object): 
     """ Main network containing router graph"""
 
     def __init__(self):
-        self.graph = nx.DiGraph()
 
         # IP config information
         #TODO: make this a general attributes dictionary
         self.tap_host = None
         self.ip_as_allocs = None
 
-        #TODO: make this an AS graph 
         self.as_names = {}
+        self._graphs = {}
+        self._graphs['physical'] = nx.DiGraph()
+        self._graphs['session'] = nx.DiGraph()
 
     #### IO Functions ###
     def save(self, filename="net_out.gml"):    
         """Write network topology to file."""
         nx.write_gml(self.graph, filename)  
 
+    #TODO: also add pickle support
 
     #TODO: make sure use asn not as_id for consistency
 
@@ -76,16 +74,31 @@ class Network:
             if 'type' not in data: 
                 self.graph.node[node]['type'] = default_type
 
-
     ################################################## 
     #### Initial Public API functions ###
     # these are used by plugins
 
-    #TODO: allow node properties to be directly accessed from the router graph
-
-    #TODO: replace these with direct networkx style access to graph
     # or write functional library like in networkx function.py file
 
+    #TODO: deprecate these in future, allow for .physical_graph property
+    @property
+    def graph(self):
+        return self._graphs['physical']
+
+    @graph.setter
+    def graph(self, value):
+        self._graphs['physical'] = value
+
+    @property
+    def g_session(self):
+        return self._graphs['session']
+
+    @g_session.setter
+    def g_session(self, value):
+        self._graphs['session'] = value
+
+
+    @deprecated
     def get_edges(self, node=None):
         if node != None:
             # Can't use shortcut of "if node" as param node=0 would 
@@ -94,21 +107,14 @@ class Network:
         else:
             return self.graph.edges()
 
+    @deprecated
     def get_edge_count(self, node):
         return self.graph.degree(node)
 
+    @deprecated
     def get_nodes_by_property(self, prop, value):
-        #TODO: wrap in try/catch block
-        # how do we handle properties not set? two options:
-        # a: return nodes with property set and ignore others
-        # b: or return error?
-        try:
-            return [n for n in self.graph
-                    if self.graph.node[n][prop] == value]
-        except KeyError:
-            LOG.warn(("Property {0} not set for all nodes in "
-                      "graph").format(property))
-            return []
+        return [n for n in self.graph
+                if self.graph.node[n].get(prop) == value]
 
     def __getitem__(self, n):
         return self.graph.node.get(n)
@@ -151,6 +157,7 @@ class Network:
     def get_node_property(self, node, prop):
         return self.graph.node[node][prop]
 
+    @deprecated
     def set_default_edge_property(self, prop, value):
         #TODO: allow list of edges to be passed in
         # sets property if not already set
@@ -158,15 +165,19 @@ class Network:
             if prop not in data:
                 self.graph[src][dst][prop] = value
 
+    @deprecated
     def set_edge_property(self, src, dest, prop, value):
         self.graph[src][dst][prop] = value
 
+    @deprecated
     def get_edge_property(self, src, dst, prop):
         return self.graph[src][dst][prop]
 
+    @deprecated
     def get_subgraph(self, nodes):
         return self.graph.subgraph(nodes)
 
+    @deprecated
     def central_node(self, graph):  
         """returns first item (if multiple) central node for a given network."""
         if graph.number_of_nodes() is 1:
@@ -201,4 +212,7 @@ class Network:
         #return ('label' for n in nodes)
         #return (self.graph.node[n]['label'] for n in nodes)
         return self.graph.node[node]['label']
+
+    # For dealing with BGP Sessions graphs
+#TODO: expand this to work with arbitrary graphs
 

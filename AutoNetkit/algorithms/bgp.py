@@ -5,11 +5,38 @@ BGP
 __author__ = "\n".join(['Simon Knight'])
 #    Copyright (C) 2009-2011 by Simon Knight, Hung Nguyen
 
-__all__ = ['get_ebgp_routers', 'get_ebgp_links', 'get_ebgp_graph',
-           'get_ibgp_routers', 'get_ibgp_links', 'get_ibgp_graph']
+__all__ = ['ebgp_routers', 'get_ebgp_links', 'get_ebgp_graph',
+           'ibgp_routers', 'get_ibgp_links', 'get_ibgp_graph',
+           'initialise_bgp']
 
 import itertools
 import networkx as nx
+
+def ebgp_edges(network):
+    return ( (s,t) for s,t in network.g_session.edges()
+            if network.asn(s) != network.asn(t))
+
+def ibgp_edges(network):
+    return ( (s,t) for s,t in network.g_session.edges()
+            if network.asn(s) == network.asn(t))
+
+def initialise_ebgp(network):
+    """Adds edge for links that have router in different ASes
+
+    """
+    edges_to_add = ( (src, dst) for src, dst in network.graph.edges()
+            if network.asn(src) != network.asn(dst))
+    network.g_session.add_edges_from(edges_to_add)
+
+def initialise_ibgp(network):
+    edges_to_add = ( (s,t) for s in network.graph for t in network.graph 
+            if (s is not t and
+                network.asn(s) == network.asn(t)))
+    network.g_session.add_edges_from(edges_to_add)
+
+def initialise_bgp(network):
+    initialise_ebgp(network)
+    initialise_ibgp(network)
 
 #toDo: add docstrings
 #TODO: remove "get" from name eg get_ebgp_graph -> ebgp_graph
@@ -24,43 +51,52 @@ def get_ibgp_links(network):
     (between two border routers in the same as)"""
     return [e for e in get_ibgp_graph(network).edges()]
 
-def get_ebgp_routers(network):
-    """Returns eBGP routers in network."""
-    ebgp_routers = ( (s,t) for s,t in network.graph.edges()
-            if network.asn(s) != network.asn(t))
-    # Flatten into list of unique node names
-    ebgp_routers = set(item for pair in ebgp_routers for item in pair)
-    return list(ebgp_routers)
+def ebgp_routers(network):
+    """List of all routers with an eBGP link"""
+    return list(set(item for pair in ebgp_edges(network) for item in pair))
 
-def get_ibgp_routers(network):
-    """Returns iBGP routers in network."""
+def ibgp_routers(network):
+    """List of all routers with an iBGP link"""
     # Note: this is the same as eBGP routers, but for a specific AS
     # routers in ibgp graph that have at least one edge
     # TODO: if get_ibgp_path design pattern changes, then this will need to
     # reflect the ibgp_graph
-    return get_ibgp_graph(network).nodes()
+    return list(set(item for pair in ibgp_edges(network) for item in pair))
 
 def get_ebgp_graph(network):
     """Returns graph of eBGP routers and links between them."""
-    ebgp_routers = get_ebgp_routers(network)
-    ebgp_graph = network.graph.subgraph(ebgp_routers)
+    Aebgp_graph = nx.DiGraph(network.g_session)
+    Aebgp_graph.name = 'ebgp'
+    Aebgp_graph.remove_edges_from( ibgp_edges(network))
+#remove nodes that don't have an eBGP links
+    non_ebgp_nodes =  [n for n in Aebgp_graph if n not in ebgp_routers(network)]
+    Aebgp_graph.remove_nodes_from(non_ebgp_nodes)
+    return Aebgp_graph
+
+    #print 'ibgp edges:', [ (network.label(s), network.label(t)) for s,t in ibgp_edges(network)]
+
+
+    ebgp_graph = network.graph.subgraph(ebgp_routers(network))
     # remove links between any two nodes in the same networ
     ebgp_graph.remove_edges_from( (s,t) for s,t in ebgp_graph.edges()
                                  if network.asn(s) == network.asn(t))
     ebgp_graph.name = "ebgp"
+    print 'AE', Aebgp_graph.edges()
+    print 'E', ebgp_graph.edges()
+    print 'new ebgp edges:', [ (network.label(s), network.label(t)) for s,t in
+            Aebgp_graph.edges()]
+    print 'old ebgp edges:', [ (network.label(s), network.label(t)) for s,t in
+            ebgp_graph.edges()]
+
+    print "new nodes", Aebgp_graph.nodes()
+    print "old nodes", ebgp_graph.nodes()
     return ebgp_graph
+
+
 
 def get_ibgp_graph(network):
     """Returns iBGP graph (full mesh currently) for an AS."""
-    #TODO: double check this
-    #TODO: Use a Cisco/etc network design pattern algorithm for iBGP mesh
-    ibgp_graph = nx.Graph(network.graph)
-    # Remove edges, as iBGP design pattern will add edges
-    ebgp_routers = set(get_ebgp_routers(network))
-    ibgp_graph.remove_edges_from(e for e in ibgp_graph.edges())
-    # Full mesh
-    ibgp_graph.add_edges_from( (s,t) for s in ibgp_graph for t in ibgp_graph
-                              if (s is not t and
-                                  network.asn(s) == network.asn(t)))
-
+    ibgp_graph = nx.DiGraph(network.g_session)
+    ibgp_graph.name = 'ibgp'
+    ibgp_graph.remove_edges_from( ebgp_edges(network))
     return ibgp_graph

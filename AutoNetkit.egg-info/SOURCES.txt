@@ -1,5 +1,6 @@
 MANIFEST.in
 README.txt
+setup.cfg
 setup.py
 AutoNetkit/__init__.py
 AutoNetkit/ank_pxssh.py

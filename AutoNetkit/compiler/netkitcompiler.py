@@ -1,14 +1,12 @@
 """
 Generate Netkit configuration files for a network
 """
-import beaker
 from mako.lookup import TemplateLookup
 
 from pkg_resources import resource_filename
 
 import os
 
-import networkx as nx
 #import network as network
 
 import logging
@@ -17,7 +15,6 @@ LOG = logging.getLogger("ANK")
 import shutil
 import glob
 
-import getpass
 
 import AutoNetkit as ank
 from AutoNetkit import config
@@ -181,8 +178,8 @@ class NetkitCompiler:
         lab_conf = {}
         tap_list_strings = {}
 
-        ibgp_routers = ank.get_ibgp_routers(self.network)
-        ebgp_routers = ank.get_ebgp_routers(self.network)
+        ibgp_routers = ank.ibgp_routers(self.network)
+        ebgp_routers = ank.ebgp_routers(self.network)
 
         if "DNS" in self.services:
             dns_list = ank.dns_list(self.network)
@@ -343,7 +340,7 @@ class NetkitCompiler:
         LOG.info("Configuring IGP")
 
         template = lookup.get_template("quagga/ospf.mako")
-        ibgp_routers = ank.get_ibgp_routers(self.network)
+        ibgp_routers = ank.ibgp_routers(self.network)
         self.network.set_default_edge_property('weight', 1)
         netkit_routers = list(self.network.q(platform="NETKIT"))
 
@@ -567,7 +564,7 @@ class NetkitCompiler:
             # so need to also add the destination for reverse DNS
             for node in as_ebgp_nodes:
                 for src, dst, data in ebgp_graph.edges(node, data=True):
-                    ebgp_sn = data['sn']
+                    ebgp_sn = self.network.graph[src][dst]['sn']
                     if ebgp_sn in subnet:
                         # Int id and ip of link from dst (in remote AS) to src
                         int_id = ank.int_id(self.network, dst, src)

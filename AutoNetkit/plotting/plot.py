@@ -16,23 +16,28 @@ LOG = logging.getLogger("ANK")
 def plot(network):
     """ Plot the network """
     graph = network.graph
-    plot_graph(graph, "Network")
-    plot_bgp(network)
-    plot_ibgp(network)
+    pos = nx.spring_layout(graph)
+    plot_graph(graph, title="Network", pos=pos)
+    plot_bgp(network, pos=pos)
+    plot_ibgp(network, pos=pos)
 
 
-def plot_bgp(network):
+def plot_bgp(network, pos=None):
     graph = ank.get_ebgp_graph(network)
-    plot_graph(graph, "eBGP")
+    labels = dict( (n, network.label(n)) for n in graph)
+    plot_graph(graph, "eBGP", pos=pos, labels=labels)
 
-def plot_ibgp(network):
+def plot_ibgp(network, pos=None):
     graph = ank.get_ibgp_graph(network)
-    plot_graph(graph, "iBGP")
+    labels = dict( (n, network.label(n)) for n in graph)
+    plot_graph(graph, title="iBGP", pos=pos, labels=labels)
 
-def plot_graph(graph, title, filename=None):
+def plot_graph(graph, title=None, filename=None, pos=None, labels=None):
     if graph.number_of_nodes() == 0:
         LOG.debug("{0} graph is empty, not plotting".format(title))
 
+    if not pos:
+        pos=nx.spring_layout(graph)
 
     # If none, filename based on title
     if not filename:
@@ -55,7 +60,7 @@ def plot_graph(graph, title, filename=None):
     # Easier reference
     plt.clf()
     #TODO: make position take into account labels
-    pos = nx.spring_layout(graph, scale=0.1)
+    #pos = nx.spring_layout(graph, scale=0.1)
     cf = plt.gcf()
     ax=cf.add_axes((0,0,1,1))
     # Create axes to allow adding of text relative to map
@@ -70,12 +75,13 @@ def plot_graph(graph, title, filename=None):
                            edge_color=edge_color,
                            alpha=0.8)
 
-    labels = {}
-    for n, data in graph.nodes(data = True):
-        label = data['label']
-        if title == 'Network' and 'lo_ip' in data:
-            label += "\n%s" % data['lo_ip']
-        labels[n] = label 
+    if not labels:
+        labels = {}
+        for n, data in graph.nodes(data = True):
+            label = data.get('label')
+            if title == 'Network' and 'lo_ip' in data:
+                label += "\n%s" % data['lo_ip']
+            labels[n] = label 
 
 
     #TODO: mark eBGP links, and iBGP routers, DNS servers, etc 
@@ -87,13 +93,18 @@ def plot_graph(graph, title, filename=None):
 
     ax.text(0.02, 0.98, title, horizontalalignment='left',
                             weight='heavy', fontsize=16, color=title_color,
-                            verticalalignment='top', transform=ax.transAxes)
+                            verticalalignment='top', 
+                            )
+                            #transform=ax.transAxes)
 
-    plt.savefig( filename, format = 'pdf',
-                bbox_inches='tight',
-                facecolor = "w", dpi = 300,
-                pad_inches=0.1,
-               )
+    plt.show()
+    plt.savefig(filename)
+
+    #plt.savefig( filename, format = 'pdf',
+    #            bbox_inches='tight',
+    #            facecolor = "w", dpi = 300,
+    #            pad_inches=0.1,
+    #           )
 
     plt.close()
 

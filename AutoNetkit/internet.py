@@ -175,6 +175,7 @@ class Internet:
         #config.get_plugin("Inv Cap").run(self.network)   
         #ank.inv_cap_weights(self.network)
         #config.get_plugin("Test").run()
+        ank.initialise_bgp(self.network)
 
         
         # Ensure nodes have a type set
@@ -186,6 +187,7 @@ class Internet:
         # Allocations  
         ank.allocate_subnets(self.network, IPNetwork("10.0.0.0/8")) 
         ank.alloc_interfaces(self.network)
+
 
         ank.alloc_tap_hosts(self.network, self.tapsn)
         
