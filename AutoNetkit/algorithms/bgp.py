@@ -9,8 +9,9 @@ __all__ = ['ebgp_routers', 'get_ebgp_graph',
            'ibgp_routers', 'get_ibgp_graph',
            'initialise_bgp']
 
-import itertools
 import networkx as nx
+import logging
+LOG = logging.getLogger("ANK")
 
 def ebgp_edges(network):
     return ( (s,t) for s,t in network.g_session.edges()
@@ -35,6 +36,11 @@ def initialise_ibgp(network):
     network.g_session.add_edges_from(edges_to_add)
 
 def initialise_bgp(network):
+    if len(network.g_session):
+        LOG.warn("Initialising BGP for non-empty session graph. Have you already"
+                " specified a session graph?")
+        #TODO: throw exception here
+        return
     initialise_ebgp(network)
     initialise_ibgp(network)
 

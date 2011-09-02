@@ -7,7 +7,6 @@ __author__ = "\n".join(['Simon Knight'])
 
 __all__ = ['nodes_by_as', 'get_as_graphs', 'get_as_list']
 
-import AutoNetkit as ank
 import networkx as nx
 from collections import defaultdict
 
