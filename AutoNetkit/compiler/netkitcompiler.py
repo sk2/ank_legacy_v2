@@ -577,8 +577,6 @@ class NetkitCompiler:
                                                 'host': ank.fqdn(self.network,
                                                                  dst)})
 
-
-
             #TODO: support non-classful AS subnets (base on ANKv1 code)
             if subnet.prefixlen not in [8, 16, 24]:
                 LOG.warn("Only classful subnet allocations supported for DNS")

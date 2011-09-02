@@ -65,33 +65,15 @@ def ibgp_routers(network):
 
 def get_ebgp_graph(network):
     """Returns graph of eBGP routers and links between them."""
-    Aebgp_graph = nx.DiGraph(network.g_session)
-    Aebgp_graph.name = 'ebgp'
-    Aebgp_graph.remove_edges_from( ibgp_edges(network))
+    ebgp_graph = nx.DiGraph(network.g_session)
+    ebgp_graph.name = 'ebgp'
+    ebgp_graph.remove_edges_from( ibgp_edges(network))
 #remove nodes that don't have an eBGP links
-    non_ebgp_nodes =  [n for n in Aebgp_graph if n not in ebgp_routers(network)]
-    Aebgp_graph.remove_nodes_from(non_ebgp_nodes)
-    return Aebgp_graph
-
-    #print 'ibgp edges:', [ (network.label(s), network.label(t)) for s,t in ibgp_edges(network)]
-
-
-    ebgp_graph = network.graph.subgraph(ebgp_routers(network))
-    # remove links between any two nodes in the same networ
-    ebgp_graph.remove_edges_from( (s,t) for s,t in ebgp_graph.edges()
-                                 if network.asn(s) == network.asn(t))
-    ebgp_graph.name = "ebgp"
-    print 'AE', Aebgp_graph.edges()
-    print 'E', ebgp_graph.edges()
-    print 'new ebgp edges:', [ (network.label(s), network.label(t)) for s,t in
-            Aebgp_graph.edges()]
-    print 'old ebgp edges:', [ (network.label(s), network.label(t)) for s,t in
-            ebgp_graph.edges()]
-
-    print "new nodes", Aebgp_graph.nodes()
-    print "old nodes", ebgp_graph.nodes()
+    non_ebgp_nodes =  [n for n in ebgp_graph if n not in ebgp_routers(network)]
+    ebgp_graph.remove_nodes_from(non_ebgp_nodes)
     return ebgp_graph
 
+    
 
 
 def get_ibgp_graph(network):

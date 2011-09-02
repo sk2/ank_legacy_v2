@@ -25,7 +25,7 @@ def plot(network):
 def plot_bgp(network, pos=None):
     graph = ank.get_ebgp_graph(network)
     labels = dict( (n, network.label(n)) for n in graph)
-    plot_graph(graph, "eBGP", pos=pos, labels=labels)
+    plot_graph(graph, title="eBGP", pos=pos, labels=labels)
 
 def plot_ibgp(network, pos=None):
     graph = ank.get_ibgp_graph(network)
@@ -90,6 +90,8 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None):
                             labels=labels,
                             font_size = 8,
                             font_color = font_color)
+
+    plt.title("test")
 
     ax.text(0.02, 0.98, title, horizontalalignment='left',
                             weight='heavy', fontsize=16, color=title_color,
