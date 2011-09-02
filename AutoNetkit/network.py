@@ -68,6 +68,7 @@ class Network(object):
 
     #TODO: make sure use asn not as_id for consistency
 
+    @deprecated
     def update_node_type(self, default_type):
         """ Updates any node in graph that has no type set to be default_type"""
         for node, data in self.graph.nodes(data=True):

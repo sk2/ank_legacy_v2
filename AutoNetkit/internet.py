@@ -109,7 +109,7 @@ class Internet:
             # Legacy ANK file format
             LOG.warn("AutoNetkit no longer supports yaml file format")
     
-    def plot(self): 
+    def plot(self, show=False, save=True): 
         """Plot the network topology
 
         Args:
@@ -124,7 +124,7 @@ class Internet:
 
         """              
         LOG.info("Plotting")      
-        ank.plot(self.network)        
+        ank.plot(self.network, show, save)        
        
     def save(self):  
         LOG.info("Saving")

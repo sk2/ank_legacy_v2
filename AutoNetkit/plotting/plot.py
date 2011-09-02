@@ -12,27 +12,35 @@ import AutoNetkit as ank
 import logging
 LOG = logging.getLogger("ANK")
 
+#TODO: add option to show plots, or save them
 
-def plot(network):
+def cmap_index(network, subgraph, attr='asn'):
+    #TODO: see if more pythonic way to do this
+# List of attributes
+    attr_list = sorted(list(set(network.graph.node[n].get(attr) for n in subgraph)))
+    return [attr_list.index(network.graph.node[n].get(attr)) for n in subgraph]
+
+def plot(network, show=False, save=True):
     """ Plot the network """
     graph = network.graph
     pos = nx.spring_layout(graph)
-    plot_graph(graph, title="Network", pos=pos)
-    plot_bgp(network, pos=pos)
-    plot_ibgp(network, pos=pos)
 
+# Different node color for each AS. Use heatmap based on ASN
 
-def plot_bgp(network, pos=None):
+    plot_graph(graph, title="Network", pos=pos, show=show, save=save,
+            node_color=cmap_index(network, graph))
+
     graph = ank.get_ebgp_graph(network)
     labels = dict( (n, network.label(n)) for n in graph)
-    plot_graph(graph, title="eBGP", pos=pos, labels=labels)
+    plot_graph(graph, title="eBGP", pos=pos, labels=labels, show=show, save=save)
 
-def plot_ibgp(network, pos=None):
     graph = ank.get_ibgp_graph(network)
     labels = dict( (n, network.label(n)) for n in graph)
-    plot_graph(graph, title="iBGP", pos=pos, labels=labels)
-
-def plot_graph(graph, title=None, filename=None, pos=None, labels=None):
+    plot_graph(graph, title="iBGP", pos=pos, labels=labels, show=show, save=save)
+    
+def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
+        node_color=None,
+        show=False, save=True):
     if graph.number_of_nodes() == 0:
         LOG.debug("{0} graph is empty, not plotting".format(title))
 
@@ -51,7 +59,8 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None):
         raise
 
     # Colors
-    node_color = "#336699"
+    if not node_color:
+        node_color = "#336699"
     font_color = "k"
     edge_color = "gray"
     title_color = "k"
@@ -69,7 +78,8 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None):
     nx.draw_networkx_nodes(graph, pos, 
                            node_size = 50, 
                            alpha = 0.8, linewidths = (0,0),
-                           node_color = node_color)
+                           node_color = node_color,
+                           cmap=plt.cm.jet)
 
     nx.draw_networkx_edges(graph, pos, arrows=False,
                            edge_color=edge_color,
@@ -80,7 +90,7 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None):
         for n, data in graph.nodes(data = True):
             label = data.get('label')
             if title == 'Network' and 'lo_ip' in data:
-                label += "\n%s" % data['lo_ip']
+                label += "\n\n%s" % data['lo_ip']
             labels[n] = label 
 
 
@@ -91,16 +101,15 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None):
                             font_size = 8,
                             font_color = font_color)
 
-    plt.title("test")
-
     ax.text(0.02, 0.98, title, horizontalalignment='left',
                             weight='heavy', fontsize=16, color=title_color,
                             verticalalignment='top', 
-                            )
-                            #transform=ax.transAxes)
+                            transform=ax.transAxes)
 
-    plt.show()
-    plt.savefig(filename)
+    if show:
+        plt.show()
+    if save:
+        plt.savefig(filename)
 
     #plt.savefig( filename, format = 'pdf',
     #            bbox_inches='tight',
