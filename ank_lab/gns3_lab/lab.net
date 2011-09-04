@@ -1,0 +1,70 @@
+autostart = False
+[localhost:7200]
+    workingdir = /tmp
+    udp = 10000
+    [[2621]]
+        image = 
+        ghostios = True
+        chassis = 2621        
+      [[ROUTER a2]]                                      
+			model  = 2621          
+			console =  2000           
+			cnfg = configs/a2.cfg           
+			slot1 = NM-4E     
+			e1/0 = a1 e1/0          
+			e1/1 = a4 e1/0          
+      [[ROUTER a1]]                                      
+			model  = 2621          
+			console =  2001           
+			cnfg = configs/a1.cfg           
+			slot1 = NM-4E     
+			e1/0 = a2 e1/0          
+			e1/1 = a3 e1/0          
+      [[ROUTER b1]]                                      
+			model  = 2621          
+			console =  2002           
+			cnfg = configs/b1.cfg           
+			slot1 = NM-4E     
+			e1/0 = b2 e1/0          
+			e1/1 = a4 e1/1          
+			e1/2 = c1 e1/0          
+      [[ROUTER a3]]                                      
+			model  = 2621          
+			console =  2003           
+			cnfg = configs/a3.cfg           
+			slot1 = NM-4E     
+			e1/0 = a1 e1/1          
+			e1/1 = b2 e1/1          
+			e1/2 = a4 e1/2          
+      [[ROUTER b2]]                                      
+			model  = 2621          
+			console =  2004           
+			cnfg = configs/b2.cfg           
+			slot1 = NM-4E     
+			e1/0 = b1 e1/0          
+			e1/1 = a3 e1/1          
+      [[ROUTER a4]]                                      
+			model  = 2621          
+			console =  2005           
+			cnfg = configs/a4.cfg           
+			slot1 = NM-4E     
+			e1/0 = a2 e1/1          
+			e1/1 = b1 e1/1          
+			e1/2 = a3 e1/2          
+			e1/3 = c2 e1/0          
+      [[ROUTER c1]]                                      
+			model  = 2621          
+			console =  2006           
+			cnfg = configs/c1.cfg           
+			slot1 = NM-4E     
+			e1/0 = b1 e1/2          
+			e1/1 = c2 e1/1          
+      [[ROUTER c2]]                                      
+			model  = 2621          
+			console =  2007           
+			cnfg = configs/c2.cfg           
+			slot1 = NM-4E     
+			e1/0 = a4 e1/3          
+			e1/1 = c1 e1/1          
+[GNS3-DATA]
+    configs = configs

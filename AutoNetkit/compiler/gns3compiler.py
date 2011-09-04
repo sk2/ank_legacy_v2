@@ -55,8 +55,7 @@ import itertools
 #TODO: Move these into a netkit helper function*****
 def lab_dir():
     #TODO: make use config
-    #return config.lab_dir
-    return "gns3lab"
+    return config.gns3_dir
 
 def router_config_dir():
     #TODO: make use config

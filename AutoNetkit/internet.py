@@ -52,13 +52,20 @@ class Internet:
 
     """
     
-    def __init__(self, filename=None, tapsn=IPNetwork("172.16.0.0/16") ): 
+    def __init__(self, filename=None, tapsn=IPNetwork("172.16.0.0/16"),
+            netkit=True, cbgp=False, gns3=False, junos=False): 
         self.network = network.Network()
         if isinstance(tapsn, str):
             # Convert to IPNetwork
             #TODO: exception handle this failing eg incorrect subnet
             tapsn = IPNetwork(tapsn)
         self.tapsn = tapsn
+        self.compile_targets = {
+                'netkit': netkit,
+                'cbgp': cbgp,
+                'gns3': gns3,
+                'junos': junos,
+                }
         if filename:
             self.load(filename)
         
@@ -176,7 +183,6 @@ class Internet:
         #ank.inv_cap_weights(self.network)
         #config.get_plugin("Test").run()
         ank.initialise_bgp(self.network)
-
         
         # Ensure nodes have a type set
         self.network.update_node_type(default_type="netkit_router")
@@ -192,31 +198,33 @@ class Internet:
         ank.alloc_tap_hosts(self.network, self.tapsn)
         
         # now configure
-        #TODO: make this clearer to be Netkit, GNS3, etc
-        nk_comp = ank.NetkitCompiler(self.network, self.services)
-        # Need to allocate DNS servers so they can be configured in Netkit
-        if("DNS" in self.services): 
-            ank.allocate_dns_servers(self.network)
-        nk_comp.initialise()     
-        nk_comp.configure_netkit()
-        nk_comp.configure_igp()     
-        nk_comp.configure_bgp()     
-      
-        # Configure DNS also if required
-        if("DNS" in self.services): 
-            LOG.info("Configuring DNS")
-            nk_comp.configure_dns()
+        if self.compile_targets['netkit']:
+            nk_comp = ank.NetkitCompiler(self.network, self.services)
+            # Need to allocate DNS servers so they can be configured in Netkit
+            if("DNS" in self.services): 
+                ank.allocate_dns_servers(self.network)
+            nk_comp.initialise()     
+            nk_comp.configure_netkit()
+            nk_comp.configure_igp()     
+            nk_comp.configure_bgp()     
+            # Configure DNS also if required
+            if("DNS" in self.services): 
+                LOG.info("Configuring DNS")
+                nk_comp.configure_dns()
 
-        COMPILE_GNS = False
-        if COMPILE_GNS:
+        if self.compile_targets['gns3']:
             gns3_comp = ank.Gns3Compiler(self.network, self.services)
             gns3_comp.initialise()     
             gns3_comp.configure()
 
-        COMPILE_CBGP = False
-        if COMPILE_CBGP:
+        if self.compile_targets['cbgp']:
             cbgp_comp = ank.CbgpCompiler(self.network, self.services)
             cbgp_comp.configure()
+
+        if self.compile_targets['junos']:
+            LOG.warn("JunOS not currently supported")
+            #cbgp_comp = ank.CbgpCompiler(self.network, self.services)
+            #cbgp_comp.configure()
 
     def deploy(self, host, username, xterm = False, platform="netkit" ):  
         """Deploy compiled configuration files."

@@ -26,6 +26,9 @@ if not os.path.isdir(ank_main_dir):
 lab_dir = settings.get('Lab', 'netkit_dir')
 lab_dir = os.path.join(ank_main_dir, lab_dir)
 
+gns3_dir = settings.get('Lab', 'gns3_dir')
+gns3_dir = os.path.join(ank_main_dir, gns3_dir)
+
 plot_dir = settings.get('Lab', 'plot_dir')
 plot_dir = os.path.join(ank_main_dir, plot_dir)
 

@@ -1,0 +1,9 @@
+/sbin/ifconfig lo:1 10.1.0.9 netmask 255.255.255.255 up
+/sbin/ifconfig eth0 10.0.0.38 netmask 255.255.255.252 broadcast 10.0.0.39 up
+/sbin/ifconfig eth1 10.1.0.5 netmask 255.255.255.252 broadcast 10.1.0.7 up
+/sbin/ifconfig lo 127.0.0.1 up
+route del default
+/etc/init.d/zebra start
+/etc/init.d/ssh start
+/etc/init.d/hostname.sh 
+

@@ -35,6 +35,12 @@ def main():
                                         " but not ANK due to "
                                         "potentially large number of VMs"))
 
+    # Deployment environments
+    opt.add_option('--netkit',  action="store_true", default=True, help="Compile Netkit")
+    opt.add_option('--cbgp',  action="store_true", default=False, help="Compile cBGP")
+    opt.add_option('--gns3',  action="store_true", default=False, help="Compile GNS3")
+    opt.add_option('--junos',  action="store_true", default=False, help="Compile JunOS")
+
     opt.add_option('--tapsn', default="172.16.0.0/16", 
                help= ("Tap subnet to use to connect to VMs. Will be split into "
                       " /24 subnets, with first subnet allocated to tunnel VM. "
@@ -51,7 +57,8 @@ def main():
     f_name = options.file  
     # check exists
     if os.path.isfile(f_name):
-        inet = Internet(tapsn = options.tapsn)
+        inet = Internet(tapsn = options.tapsn, netkit=options.netkit,
+                cbgp=options.cbgp, gns3=options.gns3, junos=options.junos)
         inet.load(f_name)
     else:    
         LOG.warn("Topology file %s not found" % f_name)

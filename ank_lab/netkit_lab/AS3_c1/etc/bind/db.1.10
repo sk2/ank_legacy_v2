@@ -1,0 +1,15 @@
+$TTL 1D
+@	IN	SOA	lo0.c1.AS3.	revdns.AS3 (
+		2008080101      ;serial
+		8H           	;refresh
+		4H           	;retry
+		4W         		;expire
+		1D          	;negative cache TTL
+		)
+
+      	IN      NS       lo0.c1.AS3.
+                       
+5.0		PTR	eth1.c2.AS3.	     
+6.0		PTR	eth1.c1.AS3.	     
+8.0		PTR	lo0.c1.AS3.	     
+9.0		PTR	lo0.c2.AS3.	     
