@@ -5,3 +5,6 @@
 dist/*
 examples/*
 .ropeproject/*
+AutoNetkit/logs/
+AutoNetkit/netkit_lab/
+AutoNetkit/plots/

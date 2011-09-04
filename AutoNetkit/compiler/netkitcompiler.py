@@ -93,7 +93,6 @@ class NetkitCompiler:
         #TODO: fetch eBGP and iBGP graphs and cache them
 
     def initialise(self):
-
         """Creates lab folder structure"""
 
         # TODO: clean out netkitdir
@@ -160,9 +159,6 @@ class NetkitCompiler:
         # ( ie is an end host) then don't use quagga
         #  and point default route to nearest router
 
-        #TODO: split zebra out of netkit as could run quagga on just
-        # a linux machine (ie not inside netkit)
-
         lab_template = lookup.get_template("netkit/lab.mako")
         startup_template = lookup.get_template("netkit/startup.mako")
         hostname_template = lookup.get_template("linux/hostname.mako")
@@ -173,7 +169,6 @@ class NetkitCompiler:
         #TODO: this needs to be created for each netkit host machine
         f_lab = open(os.path.join(lab_dir(), "lab.conf"), 'w')
 
-        # TODO need to bring up bind is using dns and this is dns server
         lab_conf = {}
         tap_list_strings = {}
 
@@ -440,7 +435,6 @@ class NetkitCompiler:
                 label = self.network.get_node_property(node, 'label')
 
                 # iBGP
-                #TODO: use networkx.Graph.adjacency_iter
                 ibgp_neighbor_list = []
                 if node in ibgp_graph:
                     for neigh in ibgp_graph.neighbors(node):
@@ -530,7 +524,6 @@ class NetkitCompiler:
 
         # TODO: also point to other AS DNS servers
         # TODO: also add the eBGP subnet details
-
 
         root_dns = ank.root_dns(self.network)
         #TODO-ING: the list of root DNS servers should not be generated here,

@@ -1,0 +1,19 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+author	setup.py	/^     author = 'Simon Knight, Hung Nguyen',$/;"	v
+author_email	setup.py	/^     author_email = "simon.knight@adelaide.edu.au",$/;"	v
+classifiers	setup.py	/^     classifiers = [$/;"	v
+description	setup.py	/^     description = 'Automated configuration generator for Netkit',$/;"	v
+download_url	setup.py	/^     download_url = ("http:\/\/www.eleceng.adelaide.edu.au\/"$/;"	v
+entry_points	setup.py	/^     entry_points = {$/;"	v
+long_description	setup.py	/^     long_description = 'Automated configuration generator for Netkit',$/;"	v
+name	setup.py	/^     name = "AutoNetkit",$/;"	v
+package_data	setup.py	/^     package_data = {'': ['settings.cfg', 'lib\/templates\/*\/*.mako',$/;"	v
+packages	setup.py	/^     packages = ['AutoNetkit', 'AutoNetkit.algorithms', 'AutoNetkit.compiler',$/;"	v
+setup	setup.py	/^from setuptools import setup$/;"	i
+url	setup.py	/^     url = "http:\/\/packages.python.org\/AutoNetkit\/",$/;"	v
+version	setup.py	/^     version = "0.5.42",$/;"	v

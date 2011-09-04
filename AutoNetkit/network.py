@@ -9,10 +9,8 @@ Main functions for AutoNetkit
 import pprint   
 from itertools import groupby
 from AutoNetkit import deprecated 
-
 # NetworkX Modules
 import networkx as nx   
-
 pp = pprint.PrettyPrinter(indent=4)       
                   
 # AutoNetkit Modules
@@ -47,7 +45,6 @@ class Network(object):
     """ Main network containing router graph"""
 
     def __init__(self):
-
         # IP config information
         #TODO: make this a general attributes dictionary
         self.tap_host = None
@@ -56,7 +53,7 @@ class Network(object):
         self.as_names = {}
         self._graphs = {}
         self._graphs['physical'] = nx.DiGraph()
-        self._graphs['session'] = nx.DiGraph()
+        self._graphs['bgp_session'] = nx.DiGraph()
 
     #### IO Functions ###
     def save(self, filename="net_out.gml"):    
@@ -91,12 +88,11 @@ class Network(object):
 
     @property
     def g_session(self):
-        return self._graphs['session']
+        return self._graphs['bgp_session']
 
     @g_session.setter
     def g_session(self, value):
-        self._graphs['session'] = value
-
+        self._graphs['bgp_session'] = value
 
     @deprecated
     def get_edges(self, node=None):

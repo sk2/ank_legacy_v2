@@ -1,6 +1,6 @@
 Metadata-Version: 1.0
 Name: AutoNetkit
-Version: 0.5.40dev-20110831
+Version: 0.5.42dev-20110903
 Summary: Automated configuration generator for Netkit
 Home-page: http://packages.python.org/AutoNetkit/
 Author: Simon Knight, Hung Nguyen

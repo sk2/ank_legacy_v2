@@ -1,9 +1,12 @@
-import sys                 
-import os
-import optparse    
+#!/usr/bin/env python
+
 import sys
+import os
+import optparse
+from . import AutoNetkit
+from AutoNetkit import deprecated 
+
 from AutoNetkit.internet import Internet
-import time    
 
 import logging
 # Can only get ANK logger after have imported Internet from ANK
@@ -51,8 +54,7 @@ def main():
         inet = Internet(tapsn = options.tapsn)
         inet.load(f_name)
     else:    
-        #TODO: use logger
-        print("Topology file {0} not found".format(f_name))
+        LOG.warn("Topology file %s not found" % f_name)
         sys.exit(0)
   
     inet.add_dns()
