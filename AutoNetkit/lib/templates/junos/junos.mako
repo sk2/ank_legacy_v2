@@ -43,20 +43,7 @@ interfaces {
         }
     }
     %endfor 
-}             
-
-ospf {
-        area 0.0.0.0 {
-		% for i in ospf_interfaces:
-            interface ${i['id']} { 
-			  % if 'passive' in i:
-					passive;
-			% endif
-			}            
-		%endfor
-    }
-}        
-
+}            
 
 routing-options {
     aggregate {
@@ -67,7 +54,43 @@ routing-options {
     }
     router-id ${router_id};
     autonomous-system ${asn};
+} 
+     
+protocols {
+	ospf {
+	        area 0.0.0.0 {
+			% for i in ospf_interfaces:
+				  % if 'passive' in i:   
+				interface ${i['id']}  {
+						passive;   
+					}
+				% else:
+				interface ${i['id']};
+			  % endif                
+			%endfor
+	    }
+	}            
+	bgp {
+		% for groupname, group_data in bgp_groups.items():   
+			group ${groupname} {
+				type ${group_data['type']};      
+				% for neighbor in group_data['neighbors']: 
+				   % if 'peer_as' in neighbor:      
+				   neighbor  ${neighbor['id']} {
+						peer-as ${neighbor['peer_as']}
+				   }
+				   % else:
+				   neighbor  ${neighbor['id']};
+				   % endif
+				% endfor
+			}
+			
+		% endfor
+	}           
 }
+
+
+
   
 <%doc>
 

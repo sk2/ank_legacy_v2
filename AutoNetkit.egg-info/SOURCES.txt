@@ -29,6 +29,7 @@ AutoNetkit/algorithms/optimise_igp.py
 AutoNetkit/compiler/__init__.py
 AutoNetkit/compiler/cbgpcompiler.py
 AutoNetkit/compiler/gns3compiler.py
+AutoNetkit/compiler/junoscompiler.py
 AutoNetkit/compiler/netkitcompiler.py
 AutoNetkit/deploy/__init__.py
 AutoNetkit/deploy/netkit_allocate.py
@@ -48,6 +49,7 @@ AutoNetkit/lib/templates/bind/root_dns.mako
 AutoNetkit/lib/templates/bind/root_dns_named.mako
 AutoNetkit/lib/templates/cisco/cisco.mako
 AutoNetkit/lib/templates/gns3/topology.mako
+AutoNetkit/lib/templates/junos/junos.mako
 AutoNetkit/lib/templates/linux/hostname.mako
 AutoNetkit/lib/templates/linux/resolv.mako
 AutoNetkit/lib/templates/netkit/lab.mako
