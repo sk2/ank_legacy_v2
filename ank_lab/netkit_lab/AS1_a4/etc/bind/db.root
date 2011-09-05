@@ -17,12 +17,12 @@ NS.AS1.			IN	A 	10.0.0.64
 
 
 AS3.				IN	NS	NS.AS3.
-1.10.in-addr.arpa	IN	NS	NS.AS3.
-NS.AS3.			IN	A 	10.1.0.8
+2.10.in-addr.arpa	IN	NS	NS.AS3.
+NS.AS3.			IN	A 	10.2.0.8
 
 
 AS2.				IN	NS	NS.AS2.
-2.10.in-addr.arpa	IN	NS	NS.AS2.
-NS.AS2.			IN	A 	10.2.0.16
+1.10.in-addr.arpa	IN	NS	NS.AS2.
+NS.AS2.			IN	A 	10.1.0.16
 
 

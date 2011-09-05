@@ -59,7 +59,7 @@ def allocate_subnets(network, address_block):
         src_as.add_edge(src, dst)
 
     #reverse so that allocate subnets in ascending order
-    for my_as in asgraphs.values():
+    for my_as in sorted(asgraphs.values()):
         as_subnet =  subnet_list.next()
 
         as_internal_nodes = [node for node,data in my_as.nodes(data=True)

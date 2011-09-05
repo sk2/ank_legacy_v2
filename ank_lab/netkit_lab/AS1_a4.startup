@@ -1,6 +1,6 @@
 /sbin/ifconfig lo:1 10.0.0.67 netmask 255.255.255.255 up
 /sbin/ifconfig eth0 10.0.0.29 netmask 255.255.255.252 broadcast 10.0.0.31 up
-/sbin/ifconfig eth1 10.2.0.6 netmask 255.255.255.252 broadcast 10.2.0.7 up
+/sbin/ifconfig eth1 10.1.0.6 netmask 255.255.255.252 broadcast 10.1.0.7 up
 /sbin/ifconfig eth2 10.0.0.33 netmask 255.255.255.252 broadcast 10.0.0.35 up
 /sbin/ifconfig eth3 10.0.0.37 netmask 255.255.255.252 broadcast 10.0.0.39 up
 /sbin/ifconfig lo 127.0.0.1 up

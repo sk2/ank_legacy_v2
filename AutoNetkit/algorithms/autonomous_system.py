@@ -5,7 +5,7 @@ Autonomous System functions
 __author__ = "\n".join(['Simon Knight'])
 #    Copyright (C) 2009-2011 by Simon Knight, Hung Nguyen
 
-__all__ = ['nodes_by_as', 'get_as_graphs', 'get_as_list']
+__all__ = ['nodes_by_as', 'get_as_graphs', 'igp_graph', 'get_as_list']
 
 import networkx as nx
 from collections import defaultdict
@@ -15,6 +15,7 @@ from collections import defaultdict
 
 def nodes_by_as(network):
     """ returns dict of nodes indexed by AS """
+#TODO: use itertools and groupby here
     as_dict = defaultdict(list)
     for node in network.graph:
         asn = network.asn(node)
@@ -28,7 +29,16 @@ def get_as_list(network):
     #returns list of unique as numbers 
     as_list = ( network.asn(n) for n in network.graph )
     # Use set to remove duplicates
-    return list(set(as_list))     
+    return list(set(as_list))    
+
+def igp_graph(network):
+    """Returns IGP graph for network - based on physical graph with inter-AS links removed"""
+    G = network.graph.subgraph(network.graph.nodes())
+# Remove inter-AS links
+    edges_to_remove = ( (s,t) for (s,t) in G.edges()
+            if network.asn(s) != network.asn(t))
+    G.remove_edges_from(edges_to_remove)
+    return G
     
 def get_as_graphs(network):   
     """Returns a graph for each AS."""

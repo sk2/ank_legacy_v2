@@ -33,6 +33,8 @@ AutoNetkit/compiler/netkitcompiler.py
 AutoNetkit/deploy/__init__.py
 AutoNetkit/deploy/netkit_allocate.py
 AutoNetkit/deploy/netkit_deploy.py
+AutoNetkit/internal/__init__.py
+AutoNetkit/internal/decorators.py
 AutoNetkit/lib/autonetkit.cfg
 AutoNetkit/lib/shadow
 AutoNetkit/lib/templates/autonetkit/interfacelist.mako

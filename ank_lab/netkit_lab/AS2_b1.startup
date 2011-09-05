@@ -1,7 +1,7 @@
-/sbin/ifconfig lo:1 10.2.0.16 netmask 255.255.255.255 up
-/sbin/ifconfig eth0 10.2.0.14 netmask 255.255.255.252 broadcast 10.2.0.15 up
-/sbin/ifconfig eth1 10.2.0.5 netmask 255.255.255.252 broadcast 10.2.0.7 up
-/sbin/ifconfig eth2 10.2.0.9 netmask 255.255.255.252 broadcast 10.2.0.11 up
+/sbin/ifconfig lo:1 10.1.0.16 netmask 255.255.255.255 up
+/sbin/ifconfig eth0 10.1.0.14 netmask 255.255.255.252 broadcast 10.1.0.15 up
+/sbin/ifconfig eth1 10.1.0.5 netmask 255.255.255.252 broadcast 10.1.0.7 up
+/sbin/ifconfig eth2 10.1.0.9 netmask 255.255.255.252 broadcast 10.1.0.11 up
 /sbin/ifconfig lo 127.0.0.1 up
 route del default
 /etc/init.d/zebra start

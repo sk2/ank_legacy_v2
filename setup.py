@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup (
      name = "AutoNetkit",
-     version = "0.5.42",
+     version = "0.5.43",
      description = 'Automated configuration generator for Netkit',
 
      long_description = 'Automated configuration generator for Netkit',
@@ -20,13 +20,13 @@ setup (
      author_email = "simon.knight@adelaide.edu.au",
      url = "http://packages.python.org/AutoNetkit/",
      packages = ['AutoNetkit', 'AutoNetkit.algorithms', 'AutoNetkit.compiler',
-                 'AutoNetkit.deploy',
+                 'AutoNetkit.deploy', 'AutoNetkit.internal',
                  'AutoNetkit.readwrite', 'AutoNetkit.plotting'],
      package_data = {'': ['settings.cfg', 'lib/templates/*/*.mako',
                           'lib/shadow', 'lib/autonetkit.cfg',
                           'lib/authorized_keys', 'plugins/*', 'plugins/*.py',
                           'algorithms/*.py', 'plotting/*.py', 'deploy/*.py',
-                          'compiler/*.py',
+                          'compiler/*.py', 'internal/*.py',
                           'readwrite/*.py']},
      download_url = ("http://www.eleceng.adelaide.edu.au/"
                      "personal/sknight/AutoNetkit"),

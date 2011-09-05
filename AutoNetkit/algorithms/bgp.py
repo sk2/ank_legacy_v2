@@ -54,20 +54,15 @@ def ibgp_routers(network):
 
 def get_ebgp_graph(network):
     """Returns graph of eBGP routers and links between them."""
-    ebgp_graph = nx.DiGraph(network.g_session)
-    ebgp_graph.name = 'ebgp'
+#TODO: see if just use subgraph here for efficiency
+    ebgp_graph = network.g_session.subgraph(ebgp_routers(network))
     ebgp_graph.remove_edges_from( ibgp_edges(network))
-#remove nodes that don't have an eBGP links
-    non_ebgp_nodes =  [n for n in ebgp_graph if n not in ebgp_routers(network)]
-    ebgp_graph.remove_nodes_from(non_ebgp_nodes)
     return ebgp_graph
-
-    
 
 
 def get_ibgp_graph(network):
     """Returns iBGP graph (full mesh currently) for an AS."""
-    ibgp_graph = nx.DiGraph(network.g_session)
-    ibgp_graph.name = 'ibgp'
+#TODO: see if just use subgraph here for efficiency
+    ibgp_graph = network.g_session.subgraph(ibgp_routers(network))
     ibgp_graph.remove_edges_from( ebgp_edges(network))
     return ibgp_graph

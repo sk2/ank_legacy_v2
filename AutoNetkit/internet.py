@@ -29,7 +29,7 @@ import os
 import AutoNetkit as ank
 from AutoNetkit import network
 
-from netaddr import IPNetwork    
+from netaddr import IPNetwork
 
 import config
 
@@ -222,9 +222,9 @@ class Internet:
             cbgp_comp.configure()
 
         if self.compile_targets['junos']:
-            LOG.warn("JunOS not currently supported")
-            #cbgp_comp = ank.CbgpCompiler(self.network, self.services)
-            #cbgp_comp.configure()
+            junos_comp = ank.JunosCompiler(self.network, self.services)
+            junos_comp.initialise()
+            junos_comp.configure()
 
     def deploy(self, host, username, xterm = False, platform="netkit" ):  
         """Deploy compiled configuration files."

@@ -1,15 +1,11 @@
 """
 Generate GNS3 configuration files for a network 
 """
-import beaker
 from mako.lookup import TemplateLookup    
 
 from pkg_resources import resource_filename         
 
 import os
-
-import networkx as nx  
-#import network as network  
 
 import logging
 LOG = logging.getLogger("ANK")
@@ -41,7 +37,6 @@ lookup = TemplateLookup(directories=[ template_dir ],
                         #cache_enabled=True,
                        )
                 
-import re
 import os    
 import itertools
 

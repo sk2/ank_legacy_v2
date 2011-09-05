@@ -94,6 +94,13 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
                            edge_color=edge_color,
                            alpha=0.8)
 
+# Draw nodes that have pos for but not in graph for visual continuity
+# so same scale, eg so eBGP graph has same positions
+#TODO: find better way to scale and set axes directly
+    g_non_plotted = nx.Graph()
+    g_non_plotted.add_nodes_from(n for n in pos if n not in graph)
+    nx.draw_networkx_nodes(g_non_plotted, pos, alpha =0, visible=False)
+
     if not labels:
         labels = {}
         for n, data in graph.nodes(data = True):

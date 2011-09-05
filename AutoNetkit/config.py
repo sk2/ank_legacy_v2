@@ -29,6 +29,9 @@ lab_dir = os.path.join(ank_main_dir, lab_dir)
 gns3_dir = settings.get('Lab', 'gns3_dir')
 gns3_dir = os.path.join(ank_main_dir, gns3_dir)
 
+junos_dir = settings.get('Lab', 'junos_dir')
+junos_dir = os.path.join(ank_main_dir, junos_dir)
+
 plot_dir = settings.get('Lab', 'plot_dir')
 plot_dir = os.path.join(ank_main_dir, plot_dir)
 
