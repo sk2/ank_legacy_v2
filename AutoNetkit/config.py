@@ -2,6 +2,12 @@
 Loads configuration settings and creates logger
 """
 
+import sys
+# Supress DeprecationWarning in Python 2.6
+if sys.version_info[:2] == (2, 6):
+    import warnings
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 from pkg_resources import resource_filename
 import os
 
