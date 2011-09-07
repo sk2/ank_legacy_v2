@@ -83,6 +83,10 @@ def bind_dir(network, rtr):
     """Returns bind path for router rtr"""
     return os.path.join(etc_dir(network, rtr), "bind")
 
+def interface_id(numeric_id):
+    """Returns Netkit (Linux) format interface ID for an AutoNetkit interface ID"""
+    return 'eth%s' % numeric_id
+
 class NetkitCompiler:
     """Compiler main"""
 
@@ -150,15 +154,6 @@ class NetkitCompiler:
         # Sets up netkit related files
         tap_host = ank.get_tap_host(self.network)
 
-        #TODO: make more flexibile than just routers/zebra - take in a list
-        # describing what the role of the device is
-        # eg netkit router, cisco router, end host... etc.... allow the user
-        # to specify hosts in the config file?
-        # this determines what services are setup
-        # and also use this for the IGP setup - if not a router
-        # ( ie is an end host) then don't use quagga
-        #  and point default route to nearest router
-
         lab_template = lookup.get_template("netkit/lab.mako")
         startup_template = lookup.get_template("netkit/startup.mako")
         hostname_template = lookup.get_template("linux/hostname.mako")
@@ -210,7 +205,6 @@ class NetkitCompiler:
             startup_int_list = []
 
             #Setup ssh
-            #TODO: see if more pythonic way to copy file
             shutil.copy(resource_filename("AutoNetkit","lib/shadow"),
                         etc_dir(self.network, node))
             startup_daemon_list.append("ssh")
@@ -225,12 +219,8 @@ class NetkitCompiler:
 
             if "DNS" in self.services:
                 if (node in dns_list.values()) or (node == root_dns):
-                    # This router is a DNS server
-                    # Note dns_list is a dict keyed by as number
                     startup_daemon_list.append("bind")
-                    # increase memory - empirically derived amount
-                    #dns_memory = 128   # in mb
-                    dns_memory = 64   # in mb
+                    dns_memory = 64 # Allocate more memory to DNS server 
                     #TODO: remove key, val and make it just key: val
                     lab_conf[rtr_folder_name].append( ('mem', dns_memory))
 
@@ -238,14 +228,10 @@ class NetkitCompiler:
             zebra_daemon_list = []
             f_zdaemons = open( os.path.join(zebra_dir(self.network, node),
                                             "daemons"), 'w')
-            # Always want to start the Zebra daemon (to propagate routes to
-            # kernel, and to telnet in, etc)
+# Always start Zebra
             zebra_daemon_list.append("zebra")
 
-            # TODO: allow IGP to be specified rather than default to ospfd
-            #TODO use same logic as in configure_igp()
             zebra_daemon_list.append("ospfd")
-            # enable BGP if required
             if (node in ibgp_routers) or (node in ebgp_routers):
                 zebra_daemon_list.append("bgpd")
 
@@ -267,7 +253,6 @@ class NetkitCompiler:
             f_z.close()
 
             # Loopback interface
-
             lo_ip = self.network[node].get('lo_ip')
             startup_int_list.append({
                 'int':          'lo:1',
@@ -276,26 +261,25 @@ class NetkitCompiler:
             })
 
             # Ethernet interfaces
-            # get link information for this router
-            for src, dst in self.network.get_edges(node):
-                int_id = self.network.edge(src, dst).get('id')
+            for src, dst, data in self.network.get_edges(node, data=True):
+                int_id = interface_id(data['id'])
+                subnet = data['sn']
+                
                 ip_addr = self.network.edge(src, dst).get('ip')
                 subnet = self.network.edge(src, dst).get('sn')
 
                 # replace the / from subnet label
                 collision_domain = "%s.%s" % (subnet.ip, subnet.prefixlen)
 
-                lab_conf[rtr_folder_name].append( ( str(int_id),
-                                                   collision_domain  ))
+                lab_conf[rtr_folder_name].append((str(int_id), collision_domain))
                 startup_int_list.append({
-                    'int':          'eth{0}'.format(int_id),
-                    'ip':           str(ip_addr),
+                    'int':          int_id,
+                    'ip':           str(data['ip']),
                     'netmask':      str(subnet.netmask),
                     'broadcast':    str(subnet.broadcast),
                 })
 
             #Write startup file for this router
-            # eg rA.startup
             f_startup = open( os.path.join(netkit_dir(self.network, node),
                 "{0}.startup".format(rtr_folder_name)), 'w')
 
@@ -326,13 +310,7 @@ class NetkitCompiler:
 
     def configure_igp(self):
         """Generates IGP specific configuration files (eg ospfd)"""
-
-        #TODO: create IGP module like for bgp and allow IGP graph to be
-        # returned, which can have OSPF areas etc set - eg allow network
-        # design patterns to be used for IGP
-
         LOG.info("Configuring IGP")
-
         template = lookup.get_template("quagga/ospf.mako")
         ibgp_routers = ank.ibgp_routers(self.network)
         self.network.set_default_edge_property('weight', 1)
@@ -348,7 +326,6 @@ class NetkitCompiler:
 
             for node in my_as:
                 label = self.network.get_node_property(node, 'label')
-                #self.network.fqdn(n,graph)
 
                 # Note use the AS, not the network graph for edges,
                 # as only concerned with intra-AS edges for IGP
@@ -423,6 +400,8 @@ class NetkitCompiler:
 
         ibgp_graph = ank.get_ibgp_graph(self.network)
         ebgp_graph = ank.get_ebgp_graph(self.network)
+        physical_graph = self.network.graph
+        
 
         for my_as in ank.get_as_graphs(self.network):
             LOG.debug("Configuring BGP for AS {0}".format(my_as.name))
@@ -451,12 +430,11 @@ class NetkitCompiler:
                 if node in ebgp_graph:
                     for neigh in ebgp_graph.neighbors(node):
                         description = ank.fqdn(self.network, neigh)
+                        peer_ip = physical_graph[neigh][node]['ip']
                         ebgp_neighbor_list.append(
                             {
                                 #'remote_ip':        neigh.lo_ip.ip  ,
-                                'remote_ip': self.network.get_edge_property(neigh,
-                                                                            node,
-                                                                            "ip"),
+                                'remote_ip': peer_ip,
                                 'remote_as':        self.network.asn(neigh),
                                 'remote_router':    neigh,
                                 'description':      description,
@@ -468,13 +446,6 @@ class NetkitCompiler:
                                 #'route_map_out':    route_map_out_id,
                             })
 
-
-
-
-                #TODO: fix this directory structure
-
-                #f = open( os.path.join(zebra_dir(n), "bgpd.conf") , 'w')
-                #look up subnet allocated to current AS
 
                 adv_subnet = ip_as_allocs[self.network.asn(node)]
                 # advertise this subnet
@@ -502,13 +473,9 @@ class NetkitCompiler:
                         snmp=False,
                 ))
 
-    #TODO: remove all the "get" in functions, from network especially
     def configure_dns(self):
         """Generates BIND configuration files for DNS"""
         ip_as_allocs = ank.get_ip_as_allocs(self.network)
-
-        #TODO: use network name instead of AS1 if present
-        #TODO: use helper function for this
 
         resolve_template = lookup.get_template("linux/resolv.mako")
         forward_template = lookup.get_template("bind/forward.mako")
@@ -522,12 +489,7 @@ class NetkitCompiler:
 
         dns_list = ank.dns_list(self.network)
 
-        # TODO: also point to other AS DNS servers
-        # TODO: also add the eBGP subnet details
-
         root_dns = ank.root_dns(self.network)
-        #TODO-ING: the list of root DNS servers should not be generated here,
-        # but should be defined somwhere else
         root_servers = {'name': root_dns,
                         'ip': self.network.lo_ip(root_dns).ip,
                         'hostname': ank.hostname(self.network, root_dns)}

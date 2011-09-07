@@ -160,7 +160,7 @@ class JunosCompiler:
 
             for src, dst, data in self.network.graph.edges(node, data=True):
                 subnet = data['sn']
-                int_id = interface_id(data['id']),
+                int_id = interface_id(data['id'])
                 description = 'Interface %s -> %s' % (
                         ank.fqdn(self.network, src), 
                         ank.fqdn(self.network, dst))
