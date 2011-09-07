@@ -8,7 +8,7 @@ if sys.version_info[:2] == (2, 6):
     import warnings
     warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from pkg_resources import resource_filename
+import pkg_resources
 import os
 
 #**************************************************************
@@ -21,7 +21,7 @@ if os.path.isfile("autonetkit.cfg"):
     settings.read('autonetkit.cfg')
 else:
     # load defaults
-    default_cfg = resource_filename(__name__,"/lib/autonetkit.cfg")
+    default_cfg = pkg_resources.resource_filename(__name__,"/lib/autonetkit.cfg")
     settings.read(default_cfg)
 
 ank_main_dir = settings.get('Lab', 'autonetkit_dir')

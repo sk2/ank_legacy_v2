@@ -7,14 +7,18 @@ import optparse
 from AutoNetkit import deprecated 
 
 from AutoNetkit.internet import Internet
-
+import distutils
 import logging
+import pkg_resources
 # Can only get ANK logger after have imported Internet from ANK
 LOG = logging.getLogger("ANK")
 
 def main():
+    version=pkg_resources.get_distribution("AutoNetkit").version
     # make it easy to turn on and off plotting and deploying from command line 
-    opt = optparse.OptionParser()
+    opt = optparse.OptionParser(version="%prog " + str(version))
+    #opt.add_option('--version', action='version', version=2)
+
     opt.add_option('--plot', '-p', action="store_true", dest="plot", 
                    default=False, help="Plot lab")
     opt.add_option('--deploy', '-d', action="store_true", dest="deploy", 

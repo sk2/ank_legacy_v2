@@ -4,6 +4,7 @@
 config "config" {
 display "NULL";                            
 
+
 % for hostname, host_data in topology_data.items():   
 vm "${hostname}" {
   // description - hostname of set on VM
