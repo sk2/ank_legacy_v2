@@ -261,7 +261,7 @@ class NetkitCompiler:
             })
 
             # Ethernet interfaces
-            for src, dst, data in self.network.get_edges(node, data=True):
+            for src, dst, data in self.network.graph.edges(node, data=True):
                 int_id = interface_id(data['id'])
                 subnet = data['sn']
                 
@@ -367,12 +367,6 @@ class NetkitCompiler:
                     LOG.warn("IGP not supported for device \
                         type {0}".format(my_as.node[node]["platform"]) )
 
-                default_gateway = False
-                if node in ibgp_routers:
-                    # This router is part of iBGP mesh, so advertise as a
-                    # default gateway into IGP
-                    default_gateway = True
-
                 f_handle.write(template.render
                                (
                                    hostname = ank.fqdn(self.network, node),
@@ -380,7 +374,6 @@ class NetkitCompiler:
                                    interface_list = interface_list,
                                    network_list = network_list,
                                    routerID = node,
-                                   default_gateway = default_gateway,
                                    use_igp = True,
                                    logfile = "/var/log/zebra/ospfd.log",
                                    use_debug = False,

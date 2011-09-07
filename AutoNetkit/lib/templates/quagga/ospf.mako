@@ -15,11 +15,6 @@ router ospf
 	network ${n['cidr']} area ${n['area']}
 ## TODO: check if this is needed  ${n['remote_ip']}
 %endfor           
-%if default_gateway:            
-	# Router is in iBGP mesh, advertise as a default-gateway
-	#default-information originate     
-	redistribute bgp
-%endif 
 !
 ##IGP specific options
 %if use_igp:

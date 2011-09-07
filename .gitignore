@@ -2,6 +2,7 @@
 *.pyo
 *.pickle
 *.log
+*.conf
 .DS_Store
 *.swp
 dist/*
