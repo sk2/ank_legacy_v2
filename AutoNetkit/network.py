@@ -12,7 +12,7 @@ from AutoNetkit import deprecated
 # NetworkX Modules
 import networkx as nx   
 pp = pprint.PrettyPrinter(indent=4)       
-                  
+
 # AutoNetkit Modules
 import logging
 LOG = logging.getLogger("ANK")

@@ -14,7 +14,7 @@ LOG = logging.getLogger("ANK")
 
 import shutil
 import glob
-
+import itertools
 
 import AutoNetkit as ank
 from AutoNetkit import config
@@ -40,10 +40,10 @@ if (os.path.exists(template_cache_dir)
 
 template_dir =  resource_filename("AutoNetkit","lib/templates")
 lookup = TemplateLookup(directories=[ template_dir ],
-                        module_directory= template_cache_dir,
-                        #cache_type='memory',
-                        #cache_enabled=True,
-                       )
+        module_directory= template_cache_dir,
+        #cache_type='memory',
+        #cache_enabled=True,
+        )
 
 import os
 
@@ -54,6 +54,11 @@ def router_dir(network, rtr):
     """Returns path for router rtr"""
     foldername = ank.rtr_folder_name(network, rtr)
     return os.path.join(lab_dir(), foldername)
+
+def router_conf(network, node):
+    """ Returns router config file"""
+    r_file = "%s.conf"%ank.rtr_folder_name(network, node)
+    return os.path.join(lab_dir(), r_file)
 
 class JunosCompiler:
     """Compiler main"""
@@ -78,10 +83,56 @@ class JunosCompiler:
                     os.mkdir(router_dir(self.network, node))
         return
 
-    def configure(self):
-        #TODO: Configure .vmm file also
+    def configure_junosphere(self):
+        vmm_template = lookup.get_template("junos/topology_vmm.mako")
+        topology_data = {}
+        # Generator for private0, private1, etc
+        bridge_id_generator = ('private%s'%i for i in itertools.count(0))
+        collision_to_bridge_mapping = {}
 
-# Configure individual routers
+     #TODO: correct this router type selector
+        for node in self.network.q(platform="NETKIT"):
+            hostname = ank.fqdn(self.network, node)
+            asn = self.network.asn(node)
+            interfaces = []
+            network_list = []
+            lo_ip = self.network.lo_ip(node)
+
+            topology_data[hostname] = {
+                    'image': 'VJX1000_LATEST',
+                    'config': router_conf(self.network, node),
+                    'interfaces': [],
+                    }
+            for src, dst, data in self.network.graph.edges(node, data=True):
+                subnet = data['sn']
+                int_id = 'em%s' % data['id']
+                description = 'Interface %s -> %s' % (
+                        ank.fqdn(self.network, src), 
+                        ank.fqdn(self.network, dst))
+# Bridge information for topology config
+                if subnet in collision_to_bridge_mapping:
+# Use bridge allocated for this subnet
+                    bridge_id = collision_to_bridge_mapping[subnet]
+                else:
+# Allocate a bridge for this subnet
+                    bridge_id = bridge_id_generator.next()
+                    collision_to_bridge_mapping[subnet] = bridge_id
+                    topology_data[hostname]['interfaces'].append({
+                            'description': description,
+                            'id': int_id,
+                            'bridge_id': bridge_id,
+                            })
+
+        #TODO: check if any bridge_id values are > 123, if so need to append to config
+
+        vmm_file = os.path.join(lab_dir(), "topology.vmm")
+        with open( vmm_file, 'w') as f_vmm:
+            f_vmm.write( vmm_template.render(
+                topology_data = topology_data,
+                ))
+
+    def configure(self):
+        self.configure_junosphere()
         LOG.info("Configuring Junos")
         junos_template = lookup.get_template("junos/junos.mako")
 
@@ -92,6 +143,7 @@ class JunosCompiler:
 
         #TODO: correct this router type selector
         for node in self.network.q(platform="NETKIT"):
+            hostname = ank.fqdn(self.network, node)
             asn = self.network.asn(node)
             interfaces = []
             network_list = []
@@ -107,14 +159,18 @@ class JunosCompiler:
 
             for src, dst, data in self.network.graph.edges(node, data=True):
                 subnet = data['sn']
+                int_id = 'em%s' % data['id']
+                description = 'Interface %s -> %s' % (
+                        ank.fqdn(self.network, src), 
+                        ank.fqdn(self.network, dst))
+
+# Interface information for router config
                 interfaces.append({
-                    'id':          'em%s' % data['id'],
+                    'id':          int_id,
                     'ip':           str(data['ip']),
                     'prefixlen':    str(subnet.prefixlen),
                     'broadcast':    str(subnet.broadcast),
-                    'description':  'Interface %s -> %s' % (
-                        ank.fqdn(self.network, src), 
-                        ank.fqdn(self.network, dst)),
+                    'description':  description,
                 })
 
 #OSPF
@@ -151,10 +207,10 @@ class JunosCompiler:
                         'type': 'external', 
                         'neighbors': external_peers}
 
-            juniper_filename = os.path.join(router_dir(self.network, node), "juniper.conf")
+            juniper_filename = router_conf(self.network, node)
             with open( juniper_filename, 'w') as f_jun:
                 f_jun.write( junos_template.render(
-                    hostname = ank.fqdn(self.network, node),
+                    hostname = hostname,
                     username = 'autonetkit',
                     interfaces=interfaces,
                     ospf_interfaces=ospf_interfaces,
@@ -164,4 +220,7 @@ class JunosCompiler:
                     network_list = network_list,
                     bgp_groups = bgp_groups,
                     ))
+
+
+
 
