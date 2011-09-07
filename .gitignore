@@ -1,6 +1,7 @@
 *.pyc
 *.pyo
 *.pickle
+*.log
 .DS_Store
 *.swp
 dist/*
