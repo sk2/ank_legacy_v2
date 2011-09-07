@@ -3,7 +3,7 @@
 import sys
 import os
 import optparse
-from . import AutoNetkit
+#from . import AutoNetkit
 from AutoNetkit import deprecated 
 
 from AutoNetkit.internet import Internet
@@ -54,6 +54,7 @@ def main():
         LOG.warn("Please specify topology file")
         sys.exit(0)
                 
+#TODO: if topology file doesn't exist, then try inside lib/examples/topologies/
     f_name = options.file  
     # check exists
     if os.path.isfile(f_name):

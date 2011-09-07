@@ -7,14 +7,6 @@ __author__ = "\n".join(['Simon Knight'])
 
 __all__ = ['domain', 'fqdn', 'rtr_folder_name', 'hostname']
 
-#TODO: combine these functions, eg call hostname where appropriate
-
-"""TODO: use translate table for more efficient string replace:
-http://stackoverflow.com/questions/265960/
-table = string.maketrans("", "")
-mystring.translate(table, string.punctuation)
-"""
-
 def domain(network, asn):
     """ Returns domain for a provided network and asn
     Accesses set domain for network, for prodived asn"""

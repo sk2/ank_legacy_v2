@@ -11,8 +11,6 @@ import networkx as nx
 import AutoNetkit as ank
 import os
 
-from collections import defaultdict
-
 #TODO: make work with network object not self.ank
 #TODO: split into smaller (not exported) functions
 import logging

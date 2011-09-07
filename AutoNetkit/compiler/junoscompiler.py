@@ -22,9 +22,11 @@ settings = config.settings
 
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
+import tarfile
 
 # Check can write to template cache directory
 #TODO: make function to provide cache directory
+#TODO: move this into config
 ank_dir = os.environ['HOME'] + os.sep + ".autonetkit"
 if not os.path.exists(ank_dir):
     os.mkdir(ank_dir)
@@ -60,6 +62,12 @@ def router_conf(network, node):
     r_file = "%s.conf"%ank.rtr_folder_name(network, node)
     return os.path.join(lab_dir(), r_file)
 
+def interface_id(numeric_id):
+    """Returns Junos format interface ID for an AutoNetkit interface ID"""
+# Junosphere uses em0 for external link
+    numeric_id +=1
+    return 'em%s' % numeric_id
+
 class JunosCompiler:
     """Compiler main"""
 
@@ -78,9 +86,6 @@ class JunosCompiler:
                 else:
                     os.unlink(item)
 
-        for node in self.network.get_nodes_by_property('platform', 'NETKIT'):
-                if not os.path.isdir(router_dir(self.network, node)):
-                    os.mkdir(router_dir(self.network, node))
         return
 
     def configure_junosphere(self):
@@ -93,11 +98,6 @@ class JunosCompiler:
      #TODO: correct this router type selector
         for node in self.network.q(platform="NETKIT"):
             hostname = ank.fqdn(self.network, node)
-            asn = self.network.asn(node)
-            interfaces = []
-            network_list = []
-            lo_ip = self.network.lo_ip(node)
-
             topology_data[hostname] = {
                     'image': 'VJX1000_LATEST',
                     'config': router_conf(self.network, node),
@@ -105,7 +105,7 @@ class JunosCompiler:
                     }
             for src, dst, data in self.network.graph.edges(node, data=True):
                 subnet = data['sn']
-                int_id = 'em%s' % data['id']
+                int_id = interface_id(data['id'])
                 description = 'Interface %s -> %s' % (
                         ank.fqdn(self.network, src), 
                         ank.fqdn(self.network, dst))
@@ -123,7 +123,9 @@ class JunosCompiler:
                             'bridge_id': bridge_id,
                             })
 
-        #TODO: check if any bridge_id values are > 123, if so need to append to config
+        if len(collision_to_bridge_mapping) > 123:
+            LOG.warn("AutoNetkit does not currently support more"
+                    " than 123 network links for Junosphere")
 
         vmm_file = os.path.join(lab_dir(), "topology.vmm")
         with open( vmm_file, 'w') as f_vmm:
@@ -131,8 +133,7 @@ class JunosCompiler:
                 topology_data = topology_data,
                 ))
 
-    def configure(self):
-        self.configure_junosphere()
+    def configure_junos(self):
         LOG.info("Configuring Junos")
         junos_template = lookup.get_template("junos/junos.mako")
 
@@ -159,7 +160,7 @@ class JunosCompiler:
 
             for src, dst, data in self.network.graph.edges(node, data=True):
                 subnet = data['sn']
-                int_id = 'em%s' % data['id']
+                int_id = interface_id(data['id']),
                 description = 'Interface %s -> %s' % (
                         ank.fqdn(self.network, src), 
                         ank.fqdn(self.network, dst))
@@ -221,6 +222,11 @@ class JunosCompiler:
                     bgp_groups = bgp_groups,
                     ))
 
-
-
-
+    def configure(self):
+        self.configure_junosphere()
+        self.configure_junos()
+# create .tgz
+        tar = tarfile.open(os.path.join(config.ank_main_dir, "junos.tgz"), "w:gz")
+# arcname to flatten file structure
+        tar.add(lab_dir(), arcname='junos_lab')
+        tar.close()
