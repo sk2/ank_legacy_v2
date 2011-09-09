@@ -9,3 +9,4 @@ dist/*
 examples/*
 .ropeproject/*
 ank_lab/*
+AutoNetkit/ank_lab/*

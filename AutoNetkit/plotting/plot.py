@@ -5,7 +5,7 @@ Plotting
 __author__ = "\n".join(['Simon Knight'])
 #    Copyright (C) 2009-2011 by Simon Knight, Hung Nguyen
 
-__all__ = ['plot']
+__all__ = ['plot', 'plot_graph']
 
 import networkx as nx
 import AutoNetkit as ank
@@ -18,6 +18,8 @@ settings = config.settings
 LOG = logging.getLogger("ANK")
 
 #TODO: add option to show plots, or save them
+
+
 
 def cmap_index(network, subgraph, attr='asn'):
     #TODO: see if more pythonic way to do this
@@ -52,6 +54,11 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
         show=False, save=True):
     if graph.number_of_nodes() == 0:
         LOG.debug("{0} graph is empty, not plotting".format(title))
+
+    if show:
+        # Larger plots for inline plotting
+        from pylab import rcParams
+        rcParams['figure.figsize'] = 20, 10
 
     if not pos:
         pos=nx.spring_layout(graph)

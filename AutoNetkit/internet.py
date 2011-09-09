@@ -194,7 +194,6 @@ class Internet:
         ank.allocate_subnets(self.network, IPNetwork("10.0.0.0/8")) 
         ank.alloc_interfaces(self.network)
 
-
         ank.alloc_tap_hosts(self.network, self.tapsn)
         
         # now configure

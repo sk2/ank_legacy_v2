@@ -25,6 +25,7 @@
     <data key="d10"/>
     <node id="n0">
       <data key="d4"><![CDATA[1]]></data>
+      <data key="d5"><![CDATA[red]]></data>
       <data key="d9">
         <y:ShapeNode>
           <y:Geometry height="30.0" width="30.0" x="361.0" y="200.0"/>
@@ -37,6 +38,7 @@
     </node>
     <node id="n1">
       <data key="d4"><![CDATA[1]]></data>
+      <data key="d5"><![CDATA[red]]></data>
       <data key="d9">
         <y:ShapeNode>
           <y:Geometry height="30.0" width="30.0" x="255.0" y="254.0"/>
@@ -73,6 +75,7 @@
     </node>
     <node id="n4">
       <data key="d4"><![CDATA[1]]></data>
+      <data key="d5"><![CDATA[red]]></data>
       <data key="d9">
         <y:ShapeNode>
           <y:Geometry height="30.0" width="30.0" x="422.0" y="301.0"/>
@@ -97,6 +100,7 @@
     </node>
     <node id="n6">
       <data key="d4"><![CDATA[1]]></data>
+      <data key="d5"><![CDATA[red]]></data>
       <data key="d6">5</data>
       <data key="d9">
         <y:ShapeNode>
@@ -110,6 +114,7 @@
     </node>
     <node id="n7">
       <data key="d4"><![CDATA[1]]></data>
+      <data key="d5"><![CDATA[red]]></data>
       <data key="d9">
         <y:ShapeNode>
           <y:Geometry height="30.0" width="30.0" x="474.0" y="139.0"/>
@@ -122,6 +127,7 @@
     </node>
     <node id="n8">
       <data key="d4"><![CDATA[3]]></data>
+      <data key="d5"><![CDATA[red]]></data>
       <data key="d9">
         <y:ShapeNode>
           <y:Geometry height="30.0" width="30.0" x="644.0" y="138.5"/>
@@ -146,6 +152,7 @@
     </node>
     <node id="n10">
       <data key="d4"><![CDATA[3]]></data>
+      <data key="d5"><![CDATA[red]]></data>
       <data key="d9">
         <y:ShapeNode>
           <y:Geometry height="30.0" width="30.0" x="619.0" y="217.5"/>
