@@ -114,12 +114,10 @@ class JunosCompiler:
                         ank.fqdn(self.network, dst))
 # Bridge information for topology config
                 if subnet in collision_to_bridge_mapping:
-                    print "is sn match for %s" % subnet
 # Use bridge allocated for this subnet
                     bridge_id = collision_to_bridge_mapping[subnet]
                 else:
 # Allocate a bridge for this subnet
-                    print "no sn match for %s" % subnet
                     bridge_id = bridge_id_generator.next()
                     collision_to_bridge_mapping[subnet] = bridge_id
 
