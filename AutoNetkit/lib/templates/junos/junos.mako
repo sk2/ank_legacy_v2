@@ -35,9 +35,9 @@ system {
 interfaces {
     % for i in interfaces:
     ${i['id']} {
-        unit 0 {
+        unit 0 {          
+	        description "${i['description']}";
             family inet {      
-                description "${i['description']}";
                 address ${i['ip']}/${i['prefixlen']};
             }
         }
@@ -84,45 +84,6 @@ protocols {
 				   % endif
 				% endfor
 			}
-			
 		% endfor
 	}           
 }
-
-
-
-  
-<%doc>
-
-
-policy-options {
-    policy-statement adverts {
-        term 1 {
-            from protocol [ aggregate direct ];
-            then accept;
-        }
-    }
-}
-
-
-protocols {
-    bgp {
-        export adverts;
-        % for n in ebgp_neighbor_list:
-        group ${n['description']} {
-            type external;
-            peer-as ${n['remote_as']};
-            neighbor ${n['remote_ip']};
-        }
-        %endfor
-        % for n in ibgp_neighbor_list:
-        % if n['remote_ip']!=router_id:
-        group ${n['description']} {
-            type internal;
-            neighbor ${n['remote_ip']};
-        }
-        %endif
-        %endfor
-    }
-                                 
-</%doc>

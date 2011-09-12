@@ -57,9 +57,13 @@ def router_dir(network, rtr):
     foldername = ank.rtr_folder_name(network, rtr)
     return os.path.join(lab_dir(), foldername)
 
-def router_conf(network, node):
-    """ Returns router config file"""
-    r_file = "%s.conf"%ank.rtr_folder_name(network, node)
+def router_conf_file(network, node):
+    """Returns filename for config file for router"""
+    return "%s.conf"%ank.rtr_folder_name(network, node)
+
+def router_conf_path(network, node):
+    """ Returns full path to router config file"""
+    r_file = router_conf_file(network, node)
     return os.path.join(lab_dir(), r_file)
 
 def interface_id(numeric_id):
@@ -85,7 +89,6 @@ class JunosCompiler:
                     shutil.rmtree(item)
                 else:
                     os.unlink(item)
-
         return
 
     def configure_junosphere(self):
@@ -100,7 +103,7 @@ class JunosCompiler:
             hostname = ank.fqdn(self.network, node)
             topology_data[hostname] = {
                     'image': 'VJX1000_LATEST',
-                    'config': router_conf(self.network, node),
+                    'config': router_conf_file(self.network, node),
                     'interfaces': [],
                     }
             for src, dst, data in self.network.graph.edges(node, data=True):
@@ -111,17 +114,20 @@ class JunosCompiler:
                         ank.fqdn(self.network, dst))
 # Bridge information for topology config
                 if subnet in collision_to_bridge_mapping:
+                    print "is sn match for %s" % subnet
 # Use bridge allocated for this subnet
                     bridge_id = collision_to_bridge_mapping[subnet]
                 else:
 # Allocate a bridge for this subnet
+                    print "no sn match for %s" % subnet
                     bridge_id = bridge_id_generator.next()
                     collision_to_bridge_mapping[subnet] = bridge_id
-                    topology_data[hostname]['interfaces'].append({
-                            'description': description,
-                            'id': int_id,
-                            'bridge_id': bridge_id,
-                            })
+
+                topology_data[hostname]['interfaces'].append({
+                    'description': description,
+                    'id': int_id,
+                    'bridge_id': bridge_id,
+                    })
 
         if len(collision_to_bridge_mapping) > 123:
             LOG.warn("AutoNetkit does not currently support more"
@@ -208,7 +214,7 @@ class JunosCompiler:
                         'type': 'external', 
                         'neighbors': external_peers}
 
-            juniper_filename = router_conf(self.network, node)
+            juniper_filename = router_conf_path(self.network, node)
             with open( juniper_filename, 'w') as f_jun:
                 f_jun.write( junos_template.render(
                     hostname = hostname,

@@ -5,7 +5,7 @@ config "config" {
 display "NULL";                            
 
 
-% for hostname, host_data in topology_data.items():   
+% for hostname, host_data in sorted(topology_data.items()):   
 vm "${hostname}" {
   // description - hostname of set on VM
   hostname "${hostname}";
@@ -15,7 +15,7 @@ vm "${hostname}" {
   interface "em0" { EXTERNAL;};                           
    % for i in host_data['interfaces']:
   //description ${i['description']}  
-  interface "${i['id']}" { bridge ${i['bridge_id']}} 
+  interface "${i['id']}" { bridge "${i['bridge_id']}";} 
    % endfor
   // description - configuration file to load on the router
   install "ENV(HOME)/active/configset/${host_data['config']}" "/root/junos.conf";
