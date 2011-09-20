@@ -130,7 +130,6 @@ class NetkitCompiler:
             dns_root = ank.root_dns(self.network)
 
         for node in self.network.get_nodes_by_property('platform', 'NETKIT'):
-                rtr = self.network.get_node_property(node, 'label')
                 # Make folders - note order counts:
                 # need to make router dir before zebra, etc dirs
                 for test_dir in [router_dir(self.network, node),
@@ -169,6 +168,7 @@ class NetkitCompiler:
 
         ibgp_routers = ank.ibgp_routers(self.network)
         ebgp_routers = ank.ebgp_routers(self.network)
+        igp_graph = ank.igp_graph(self.network)
 
         if "DNS" in self.services:
             dns_list = ank.dns_list(self.network)
@@ -196,8 +196,6 @@ class NetkitCompiler:
         for node in self.network.q(platform="NETKIT"):
             #TODO: see if rtr label is still needed, if so replace with
             # appropriate naming module function
-            rtr = self.network[node].get('label')
-            #rtr = self.network.
             rtr_folder_name = ank.rtr_folder_name(self.network, node)
 
             lab_conf[rtr_folder_name] = []
@@ -231,7 +229,8 @@ class NetkitCompiler:
 # Always start Zebra
             zebra_daemon_list.append("zebra")
 
-            zebra_daemon_list.append("ospfd")
+            if igp_graph.degree(node) > 0:
+                zebra_daemon_list.append("ospfd") # Only start IGP process if IGP links
             if (node in ibgp_routers) or (node in ebgp_routers):
                 zebra_daemon_list.append("bgpd")
 
@@ -265,7 +264,6 @@ class NetkitCompiler:
                 int_id = interface_id(data['id'])
                 subnet = data['sn']
                 
-                ip_addr = self.network.edge(src, dst).get('ip')
                 subnet = self.network.edge(src, dst).get('sn')
 
                 # replace the / from subnet label
@@ -312,7 +310,6 @@ class NetkitCompiler:
         """Generates IGP specific configuration files (eg ospfd)"""
         LOG.info("Configuring IGP")
         template = lookup.get_template("quagga/ospf.mako")
-        ibgp_routers = ank.ibgp_routers(self.network)
         self.network.set_default_edge_property('weight', 1)
         netkit_routers = list(self.network.q(platform="NETKIT"))
 
