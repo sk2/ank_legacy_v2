@@ -3,15 +3,6 @@ system {
     root-authentication {
         encrypted-password "$1$NzaHcpA7$5McU2mGx8OG.hWkTbyDtA1"; ## SECRET-DATA
     }
-    login {
-        user vjunos {
-            uid 2000;
-            class super-user;
-            authentication {
-                encrypted-password "$1$0wNMUqBN$89uUNEFiTaFtxobIOP8R10"; ## SECRET-DATA
-            }
-        }
-    }
     services {
         ssh {
             root-login allow;
@@ -70,7 +61,8 @@ protocols {
 			%endfor
 	    }
 	}            
-	bgp {
+	bgp {                  
+		export adverts;
 		% for groupname, group_data in bgp_groups.items():   
 			group ${groupname} {
 				type ${group_data['type']};      
@@ -79,11 +71,21 @@ protocols {
 				   neighbor  ${neighbor['id']} {
 						peer-as ${neighbor['peer_as']}
 				   }
-				   % else:
+				   % else:          
+				   local-address ${router_id};
 				   neighbor  ${neighbor['id']};
 				   % endif
 				% endfor
 			}
 		% endfor
 	}           
+}                  
+
+policy-options {
+    policy-statement adverts {
+        term 1 {
+            from protocol [ aggregate direct ];
+            then accept;
+        }
+    }
 }
