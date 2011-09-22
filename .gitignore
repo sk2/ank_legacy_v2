@@ -10,3 +10,4 @@ examples/*
 .ropeproject/*
 ank_lab/*
 AutoNetkit/ank_lab/*
+AutoNetkit.egg-info/*
