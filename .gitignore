@@ -7,8 +7,10 @@
 *.swp
 dist/*
 examples/*
-.ropeproject/*
+*/.ropeproject/*
 ank_lab/*
 AutoNetkit/ank_lab/*
 AutoNetkit.egg-info/*
 tags
+*.gz
+AutoNetkit-*/
