@@ -180,11 +180,13 @@ class JunosCompiler:
 
 #OSPF
             ospf_interfaces = []
-            ospf_interfaces.append({ 'id': 'lo0', 'passive': True})
-            for src, dst, data in igp_graph.edges(node, data=True):
-                ospf_interfaces.append({
-                    'id':          'em%s.0' % data['id'],
-                    })
+            if igp_graph.degree(node) > 0:
+                # Only start IGP process if IGP links
+                ospf_interfaces.append({ 'id': 'lo0', 'passive': True})
+                for src, dst, data in igp_graph.edges(node, data=True):
+                    ospf_interfaces.append({
+                        'id':          'em%s.0' % data['id'],
+                        })
 
 # BGP
             adv_subnet = self.network.ip_as_allocs[asn]
@@ -199,7 +201,8 @@ class JunosCompiler:
                     internal_peers.append({'id': self.network.lo_ip(peer).ip})
                 bgp_groups['internal_peers'] = {
                         'type': 'internal',
-                        'neighbors': internal_peers}
+                        'neighbors': internal_peers
+                        }
 
             if node in ebgp_graph:
                 external_peers = []
