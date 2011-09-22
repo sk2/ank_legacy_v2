@@ -48,6 +48,7 @@ class Network(object):
         # IP config information
         #TODO: make this a general attributes dictionary
         self.tap_host = None
+        self.tap_sn = None
         self.ip_as_allocs = None
 
         self.as_names = {}

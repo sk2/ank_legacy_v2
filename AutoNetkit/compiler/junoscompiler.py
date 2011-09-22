@@ -23,6 +23,7 @@ settings = config.settings
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 import tarfile
+import time
 
 # Check can write to template cache directory
 #TODO: make function to provide cache directory
@@ -68,7 +69,7 @@ def router_conf_path(network, node):
 def interface_id(numeric_id):
     """Returns Junos format interface ID for an AutoNetkit interface ID"""
 # Junosphere uses em0 for external link
-    numeric_id +=1
+    numeric_id += 1
     return 'em%s' % numeric_id
 
 class JunosCompiler:
@@ -149,6 +150,9 @@ class JunosCompiler:
         ibgp_graph = ank.get_ibgp_graph(self.network)
         ebgp_graph = ank.get_ebgp_graph(self.network)
 
+        tap_subnet = self.network.tap_sn
+
+
         #TODO: correct this router type selector
         for node in self.network.q(platform="NETKIT"):
             hostname = ank.fqdn(self.network, node)
@@ -163,6 +167,15 @@ class JunosCompiler:
                 'netmask':      str(lo_ip.netmask),
                 'prefixlen':    str(lo_ip.prefixlen),
                 'description': 'Loopback',
+            })
+
+            # Add em0.0 for Qemu
+            interfaces.append({
+                'id':          'em0.0',
+                'ip':           str(self.network[node].get('tap_ip')),
+                'netmask':      str(tap_subnet.netmask),
+                'prefixlen':    str(tap_subnet.prefixlen),
+                'description': 'Admin for Qemu',
             })
 
             for src, dst, data in self.network.graph.edges(node, data=True):
@@ -187,8 +200,9 @@ class JunosCompiler:
                 # Only start IGP process if IGP links
                 ospf_interfaces.append({ 'id': 'lo0', 'passive': True})
                 for src, dst, data in igp_graph.edges(node, data=True):
+                    int_id = interface_id(data['id'])
                     ospf_interfaces.append({
-                        'id':          'em%s.0' % data['id'],
+                        'id':          int_id,
                         })
 
 # BGP
@@ -236,7 +250,8 @@ class JunosCompiler:
         self.configure_junosphere()
         self.configure_junos()
 # create .tgz
-        tar = tarfile.open(os.path.join(config.ank_main_dir, "junos.tgz"), "w:gz")
+        tar_filename = "junos_%s" % time.strftime("%Y%m%d_%H%M%S", time.localtime())
+        tar = tarfile.open(os.path.join(config.ank_main_dir, "%s.tar.gz"%tar_filename), "w:gz")
 # arcname to flatten file structure
-        tar.add(lab_dir(), arcname='junos_lab')
+        tar.add(lab_dir(), arcname="")
         tar.close()

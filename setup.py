@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup (
      name = "AutoNetkit",
-     version = "0.5.45",
+     version = "0.5.46",
      description = 'Automated configuration generator for Netkit',
 
      long_description = 'Automated configuration generator for Netkit',

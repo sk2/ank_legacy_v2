@@ -136,6 +136,7 @@ def get_tap_host(network):
 
 def alloc_tap_hosts(network, address_block=IPNetwork("172.16.0.0/16")):
     """Allocates TAP IPs for connecting using Netkit"""
+    network.tap_sn = address_block
 
     as_graph = ank.get_as_graphs(network)
     # Try allocating /24 to each subnet as cleaner
