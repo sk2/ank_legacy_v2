@@ -18,5 +18,6 @@ route del default
 % for d in daemons:
 /etc/init.d/${d} start
 %endfor              
+%if set_hostname:
 /etc/init.d/hostname.sh 
-
+%endif              

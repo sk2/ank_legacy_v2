@@ -65,6 +65,15 @@ def netkit_dir(network, rtr):
     #return os.path.join(lab_dir(), nk_dir)
     return lab_dir()
 
+def shared_dir():
+# Shared dir for the lab
+# Refer http://wiki.netkit.org/man/man1/lstart.1.html#lbAE
+    return os.path.join(lab_dir(), "shared")
+
+
+def shared_etc_dir():
+    return os.path.join(shared_dir(), "etc")
+
 def router_dir(network, rtr):
     """Returns path for router rtr"""
     foldername = ank.rtr_folder_name(network, rtr)
@@ -116,15 +125,11 @@ class NetkitCompiler:
 
         # Create folder for netkit hosts
         #TODO: reinstate for multi-machine ANK
-        """
-        for id, hostname in ank.netkit_hosts().items():
-            nk_host_dir =  os.path.join(lab_dir(), hostname)
-            if not os.path.isdir(nk_host_dir):
-                os.mkdir(nk_host_dir)
-                """
-
-
-
+        if not os.path.isdir(shared_dir()):
+            os.mkdir(shared_dir())
+        if not os.path.isdir(shared_etc_dir()):
+            os.mkdir(shared_etc_dir())
+        
         if "DNS" in self.services:
             dns_list = ank.dns_list(self.network)
             dns_root = ank.root_dns(self.network)
@@ -159,6 +164,25 @@ class NetkitCompiler:
         zebra_daemons_template = lookup.get_template(
             "quagga/zebra_daemons.mako")
         zebra_template = lookup.get_template("quagga/zebra.mako")
+
+        # Shared (common) configuration
+        startup_daemon_list = []
+        #Setup ssh
+        shutil.copy(resource_filename("AutoNetkit","lib/shadow"), shared_etc_dir())
+        startup_daemon_list.append("ssh")
+
+        f_startup = open( os.path.join(lab_dir(), "shared.startup"), 'w')
+        f_startup.write(startup_template.render(
+            interfaces=[],
+            add_localhost=True,
+            #don't send out the tap interface
+            del_default_route=True,
+            daemons=startup_daemon_list,
+            set_hostname=True,
+            ))
+        f_startup.close()
+
+# Files for indvidual node configuration
 
         #TODO: this needs to be created for each netkit host machine
         f_lab = open(os.path.join(lab_dir(), "lab.conf"), 'w')
@@ -201,11 +225,6 @@ class NetkitCompiler:
             lab_conf[rtr_folder_name] = []
             startup_daemon_list = ["zebra"]
             startup_int_list = []
-
-            #Setup ssh
-            shutil.copy(resource_filename("AutoNetkit","lib/shadow"),
-                        etc_dir(self.network, node))
-            startup_daemon_list.append("ssh")
 
             # convert tap list from ips into strings
             # tap_int_id cannot conflict with already allocated interfaces
@@ -268,8 +287,9 @@ class NetkitCompiler:
 
                 # replace the / from subnet label
                 collision_domain = "%s.%s" % (subnet.ip, subnet.prefixlen)
-
-                lab_conf[rtr_folder_name].append((str(int_id), collision_domain))
+    
+                # lab.conf has id in form host[0]=... for eth0 of host
+                lab_conf[rtr_folder_name].append((str(data['id']), collision_domain))
                 startup_int_list.append({
                     'int':          int_id,
                     'ip':           str(data['ip']),
