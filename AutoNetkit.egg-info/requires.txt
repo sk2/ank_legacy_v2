@@ -1,5 +1,0 @@
-netaddr
-mako
-networkx>=1.5
-pexpect
-beaker
