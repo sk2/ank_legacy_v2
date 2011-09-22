@@ -52,10 +52,9 @@ import os
 def lab_dir():
     return config.junos_dir
 
-def router_dir(network, rtr):
-    """Returns path for router rtr"""
-    foldername = ank.rtr_folder_name(network, rtr)
-    return os.path.join(lab_dir(), foldername)
+
+def router_conf_dir():
+    return os.path.join(lab_dir(), "configset")
 
 def router_conf_file(network, node):
     """Returns filename for config file for router"""
@@ -64,7 +63,7 @@ def router_conf_file(network, node):
 def router_conf_path(network, node):
     """ Returns full path to router config file"""
     r_file = router_conf_file(network, node)
-    return os.path.join(lab_dir(), r_file)
+    return os.path.join(router_conf_dir(), r_file)
 
 def interface_id(numeric_id):
     """Returns Junos format interface ID for an AutoNetkit interface ID"""
@@ -89,6 +88,10 @@ class JunosCompiler:
                     shutil.rmtree(item)
                 else:
                     os.unlink(item)
+
+        # Directory to put config files into
+        if not os.path.isdir(router_conf_dir()):
+            os.mkdir(router_conf_dir())
         return
 
     def configure_junosphere(self):
