@@ -75,10 +75,10 @@ def int_id_em(numeric_id):
 
 def int_id_ge(numeric_id):
     """Returns Junos format interface ID for an AutoNetkit interface ID
-    eg ge/0/0/1"""
+    eg ge-0/0/1"""
 # Junosphere uses ge/0/0/0 for external link
     numeric_id += 1
-    return 'ge/0/0/%s' % numeric_id
+    return 'ge-0/0/%s' % numeric_id
 
 class JunosCompiler:
     """Compiler main"""
