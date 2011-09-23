@@ -12,10 +12,10 @@ vm "${hostname}" {
   // description Operating system image to load
   ${host_data['image']}
   // description - ge 0/0/0 management interface
-  interface "em0" { EXTERNAL;};                           
+  interface "em0" { EXTERNAL;};                         
    % for i in host_data['interfaces']:
   //description ${i['description']}  
-  interface "${i['id']}" { bridge "${i['bridge_id']}";};
+  interface "${i['id']}" { bridge "${i['bridge_id']}";};     /* ${i['id_ge']} */
    % endfor
   // description - configuration file to load on the router
   install "ENV(HOME)/active/configset/${host_data['config']}" "/root/junos.conf";

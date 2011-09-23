@@ -66,11 +66,19 @@ def router_conf_path(network, node):
     r_file = router_conf_file(network, node)
     return os.path.join(router_conf_dir(), r_file)
 
-def interface_id(numeric_id):
-    """Returns Junos format interface ID for an AutoNetkit interface ID"""
+def int_id_em(numeric_id):
+    """Returns Junos format interface ID for an AutoNetkit interface ID
+    eg em1"""
 # Junosphere uses em0 for external link
     numeric_id += 1
     return 'em%s' % numeric_id
+
+def int_id_ge(numeric_id):
+    """Returns Junos format interface ID for an AutoNetkit interface ID
+    eg ge/0/0/1"""
+# Junosphere uses ge/0/0/0 for external link
+    numeric_id += 1
+    return 'ge/0/0/%s' % numeric_id
 
 class JunosCompiler:
     """Compiler main"""
@@ -112,7 +120,6 @@ class JunosCompiler:
                     }
             for src, dst, data in self.network.graph.edges(node, data=True):
                 subnet = data['sn']
-                int_id = interface_id(data['id'])
                 description = 'Interface %s -> %s' % (
                         ank.fqdn(self.network, src), 
                         ank.fqdn(self.network, dst))
@@ -127,7 +134,8 @@ class JunosCompiler:
 
                 topology_data[hostname]['interfaces'].append({
                     'description': description,
-                    'id': int_id,
+                    'id': int_id_em(data['id']),
+                    'id_ge':  int_id_ge(data['id']),
                     'bridge_id': bridge_id,
                     })
 
@@ -180,7 +188,7 @@ class JunosCompiler:
 
             for src, dst, data in self.network.graph.edges(node, data=True):
                 subnet = data['sn']
-                int_id = interface_id(data['id'])
+                int_id = int_id_ge(data['id'])
                 description = 'Interface %s -> %s' % (
                         ank.fqdn(self.network, src), 
                         ank.fqdn(self.network, dst))
@@ -200,7 +208,7 @@ class JunosCompiler:
                 # Only start IGP process if IGP links
                 ospf_interfaces.append({ 'id': 'lo0', 'passive': True})
                 for src, dst, data in igp_graph.edges(node, data=True):
-                    int_id = interface_id(data['id'])
+                    int_id = int_id_ge(data['id'])
                     ospf_interfaces.append({
                         'id':          int_id,
                         })
@@ -250,7 +258,7 @@ class JunosCompiler:
         self.configure_junosphere()
         self.configure_junos()
 # create .tgz
-        tar_filename = "junos_%s" % time.strftime("%Y%m%d_%H%M%S", time.localtime())
+        tar_filename = "junos_%s" % time.strftime("%Y%m%d_%H%M", time.localtime())
         tar = tarfile.open(os.path.join(config.ank_main_dir, "%s.tar.gz"%tar_filename), "w:gz")
 # arcname to flatten file structure
         tar.add(lab_dir(), arcname="")
