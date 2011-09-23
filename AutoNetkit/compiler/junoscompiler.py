@@ -171,10 +171,10 @@ class JunosCompiler:
 
             # Add em0.0 for Qemu
             interfaces.append({
-                'id':          'em0.0',
+                'id':          'em0',# modified from "em0.0"
                 'ip':           str(self.network[node].get('tap_ip')),
                 'netmask':      str(tap_subnet.netmask),
-                'prefixlen':    str(tap_subnet.prefixlen),
+                'prefixlen':    32,# modified into 32
                 'description': 'Admin for Qemu',
             })
 
