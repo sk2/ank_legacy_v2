@@ -2,9 +2,7 @@
 Generate Netkit configuration files for a network
 """
 from mako.lookup import TemplateLookup
-
 from pkg_resources import resource_filename
-
 import os
 
 #import network as network
@@ -14,7 +12,6 @@ LOG = logging.getLogger("ANK")
 
 import shutil
 import glob
-import itertools
 
 import AutoNetkit as ank
 from AutoNetkit import config
@@ -23,8 +20,6 @@ from collections import defaultdict
 
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
-import tarfile
-import time
 
 # Check can write to template cache directory
 #TODO: make function to provide cache directory
@@ -134,7 +129,6 @@ class CbgpCompiler:
             ibgp_topology[asn] = {}
             as_ibgp_graph = ibgp_graph.subgraph(as_graph.nodes())
             ibgp_topology[asn]['routers'] = [loopback[n] for n in as_ibgp_graph]
-
 
 # eBGP configuration
         for node in ebgp_graph.nodes():
