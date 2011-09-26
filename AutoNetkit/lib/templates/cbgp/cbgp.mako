@@ -36,11 +36,18 @@ bgp domain ${asn} full-mesh
 
 %endfor        
 
+# eBGP static routes
+% for router, peers in sorted(ebgp_topology.items()):              
+% for peer_asn, peer in peers:       
+net node ${router} route add --oif=${peer} ${peer}/32 1
+% endfor
+% endfor
+
 # Setup eBGP sessions
 % for router, peers in sorted(ebgp_topology.items()):              
 bgp router ${router}
 % for peer_asn, peer in peers:
-	add peer ${peer_asn} ${peer}
+	add peer ${peer_asn} ${peer}      	
 	peer ${peer} next-hop-self
 	peer ${peer} up
 % endfor
@@ -52,7 +59,11 @@ bgp router ${router}
 	bgp router ${router} add network ${prefix}
 % endfor
 
-sim run                         
+sim run               
+
+bgp assert peerings-ok                  
+
+bgp assert reachability-ok
 
 net node 10.0.0.67 show rt *                     
 bgp router 10.0.0.67 debug dp 10.2.0.0/16
