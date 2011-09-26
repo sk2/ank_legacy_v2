@@ -328,7 +328,7 @@ class NetkitCompiler:
 
     def configure_igp(self):
         """Generates IGP specific configuration files (eg ospfd)"""
-        LOG.info("Configuring IGP")
+        LOG.debug("Configuring IGP")
         template = lookup.get_template("quagga/ospf.mako")
         self.network.set_default_edge_property('weight', 1)
         netkit_routers = list(self.network.q(platform="NETKIT"))
@@ -401,7 +401,7 @@ class NetkitCompiler:
 
         ip_as_allocs = ank.get_ip_as_allocs(self.network)
 
-        LOG.info("Configuring BGP")
+        LOG.debug("Configuring BGP")
         template = lookup.get_template("quagga/bgp.mako")
 
         route_maps = {}
@@ -720,3 +720,12 @@ class NetkitCompiler:
         #TODO: build in checks eg named-checkconf named.conf
         # and named-checkzone . db.root
         return
+
+    def configure(self):
+        """Configure Netkit"""
+        LOG.info("Configuring Netkit")
+        self.configure_netkit()
+        self.configure_igp()
+        self.configure_bgp()
+        self.configure_dns()
+

@@ -203,13 +203,7 @@ class Internet:
             if("DNS" in self.services): 
                 ank.allocate_dns_servers(self.network)
             nk_comp.initialise()     
-            nk_comp.configure_netkit()
-            nk_comp.configure_igp()     
-            nk_comp.configure_bgp()     
-            # Configure DNS also if required
-            if("DNS" in self.services): 
-                LOG.info("Configuring DNS")
-                nk_comp.configure_dns()
+            nk_comp.configure()
 
         if self.compile_targets['gns3']:
             gns3_comp = ank.Gns3Compiler(self.network, self.services)

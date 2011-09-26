@@ -79,6 +79,7 @@ class CbgpCompiler:
         return
 
     def configure(self):
+        LOG.info("Configuring C-BGP")
         self.initialise()
         template = lookup.get_template("cbgp/cbgp.mako")
         physical_graph = self.network.graph

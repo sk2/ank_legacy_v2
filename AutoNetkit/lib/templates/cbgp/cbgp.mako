@@ -62,8 +62,4 @@ bgp router ${router}
 sim run               
 
 bgp assert peerings-ok                  
-
 bgp assert reachability-ok
-
-net node 10.0.0.67 show rt *                     
-bgp router 10.0.0.67 debug dp 10.2.0.0/16
