@@ -94,6 +94,7 @@ class Gns3Compiler:
 
     def configure(self):  
         """Generates Netkit and Zebra/Quagga specific configuration files."""
+        LOG.info("Configuring GNS3")
 
         # Location of IOS binary
         image = ""
