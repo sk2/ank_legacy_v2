@@ -10,6 +10,7 @@ LOG = logging.getLogger("ANK")
                                  
 import os     
 import time
+import AutoNetkit.config as config
               
 # Used for EOF and TIMEOUT variables
 import pexpect
@@ -20,13 +21,15 @@ class NetkitDeploy():
     def __init__(self):
         self.server = None    
         self.lab_dir = None
+        self.network = None
     
-    def deploy(self, server, lab_dir, xterm=False): 
+    def deploy(self, server, lab_dir, network, xterm=False): 
         """ Deploys lab_dir to Netkit server""" 
         # stops lab, copies new lab over, starts lab 
        
         self.server = server
         self.lab_dir = lab_dir
+        self.network = network
         self.xterm = xterm
         
         shell = self.server.get_shell()   
@@ -113,12 +116,7 @@ class NetkitDeploy():
         LOG.info("Copying Lab over")    
                                         
         # Archive current lab
-        #TODO: use proper system function for this not cmd
-        tar_file = "netkit_lab.tar.gz"   
-        cmd = "tar -czf " + tar_file + " " + self.lab_dir      
-        os.system(cmd)       
-        LOG.debug( "Archived Lab")
-
+        tar_file = os.path.join(config.ank_main_dir, self.network.compiled_labs['netkit'])
         # Transfer to remote server  
         self.server.transfer_file(tar_file)
                
@@ -130,8 +128,13 @@ class NetkitDeploy():
         shell.prompt() 
         LOG.debug(  "Removed previous lab directory" )
 
+#TODO: check why get " ar: Removing leading `/' from member names" on Linux
+
         # Extract new lab
-        shell.sendline("tar -xzf  " + tar_file)
+        #_, tarfilename = os.path.split(tar_file)
+        #tar_filename, _ = os.path.splitext(filename)
+        tar_basename = os.path.basename(tar_file)
+        shell.sendline("tar -xzf  " + tar_basename)
         shell.prompt() 
         LOG.debug(  "Extracted new lab"  )
         

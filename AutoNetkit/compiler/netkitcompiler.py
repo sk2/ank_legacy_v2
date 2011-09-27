@@ -14,6 +14,8 @@ LOG = logging.getLogger("ANK")
 
 import shutil
 import glob
+import time
+import tarfile
 
 
 import AutoNetkit as ank
@@ -728,4 +730,13 @@ class NetkitCompiler:
         self.configure_igp()
         self.configure_bgp()
         self.configure_dns()
+
+        # create .tgz
+        tar_filename = "netkit_%s.tar.gz" % time.strftime("%Y%m%d_%H%M", time.localtime())
+        tar = tarfile.open(os.path.join(config.ank_main_dir, tar_filename), "w:gz")
+# Store using directory structure, eg ank_lab/netkit_lab/
+# Note: this differs to Junos which flattens file structure
+        tar.add(lab_dir())
+        self.network.compiled_labs['netkit'] = tar_filename
+        tar.close()
 

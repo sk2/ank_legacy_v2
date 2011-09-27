@@ -55,6 +55,7 @@ class Network(object):
         self._graphs = {}
         self._graphs['physical'] = nx.DiGraph()
         self._graphs['bgp_session'] = nx.DiGraph()
+        self.compiled_labs = {} # Record compiled lab filenames
 
     #### IO Functions ###
     def save(self, filename="net_out.gml"):    

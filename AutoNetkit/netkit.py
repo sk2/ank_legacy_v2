@@ -77,7 +77,6 @@ class Netkit:
             self.connect_to_server()
             return self.shell
     
-    
     def transfer_file(self, local_file):
         """Transfers file to remote host using SCP"""
         # Sanity check
@@ -90,7 +89,7 @@ class Netkit:
         child.logfile = self.logfile
 
         child.expect(pexpect.EOF) 
-        LOG.debug(  "SCP result {0}".format(child.before) )
+        LOG.debug(  "SCP result %s"% child.before.strip())
         return 
         
     def connect_to_server(self):  

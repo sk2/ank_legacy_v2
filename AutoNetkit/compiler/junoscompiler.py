@@ -258,8 +258,9 @@ class JunosCompiler:
         self.configure_junosphere()
         self.configure_junos()
 # create .tgz
-        tar_filename = "junos_%s" % time.strftime("%Y%m%d_%H%M", time.localtime())
-        tar = tarfile.open(os.path.join(config.ank_main_dir, "%s.tar.gz"%tar_filename), "w:gz")
+        tar_filename = "junos_%s.tar.gz" % time.strftime("%Y%m%d_%H%M", time.localtime())
+        tar = tarfile.open(os.path.join(config.ank_main_dir, tar_filename), "w:gz")
 # arcname to flatten file structure
         tar.add(lab_dir(), arcname="")
+        self.network.compiled_labs['junos'] = tar_filename
         tar.close()

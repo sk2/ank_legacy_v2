@@ -246,7 +246,7 @@ class Internet:
             nkd = ank.NetkitDeploy()
             # Need to tell deploy plugin where the netkit files are
             netkit_dir = config.lab_dir
-            nkd.deploy(netkit_server, netkit_dir, xterm)
+            nkd.deploy(netkit_server, netkit_dir, self.network, xterm)
         else:
             LOG.warn("Currently only Netkit deployment is supported")
 
