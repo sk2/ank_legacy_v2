@@ -14,7 +14,7 @@ __author__ = """\n""".join(['Simon Knight (simon.knight@adelaide.edu.au)',
 # linux.byexamples.com/archives/346/python-how-to-access-ssh-with-pexpect/
 
 import pexpect
-import ank_pxssh   
+import pxssh
 import os  
 
 import config
@@ -110,7 +110,7 @@ class Netkit:
                 # ssh_link already set
                 return ssh_link
 
-            shell = ank_pxssh.pxssh()    
+            shell = pxssh.pxssh()    
             shell.logfile = self.logfile
             LOG.info(  "Connecting to {0}".format(self.host) ) 
 
