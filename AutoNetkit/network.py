@@ -7,6 +7,7 @@ Main functions for AutoNetkit
 
 """
 import pprint   
+import AutoNetkit as ank
 from itertools import groupby
 from AutoNetkit import deprecated 
 # NetworkX Modules
@@ -195,8 +196,17 @@ class Network(object):
     ################################################## 
     #TODO: move these into a nodes shortcut module
     def asn(self, node):
-        """ syntactic sugar for accessing asn of a node """
-        return self.graph.node[node].get('asn')
+        """ syntactic sugar for accessing asn of a node
+        >>> network = ank.example_multi_as()
+        >>> network.asn('1a')
+        1
+        >>> network.asn('2a')
+        2
+        >>> network.asn('3a')
+        3
+        
+        """
+        return int(self.graph.node[node].get('asn'))
 
     def lo_ip(self, node):
         """ syntactic sugar for accessing loopback IP of a node """
