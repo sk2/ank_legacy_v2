@@ -53,46 +53,55 @@ if not os.path.isdir(plot_dir):
     os.mkdir(plot_dir)
 
 
-#TODO: make so don't add each time - make module called by main ANK program
+def add_logging(console_debug=False):
+    import logging
+    import logging.handlers
 
-#**************************************************************
-import logging
-import logging.handlers
-
-LEVELS = {'debug': logging.DEBUG,
-          'info': logging.INFO,
-          'warning': logging.WARNING,
-          'error': logging.ERROR,
-          'critical': logging.CRITICAL}
+    LEVELS = {'debug': logging.DEBUG,
+            'info': logging.INFO,
+            'warning': logging.WARNING,
+            'error': logging.ERROR,
+            'critical': logging.CRITICAL}
 
 
 #TODO: load logger settings from config file
-logger = logging.getLogger("ANK")
-logger.setLevel(logging.DEBUG)
+    logger = logging.getLogger("ANK")
+    logger.setLevel(logging.DEBUG)
 
 #TODO: check settings are being loaded from file correctly
 # and that handlers are being correctly set - as default level appearing
 
-formatter = logging.Formatter('%(levelname)-6s %(message)s')
-ch = logging.StreamHandler()
-level = LEVELS.get(settings.get('Logging', 'console'))
-ch.setLevel(level)
-ch.setLevel(logging.INFO)
+    ch = logging.StreamHandler()
+    if console_debug:
+        level = logging.DEBUG # User specified debug level
+    else:
+# Use debug from settings
+        level = LEVELS.get(settings.get('Logging', 'console'))
 
-ch.setFormatter(formatter)
+    if level == logging.DEBUG:
+# Include module name in debugging output
+        formatter = logging.Formatter('%(module)s\t %(levelname)-6s %(message)s')
+    else:
+        formatter = logging.Formatter('%(levelname)-6s %(message)s')
 
-logging.getLogger('').addHandler(ch)
 
-LOG_FILENAME =  os.path.join(log_dir, "autonetkit.log")
-LOG_SIZE = 2097152 # 2 MB
-fh = logging.handlers.RotatingFileHandler(
-              LOG_FILENAME, maxBytes=LOG_SIZE, backupCount=5)
+    ch.setLevel(level)
+    #ch.setLevel(logging.INFO)
 
-level = LEVELS.get(settings.get('Logging', 'file'))
+    ch.setFormatter(formatter)
 
-fh.setLevel(level)
-formatter = logging.Formatter("%(asctime)s %(levelname)s "
-                              "%(funcName)s %(message)s")
-fh.setFormatter(formatter)
+    logging.getLogger('').addHandler(ch)
 
-logging.getLogger('').addHandler(fh)
+    LOG_FILENAME =  os.path.join(log_dir, "autonetkit.log")
+    LOG_SIZE = 2097152 # 2 MB
+    fh = logging.handlers.RotatingFileHandler(
+                LOG_FILENAME, maxBytes=LOG_SIZE, backupCount=5)
+
+    level = LEVELS.get(settings.get('Logging', 'file'))
+
+    fh.setLevel(level)
+    formatter = logging.Formatter("%(asctime)s %(levelname)s "
+                                "%(funcName)s %(message)s")
+    fh.setFormatter(formatter)
+
+    logging.getLogger('').addHandler(fh)

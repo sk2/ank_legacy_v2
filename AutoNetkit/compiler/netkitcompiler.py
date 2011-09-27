@@ -581,8 +581,8 @@ class NetkitCompiler:
                                                 'host': ank.fqdn(self.network,
                                                                  rtr)})
                     else:
-                        LOG.debug("Skipping link {0}.{1} as {2} \
-                                  not in {3}".format(int_id, rtr,
+                        LOG.debug("Skipping link {0}.{1} as {2} "
+                                  " not in {3}".format(int_id, rtr,
                                                      ip_addr, subnet))
 
                 # and add loopbacks

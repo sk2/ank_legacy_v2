@@ -4,6 +4,7 @@ import os
 import optparse
 
 from AutoNetkit.internet import Internet
+from AutoNetkit import config
 import AutoNetkit as ank
 import logging
 import pkg_resources
@@ -36,6 +37,8 @@ def main():
                                         " but not ANK due to "
                                             "potentially large number of VMs"))
 
+    opt.add_option('--debug',  action="store_true", default=False, help="Debugging output")
+
 # Deployment environments
     opt.add_option('--netkit',  action="store_true", default=True, help="Compile Netkit")
     opt.add_option('--cbgp',  action="store_true", default=False, help="Compile cBGP")
@@ -49,11 +52,17 @@ def main():
                         " other end of the tunnel")) 
 
     options, arguments = opt.parse_args()
+    config.add_logging(console_debug = options.debug)
             
 #### Main code 
     if not options.file:
         LOG.warn("Please specify topology file")
         sys.exit(0)
+
+    
+        logging.setLevel(logging.DEBUG)
+
+
                 
 #TODO: if topology file doesn't exist, then try inside lib/examples/topologies/
     f_name = options.file  
