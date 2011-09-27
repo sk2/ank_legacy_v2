@@ -13,20 +13,17 @@ Simple example
    
 This example builds and deploys a simple single Autonomous System network.
 
-Download the topologies from:
-
- `Simple <http://www.eleceng.adelaide.edu.au/personal/sknight/AutoNetkit/topologies/Simple.gml>`_
- `MultiAS <http://www.eleceng.adelaide.edu.au/personal/sknight/AutoNetkit/topologies/MultiAs.gml>`_
+Download the topologies from `GitHub <https://github.com/sk2/autonetkit/tree/master/AutoNetkit/lib/examples/topologies>`_
                                     
 The simple topology to describe the network looks like:
 
 .. highlight:: yaml
 
-.. literalinclude:: ../../examples/topologies/Simple.gml 
+.. literalinclude:: ../../AutoNetkit/lib/examples/topologies/Simple.graphml 
 
 and for a multi AS:
 
-.. literalinclude:: ../../examples/topologies/MultiAs.gml 
+.. literalinclude:: ../../AutoNetkit/lib/examples/topologies/MultiAs.graphml 
                      
 .. highlight:: python
 
