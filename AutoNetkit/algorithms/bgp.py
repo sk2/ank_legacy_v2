@@ -10,20 +10,33 @@ __all__ = ['ebgp_routers', 'get_ebgp_graph',
            'initialise_bgp']
 
 import networkx as nx
+import AutoNetkit as ank
 import logging
 LOG = logging.getLogger("ANK")
 
 def ebgp_edges(network):
+    """
+
+    """
     return ( (s,t) for s,t in network.g_session.edges()
             if network.asn(s) != network.asn(t))
 
 def ibgp_edges(network):
+    """ iBGP edges in network 
+    >>> network = ank.example_single_as()
+    >>> initialise_ibgp(network)
+    >>> list(ibgp_edges(network))
+    [('n0', 'n1'), ('n0', 'n3'), ('n1', 'n0'), ('n1', 'n3'), ('n3', 'n0'), ('n3', 'n1')]
+    """
     return ( (s,t) for s,t in network.g_session.edges()
             if network.asn(s) == network.asn(t))
 
 def initialise_ebgp(network):
     """Adds edge for links that have router in different ASes
-
+    >>> network = ank.example_multi_as()
+    >>> initialise_ebgp(network)
+    >>> network.g_session.edges()
+    [('n0', 'n5'), ('n3', 'n4'), ('n5', 'n2')]
     """
     edges_to_add = ( (src, dst) for src, dst in network.graph.edges()
             if network.asn(src) != network.asn(dst))
@@ -45,7 +58,12 @@ def initialise_bgp(network):
     initialise_ibgp(network)
 
 def ebgp_routers(network):
-    """List of all routers with an eBGP link"""
+    """List of all routers with an eBGP link
+    >>> network = ank.example_multi_as()
+    >>> initialise_ebgp(network)
+    >>> ebgp_routers(network)
+    ['1a', '1c', '1b', '1d', '2b', '2c', '3a', '2a']
+    """
     return list(set(item for pair in ebgp_edges(network) for item in pair))
 
 def ibgp_routers(network):
