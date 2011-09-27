@@ -69,7 +69,7 @@ protocols {
 				% for neighbor in group_data['neighbors']: 
 				   % if 'peer_as' in neighbor:      
 				   neighbor  ${neighbor['id']} {
-						peer-as ${neighbor['peer_as']}
+						peer-as ${neighbor['peer_as']};
 				   }
 				   % else:          
 				   local-address ${router_id};
