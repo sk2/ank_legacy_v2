@@ -19,7 +19,8 @@ Internal modules. Documentation provided for reference.
    compiler/index  
    config          
    console_script
-   deploy/index
+   deploy/index      
+   examples/index
    network 
    plot
    readwrite/index

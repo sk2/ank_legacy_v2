@@ -19,49 +19,53 @@
     <data key="d8"/>
     <node id="n0">
       <data key="d4"><![CDATA[1]]></data>
+      <data key="d6"/>
       <data key="d7">
         <y:ShapeNode>
-          <y:Geometry height="30.0" width="30.0" x="183.0" y="262.0"/>
+          <y:Geometry height="30.0" width="30.0" x="19.0" y="0.0"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" borderDistance="0.0" fontFamily="Dialog" fontSize="13" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="19.310546875" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="11.17919921875" x="9.410400390625" y="5.3447265625">a</y:NodeLabel>
-          <y:Shape type="rectangle"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="18.1328125" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="18.21484375" x="5.892578125" y="5.93359375">1a</y:NodeLabel>
+          <y:Shape type="ellipse"/>
         </y:ShapeNode>
       </data>
     </node>
     <node id="n1">
       <data key="d4"><![CDATA[1]]></data>
+      <data key="d6"/>
       <data key="d7">
         <y:ShapeNode>
-          <y:Geometry height="30.0" width="30.0" x="116.0" y="347.0"/>
+          <y:Geometry height="30.0" width="30.0" x="-9.0" y="39.0"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" borderDistance="0.0" fontFamily="Dialog" fontSize="13" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="19.310546875" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="12.18212890625" x="8.908935546875" y="5.3447265625">b</y:NodeLabel>
-          <y:Shape type="rectangle"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="18.1328125" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="19.140625" x="5.4296875" y="5.93359375">1b</y:NodeLabel>
+          <y:Shape type="ellipse"/>
         </y:ShapeNode>
       </data>
     </node>
     <node id="n2">
       <data key="d4"><![CDATA[1]]></data>
+      <data key="d6"/>
       <data key="d7">
         <y:ShapeNode>
-          <y:Geometry height="30.0" width="30.0" x="318.0" y="325.0"/>
+          <y:Geometry height="30.0" width="30.0" x="58.0" y="35.0"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" borderDistance="0.0" fontFamily="Dialog" fontSize="13" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="19.310546875" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="10.65869140625" x="9.670654296875" y="5.3447265625">c</y:NodeLabel>
-          <y:Shape type="rectangle"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="18.1328125" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="19.140625" x="5.4296875" y="5.93359375">1d</y:NodeLabel>
+          <y:Shape type="ellipse"/>
         </y:ShapeNode>
       </data>
     </node>
     <node id="n3">
       <data key="d4"><![CDATA[1]]></data>
+      <data key="d6"/>
       <data key="d7">
         <y:ShapeNode>
-          <y:Geometry height="30.0" width="30.0" x="250.0" y="375.0"/>
+          <y:Geometry height="30.0" width="30.0" x="25.0" y="79.0"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" borderDistance="0.0" fontFamily="Dialog" fontSize="13" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="19.310546875" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="12.18212890625" x="8.908935546875" y="5.3447265625">d</y:NodeLabel>
-          <y:Shape type="rectangle"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="18.1328125" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="17.734375" x="6.1328125" y="5.93359375">1c</y:NodeLabel>
+          <y:Shape type="ellipse"/>
         </y:ShapeNode>
       </data>
     </node>
