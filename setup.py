@@ -12,7 +12,7 @@ setup (
      # simple to run 
      entry_points = {
          'console_scripts': [
-             'autonetkit = AutoNetkit.demo:main',
+             'autonetkit = AutoNetkit.console_script:main',
          ],
      },
 
