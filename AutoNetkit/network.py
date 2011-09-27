@@ -197,6 +197,7 @@ class Network(object):
     #TODO: move these into a nodes shortcut module
     def asn(self, node):
         """ syntactic sugar for accessing asn of a node
+
         >>> network = ank.example_multi_as()
         >>> network.asn('1a')
         1
