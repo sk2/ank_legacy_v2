@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup (
      name = "AutoNetkit",
-     version = "0.5.47",
+     version = "0.5.48",
      description = 'Automated configuration generator for Netkit',
 
      long_description = 'Automated configuration generator for Netkit',
@@ -28,8 +28,7 @@ setup (
                           'algorithms/*.py', 'plotting/*.py', 'deploy/*.py',
                           'compiler/*.py', 'internal/*.py',
                           'readwrite/*.py']},
-     download_url = ("http://www.eleceng.adelaide.edu.au/"
-                     "personal/sknight/AutoNetkit"),
+     download_url = ("http://pypi.python.org/pypi/AutoNetkit"),
 
      install_requires = ['netaddr', 'mako', 'networkx>=1.5', 
                          'pexpect', 'beaker',],
