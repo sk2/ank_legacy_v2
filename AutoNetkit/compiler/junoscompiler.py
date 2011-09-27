@@ -18,7 +18,6 @@ import itertools
 
 import AutoNetkit as ank
 from AutoNetkit import config
-settings = config.settings
 
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
@@ -48,18 +47,17 @@ lookup = TemplateLookup(directories=[ template_dir ],
         #cache_enabled=True,
         )
 
-import os
-
 def lab_dir():
+    """Lab directory for junos configs"""
     return config.junos_dir
 
-
 def router_conf_dir():
+    """Directory for individual Junos router configs"""
     return os.path.join(lab_dir(), "configset")
 
 def router_conf_file(network, node):
     """Returns filename for config file for router"""
-    return "%s.conf"%ank.rtr_folder_name(network, node)
+    return "%s.conf" % ank.rtr_folder_name(network, node)
 
 def router_conf_path(network, node):
     """ Returns full path to router config file"""
@@ -102,6 +100,8 @@ class JunosCompiler:
         if not os.path.isdir(router_conf_dir()):
             os.mkdir(router_conf_dir())
         return
+
+
 
     def configure_junosphere(self):
         vmm_template = lookup.get_template("junos/topology_vmm.mako")
@@ -149,7 +149,89 @@ class JunosCompiler:
                 topology_data = topology_data,
                 ))
 
+    def configure_interfaces(self, node):
+        """Interface configuration"""
+        lo_ip = self.network.lo_ip(node)
+        tap_subnet = self.network.tap_sn
+        interfaces = []
+
+        interfaces.append({
+            'id':          'lo0',
+            'ip':           str(lo_ip.ip),
+            'netmask':      str(lo_ip.netmask),
+            'prefixlen':    str(lo_ip.prefixlen),
+            'description': 'Loopback',
+        })
+
+        # Add em0.0 for Qemu
+        interfaces.append({
+            'id':          'em0',# modified from "em0.0"
+            'ip':           str(self.network[node].get('tap_ip')),
+            'netmask':      str(tap_subnet.netmask),
+            'prefixlen':    32,# modified into 32
+            'description': 'Admin for Qemu',
+        })
+
+        for src, dst, data in self.network.graph.edges(node, data=True):
+            subnet = data['sn']
+            int_id = int_id_ge(data['id'])
+            description = 'Interface %s -> %s' % (
+                    ank.fqdn(self.network, src), 
+                    ank.fqdn(self.network, dst))
+
+# Interface information for router config
+            interfaces.append({
+                'id':          int_id,
+                'ip':           str(data['ip']),
+                'prefixlen':    str(subnet.prefixlen),
+                'broadcast':    str(subnet.broadcast),
+                'description':  description,
+            })
+
+        return interfaces
+
+
+    def configure_ospf(self, node, igp_graph):
+        """OSPF configuration"""
+        ospf_interfaces = []
+        if igp_graph.degree(node) > 0:
+            # Only start IGP process if IGP links
+            ospf_interfaces.append({ 'id': 'lo0', 'passive': True})
+            for src, dst, data in igp_graph.edges(node, data=True):
+                int_id = int_id_ge(data['id'])
+                ospf_interfaces.append({
+                    'id':          int_id,
+                    })
+
+        return ospf_interfaces
+
+    def configure_bgp(self, node, physical_graph, ibgp_graph, ebgp_graph):
+        """ BGP configuration"""
+        bgp_groups = {}
+        if node in ibgp_graph:
+            internal_peers = []
+            for peer in ibgp_graph.neighbors(node):
+                internal_peers.append({'id': self.network.lo_ip(peer).ip})
+            bgp_groups['internal_peers'] = {
+                    'type': 'internal',
+                    'neighbors': internal_peers
+                    }
+
+        if node in ebgp_graph:
+            external_peers = []
+            for peer in ebgp_graph.neighbors(node):
+                peer_ip = physical_graph[peer][node]['ip']
+                external_peers.append({
+                    'id': peer_ip, 
+                    'peer_as': self.network.asn(peer)})
+            bgp_groups['external_peers'] = {
+                    'type': 'external', 
+                    'neighbors': external_peers}
+
+        return bgp_groups
+
     def configure_junos(self):
+        """ Configures Junos"""
         LOG.info("Configuring Junos")
         junos_template = lookup.get_template("junos/junos.mako")
 
@@ -158,92 +240,25 @@ class JunosCompiler:
         ibgp_graph = ank.get_ibgp_graph(self.network)
         ebgp_graph = ank.get_ebgp_graph(self.network)
 
-        tap_subnet = self.network.tap_sn
-
-
         #TODO: correct this router type selector
         for node in self.network.q(platform="NETKIT"):
-            hostname = ank.fqdn(self.network, node)
             asn = self.network.asn(node)
-            interfaces = []
             network_list = []
             lo_ip = self.network.lo_ip(node)
 
-            interfaces.append({
-                'id':          'lo0',
-                'ip':           str(lo_ip.ip),
-                'netmask':      str(lo_ip.netmask),
-                'prefixlen':    str(lo_ip.prefixlen),
-                'description': 'Loopback',
-            })
+            interfaces = self.configure_interfaces(node)
+            ospf_interfaces = self.configure_ospf(node, igp_graph)
+            bgp_groups = self.configure_bgp(node, physical_graph, ibgp_graph, ebgp_graph)
 
-            # Add em0.0 for Qemu
-            interfaces.append({
-                'id':          'em0',# modified from "em0.0"
-                'ip':           str(self.network[node].get('tap_ip')),
-                'netmask':      str(tap_subnet.netmask),
-                'prefixlen':    32,# modified into 32
-                'description': 'Admin for Qemu',
-            })
-
-            for src, dst, data in self.network.graph.edges(node, data=True):
-                subnet = data['sn']
-                int_id = int_id_ge(data['id'])
-                description = 'Interface %s -> %s' % (
-                        ank.fqdn(self.network, src), 
-                        ank.fqdn(self.network, dst))
-
-# Interface information for router config
-                interfaces.append({
-                    'id':          int_id,
-                    'ip':           str(data['ip']),
-                    'prefixlen':    str(subnet.prefixlen),
-                    'broadcast':    str(subnet.broadcast),
-                    'description':  description,
-                })
-
-#OSPF
-            ospf_interfaces = []
-            if igp_graph.degree(node) > 0:
-                # Only start IGP process if IGP links
-                ospf_interfaces.append({ 'id': 'lo0', 'passive': True})
-                for src, dst, data in igp_graph.edges(node, data=True):
-                    int_id = int_id_ge(data['id'])
-                    ospf_interfaces.append({
-                        'id':          int_id,
-                        })
-
-# BGP
+            # advertise AS subnet
             adv_subnet = self.network.ip_as_allocs[asn]
-            # advertise this subnet
             if not adv_subnet in network_list:
                 network_list.append(adv_subnet)
-            
-            bgp_groups = {}
-            if node in ibgp_graph:
-                internal_peers = []
-                for peer in ibgp_graph.neighbors(node):
-                    internal_peers.append({'id': self.network.lo_ip(peer).ip})
-                bgp_groups['internal_peers'] = {
-                        'type': 'internal',
-                        'neighbors': internal_peers
-                        }
-
-            if node in ebgp_graph:
-                external_peers = []
-                for peer in ebgp_graph.neighbors(node):
-                    peer_ip = physical_graph[peer][node]['ip']
-                    external_peers.append({
-                        'id': peer_ip, 
-                        'peer_as': self.network.asn(peer)})
-                bgp_groups['external_peers'] = {
-                        'type': 'external', 
-                        'neighbors': external_peers}
 
             juniper_filename = router_conf_path(self.network, node)
             with open( juniper_filename, 'w') as f_jun:
                 f_jun.write( junos_template.render(
-                    hostname = hostname,
+                    hostname = ank.fqdn(self.network, node),
                     username = 'autonetkit',
                     interfaces=interfaces,
                     ospf_interfaces=ospf_interfaces,
@@ -258,8 +273,10 @@ class JunosCompiler:
         self.configure_junosphere()
         self.configure_junos()
 # create .tgz
-        tar_filename = "junos_%s.tar.gz" % time.strftime("%Y%m%d_%H%M", time.localtime())
-        tar = tarfile.open(os.path.join(config.ank_main_dir, tar_filename), "w:gz")
+        tar_filename = "junos_%s.tar.gz" % time.strftime("%Y%m%d_%H%M",
+                time.localtime())
+        tar = tarfile.open(os.path.join(config.ank_main_dir,
+            tar_filename), "w:gz")
 # arcname to flatten file structure
         tar.add(lab_dir(), arcname="")
         self.network.compiled_labs['junos'] = tar_filename
