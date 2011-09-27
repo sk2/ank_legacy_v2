@@ -273,7 +273,7 @@ class NetkitCompiler:
             f_z.close()
 
             # Loopback interface
-            lo_ip = self.network[node].get('lo_ip')
+            lo_ip = self.network.lo_ip(node)
             startup_int_list.append({
                 'int':          'lo:1',
                 'ip':           str(lo_ip.ip),
