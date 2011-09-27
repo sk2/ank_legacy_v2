@@ -16,8 +16,8 @@ import logging
 LOG = logging.getLogger("ANK")
 
 def tidy_archives():
-    LOG.debug("Tidying archives")
     """ Moves old archive files into archive directory"""
+    LOG.debug("Tidying archives")
     base_dir = config.ank_main_dir
     files_to_archive = glob.glob(os.path.join(base_dir, "*.tar.gz"))
 

@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+
+
+"""Standalone console script"""
+
 import sys
 import os
 import optparse
@@ -8,7 +12,6 @@ from AutoNetkit import config
 import AutoNetkit as ank
 import logging
 import pkg_resources
-# Can only get ANK logger after have imported Internet from ANK
 LOG = logging.getLogger("ANK")
 
 def main():

@@ -89,10 +89,14 @@ def reverse_subnet(ip_addr, subnet):
 
 def rev_dns_identifier(subnet):
     """ Returns Identifier part of subnet for use in reverse dns itentification.
+
     Eg 10.1.2.3/8 -> 10
+
     172.16.1.2/8 -> 16.172
+
     192.168.0.1/24 -> 0.168.192
     """
+#TODO: look at netaddr functions for this
 
     split_sn = str(subnet).split(".")
     prefixlen = subnet.prefixlen

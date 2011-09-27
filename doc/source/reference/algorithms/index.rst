@@ -8,6 +8,9 @@ Algorithms to perform tasks on router graph.
 
    autonomous_system
    bgp
-   dns
-   ip
-   naming
+   dns  
+   inv_cap
+   ip   
+   housekeeping
+   naming 
+   optimise_igp

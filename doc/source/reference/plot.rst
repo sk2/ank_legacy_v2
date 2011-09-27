@@ -1,5 +1,5 @@
 Plot
 ****************
 
-.. automodule:: plotting.plot
+.. automodule:: AutoNetkit.plotting.plot
    :members:

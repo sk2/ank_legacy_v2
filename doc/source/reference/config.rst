@@ -1,5 +1,5 @@
 Config
 ****************
 
-.. automodule:: config
+.. automodule:: AutoNetkit.config
    :members:
