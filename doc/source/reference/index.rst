@@ -16,10 +16,9 @@ Internal modules. Documentation provided for reference.
    :maxdepth: 1  
   
    algorithms/index
-   compiler
+   compiler/index
    config
    deploy/index
-   netkit
    network 
    plot
    readwrite/index

@@ -16,10 +16,6 @@ import sys, os
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.append(os.path.abspath('/Users/sk2/ank2/AutoNetkit'))  
-sys.path.append(os.path.abspath('/Users/sk2/ank2/'))
-
-
 
 import AutoNetkit 
 
@@ -101,7 +97,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'default'
+html_theme = 'nature'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -141,7 +137,6 @@ html_static_path = ['_static']
 html_use_smartypants = True     
 
 html_theme_options = {
-    "codebgcolor": "#DAE1C9"
 }      
 
 html_title = "AutoNetkit"   
