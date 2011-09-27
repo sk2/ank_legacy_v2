@@ -196,20 +196,17 @@ class Network(object):
     #TODO: move these into a nodes shortcut module
     def asn(self, node):
         """ syntactic sugar for accessing asn of a node """
-        try:
-            return self.graph.node[node]['asn']
-        except KeyError:
-            return None
+        return self.graph.node[node].get('asn')
 
     def lo_ip(self, node):
         """ syntactic sugar for accessing loopback IP of a node """
-        return self.graph.node[node]['lo_ip']
+        return self.graph.node[node].get('lo_ip')
 
     def label(self, node):
         """ syntactic sugar for accessing label of a node """
         #return ('label' for n in nodes)
         #return (self.graph.node[n]['label'] for n in nodes)
-        return self.graph.node[node]['label']
+        return self.graph.node[node].get('label')
 
     # For dealing with BGP Sessions graphs
 #TODO: expand this to work with arbitrary graphs
