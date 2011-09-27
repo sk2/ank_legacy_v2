@@ -177,6 +177,9 @@ class Internet:
         if self.network.graph.number_of_nodes() == 0:
             LOG.warn("Cannot compile empty network")
             return
+
+# Clean up old archives
+        ank.tidy_archives()
       
         #TODO: 
         #config.get_plugin("Inv Cap").run(self.network)   
