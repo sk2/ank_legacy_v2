@@ -79,6 +79,7 @@ class CbgpCompiler:
         return
 
     def configure(self):
+        """Configure C-BGP"""
         LOG.info("Configuring C-BGP")
         self.initialise()
         template = lookup.get_template("cbgp/cbgp.mako")

@@ -93,7 +93,7 @@ class Gns3Compiler:
         return
 
     def configure(self):  
-        """Generates Netkit and Zebra/Quagga specific configuration files."""
+        """Generates GNS3 specific configuration files."""
         LOG.info("Configuring GNS3")
 
         # Location of IOS binary
@@ -179,7 +179,6 @@ class Gns3Compiler:
                 router_info['slot1'] = "NM-4E"
                 for src, dst, data in graph.edges(node, data=True):
                     # Src is node, dst is router connected to. Link data in data
-                    dest_label = self.network.get_node_property(dst, 'label')
                     local_id = data['id']
                     remote_id = graph.edge[dst][src]['id']
                     local_cisco_id = cisco_int_name(local_id)
@@ -214,7 +213,6 @@ class Gns3Compiler:
                 f_cisco = open( os.path.join(router_config_dir(), 
                                             "%s.cfg" % hostname), 'w') 
                 interface_list = []  
-                network_list = []    
                 asn = self.network.asn(node)
 
                 # Want to setup IP for both IGP and BGP links

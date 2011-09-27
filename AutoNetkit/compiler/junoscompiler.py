@@ -104,6 +104,7 @@ class JunosCompiler:
 
 
     def configure_junosphere(self):
+        """Configure Junosphere topology structure"""
         vmm_template = lookup.get_template("junos/topology_vmm.mako")
         topology_data = {}
         # Generator for private0, private1, etc
