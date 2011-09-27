@@ -16,8 +16,9 @@ Internal modules. Documentation provided for reference.
    :maxdepth: 1  
   
    algorithms/index
-   compiler/index
-   config
+   compiler/index  
+   config          
+   console_script
    deploy/index
    network 
    plot
