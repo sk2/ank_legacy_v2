@@ -18,7 +18,6 @@ import ank_pxssh
 import os  
 
 import config
-LOG = config.logger    
 
 from netaddr import IPNetwork
 
