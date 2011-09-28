@@ -15,6 +15,7 @@ import pkg_resources
 LOG = logging.getLogger("ANK")
 
 def main():
+
     version=pkg_resources.get_distribution("AutoNetkit").version
 # make it easy to turn on and off plotting and deploying from command line 
     opt = optparse.OptionParser(version="%prog " + str(version))
@@ -61,11 +62,7 @@ def main():
     if not options.file:
         LOG.warn("Please specify topology file")
         sys.exit(0)
-
-    
         logging.setLevel(logging.DEBUG)
-
-
                 
 #TODO: if topology file doesn't exist, then try inside lib/examples/topologies/
     f_name = options.file  
@@ -77,6 +74,7 @@ def main():
     else:    
         LOG.warn("Topology file %s not found" % f_name)
         sys.exit(0)
+
 
     inet.add_dns()
 
@@ -91,12 +89,10 @@ def main():
         inet.deploy(host = options.netkithost, username = options.username,
                     xterm = options.xterm)     
 
-
     if(options.verify):
         inet.verify(host = options.netkithost, username = options.username)    
 
     qp = ank.QueryPlotter(inet.network)
-
 
 if __name__ == "__main__":
     try:
