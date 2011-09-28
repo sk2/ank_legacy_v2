@@ -60,10 +60,10 @@ def allocate_subnets(network, address_block):
 
     #reverse so that allocate subnets in ascending order
     for my_as in sorted(asgraphs.values()):
+        asn = int(my_as.name)
         as_subnet =  subnet_list.next()
 
-        as_internal_nodes = [node for node,data in my_as.nodes(data=True)
-                             if 'asn' in data and data['asn'] == my_as.name]
+        as_internal_nodes = [n for n in my_as.nodes() if network.asn(n) == asn]
 
         host_count = my_as.number_of_nodes()
 

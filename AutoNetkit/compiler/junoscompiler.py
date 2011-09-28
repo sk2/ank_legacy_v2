@@ -108,6 +108,7 @@ class JunosCompiler:
         vmm_template = lookup.get_template("junos/topology_vmm.mako")
         topology_data = {}
         # Generator for private0, private1, etc
+        #TODO: replace count with xrange up to limit of interfaces, eg 64 in Junosphere
         bridge_id_generator = ('private%s'%i for i in itertools.count(0))
         collision_to_bridge_mapping = {}
 
@@ -140,7 +141,7 @@ class JunosCompiler:
                     'bridge_id': bridge_id,
                     })
 
-        if len(collision_to_bridge_mapping) > 123:
+        if len(collision_to_bridge_mapping) > 64:
             LOG.warn("AutoNetkit does not currently support more"
                     " than 123 network links for Junosphere")
 

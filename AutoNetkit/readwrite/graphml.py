@@ -52,6 +52,8 @@ def load_graphml(network, net_file, default_asn = 1):
                      (data['label'],
                       default_asn))
             input_graph.node[node]['asn'] = default_asn
+        else:
+            input_graph.node[node]['asn'] = int(data['asn']) # ensure is integer
 
     # Convert to single-edge and then back to directed, to ensure edge in both
     # directions

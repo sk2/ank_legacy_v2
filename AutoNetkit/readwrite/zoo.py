@@ -154,7 +154,7 @@ def load_zoo(network, net_file):
             #TODO: look for cleaner way to search dict items
             for curr_asn, curr_asn_name in network.as_names.items():
                 if curr_asn_name == network_name:
-                    asn = curr_asn
+                    asn = int(curr_asn)
                     if not asn:
                         LOG.warn("Unable to find ASN for network "
                                  "{0}".format(network_name))
@@ -253,7 +253,7 @@ def graph_to_ank(network, graph, asn=None, include_ext_nodes=True):
     #TODO: clean up this logic
     if asn and asn in asn_list:
         # User specified asn already in use
-        LOG.warn("ASN {0} already in use".format(asn))
+        LOG.warn("ASN %s already in use" % asn)
     elif asn:
         # Record as being used
         asn_list.append(int(asn))
