@@ -29,8 +29,8 @@ def example_single_as():
     """
     network = AutoNetkit.network.Network()
     network.graph.add_nodes_from( [
-            ('1a', {'asn': u'1'}), ('1b', {'asn': u'1'}),
-            ('1c', {'asn': u'2'}), ('1d', {'asn': u'1'})])
+            ('1a', {'asn': 1}), ('1b', {'asn': 1}),
+            ('1c', {'asn': 1}), ('1d', {'asn': 1})])
 
     network.graph.add_edges_from( [
             ('1a', '1b'), ('1b', '1c'),
@@ -52,10 +52,10 @@ def example_multi_as():
     """
     network = AutoNetkit.network.Network()
     network.graph.add_nodes_from( [
-            ('1a', {'asn': u'1'}), ('1c', {'asn': u'1'}),
-            ('1b', {'asn': u'2'}), ('2a', {'asn': u'2'}),
-            ('2b', {'asn': u'2'}), ('2c', {'asn': u'2'}),
-            ('2d', {'asn': u'2'}), ('3a', {'asn': u'3'})])
+            ('1a', {'asn': 1}), ('1c', {'asn': 1}),
+            ('1b', {'asn': 1}), ('2a', {'asn': 2}),
+            ('2b', {'asn': 2}), ('2c', {'asn': 2}),
+            ('2d', {'asn': 2}), ('3a', {'asn': 3})])
 
     network.graph.add_edges_from( [
             ('1a', '1b'), ('1a', '1c'),

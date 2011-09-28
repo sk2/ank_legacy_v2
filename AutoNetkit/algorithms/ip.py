@@ -112,15 +112,12 @@ def allocate_subnets(network, address_block):
                 network.graph[dst][src]['ip'] = subnet[2]
 
         # Allocate an loopback interface to each router
-        #TODO: remove ebgp name check (here and elsewhere) as handled diff now
-        #TODO: assign the loopback IPs before the ptp ips
-        if my_as.name is not "ebgp":
-            #TODO: check if next step is necessary
-            loopback_ips = loopback_subnet.subnet(32)
+        #TODO: check if next step is necessary
+        loopback_ips = loopback_subnet.subnet(32)
     
-            for rtr in as_internal_nodes:
-                lo_ip = loopback_ips.next()
-                network.graph.node[rtr]['lo_ip'] = lo_ip
+        for rtr in as_internal_nodes:
+            lo_ip = loopback_ips.next()
+            network.graph.node[rtr]['lo_ip'] = lo_ip
 
     network.ip_as_allocs = ip_as_allocs
 
