@@ -81,7 +81,6 @@ def get_ebgp_graph(network):
     ebgp_graph.remove_edges_from( ibgp_edges(network))
     return ebgp_graph
 
-
 def get_ibgp_graph(network):
     """Returns iBGP graph (full mesh currently) for an AS."""
 #TODO: see if just use subgraph here for efficiency

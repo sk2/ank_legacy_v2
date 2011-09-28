@@ -48,7 +48,7 @@ class Internet:
 
     Example usage:
 
-    >>> inet = Internet("simple.graphml") 
+    >>> inet = Internet("lib/examples/topologies/simple.graphml") 
 
     """
     
@@ -83,6 +83,7 @@ class Internet:
 
         Example usage:
 
+        >>> inet = ank.internet.Internet()
         >>> inet.add_dns() 
 
         """
@@ -101,10 +102,30 @@ class Internet:
 
         Example usage:
 
-        >>> inet.load("simple.graphml")
+        >>> inet = ank.internet.Internet()
+        >>> inet.load("lib/examples/topologies/simple.graphml")
+        >>> inet.network.graph.nodes()
+        ['n0', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7']
+
+        >>> inet = ank.internet.Internet()
+        >>> inet.load("singleas")
+        >>> inet.network.graph.nodes()
+        ['1a', '1c', '1b', '1d']
+
+        >>> inet = ank.internet.Internet()
+        >>> inet.load("multias")
+        >>> inet.network.graph.nodes()
+        ['2d', '1a', '1c', '1b', '2a', '2b', '2c', '3a']
 
         """
         LOG.info("Loading")
+        if filename == "multias":
+            self.network = ank.example_multi_as()
+            return
+        elif filename == "singleas":
+            self.network = ank.example_single_as()
+            return
+
         # Look at file extension
         ext = os.path.splitext(filename)[1]
         if ext == ".gml":
@@ -127,6 +148,7 @@ class Internet:
 
         Example usage:
 
+        >>> inet = ank.internet.Internet()
         >>> inet.plot()
 
         """              
@@ -148,6 +170,7 @@ class Internet:
 
         Example usage:
 
+        >>> inet = ank.internet.Internet()
         >>> inet.optimise()
 
         """
@@ -166,10 +189,16 @@ class Internet:
 
           Example usage:
 
+          >>> inet = ank.internet.Internet()
+          >>> inet.compile()
+
+          >>> inet = ank.internet.Internet()
           >>> inet.compile()
 
           """
 
+        #TODO: fix import order problem with doctests:
+        #No handlers could be found for logger "ANK"
         
         LOG.info("Compiling")
 
@@ -178,7 +207,7 @@ class Internet:
             LOG.warn("Cannot compile empty network")
             return
 
-# Clean up old archives
+        # Clean up old archives
         ank.tidy_archives()
       
         #TODO: 
@@ -236,7 +265,8 @@ class Internet:
 
         Example usage:
 
-        >>> inet.deploy(host = my_hostname, username = my_username)
+        >>> inet = ank.internet.Internet()
+        >>> inet.deploy(host = "netkithost", username = "autonetkit")
 
         """
         if platform == "netkit":
@@ -266,6 +296,7 @@ class Internet:
 
         Example usage:
 
+        >>> inet = ank.internet.Internet()
         >>> inet.deploy(host = my_hostname, username = my_username)
 
         """
