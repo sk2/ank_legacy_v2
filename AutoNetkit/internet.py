@@ -297,7 +297,7 @@ class Internet:
         Example usage:
 
         >>> inet = ank.internet.Internet()
-        >>> inet.deploy(host = my_hostname, username = my_username)
+        >>> inet.deploy(host = "netkithost", username = "autonetkit")
 
         """
         #TODO: implement this 
