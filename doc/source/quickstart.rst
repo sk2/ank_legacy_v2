@@ -15,18 +15,6 @@ This example builds and deploys a simple single Autonomous System network.
 
 Download the topologies from `GitHub <https://github.com/sk2/autonetkit/tree/master/AutoNetkit/lib/examples/topologies>`_
                                     
-The simple topology to describe the network looks like:
-
-.. highlight:: yaml
-
-.. literalinclude:: ../../AutoNetkit/lib/examples/topologies/Simple.graphml 
-
-and for a multi AS:
-
-.. literalinclude:: ../../AutoNetkit/lib/examples/topologies/MultiAs.graphml 
-                     
-.. highlight:: python
-
 For more information on the Multi AS topology, please see the 
 :doc:`topologies` page
 

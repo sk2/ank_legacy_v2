@@ -30,9 +30,6 @@ def allocate_subnets(network, address_block):
 
     Example usage:
 
-    >>> (ip_as_allocs) = allocate_subnets(graph, IPNetwork("10.0.0.0/8"))
-    0
-
     """
     # Initialise IP list to be graph edge format
     #ip_list =  nx.to_dict_of_dicts(graph,
