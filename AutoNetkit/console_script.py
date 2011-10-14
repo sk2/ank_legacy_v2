@@ -48,6 +48,7 @@ def main():
     opt.add_option('--cbgp',  action="store_true", default=False, help="Compile cBGP")
     opt.add_option('--gns3',  action="store_true", default=False, help="Compile GNS3")
     opt.add_option('--junos',  action="store_true", default=False, help="Compile JunOS")
+    opt.add_option('--isis',  action="store_true", default=False, help="Use IS-IS as IGP")
 
     opt.add_option('--tapsn', default="172.16.0.0/16", 
                 help= ("Tap subnet to use to connect to VMs. Will be split into "
@@ -68,8 +69,12 @@ def main():
     f_name = options.file  
 # check exists
     if os.path.isfile(f_name):
+        igp = "ospf"
+        if options.isis:
+            igp = "isis"
         inet = Internet(tapsn = options.tapsn, netkit=options.netkit,
-                cbgp=options.cbgp, gns3=options.gns3, junos=options.junos)
+                cbgp=options.cbgp, gns3=options.gns3, junos=options.junos,
+                igp=igp)
         inet.load(f_name)
     else:    
         LOG.warn("Topology file %s not found" % f_name)

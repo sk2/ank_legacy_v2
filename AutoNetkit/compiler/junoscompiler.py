@@ -81,9 +81,10 @@ def int_id_ge(numeric_id):
 class JunosCompiler:
     """Compiler main"""
 
-    def __init__(self, network, services):
+    def __init__(self, network, services, igp):
         self.network = network
         self.services = services
+        self.igp = igp
 
     def initialise(self):
         """Creates lab folder structure"""
@@ -100,8 +101,6 @@ class JunosCompiler:
         if not os.path.isdir(router_conf_dir()):
             os.mkdir(router_conf_dir())
         return
-
-
 
     def configure_junosphere(self):
         """Configure Junosphere topology structure"""
@@ -162,6 +161,7 @@ class JunosCompiler:
             'ip':           str(lo_ip.ip),
             'netmask':      str(lo_ip.netmask),
             'prefixlen':    str(lo_ip.prefixlen),
+            'net_ent_title': ank.ip_to_net_ent_title(lo_ip),
             'description': 'Loopback',
         })
 
@@ -193,19 +193,19 @@ class JunosCompiler:
         return interfaces
 
 
-    def configure_ospf(self, node, igp_graph):
-        """OSPF configuration"""
-        ospf_interfaces = []
+    def configure_igp(self, node, igp_graph):
+        """igp configuration"""
+        igp_interfaces = []
         if igp_graph.degree(node) > 0:
             # Only start IGP process if IGP links
-            ospf_interfaces.append({ 'id': 'lo0', 'passive': True})
+            igp_interfaces.append({ 'id': 'lo0', 'passive': True})
             for src, dst, data in igp_graph.edges(node, data=True):
                 int_id = int_id_ge(data['id'])
-                ospf_interfaces.append({
+                igp_interfaces.append({
                     'id':          int_id,
                     })
 
-        return ospf_interfaces
+        return igp_interfaces
 
     def configure_bgp(self, node, physical_graph, ibgp_graph, ebgp_graph):
         """ BGP configuration"""
@@ -249,7 +249,7 @@ class JunosCompiler:
             lo_ip = self.network.lo_ip(node)
 
             interfaces = self.configure_interfaces(node)
-            ospf_interfaces = self.configure_ospf(node, igp_graph)
+            igp_interfaces = self.configure_igp(node, igp_graph)
             bgp_groups = self.configure_bgp(node, physical_graph, ibgp_graph, ebgp_graph)
 
             # advertise AS subnet
@@ -263,7 +263,8 @@ class JunosCompiler:
                     hostname = ank.fqdn(self.network, node),
                     username = 'autonetkit',
                     interfaces=interfaces,
-                    ospf_interfaces=ospf_interfaces,
+                    igp_interfaces=igp_interfaces,
+                    igp_protocol = self.igp,
                     asn = asn,
                     lo_ip=lo_ip,
                     router_id = lo_ip.ip,

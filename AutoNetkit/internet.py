@@ -53,7 +53,8 @@ class Internet:
     """
     
     def __init__(self, filename=None, tapsn=IPNetwork("172.16.0.0/16"),
-            netkit=True, cbgp=False, gns3=False, junos=False): 
+            netkit=True, cbgp=False, gns3=False, junos=False,
+            igp='ospf'): 
         self.network = network.Network()
         if isinstance(tapsn, str):
             # Convert to IPNetwork
@@ -66,6 +67,7 @@ class Internet:
                 'gns3': gns3,
                 'junos': junos,
                 }
+        self.igp = igp
         if filename:
             self.load(filename)
         
@@ -247,7 +249,7 @@ class Internet:
             cbgp_comp.configure()
 
         if self.compile_targets['junos']:
-            junos_comp = ank.JunosCompiler(self.network, self.services)
+            junos_comp = ank.JunosCompiler(self.network, self.services, self.igp)
             junos_comp.initialise()
             junos_comp.configure()
 

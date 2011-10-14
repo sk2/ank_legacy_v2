@@ -30,7 +30,14 @@ interfaces {
 	        description "${i['description']}";
             family inet {      
                 address ${i['ip']}/${i['prefixlen']};
-            }
+            }                 
+			% if 'net_ent_title' in i:  
+			family iso {
+				address ${i['net_ent_title']}
+			}   
+			% elif igp_protocol == 'isis':
+			family iso;
+			% endif
         }
     }
     %endfor 
@@ -47,10 +54,11 @@ routing-options {
     autonomous-system ${asn};
 } 
      
-protocols {
+protocols {             
+	% if igp_protocol == 'ospf':
 	ospf {
 	        area 0.0.0.0 {
-			% for i in ospf_interfaces:
+			% for i in igp_interfaces:
 				  % if 'passive' in i:   
 				interface ${i['id']}  {
 						passive;   
@@ -60,7 +68,22 @@ protocols {
 			  % endif                
 			%endfor
 	    }
-	}            
+	}                      
+	% elif igp_protocol == 'isis':
+	ISIS {
+	        area 0.0.0.0 {
+			% for i in igp_interfaces:
+				  % if 'passive' in i:   
+				interface ${i['id']}  {
+						passive;   
+					}
+				% else:
+				interface ${i['id']};
+			  % endif                
+			%endfor
+	    }
+	}                      
+	% endif              
 	bgp {                  
 		export adverts;
 		% for groupname, group_data in bgp_groups.items():   

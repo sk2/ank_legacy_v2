@@ -6,7 +6,8 @@ __author__ = "\n".join(['Simon Knight'])
 #    Copyright (C) 2009-2011 by Simon Knight, Hung Nguyen
 
 __all__ = ['get_ip_as_allocs', 'allocate_subnets', 'alloc_interfaces',
-           'alloc_tap_hosts', 'get_tap_host', 'int_id', 'ip_addr' ]
+           'alloc_tap_hosts', 'get_tap_host', 'int_id', 'ip_addr',
+           'ip_to_net_ent_title']
 
 #toDo: add docstrings
 from netaddr import IPNetwork
@@ -199,3 +200,20 @@ def int_id(network, src, dst):
 
 def ip_addr(network, src, dst):
     return network.graph[src][dst]['ip']
+
+def ip_to_net_ent_title(ip):
+    """ Converts an IP address into an OSI Network Entity Title
+    suitable for use in IS-IS.
+
+    >>> ip_to_net_ent_title(IPAddress("192.168.19.1"))
+    '49.0001.1921.6801.9001.00'
+    """
+    area_id = "49.0001"
+    ip_octets = str(ip.ip).split(".")
+# Pad with leading zeros, eg 1->001, 12->012, 123->123
+    ip_octets = ["%03d" % int(octet) for octet in ip_octets]
+# Condense to single string
+    ip_octets = "".join(ip_octets)
+# and split into bytes
+    ip_octets = ip_octets[0:4] + "." + ip_octets[4:8] + "." + ip_octets[8:12]
+    return area_id + "." + ip_octets + "." + "00"
