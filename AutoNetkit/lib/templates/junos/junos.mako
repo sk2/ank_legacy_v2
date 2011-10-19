@@ -86,7 +86,8 @@ protocols {
 		% endif
 		%endfor    
 	}                      
-	% endif              
+	% endif    
+	% if bgp_groups:         
 	bgp {                  
 		export adverts;
 		% for groupname, group_data in bgp_groups.items():   
@@ -104,7 +105,8 @@ protocols {
 				% endfor
 			}
 		% endfor
-	}           
+	}
+	% endif           
 }                  
 
 policy-options {

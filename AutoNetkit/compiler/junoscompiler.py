@@ -209,7 +209,11 @@ class JunosCompiler:
 
     def configure_bgp(self, node, physical_graph, ibgp_graph, ebgp_graph):
         """ BGP configuration"""
-        print ebgp_graph.edges()
+        if len(ebgp_graph.edges()) == 0:
+# Don't configure iBGP or eBGP if no eBGP edges
+            LOG.debug("Skipping BGP configuration for %s as no eBGP edges" % node)
+            return
+
         bgp_groups = {}
         if node in ibgp_graph:
             internal_peers = []
