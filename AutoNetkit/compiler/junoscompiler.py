@@ -202,13 +202,14 @@ class JunosCompiler:
             for src, dst, data in igp_graph.edges(node, data=True):
                 int_id = int_id_ge(data['id'])
                 igp_interfaces.append({
-                    'id':          int_id,
+                    'id':       int_id,
+                    'weight':   data.get('weight')
                     })
-
         return igp_interfaces
 
     def configure_bgp(self, node, physical_graph, ibgp_graph, ebgp_graph):
         """ BGP configuration"""
+        print ebgp_graph.edges()
         bgp_groups = {}
         if node in ibgp_graph:
             internal_peers = []

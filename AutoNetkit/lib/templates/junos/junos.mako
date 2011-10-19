@@ -70,18 +70,21 @@ protocols {
 	    }
 	}                      
 	% elif igp_protocol == 'isis':
-	ISIS {
-	        area 0.0.0.0 {
-			% for i in igp_interfaces:
-				  % if 'passive' in i:   
-				interface ${i['id']}  {
-						passive;   
-					}
-				% else:
-				interface ${i['id']};
-			  % endif                
-			%endfor
-	    }
+	isis {               
+		level 2 wide-metrics-only;
+		level 1 disable;
+		% for i in igp_interfaces:   
+		% if i['id'].startswith('lo'):
+		interface ${i['id']};
+		% else:
+		interface ${i['id']}  {
+			point-to-point;   
+			% if 'weight' in i:
+			level 2 metric ${i['weight']};
+			% endif
+		}                        
+		% endif
+		%endfor    
 	}                      
 	% endif              
 	bgp {                  
