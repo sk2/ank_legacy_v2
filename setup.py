@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup (
      name = "AutoNetkit",
-     version = "0.5.50",
+     version = "0.5.53",
      description = 'Automated configuration generator for Netkit',
 
      long_description = 'Automated configuration generator for Netkit',
@@ -36,7 +36,8 @@ setup (
 
      install_requires = ['netaddr', 'mako', 'networkx>=1.5', 
          'nose',
-                         'pexpect', 'beaker',],
+         'pexpect', 'beaker',],
+
      classifiers = [
          "Programming Language :: Python",
          "Development Status :: 3 - Alpha",
