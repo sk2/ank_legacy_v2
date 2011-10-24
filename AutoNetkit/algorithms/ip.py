@@ -151,6 +151,8 @@ def alloc_tap_hosts(network, address_block=IPNetwork("172.16.0.0/16")):
 
     max_req_hosts = max(len(my_as) for my_as in as_graph)
     req_host_bits = int(math.ceil(math.log(max_req_hosts, 2)))
+#TODO: there is an off by one error here mking the tap subnets /9 rather than /8
+# so end up with 172.16.64.1 and 172.16.128.1 not .1 .2 etc
 
     # Check subnetting is feasible
     lower_bound = address_block.prefixlen + req_network_bits
@@ -178,6 +180,7 @@ def alloc_tap_hosts(network, address_block=IPNetwork("172.16.0.0/16")):
         # Single AS, don't need to subnet the address block
         host_ips = address_block.iter_hosts()
         network.tap_host = host_ips.next()
+        _ = host_ips.next() # IP of tap VM
         my_as = as_graph.pop()
         # Allocate directly from address block
         set_tap_ips(network, my_as.nodes(), host_ips)
