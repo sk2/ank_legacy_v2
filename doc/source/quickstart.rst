@@ -14,9 +14,7 @@ Simple example
 This example builds and deploys a simple single Autonomous System network.
 
 Download the topologies from `GitHub <https://github.com/sk2/autonetkit/tree/master/AutoNetkit/lib/examples/topologies>`_
-                                    
-For more information on the Multi AS topology, please see the 
-:doc:`topologies` page
+                                   
 
 
 Code listing
@@ -32,10 +30,11 @@ When you install AutoNetkit, it will also install the standalone program. You ca
 
 To get the help:: 
 
-	sk:Desktop sk2$ autonetkit --help
+	sk:~ sk2$ autonetkit --help
 	Usage: autonetkit [options]
 
 	Options:
+	  --version             show program's version number and exit
 	  -h, --help            show this help message and exit
 	  -p, --plot            Plot lab
 	  -d, --deploy          Deploy lab to Netkit host
@@ -45,18 +44,31 @@ To get the help::
 	  -u USERNAME, --username=USERNAME
 	                        Username for Netkit host machine (if connecting to
 	                        external Netkit machine)
-	  -v, --verify          Verify lab on Netkit host   
+	  -v, --verify          Verify lab on Netkit host
+	  --xterm               Load each VM console in Xterm  This is the default in
+	                        Netkit,  but not ANK due to potentially large number
+	                        of VMs
+	  --debug               Debugging output
+	  --netkit              Compile Netkit
+	  --cbgp                Compile cBGP
+	  --gns3                Compile GNS3
+	  --junos               Compile JunOS
+	  --isis                Use IS-IS as IGP
+	  --tapsn=TAPSN         Tap subnet to use to connect to VMs. Will be split
+	                        into  /24 subnets, with first subnet allocated to
+	                        tunnel VM. eg 172.16.0.1 is the linux host, 172.16.0.2
+	                        is the  other end of the tunnel    
   
 
 
 Download the sample topology, and change to that directory on the command line::
 
 	sk:Desktop sk2$ ls
-	simple.gml
+	simple.graphml
 
 From here you can run autonetkit::
 
-	autonetkit -f simple.gml
+	autonetkit -f simple.graphml
 
 
 Compiling
@@ -64,47 +76,40 @@ Compiling
 
 Running the example will give an output similar to:: 
 
-	sk:Desktop sk2$ autonetkit -f simple.gml
+	sk:~ sk2$ autonetkit -f simple.graphml 
 	INFO   Loading
 	INFO   Compiling
-	INFO   Configuring IGP
-	INFO   Configuring BGP
-	INFO   Configuring DNS  
-
-Note that the demo automatically adds DNS.                
+	INFO   Configuring Netkit        
 
 this creates the relevant folders::
 
-    sk:~ sk2$ tree autonetkit/netkit_lab/
-    autonetkit/netkit_lab/
-    ── 1_AA
-    │   ── etc
-    │       ── bind
-    │       │   ── db.0.10
-    │       │   ── db.Example
-    │       │   ── db.root
-    │       │   ── named.conf
-    │       ── hostname
-    │       ── resolv.conf
-    │       ── shadow
-    │       ── zebra
-    │           ── bgpd.conf
-    │           ── daemons
-    │           ── ospfd.conf
-    │           ── zebra.conf
-    ── 1_AA.startup
-    ── 1_BB
-    │   ── etc
-    │       ── hostname
-    │       ── resolv.conf
-    │       ── shadow
-    │       ── zebra
-    │           ── bgpd.conf
-    │           ── daemons
-    │           ── ospfd.conf
-    │           ── zebra.conf
-    ── 1_BB.startup
-    ── lab.conf
+	sk:~ sk2$ tree ank_lab/netkit_lab/
+	ank_lab/netkit_lab/
+	├── AS1_Router_A
+	│   └── etc
+	│       ├── hostname
+	│       ├── resolv.conf
+	│       └── zebra
+	│           ├── bgpd.conf
+	│           ├── daemons
+	│           ├── ospfd.conf
+	│           └── zebra.conf
+	├── AS1_Router_A.startup
+	├── AS1_Router_B
+	│   └── etc
+	│       ├── bind
+	│       │   ├── db.2.10
+	│       │   ├── db.AS1
+	│       │   ├── db.root
+	│       │   └── named.conf
+	│       ├── hostname
+	│       ├── resolv.conf
+	│       └── zebra
+	│           ├── bgpd.conf
+	│           ├── daemons
+	│           ├── ospfd.conf
+	│           └── zebra.conf
+	├── AS1_Router_B.startup  
 
 etc (for each router)
 
@@ -149,22 +154,23 @@ Deploying
 
 To automatically deploy the lab, use the -d argument. If you are running AutoNetkit on the same machine that is running Netkit, just use -d. You should see the lab started as follows::
 
-  sk:~ sk2$ autonetkit -f test.gml -d 
-  INFO   Loading
-  INFO   Compiling
-  INFO   Configuring IGP
-  INFO   Configuring BGP
-  INFO   Configuring DNS
-  INFO   Deploying to Netkit
-  INFO   Connecting to netkithost
-  INFO   Connected to netkithost
-  INFO   Copying Lab over
-  INFO   Starting lab
-  INFO   Checking all previous machines shutdown
-  INFO   All previous machines shutdown, starting lab
-  INFO   Starting 1_BB (1/2)
-  INFO   Starting 1_AA (2/2)
-  INFO   Finished starting Lab, 2 machines started
+	autonetkit@trc1:~$ autonetkit -f simple.graphml  -d
+	INFO   Loading
+	INFO   Compiling
+	INFO   Configuring Netkit
+	INFO   Deploying to Netkit
+	INFO   Starting lab
+	INFO   Checking all previous machines shutdown
+	INFO   All previous machines shutdown, starting lab
+	INFO   Starting AS1_n1 (1/8)
+	INFO   Starting AS2_n4 (2/8)
+	INFO   Starting AS1_n3 (3/8)
+	INFO   Starting AS2_n2 (4/8)
+	INFO   Starting AS1_n0 (5/8)
+	INFO   Starting AS2_n6 (6/8)
+	INFO   Starting AS2_n7 (7/8)
+	INFO   Starting AS3_n5 (8/8)
+	INFO   Finished starting Lab, 8 machines started  
 
 
 If you are running AutoNetkit from another machine (such as a Mac, a different Linux machine, or the same Linux machine but as a different user), you can get AutoNetkit to deploy using SSH.
@@ -173,47 +179,43 @@ Note that this method assumes you have setup ssh keys, such that you can log int
 
 Once you have setup ssh keys, you can deploy to a remote Netkit host as follows::     
 
-  sk:~ sk2$ autonetkit -f test.gml -d -n netkithost -u autonetkit
+  autonetkit -f simple.graphml -d -n netkithost -u autonetkit
 
 You can also try aarnet, a larger network. This network can be found in the
 Internet Topology Zoo, at www.topology-zoo.org. Download the file http://topology-zoo.org/files/Aarnet.gml ::
 
-  sk:~ sk2$ autonetkit -f Aarnet.gml -d -n netkithost -u autonetkit
-  INFO   Loading
-  INFO   Compiling
-  INFO   Configuring IGP
-  INFO   Configuring BGP
-  INFO   Configuring DNS
-  INFO   Deploying to Netkit
-  INFO   Connecting to netkithost
-  INFO   Connected to netkithost
-  INFO   Copying Lab over
-  INFO   Starting lab
-  INFO   Checking all previous machines shutdown
-  INFO   All previous machines shutdown, starting lab
-  INFO   Starting 1_Adelaide1 (1/19)
-  INFO   Starting 1_Armidale (2/19)
-  INFO   Starting 1_Adelaide2 (3/19)
-  INFO   Starting 1_Alice_Springs (4/19)
-  INFO   Starting 1_Brisbane1 (5/19)
-  INFO   Starting 1_Brisbane2 (6/19)
-  INFO   Starting 1_Cairns (7/19)
-  INFO   Starting 1_Canberra1 (8/19)
-  INFO   Starting 1_Canberra2 (9/19)
-  INFO   Starting 1_Darwin (10/19)
-  INFO   Starting 1_Melbourne1 (11/19)
-  INFO   Starting 1_Hobart (12/19)
-  INFO   Starting 1_Melbourne2 (13/19)
-  INFO   Starting 1_Perth1 (14/19)
-  INFO   Starting 1_Perth2 (15/19)
-  INFO   Starting 1_Rockhampton (16/19)
-  INFO   Starting 1_Sydney1 (17/19)
-  INFO   Starting 1_Sydney2 (18/19)
-  INFO   Starting 1_Townsville (19/19)
-  INFO   Finished starting Lab, 19 machines started
+	sk:~ sk2$ autonetkit -f Aarnet.gml -d -n netkithost -u autonetkit
+	INFO   Loading
+	INFO   Compiling
+	INFO   Configuring Netkit
+	INFO   Deploying to Netkit
+	INFO   Connecting to netkithost
+	INFO   Connected to netkithost
+	INFO   Copying Lab over
+	INFO   Starting lab
+	INFO   Checking all previous machines shutdown
+	INFO   All previous machines shutdown, starting lab
+	INFO   Starting AARNET_Adelaide1 (1/19)
+	INFO   Starting AARNET_Alice_Springs (2/19)
+	INFO   Starting AARNET_Adelaide2 (3/19)
+	INFO   Starting AARNET_Brisbane1 (4/19)
+	INFO   Starting AARNET_Armidale (5/19)
+	INFO   Starting AARNET_Brisbane2 (6/19)
+	INFO   Starting AARNET_Cairns (7/19)
+	INFO   Starting AARNET_Canberra1 (8/19)
+	INFO   Starting AARNET_Canberra2 (9/19)
+	INFO   Starting AARNET_Darwin (10/19)
+	INFO   Starting AARNET_Hobart (11/19)
+	INFO   Starting AARNET_Melbourne1 (12/19)
+	INFO   Starting AARNET_Melbourne2 (13/19)
+	INFO   Starting AARNET_Perth1 (14/19)
+	INFO   Starting AARNET_Perth2 (15/19)
+	INFO   Starting AARNET_Rockhampton (16/19)
+	INFO   Starting AARNET_Sydney1 (17/19)
+	INFO   Starting AARNET_Sydney2 (18/19)
+	INFO   Starting AARNET_Townsville (19/19)
+	INFO   Finished starting Lab, 19 machines started  
   
-
-
 Logging into virtual machines
 ------------------------------
 Assuming you have setup the tap host, and deployed the lab, you should now be able to access the lab.
@@ -223,35 +225,36 @@ Each machine is assigned an IP address inside the TAP subnet, to which you can s
 172.16.1.x, the second has 172.16.2.x, etc
 The first host in the first AS has 172.16.1.1, the second 172.16.1.2, etc
 
-You can check the allocations in the lab.conf file, inside the autonetkit/netkit_lab directory::
+You can check the allocations in the lab.conf file, inside the ank_lab/netkit_lab/ directory::
 
-  1_Adelaide1[8]=tap,172.16.0.1,172.16.1.1
-  1_Adelaide2[8]=tap,172.16.0.1,172.16.1.2
-  1_Alice_Springs[4]=tap,172.16.0.1,172.16.1.3
-  1_Armidale[2]=tap,172.16.0.1,172.16.1.4
-  1_Brisbane1[6]=tap,172.16.0.1,172.16.1.5
-  1_Brisbane2[4]=tap,172.16.0.1,172.16.1.6
-  1_Cairns[2]=tap,172.16.0.1,172.16.1.7
-  1_Canberra1[4]=tap,172.16.0.1,172.16.1.8
-  1_Canberra2[4]=tap,172.16.0.1,172.16.1.9
-  1_Darwin[4]=tap,172.16.0.1,172.16.1.10
-  1_Hobart[4]=tap,172.16.0.1,172.16.1.11
-  1_Melbourne1[8]=tap,172.16.0.1,172.16.1.12
-  1_Melbourne2[8]=tap,172.16.0.1,172.16.1.13
-  1_Perth1[4]=tap,172.16.0.1,172.16.1.14
-  1_Perth2[4]=tap,172.16.0.1,172.16.1.15
-  1_Rockhampton[4]=tap,172.16.0.1,172.16.1.16
-  1_Sydney1[6]=tap,172.16.0.1,172.16.1.17
-  1_Sydney2[8]=tap,172.16.0.1,172.16.1.18
-  1_Townsville[4]=tap,172.16.0.1,172.16.1.19
+	AARNET_Adelaide1[8]=tap,172.16.0.1,172.16.0.3
+	AARNET_Adelaide2[8]=tap,172.16.0.1,172.16.0.4
+	AARNET_Alice_Springs[4]=tap,172.16.0.1,172.16.0.5
+	AARNET_Armidale[2]=tap,172.16.0.1,172.16.0.6
+	AARNET_Brisbane1[6]=tap,172.16.0.1,172.16.0.7
+	AARNET_Brisbane2[4]=tap,172.16.0.1,172.16.0.8
+	AARNET_Cairns[2]=tap,172.16.0.1,172.16.0.9
+	AARNET_Canberra1[4]=tap,172.16.0.1,172.16.0.10
+	AARNET_Canberra2[4]=tap,172.16.0.1,172.16.0.11
+	AARNET_Darwin[4]=tap,172.16.0.1,172.16.0.12
+	AARNET_Hobart[4]=tap,172.16.0.1,172.16.0.13
+	AARNET_Melbourne1[8]=tap,172.16.0.1,172.16.0.14
+	AARNET_Melbourne2[8]=tap,172.16.0.1,172.16.0.15
+	AARNET_Perth1[4]=tap,172.16.0.1,172.16.0.16
+	AARNET_Perth2[4]=tap,172.16.0.1,172.16.0.17
+	AARNET_Rockhampton[4]=tap,172.16.0.1,172.16.0.18
+	AARNET_Sydney1[6]=tap,172.16.0.1,172.16.0.19
+	AARNET_Sydney2[8]=tap,172.16.0.1,172.16.0.20
+	AARNET_Townsville[4]=tap,172.16.0.1,172.16.0.21     
+
 
 The first element is the name of the virtual machine (eg 1_AA), and the last IP on each line is the IP the machine can be reached at. (The 172.16.0.1 IP is the Linux host). 
 You can ssh into each machine as the "root" user, with the default password of "1234"::
 
-  autonetkit@trc1:~$ ssh root@172.16.1.1
-  root@172.16.1.1's password: 
-  Last login: Sun Apr 10 06:12:37 2011 from 172.16.0.1
-  Adelaide1_AARNET:~#
+	autonetkit@trc1:~$ ssh root@172.16.0.3 
+	root@172.16.0.3's password: 
+	Last login: Mon Oct 24 04:51:19 2011
+	Adelaide1_AARNET:~#  
 
 
 Here you can check DNS is working, and use standard diagnostic tools::
