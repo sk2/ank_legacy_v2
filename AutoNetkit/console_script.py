@@ -44,7 +44,7 @@ def main():
     opt.add_option('--debug',  action="store_true", default=False, help="Debugging output")
 
 # Deployment environments
-    opt.add_option('--netkit',  action="store_true", default=True, help="Compile Netkit")
+    opt.add_option('--netkit',  action="store_true", default=False, help="Compile Netkit")
     opt.add_option('--cbgp',  action="store_true", default=False, help="Compile cBGP")
     opt.add_option('--gns3',  action="store_true", default=False, help="Compile GNS3")
     opt.add_option('--junos',  action="store_true", default=False, help="Compile JunOS")
@@ -64,6 +64,10 @@ def main():
         LOG.warn("Please specify topology file")
         sys.exit(0)
         logging.setLevel(logging.DEBUG)
+
+    if not (options.netkit or options.cbgp or options.gns3 or options.junos):
+        LOG.warn("Please specify a target environment, eg --netkit")
+        sys.exit(0)
                 
 #TODO: if topology file doesn't exist, then try inside lib/examples/topologies/
     f_name = options.file  
