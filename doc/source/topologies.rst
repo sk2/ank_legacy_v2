@@ -4,10 +4,28 @@ Topologies
 Overview:
 +++++++++   
   
-This page is currently being updated. The initial guide to topology tracing
-described on this page has grown into the Internet Topology Zoo project,
-available at www.topology-zoo.org
-Please refer there in the mean time.
+
+                                         
+This can then be compiled::
+
+	sk:ank_demo sk2$ autonetkit -f demo.graphml 
+	INFO   Loading
+	INFO   No asn set for node n0 using default of 1
+	INFO   No asn set for node n1 using default of 1
+	INFO   No asn set for node n2 using default of 1
+	INFO   No asn set for node n3 using default of 1
+	INFO   Compiling
+	INFO   Configuring Netkit 
+                                       
+
+Set the ASN to be 1::         
+
+	sk:ank_demo sk2$ autonetkit -f demo.graphml 
+	INFO   Loading
+	INFO   Compiling
+	INFO   Configuring Netkit       
+	
+
 
 
 Internet Topology Zoo
