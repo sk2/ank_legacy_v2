@@ -49,6 +49,7 @@ def main():
     opt.add_option('--gns3',  action="store_true", default=False, help="Compile GNS3")
     opt.add_option('--junos',  action="store_true", default=False, help="Compile JunOS")
     opt.add_option('--isis',  action="store_true", default=False, help="Use IS-IS as IGP")
+    opt.add_option('--ospf',  action="store_true", default=False, help="Use OSPF as IGP")
 
     opt.add_option('--tapsn', default="172.16.0.0/16", 
                 help= ("Tap subnet to use to connect to VMs. Will be split into "
@@ -67,6 +68,10 @@ def main():
 
     if not (options.netkit or options.cbgp or options.gns3 or options.junos):
         LOG.warn("Please specify a target environment, eg --netkit")
+        sys.exit(0)
+
+    if options.junos and not (options.isis or options.ospf):
+        LOG.warn("Please specify an IGP if using junos: --isis or --ospf")
         sys.exit(0)
                 
 #TODO: if topology file doesn't exist, then try inside lib/examples/topologies/
