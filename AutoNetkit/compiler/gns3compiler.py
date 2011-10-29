@@ -23,7 +23,8 @@ import pprint
 pp = pprint.PrettyPrinter(indent=4)      
 
 # Check can write to template cache directory
-template_cache_dir ="/tmp/mako_modules" 
+template_cache_dir = config.template_cache_dir
+
 if (os.path.exists(template_cache_dir) 
     and not os.access(template_cache_dir, os.W_OK)):
     LOG.info("Unable to write to cache dir %s, "

@@ -24,18 +24,7 @@ pp = pprint.PrettyPrinter(indent=4)
 # Check can write to template cache directory
 #TODO: make function to provide cache directory
 #TODO: move this into config
-ank_dir = os.environ['HOME'] + os.sep + ".autonetkit"
-if not os.path.exists(ank_dir):
-    os.mkdir(ank_dir)
-template_cache_dir = ank_dir + os.sep + "cache"
-if not os.path.exists(template_cache_dir):
-    os.mkdir(template_cache_dir)
-
-if (os.path.exists(template_cache_dir)
-    and not os.access(template_cache_dir, os.W_OK)):
-    LOG.info("Unable to write to cache dir %s, "
-             "template caching disabled" % template_cache_dir)
-    template_cache_dir = None
+template_cache_dir = config.template_cache_dir
 
 template_dir =  resource_filename("AutoNetkit","lib/templates")
 lookup = TemplateLookup(directories=[ template_dir ],

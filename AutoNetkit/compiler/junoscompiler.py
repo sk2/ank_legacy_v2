@@ -27,18 +27,8 @@ import time
 # Check can write to template cache directory
 #TODO: make function to provide cache directory
 #TODO: move this into config
-ank_dir = os.environ['HOME'] + os.sep + ".autonetkit"
-if not os.path.exists(ank_dir):
-    os.mkdir(ank_dir)
-template_cache_dir = ank_dir + os.sep + "cache"
-if not os.path.exists(template_cache_dir):
-    os.mkdir(template_cache_dir)
+template_cache_dir = config.template_cache_dir
 
-if (os.path.exists(template_cache_dir)
-    and not os.access(template_cache_dir, os.W_OK)):
-    LOG.info("Unable to write to cache dir %s, "
-             "template caching disabled" % template_cache_dir)
-    template_cache_dir = None
 
 template_dir =  resource_filename("AutoNetkit","lib/templates")
 lookup = TemplateLookup(directories=[ template_dir ],
@@ -77,6 +67,11 @@ def int_id_ge(numeric_id):
 # Junosphere uses ge/0/0/0 for external link
     numeric_id += 1
     return 'ge-0/0/%s' % numeric_id
+
+def logical_int_id_ge(numeric_id):
+    """ For routing protocols, refer to logical int id:
+    ge-0/0/1 becomes ge-0/0/1.0"""
+    return int_id_ge(numeric_id) + ".0"
 
 class JunosCompiler:
     """Compiler main"""
@@ -166,6 +161,8 @@ class JunosCompiler:
         })
 
         # Add em0.0 for Qemu
+#TODO: make this enabled with switch for QEMU
+        """
         interfaces.append({
             'id':          'em0',# modified from "em0.0"
             'ip':           str(self.network[node].get('tap_ip')),
@@ -173,6 +170,7 @@ class JunosCompiler:
             'prefixlen':    32,# modified into 32
             'description': 'Admin for Qemu',
         })
+        """
 
         for src, dst, data in self.network.graph.edges(node, data=True):
             subnet = data['sn']
@@ -195,15 +193,16 @@ class JunosCompiler:
 
     def configure_igp(self, node, igp_graph):
         """igp configuration"""
+        default_weight = 1
         igp_interfaces = []
         if igp_graph.degree(node) > 0:
             # Only start IGP process if IGP links
             igp_interfaces.append({ 'id': 'lo0', 'passive': True})
             for src, dst, data in igp_graph.edges(node, data=True):
-                int_id = int_id_ge(data['id'])
+                int_id = logical_int_id_ge(data['id'])
                 igp_interfaces.append({
                     'id':       int_id,
-                    'weight':   data.get('weight')
+                    'weight':   data.get('weight', default_weight)
                     })
         return igp_interfaces
 

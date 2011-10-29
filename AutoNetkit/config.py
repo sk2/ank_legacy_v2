@@ -53,6 +53,21 @@ if not os.path.isdir(plot_dir):
     os.mkdir(plot_dir)
 
 
+# Cache directory for templates
+ank_dir = os.path.expanduser("~") + os.sep + ".autonetkit"
+if not os.path.exists(ank_dir):
+    os.mkdir(ank_dir)
+template_cache_dir = ank_dir + os.sep + "cache"
+if not os.path.exists(template_cache_dir):
+    os.mkdir(template_cache_dir)
+
+if (os.path.exists(template_cache_dir)
+    and not os.access(template_cache_dir, os.W_OK)):
+    LOG.info("Unable to write to cache dir %s, "
+             "template caching disabled" % template_cache_dir)
+    template_cache_dir = None
+
+
 def add_logging(console_debug=False):
     import logging
     import logging.handlers

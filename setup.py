@@ -4,11 +4,10 @@ from setuptools import setup
 
 setup (
      name = "AutoNetkit",
-     version = "0.5.53",
-     description = 'Automated configuration generator for Netkit',
+     version = "0.5.54",
+     description = 'Automated configuration generator for cBGP, Netkit and Junosphere',
+     long_description = 'Automated configuration generator for cBGP, Netkit and Junosphere',
 
-     long_description = 'Automated configuration generator for Netkit',
-               
      # simple to run 
      entry_points = {
          'console_scripts': [
