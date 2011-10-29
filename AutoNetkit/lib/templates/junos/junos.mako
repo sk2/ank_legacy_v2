@@ -92,14 +92,14 @@ protocols {
 		export adverts;
 		% for groupname, group_data in bgp_groups.items():   
 			group ${groupname} {
-				type ${group_data['type']};      
-				% for neighbor in group_data['neighbors']: 
+				type ${group_data['type']};    
+			    local-address ${router_id};
+			    % for neighbor in group_data['neighbors']: 
 				   % if 'peer_as' in neighbor:      
 				   neighbor  ${neighbor['id']} {
 						peer-as ${neighbor['peer_as']};
 				   }
 				   % else:          
-				   local-address ${router_id};
 				   neighbor  ${neighbor['id']};
 				   % endif
 				% endfor
