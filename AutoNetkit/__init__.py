@@ -7,6 +7,9 @@ from AutoNetkit.compiler import *
 import AutoNetkit.examples
 from AutoNetkit.examples import *
 
+import AutoNetkit.deploy
+from AutoNetkit.deploy import *
+
 import AutoNetkit.internal
 from AutoNetkit.internal import *
 

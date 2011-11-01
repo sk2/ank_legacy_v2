@@ -12,17 +12,23 @@ __author__ = """\n""".join(['Simon Knight (simon.knight@adelaide.edu.au)',
 
 # SSH connection code based on
 # linux.byexamples.com/archives/346/python-how-to-access-ssh-with-pexpect/
+import config
+import logging
+LOG = logging.getLogger("ANK")
 
-import pexpect
-import pxssh
+try:
+    import pexpect
+    import pxssh
+except:
+    LOG.error("Netkit deployment requires pexpect")
+    raise
+
 import os  
 
-import config
 
 from netaddr import IPNetwork
 
-import logging
-LOG = logging.getLogger("ANK")
+
 
 #based on http://bytes.com/topic/python/answers/619040-using-pxssh
 

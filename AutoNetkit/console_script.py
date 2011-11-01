@@ -106,8 +106,6 @@ def main():
     if(options.verify):
         inet.verify(host = options.netkithost, username = options.username)    
 
-    qp = ank.QueryPlotter(inet.network)
-
 if __name__ == "__main__":
     try:
         main()

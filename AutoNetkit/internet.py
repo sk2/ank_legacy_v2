@@ -268,19 +268,26 @@ class Internet:
         >>> inet.deploy(host = "netkithost", username = "autonetkit")
 
         """
-        if platform == "netkit":
-            import netkit
+        if self.compile_targets['netkit']:
+            try:
+                import netkit
+            except ImportError:
+                LOG.warn("Unable to import Netkit, ending deployment")
+                return
             LOG.info("Deploying to Netkit")   
             #TODO: make netkit a plugin also
             netkit_server = netkit.Netkit(host, username, tapsn=self.tapsn)
 
             # Get the deployment plugin
-            nkd = ank.deploy.NetkitDeploy()
+            nkd = ank.deploy.netkit_deploy.NetkitDeploy()
             # Need to tell deploy plugin where the netkit files are
             netkit_dir = config.lab_dir
             nkd.deploy(netkit_server, netkit_dir, self.network, xterm)
+        elif self.compile_targets['junos']:
+            LOG.warn("Junos automatic deployment not supported. "
+                    "Please manually upload Junosphere configuration file")
         else:
-            LOG.warn("Currently only Netkit deployment is supported")
+            LOG.warn("Only automated Netkit deployment is supported")
 
     def verify(self, host, username, platform="netkit" ):  
         """Deploy compiled configuration files."
