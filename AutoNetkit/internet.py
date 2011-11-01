@@ -250,13 +250,13 @@ class Internet:
             junos_comp.initialise()
             junos_comp.configure()
 
-    def deploy(self, host, username, xterm = False, platform="netkit" ):  
+    def deploy(self, host, username, xterm = False):  
         """Deploy compiled configuration files."
 
         Args:
            host:    host to deploy to (if remote machine)
            username: username on remote host
-           platform:    platform to deploy to 
+           platform:    automatically uses compile targets 
            xterm: if to load an xterm window for each VM
 
         Returns:
