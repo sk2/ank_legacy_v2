@@ -6,7 +6,6 @@ import AutoNetkit.compiler
 from AutoNetkit.compiler import *
 
 import AutoNetkit.deploy
-from AutoNetkit.deploy import *
 
 import AutoNetkit.examples
 from AutoNetkit.examples import *

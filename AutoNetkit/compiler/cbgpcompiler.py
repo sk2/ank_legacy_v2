@@ -33,8 +33,6 @@ lookup = TemplateLookup(directories=[ template_dir ],
         #cache_enabled=True,
         )
 
-import os
-
 def lab_dir():
     return config.cbgp_dir
 

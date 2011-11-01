@@ -221,9 +221,6 @@ class Internet:
         # Ensure nodes have a type set
         self.network.update_node_type(default_type="netkit_router")
 
-        # Allocate to machines
-        ank.allocate_to_netkit_hosts(self.network)
-        
         # Allocations  
         ank.allocate_subnets(self.network, IPNetwork("10.0.0.0/8")) 
         ank.alloc_interfaces(self.network)
@@ -278,7 +275,7 @@ class Internet:
             netkit_server = netkit.Netkit(host, username, tapsn=self.tapsn)
 
             # Get the deployment plugin
-            nkd = ank.NetkitDeploy()
+            nkd = ank.deploy.NetkitDeploy()
             # Need to tell deploy plugin where the netkit files are
             netkit_dir = config.lab_dir
             nkd.deploy(netkit_server, netkit_dir, self.network, xterm)
