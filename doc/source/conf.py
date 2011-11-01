@@ -47,7 +47,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'AutoNetkit'
-copyright = u'2011, Simon Knight , Hung Nguyen, Nick Falkner, Matthew Roughan'
+copyright = u'2011, Simon Knight, Hung Nguyen, Nick Falkner, Matthew Roughan'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -229,5 +229,5 @@ latex_preamble = '\usepackage{amssymb}'
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'autonetkit', u'AutoNetkit Documentation',
-     [u'Simon Knight , Hung Nguyen'], 1)
+     [u'Simon Knight, Hung Nguyen'], 1)
 ]
