@@ -11,9 +11,15 @@ LOG = logging.getLogger("ANK")
 import os     
 import time
 import AutoNetkit.config as config
+
+
+print "IMPORTNINT DPELOY"
               
 # Used for EOF and TIMEOUT variables
-import pexpect
+try:
+    import pexpect
+except:
+    raise
 
 class NetkitDeploy():  
     """ Deploy a given Netkit lab to a Netkit server"""

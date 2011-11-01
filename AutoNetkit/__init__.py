@@ -1,11 +1,8 @@
-
 import AutoNetkit.algorithms
 from AutoNetkit.algorithms import *
 
 import AutoNetkit.compiler
 from AutoNetkit.compiler import *
-
-import AutoNetkit.deploy
 
 import AutoNetkit.examples
 from AutoNetkit.examples import *
