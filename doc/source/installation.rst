@@ -76,3 +76,9 @@ pip install --upgrade AutoNetkit
 MAC:
 
 sudo pip install --upgrade AutoNetkit        
+
+
+Next Steps
+-----------
+Once you have installed AutoNetkit you can proceed to the :ref:`quickstart-guide`.
+

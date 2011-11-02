@@ -7,7 +7,7 @@ It also has support for `Junosphere <http://www.juniper.net/as/en/products-servi
 `C-BGP <http://c-bgp.sourceforge.net/>`_,
 and limited support for `GNS3 <http://www.gns3.net/>`_
 
-Contents:  
+Getting Started
 __________ 
 
 .. toctree::
@@ -15,11 +15,8 @@ __________
 
    installation             
    quickstart 
-   topologies 
    tutorial
    reference/index
-   glossary                                                                            
-
 
 Feedback and Citing
 ___________

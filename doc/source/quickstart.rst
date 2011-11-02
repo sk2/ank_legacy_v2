@@ -1,38 +1,56 @@
-.. _cheat-sheet:
+.. _quickstart-guide:
 
 ******************
 Quickstart guide
 ******************
     
-CREATE A TOPOLOGY
+Create a Topology
 -----------------
 
-AutoNetKit will process a network topology which is presented in GraphML format. Diagrams can be created using a tool such as yED, which is available from http://www.yworks.com/en/products_yed_download.html. A wide range of network topologies are available from http://www.topology-zoo.org/dataset.html 
+AutoNetKit will process a network topology which is presented in GraphML format. Diagrams can be created using a tool such as yED, which is available from http://www.yworks.com/en/products_yed_download.html.
+A wide range of network topologies are available from http://www.topology-zoo.org/dataset.html 
 
-Using yED, you can build a topology by dragging in two or more 'shape nodes'. Left-click on a node, hold and drag a connector to the other node to get a connection.
+Using yED, you can build a topology by dragging in two or more 'shape nodes'.
+
+.. image:: images/quickstart/nodes.*
+
+Left-click on a node, hold and drag a connector to the other node to get a connection.
+
+.. image:: images/quickstart/nodesconnected.*
 
 Alternatively, download a topology from http://www.topology-zoo.org/dataset.html. Open the file in yED and use options from the 'Layout' menu to see the node connectivity.
 
-You can set the Router's name using the Data/Label field which is present in the node's properties view.
-Add the ASN numbers by adding 'Edit/Manage custom properties', create a node property called 'ASN'. and press close
-Now will see 'ASN' present under Data field	
+You can set the Router's name using the Data/Label field which is present in the node's properties view, by double-clicking on a node, or by selecting a node and pressing the Enter key.
+
+.. image:: images/quickstart/nodeslabelled.*
+
+Add the ASN numbers by adding 'Edit/Manage Custom Properties', create a node property called 'ASN'. and press close
+Now will see 'ASN' present under Data field.
+
+* .. image:: images/quickstart/setasn1.*
+
+* .. image:: images/quickstart/setasn2.*
+
+* .. image:: images/quickstart/setasn3.*
+
+* .. image:: images/quickstart/setasn4.*
 
 If the ASN numbers are different between connected nodes, you will get an eBGP peering. If the ASN number is the same, the result will be iBGP peering.
 
 Save your file in GraphML format when you're done.
 
-GENERATING THE CONFIGURATION FILES
+Generating the Configuration Files
 ----------------------------------
 To generate Junosphere configuration, 
 
 
-WINDOWS:
+Windows:
 
 open a cmd session (run cmd.exe) cd into the scripts directory where autonetkit has been installed (c:\Python27\scripts), then
 
 autonetkit -f <path to .graphml file> --junos [--ospf|--isis]
 
-MAC:
+Mac:
 
 cd into the directory where you have the graphml file and then:
 
