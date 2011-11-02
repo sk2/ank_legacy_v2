@@ -1,14 +1,27 @@
-.. _tutorial:
-******************
-Tutorial
-******************
+.. _netkit-tutorial:
+
+Netkit Tutorial
+===================
 
 Simple example
-+++++++++++++++++++  
+-----------------  
+
+
+
+.. _my-reference-label:
+
+Section to cross-reference
+--------------------------
+
+Please refer to the :ref:`_my-reference-label`.
    
 This example builds and deploys a simple single Autonomous System network.
 
-Download the topologies from `GitHub <https://github.com/sk2/autonetkit/tree/master/AutoNetkit/lib/examples/topologies>`_
+Topologies:
+
+* :download:`Simple Network <../../AutoNetkit/lib/examples/topologies/simple.graphml>`
+
+* :download:`MultiAS Network <../../AutoNetkit/lib/examples/topologies/multias.graphml>`
 
 
 Code listing
@@ -62,7 +75,7 @@ Download the sample topology, and change to that directory on the command line::
 
 From here you can run autonetkit::
 
-	autonetkit -f simple.graphml
+	autonetkit -f simple.graphml --netkit
 
 
 Compiling
@@ -70,7 +83,7 @@ Compiling
 
 Running the example will give an output similar to:: 
 
-	sk:~ sk2$ autonetkit -f simple.graphml 
+	sk:~ sk2$ autonetkit -f simple.graphml --netkit
 	INFO   Loading
 	INFO   Compiling
 	INFO   Configuring Netkit        
@@ -148,7 +161,7 @@ Deploying
 
 To automatically deploy the lab, use the -d argument. If you are running AutoNetkit on the same machine that is running Netkit, just use -d. You should see the lab started as follows::
 
-	autonetkit@trc1:~$ autonetkit -f simple.graphml  -d
+	autonetkit@trc1:~$ autonetkit -f simple.graphml --netkit -d
 	INFO   Loading
 	INFO   Compiling
 	INFO   Configuring Netkit
@@ -173,12 +186,12 @@ Note that this method assumes you have setup ssh keys, such that you can log int
 
 Once you have setup ssh keys, you can deploy to a remote Netkit host as follows::     
 
-  autonetkit -f simple.graphml -d -n netkithost -u autonetkit
+  autonetkit -f simple.graphml --netkit -d -n netkithost -u autonetkit
 
 You can also try aarnet, a larger network. This network can be found in the
 Internet Topology Zoo, at www.topology-zoo.org. Download the file http://topology-zoo.org/files/Aarnet.gml ::
 
-	sk:~ sk2$ autonetkit -f Aarnet.gml -d -n netkithost -u autonetkit
+	sk:~ sk2$ autonetkit -f Aarnet.gml --netkit -d -n netkithost -u autonetkit
 	INFO   Loading
 	INFO   Compiling
 	INFO   Configuring Netkit
@@ -390,9 +403,9 @@ and::
 Plotting
 ---------  
 
-Plotting can be enabled using the -p switch::
+Plotting can be enabled using the ``--plot`` switch::
 
-	sk:Desktop sk2$ autonetkit -f simple.yaml -p
+	sk:Desktop sk2$ autonetkit -f simple.graphml --netkit --plot
 	INFO   Loading
 	INFO   Compiling
 	INFO   Configuring IGP
@@ -426,3 +439,4 @@ The individual AS topologies are also plotted. Note that the single router AS2 h
 .. image:: images/examples/AS1.*
                               
 .. image:: images/examples/AS3.*
+
