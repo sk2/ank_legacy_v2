@@ -64,6 +64,4 @@ The script will place all of the files it creates in a directory called ank_lab.
 
 Generating AutoNetkit Configuration Files
 ------------------------------------------
-Please refer to the :ref:`_netkit-tutorial`.
-
-
+Please refer to the :ref:`netkit-tutorial`.

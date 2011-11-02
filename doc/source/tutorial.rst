@@ -6,14 +6,6 @@ Netkit Tutorial
 Simple example
 -----------------  
 
-
-
-.. _my-reference-label:
-
-Section to cross-reference
---------------------------
-
-Please refer to the :ref:`_my-reference-label`.
    
 This example builds and deploys a simple single Autonomous System network.
 
