@@ -3,7 +3,9 @@ Generate Netkit configuration files for a network
 """
 from mako.lookup import TemplateLookup
 
+# TODO: merge these imports but make consistent across compilers
 from pkg_resources import resource_filename
+import pkg_resources
 
 import os
 
@@ -148,7 +150,6 @@ class JunosCompiler:
     def configure_interfaces(self, node):
         """Interface configuration"""
         lo_ip = self.network.lo_ip(node)
-        tap_subnet = self.network.tap_sn
         interfaces = []
 
         interfaces.append({
@@ -240,6 +241,7 @@ class JunosCompiler:
         """ Configures Junos"""
         LOG.info("Configuring Junos")
         junos_template = lookup.get_template("junos/junos.mako")
+        ank_version = pkg_resources.get_distribution("AutoNetkit").version
 
         physical_graph = self.network.graph
         igp_graph = ank.igp_graph(self.network)
@@ -261,6 +263,7 @@ class JunosCompiler:
             if not adv_subnet in network_list:
                 network_list.append(adv_subnet)
 
+
             juniper_filename = router_conf_path(self.network, node)
             with open( juniper_filename, 'w') as f_jun:
                 f_jun.write( junos_template.render(
@@ -274,6 +277,7 @@ class JunosCompiler:
                     router_id = lo_ip.ip,
                     network_list = network_list,
                     bgp_groups = bgp_groups,
+                    ank_version = ank_version,
                     ))
 
     def configure(self):
