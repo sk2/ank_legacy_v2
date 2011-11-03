@@ -18,8 +18,10 @@ def main():
 
     version=pkg_resources.get_distribution("AutoNetkit").version
 # make it easy to turn on and off plotting and deploying from command line 
-    opt = optparse.OptionParser(version="%prog " + str(version))
-#opt.add_option('--version', action='version', version=2)
+    usage = ("\nNetkit: %prog -f filename.graphml --netkit\n"
+            "Junosphere: %prog -f filename.graphml --junos\n"
+            "Additional documentation at http://packages.python.org/AutoNetkit/")
+    opt = optparse.OptionParser(usage, version="%prog " + str(version))
 
     opt.add_option('--plot', '-p', action="store_true", dest="plot", 
                     default=False, help="Plot lab")
