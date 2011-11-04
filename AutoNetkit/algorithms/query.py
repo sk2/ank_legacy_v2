@@ -11,6 +11,8 @@ import logging
 LOG = logging.getLogger("ANK")
 #TODO: only import what is needed
 from pyparsing import *
+from booleano.parser import Grammar, ConvertibleParseManager
+
 
 class Query(object):
 
