@@ -19,31 +19,21 @@ class Query(object):
     def __init__(self, network):
         self.network = network
 #Setup query here
-        attribute = Word(alphanums)
-        lt, le, eq, ge, gt = oneOf("< lt"), oneOf("<= le"), oneOf("== eq is"), oneOf(">= ge"), oneOf("> gt")
-        condition = oneOf("< lt <= le == is eq >= ge > gt")
-        condition = Or([lt("lt"), le("le"), eq("eq"), ge("ge"), gt("gt")])
-        value = Word(alphanums)
-        query_element = Group(attribute("attribute") + condition("condition") + value("value")).setResultsName("query_element")
-        booleans = oneOf("and && or || not !")
-#TODO: Add support for parentheses
-        self.query_parse = Group(query_element + ZeroOrMore(booleans + query_element)).setResultsName("Query")
+        grammar = Grammar(belongs_to="in", is_subset="is subset of")
+        self.parse_manager = ConvertibleParseManager(grammar)
         return
         
     def query(self, qstring):
         """ Query network property/properties
         """
-        print "CALLED"
-        print qstring
-        result = self.query_parse.parseString(qstring)
-        print "----------"
-        print result.dump()
-        print "----------"
-        print G.nodes(data=True)
+        print self.parse_manager.parse(qstring)
+
         return
 
 
 G = nx.Graph()
 Q = Query(G)
-Q.query("A > 4 and B == 5 || c is AA")
-Q.query("A > 4 and B == 5")
+Q.query('"thursday" in {"monday", "tuesday", "wednesday", "thursday", "friday"}')
+Q.query('today == "2009-07-17"')
+#Q.query("A > 4 and B == 5 || c is AA")
+#Q.query("A > 4 and B == 5")
