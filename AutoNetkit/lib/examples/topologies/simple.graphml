@@ -30,7 +30,7 @@
       <data key="d4"><![CDATA[1]]></data>
       <data key="d9">
         <y:ShapeNode>
-          <y:Geometry height="30.0" width="30.0" x="323.5" y="235.0"/>
+          <y:Geometry height="30.0" width="30.0" x="364.0" y="235.0"/>
           <y:Fill color="#FF0000" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" borderDistance="0.0" fontFamily="Dialog" fontSize="13" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="19.310546875" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="57.28857421875" x="-13.644287109375" y="5.3447265625">Router B</y:NodeLabel>
@@ -42,7 +42,7 @@
       <data key="d4"><![CDATA[1]]></data>
       <data key="d9">
         <y:ShapeNode>
-          <y:Geometry height="30.0" width="30.0" x="217.5" y="289.0"/>
+          <y:Geometry height="30.0" width="30.0" x="249.0" y="278.46875"/>
           <y:Fill color="#FF0000" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" borderDistance="0.0" fontFamily="Dialog" fontSize="13" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="19.310546875" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="58.7802734375" x="-14.39013671875" y="5.3447265625">Router A</y:NodeLabel>
@@ -54,7 +54,7 @@
       <data key="d4"><![CDATA[2]]></data>
       <data key="d9">
         <y:ShapeNode>
-          <y:Geometry height="30.0" width="30.0" x="471.375" y="402.8125"/>
+          <y:Geometry height="30.0" width="30.0" x="486.375" y="408.875"/>
           <y:Fill color="#00FFFF" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" borderDistance="0.0" fontFamily="Dialog" fontSize="13" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="19.310546875" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="59.54833984375" x="-14.774169921875" y="5.3447265625">Router D</y:NodeLabel>
@@ -66,7 +66,7 @@
       <data key="d4"><![CDATA[1]]></data>
       <data key="d9">
         <y:ShapeNode>
-          <y:Geometry height="30.0" width="30.0" x="340.75" y="321.9375"/>
+          <y:Geometry height="30.0" width="30.0" x="364.0" y="321.9375"/>
           <y:Fill color="#FF0000" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" borderDistance="0.0" fontFamily="Dialog" fontSize="13" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="19.310546875" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="58.8056640625" x="-14.40283203125" y="5.3447265625">Router C</y:NodeLabel>
@@ -78,7 +78,7 @@
       <data key="d4"><![CDATA[2]]></data>
       <data key="d9">
         <y:ShapeNode>
-          <y:Geometry height="30.0" width="30.0" x="364.0" y="404.625"/>
+          <y:Geometry height="30.0" width="30.0" x="367.12500000000006" y="408.875"/>
           <y:Fill color="#00FFFF" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" borderDistance="0.0" fontFamily="Dialog" fontSize="13" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="19.310546875" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="58.7802734375" x="-14.39013671875" y="5.3447265625">Router A</y:NodeLabel>
@@ -90,7 +90,7 @@
       <data key="d4"><![CDATA[3]]></data>
       <data key="d9">
         <y:ShapeNode>
-          <y:Geometry height="30.0" width="30.0" x="552.0" y="236.625"/>
+          <y:Geometry height="30.0" width="30.0" x="481.0" y="236.625"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" borderDistance="0.0" fontFamily="Dialog" fontSize="13" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="19.310546875" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="58.7802734375" x="-14.39013671875" y="5.3447265625">Router A</y:NodeLabel>
@@ -102,7 +102,7 @@
       <data key="d4"><![CDATA[2]]></data>
       <data key="d9">
         <y:ShapeNode>
-          <y:Geometry height="30.0" width="30.0" x="367.12500000000006" y="489.0"/>
+          <y:Geometry height="30.0" width="30.0" x="367.12500000000006" y="495.8125"/>
           <y:Fill color="#00FFFF" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" borderDistance="0.0" fontFamily="Dialog" fontSize="13" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="19.310546875" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="57.28857421875" x="-13.644287109375" y="5.3447265625">Router B</y:NodeLabel>
@@ -114,7 +114,7 @@
       <data key="d4"><![CDATA[2]]></data>
       <data key="d9">
         <y:ShapeNode>
-          <y:Geometry height="30.0" width="30.0" x="471.8125" y="489.0"/>
+          <y:Geometry height="30.0" width="30.0" x="486.375" y="495.8125"/>
           <y:Fill color="#00FFFF" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" borderDistance="0.0" fontFamily="Dialog" fontSize="13" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="19.310546875" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="58.8056640625" x="-14.40283203125" y="5.3447265625">Router C</y:NodeLabel>
@@ -128,7 +128,7 @@
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
           <y:LineStyle color="#00FF00" type="line" width="1.0"/>
           <y:Arrows source="none" target="none"/>
-          <y:EdgeLabel alignment="center" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" modelName="six_pos" modelPosition="tail" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" visible="false" width="4.0" x="-41.6343994140625" y="23.20996899874706"/>
+          <y:EdgeLabel alignment="center" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" modelName="six_pos" modelPosition="tail" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" visible="false" width="4.0" x="-45.468902587890625" y="19.186749134892978"/>
           <y:BendStyle smoothed="false"/>
         </y:PolyLineEdge>
       </data>
@@ -140,7 +140,7 @@
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
           <y:LineStyle color="#00FF00" type="line" width="1.0"/>
           <y:Arrows source="none" target="none"/>
-          <y:EdgeLabel alignment="center" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" modelName="six_pos" modelPosition="tail" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" visible="false" width="4.0" x="45.133544921875" y="15.130521576980072"/>
+          <y:EdgeLabel alignment="center" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" modelName="six_pos" modelPosition="tail" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" visible="false" width="4.0" x="41.468902587890625" y="19.18676439368204"/>
           <y:BendStyle smoothed="false"/>
         </y:PolyLineEdge>
       </data>
@@ -151,7 +151,7 @@
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
           <y:LineStyle color="#00FF00" type="line" width="1.0"/>
           <y:Arrows source="none" target="none"/>
-          <y:EdgeLabel alignment="center" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" modelName="six_pos" modelPosition="tail" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" visible="false" width="4.0" x="10.127116577425227" y="24.903717041015625"/>
+          <y:EdgeLabel alignment="center" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" modelName="six_pos" modelPosition="tail" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" visible="false" width="4.0" x="3.095572366721342" y="26.478424072265625"/>
           <y:BendStyle smoothed="false"/>
         </y:PolyLineEdge>
       </data>
@@ -162,7 +162,7 @@
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
           <y:LineStyle color="#00FF00" type="line" width="1.0"/>
           <y:Arrows source="none" target="none"/>
-          <y:EdgeLabel alignment="center" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" modelName="six_pos" modelPosition="tail" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" visible="false" width="4.0" x="36.68963623046875" y="1.3806840143880663"/>
+          <y:EdgeLabel alignment="center" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" modelName="six_pos" modelPosition="tail" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" visible="false" width="4.0" x="42.625" y="2.0"/>
           <y:BendStyle smoothed="false"/>
         </y:PolyLineEdge>
       </data>
@@ -173,7 +173,7 @@
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
           <y:LineStyle color="#00FF00" type="line" width="1.0"/>
           <y:Arrows source="none" target="none"/>
-          <y:EdgeLabel alignment="center" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" modelName="six_pos" modelPosition="tail" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" visible="false" width="4.0" x="-30.794847136200133" y="67.59811401367188"/>
+          <y:EdgeLabel alignment="center" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" modelName="six_pos" modelPosition="tail" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" visible="false" width="4.0" x="4.282074816168176" y="69.13229370117188"/>
           <y:BendStyle smoothed="false"/>
         </y:PolyLineEdge>
       </data>

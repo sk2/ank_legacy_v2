@@ -19,10 +19,9 @@
     <data key="d8"/>
     <node id="n0">
       <data key="d4"><![CDATA[1]]></data>
-      <data key="d6"/>
       <data key="d7">
         <y:ShapeNode>
-          <y:Geometry height="30.0" width="30.0" x="19.0" y="0.0"/>
+          <y:Geometry height="30.0" width="30.0" x="0.0" y="0.0"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="18.1328125" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="18.21484375" x="5.892578125" y="5.93359375">1a</y:NodeLabel>
@@ -32,10 +31,9 @@
     </node>
     <node id="n1">
       <data key="d4"><![CDATA[1]]></data>
-      <data key="d6"/>
       <data key="d7">
         <y:ShapeNode>
-          <y:Geometry height="30.0" width="30.0" x="-9.0" y="39.0"/>
+          <y:Geometry height="30.0" width="30.0" x="-50.0" y="50.0"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="18.1328125" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="19.140625" x="5.4296875" y="5.93359375">1b</y:NodeLabel>
@@ -45,10 +43,9 @@
     </node>
     <node id="n2">
       <data key="d4"><![CDATA[1]]></data>
-      <data key="d6"/>
       <data key="d7">
         <y:ShapeNode>
-          <y:Geometry height="30.0" width="30.0" x="58.0" y="35.0"/>
+          <y:Geometry height="30.0" width="30.0" x="50.0" y="50.0"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="18.1328125" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="19.140625" x="5.4296875" y="5.93359375">1d</y:NodeLabel>
@@ -58,10 +55,9 @@
     </node>
     <node id="n3">
       <data key="d4"><![CDATA[1]]></data>
-      <data key="d6"/>
       <data key="d7">
         <y:ShapeNode>
-          <y:Geometry height="30.0" width="30.0" x="25.0" y="79.0"/>
+          <y:Geometry height="30.0" width="30.0" x="0.0" y="100.0"/>
           <y:Fill color="#FFCC00" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="18.1328125" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="17.734375" x="6.1328125" y="5.93359375">1c</y:NodeLabel>
