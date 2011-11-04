@@ -18,7 +18,9 @@ class Query(object):
         self.network = network
 #Setup query here
         attribute = Word(alphanums)
+        lt, le, eq, ge, gt = oneOf("< lt"), oneOf("<= le"), oneOf("== eq is"), oneOf(">= ge"), oneOf("> gt")
         condition = oneOf("< lt <= le == is eq >= ge > gt")
+        condition = Or([lt("lt"), le("le"), eq("eq"), ge("ge"), gt("gt")])
         value = Word(alphanums)
         query_element = Group(attribute("attribute") + condition("condition") + value("value")).setResultsName("query_element")
         booleans = oneOf("and && or || not !")
@@ -42,3 +44,4 @@ class Query(object):
 G = nx.Graph()
 Q = Query(G)
 Q.query("A > 4 and B == 5 || c is AA")
+Q.query("A > 4 and B == 5")
