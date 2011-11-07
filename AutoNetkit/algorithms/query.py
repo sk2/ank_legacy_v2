@@ -14,12 +14,23 @@ from pyparsing import *
 from booleano.parser import Grammar, ConvertibleParseManager
 
 
+
+
+
 class Query(object):
 
     def __init__(self, network):
         self.network = network
 #Setup query here
-        grammar = Grammar(belongs_to="in", is_subset="is subset of")
+        new_tokens = {
+                'not': "not",
+                'eq': "is",
+                'ne': "isn't",
+                'belongs_to': "in",
+                'and': 'and',
+                'is_subset': "are included in",
+                }
+        grammar = Grammar(**new_tokens)
         self.parse_manager = ConvertibleParseManager(grammar)
         return
         
@@ -34,6 +45,7 @@ class Query(object):
 G = nx.Graph()
 Q = Query(G)
 Q.query('"thursday" in {"monday", "tuesday", "wednesday", "thursday", "friday"}')
-Q.query('today == "2009-07-17"')
+Q.query('today is "2009-07-17"')
+Q.query("a > 5 and b < 4")
 #Q.query("A > 4 and B == 5 || c is AA")
 #Q.query("A > 4 and B == 5")
