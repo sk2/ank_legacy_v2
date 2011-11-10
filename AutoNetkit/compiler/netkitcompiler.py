@@ -85,6 +85,12 @@ def interface_id(numeric_id):
     """Returns Netkit (Linux) format interface ID for an AutoNetkit interface ID"""
     return 'eth%s' % numeric_id
 
+def tap_interface_id(network, node):
+    """ Returns the next free interface number for the tap interface"""
+    return network.get_edge_count(node)/2
+    
+
+
 class NetkitCompiler:
     """Compiler main"""
 
@@ -219,8 +225,8 @@ class NetkitCompiler:
             # tap_int_id cannot conflict with already allocated interfaces
             # assume edges number sequentially, so next free int id is number of
             # edges
-            tap_id = self.network.get_edge_count(node)
-            tap_list_strings[rtr_folder_name] = (tap_id,
+            node_tap_id = tap_interface_id(self.network, node)
+            tap_list_strings[rtr_folder_name] = (node_tap_id,
                                                  self.network[node].get('tap_ip'))
 
             if "DNS" in self.services:
@@ -410,7 +416,6 @@ class NetkitCompiler:
 
             for node in my_as.nodes():
                 network_list = []
-                label = self.network.get_node_property(node, 'label')
 
                 # iBGP
                 ibgp_neighbor_list = []
