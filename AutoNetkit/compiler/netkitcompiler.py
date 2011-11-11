@@ -155,7 +155,6 @@ class NetkitCompiler:
 
         lab_template = lookup.get_template("netkit/lab.mako")
         startup_template = lookup.get_template("netkit/startup.mako")
-        hostname_template = lookup.get_template("linux/hostname.mako")
         zebra_daemons_template = lookup.get_template(
             "quagga/zebra_daemons.mako")
         zebra_template = lookup.get_template("quagga/zebra.mako")
@@ -173,7 +172,6 @@ class NetkitCompiler:
             #don't send out the tap interface
             del_default_route=True,
             daemons=startup_daemon_list,
-            set_hostname=True,
             ))
         f_startup.close()
 
@@ -304,15 +302,6 @@ class NetkitCompiler:
                 daemons=startup_daemon_list,
                 ))
             f_startup.close()
-
-            f_hostname = open( os.path.join(etc_dir(self.network, node),
-                                          "hostname"), 'w')
-
-            f_hostname.write(hostname_template.render(
-                # Netkit hostnames truncate at first period, replace with _
-                hostname = ank.fqdn(self.network, node).replace(".", "_"),
-            ))
-            f_hostname.close()
 
         # Write lab file for whole lab
         f_lab.write(lab_template.render(
