@@ -63,9 +63,11 @@ def router_config_dir():
 class Gns3Compiler:  
     """Compiler main"""
 
-    def __init__(self, network, services):
+    def __init__(self, network, services, image, hypervisor):
         self.network = network
         self.services = services
+        self.image = image
+        self.hypervisor = hypervisor
         # Speed improvement: grab eBGP and iBGP  graphs
         #TODO: fetch eBGP and iBGP graphs and cache them
 
@@ -98,7 +100,7 @@ class Gns3Compiler:
         LOG.info("Configuring GNS3")
 
         # Location of IOS binary
-        image = ""
+        working_dir = "/tmp" 
         # Set up lab
 
         # Set up routers
@@ -152,7 +154,7 @@ class Gns3Compiler:
             router_info = {}
 
             data = graph.node[node]
-            hostname = ank.hostname(self.network, node)
+            hostname = ank.fqdn(self.network, node)
             router_info['hostname'] = hostname
 
             if 'model' in data:
@@ -184,7 +186,7 @@ class Gns3Compiler:
                     remote_id = graph.edge[dst][src]['id']
                     local_cisco_id = cisco_int_name(local_id)
                     remote_cisco_id = cisco_int_name(remote_id)
-                    remote_hostname = ank.hostname(self.network, dst)
+                    remote_hostname = ank.fqdn(self.network, dst)
                     router_links.append( (local_cisco_id, remote_cisco_id,
                                           remote_hostname))
 
@@ -198,8 +200,10 @@ class Gns3Compiler:
 
         #pprint.pprint(all_router_info)
         f_lab.write(lab_template.render(
-            image = image,
+            image = self.image,
+            hypervisor = self.hypervisor,
             all_router_info = all_router_info,   
+            working_dir = working_dir,
         ))
 
         # And configure the router
@@ -210,7 +214,7 @@ class Gns3Compiler:
             for node in my_as:   
                 data = self.network.graph.node[node]
             
-                hostname = ank.hostname(self.network, node)
+                hostname = ank.fqdn(self.network, node)
                 f_cisco = open( os.path.join(router_config_dir(), 
                                             "%s.cfg" % hostname), 'w') 
                 interface_list = []  
@@ -247,7 +251,7 @@ class Gns3Compiler:
                                 hostname = hostname,
                                 asn = asn,
                                 password = "z",
-                                image = image,
+                                image = self.image,
                                 interface_list = interface_list,
                                 igp_network_list = igp_network_list, 
                                 logfile = "/var/log/zebra/ospfd.log",

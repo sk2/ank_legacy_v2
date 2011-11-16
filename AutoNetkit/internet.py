@@ -70,6 +70,9 @@ class Internet:
         self.igp = igp
         if filename:
             self.load(filename)
+
+        self.gns_image = None
+        self.gns_hypervisor = None
         
         self.services = []
          
@@ -237,7 +240,8 @@ class Internet:
             nk_comp.configure()
 
         if self.compile_targets['gns3']:
-            gns3_comp = ank.Gns3Compiler(self.network, self.services)
+            gns3_comp = ank.Gns3Compiler(self.network, self.services, 
+                    self.gns_image, self.gns_hypervisor)
             gns3_comp.initialise()     
             gns3_comp.configure()
 

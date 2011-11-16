@@ -1,6 +1,6 @@
 autostart = False
-[localhost:7200]
-    workingdir = /tmp
+[${hypervisor}]
+    workingdir = ${working_dir}
     udp = 10000
     [[2621]]
         image = ${image}
