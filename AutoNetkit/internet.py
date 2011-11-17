@@ -53,7 +53,7 @@ class Internet:
     """
     
     def __init__(self, filename=None, tapsn=IPNetwork("172.16.0.0/16"),
-            netkit=True, cbgp=False, gns3=False, junos=False,
+            netkit=True, cbgp=False, dynagen=False, junos=False,
             igp='ospf'): 
         self.network = network.Network()
         if isinstance(tapsn, str):
@@ -64,7 +64,7 @@ class Internet:
         self.compile_targets = {
                 'netkit': netkit,
                 'cbgp': cbgp,
-                'gns3': gns3,
+                'dynagen': dynagen,
                 'junos': junos,
                 }
         self.igp = igp
@@ -239,11 +239,11 @@ class Internet:
             nk_comp.initialise()     
             nk_comp.configure()
 
-        if self.compile_targets['gns3']:
-            gns3_comp = ank.Gns3Compiler(self.network, self.services, 
+        if self.compile_targets['dynagen']:
+            dynagen_comp = ank.dynagenCompiler(self.network, self.services, 
                     self.gns_image, self.gns_hypervisor)
-            gns3_comp.initialise()     
-            gns3_comp.configure()
+            dynagen_comp.initialise()     
+            dynagen_comp.configure()
 
         if self.compile_targets['cbgp']:
             cbgp_comp = ank.CbgpCompiler(self.network, self.services)

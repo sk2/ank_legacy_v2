@@ -42,15 +42,15 @@ def main():
                                         " This is the default in Netkit, "
                                         " but not ANK due to "
                                             "potentially large number of VMs"))
-    opt.add_option('--gns_image',  default= None, help="Image to use for GNS3") 
-    opt.add_option('--gns_hypervisor',  default= "localhost:7200", help="Hypervisor to use for GNS3") 
+    opt.add_option('--gns_image',  default= None, help="Image to use for dynagen") 
+    opt.add_option('--gns_hypervisor',  default= "localhost:7200", help="Hypervisor to use for dynagen") 
 
     opt.add_option('--debug',  action="store_true", default=False, help="Debugging output")
 
 # Deployment environments
     opt.add_option('--netkit',  action="store_true", default=False, help="Compile Netkit")
     opt.add_option('--cbgp',  action="store_true", default=False, help="Compile cBGP")
-    opt.add_option('--gns3',  action="store_true", default=False, help="Compile GNS3")
+    opt.add_option('--dynagen',  action="store_true", default=False, help="Compile dynagen")
     opt.add_option('--junos',  action="store_true", default=False, help="Compile JunOS")
     opt.add_option('--isis',  action="store_true", default=False, help="Use IS-IS as IGP")
     opt.add_option('--ospf',  action="store_true", default=False, help="Use OSPF as IGP")
@@ -70,7 +70,7 @@ def main():
         sys.exit(0)
         logging.setLevel(logging.DEBUG)
 
-    if not (options.netkit or options.cbgp or options.gns3 or options.junos):
+    if not (options.netkit or options.cbgp or options.dynagen or options.junos):
         LOG.warn("Please specify a target environment, eg --netkit")
         sys.exit(0)
 
@@ -86,7 +86,7 @@ def main():
         if options.isis:
             igp = "isis"
         inet = Internet(tapsn = options.tapsn, netkit=options.netkit,
-                cbgp=options.cbgp, gns3=options.gns3, junos=options.junos,
+                cbgp=options.cbgp, dynagen=options.dynagen, junos=options.junos,
                 igp=igp)
         inet.load(f_name)
     else:    

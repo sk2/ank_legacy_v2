@@ -1,5 +1,5 @@
 """
-Generate GNS3 configuration files for a network 
+Generate dynagen configuration files for a network 
 """
 from mako.lookup import TemplateLookup    
 
@@ -53,7 +53,7 @@ import itertools
 #TODO: Move these into a netkit helper function*****
 def lab_dir():
     #TODO: make use config
-    return config.gns3_dir
+    return config.dynagen_dir
 
 def router_config_dir():
     #TODO: make use config
@@ -62,7 +62,7 @@ def router_config_dir():
 
 
 
-class Gns3Compiler:  
+class dynagenCompiler:  
     """Compiler main"""
 
     def __init__(self, network, services, image, hypervisor):
@@ -98,15 +98,15 @@ class Gns3Compiler:
         return
 
     def configure(self):  
-        """Generates GNS3 specific configuration files."""
-        LOG.info("Configuring GNS3")
+        """Generates dynagen specific configuration files."""
+        LOG.info("Configuring dynagen")
 
         # Location of IOS binary
         working_dir = "/tmp" 
         # Set up lab
 
         # Set up routers
-        lab_template = lookup.get_template("gns3/topology.mako")
+        lab_template = lookup.get_template("dynagen/topology.mako")
 
         # Counter starting at 2000, eg 2000, 2001, 2002, etc
         console_port = itertools.count(2000)
@@ -150,7 +150,7 @@ class Gns3Compiler:
 
         all_router_info = {}
 
-        #TODO: make this use GNS3 tagged nodes
+        #TODO: make this use dynagen tagged nodes
         for node in self.network.get_nodes_by_property('platform', 'NETKIT'):
             router_info = {}
 
@@ -261,10 +261,9 @@ class Gns3Compiler:
 
         # create .tgz
 # create .tgz
-        tar_filename = "gns3_%s.tar.gz" % time.strftime("%Y%m%d_%H%M", time.localtime())
+        tar_filename = "dynagen_%s.tar.gz" % time.strftime("%Y%m%d_%H%M", time.localtime())
         tar = tarfile.open(os.path.join(config.ank_main_dir, tar_filename), "w:gz")
 # arcname to flatten file structure
-        print lab_dir()
-        tar.add(lab_dir(), arcname="gns3_lab")
-        self.network.compiled_labs['gns3'] = tar_filename
+        tar.add(lab_dir(), arcname="dynagen_lab")
+        self.network.compiled_labs['dynagen'] = tar_filename
         tar.close()
