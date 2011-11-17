@@ -13,6 +13,8 @@ LOG = logging.getLogger("ANK")
 import shutil      
 import glob
 import netaddr
+import time
+import tarfile
 
 import AutoNetkit as ank
 #from ank.config import config
@@ -105,7 +107,6 @@ class Gns3Compiler:
 
         # Set up routers
         lab_template = lookup.get_template("gns3/topology.mako")
-        f_lab = open(os.path.join(lab_dir(), "lab.net"), 'w') 
 
         # Counter starting at 2000, eg 2000, 2001, 2002, etc
         console_port = itertools.count(2000)
@@ -164,8 +165,7 @@ class Gns3Compiler:
 
             router_info['console'] = console_port.next() 
             #TODO: tidy this up - want relative reference to config dir
-            router_info['cnfg'] = os.path.join("configs" , 
-                                            "%s.cfg" % hostname)
+            router_info['cnfg'] = os.path.join("configs", "%s.cfg" % hostname)
 
             # Max of 3 connections out
             # todo: check symmetric
@@ -199,12 +199,14 @@ class Gns3Compiler:
         #TODO: Also setup chassis information
 
         #pprint.pprint(all_router_info)
-        f_lab.write(lab_template.render(
-            image = self.image,
-            hypervisor = self.hypervisor,
-            all_router_info = all_router_info,   
-            working_dir = working_dir,
-        ))
+        lab_file = os.path.join(lab_dir(), "lab.net")
+        with open( lab_file, 'w') as f_lab:
+            f_lab.write( lab_template.render(
+                image = self.image,
+                hypervisor = self.hypervisor,
+                all_router_info = all_router_info,   
+                working_dir = working_dir,
+                ))
 
         # And configure the router
         cisco_template = lookup.get_template("cisco/cisco.mako") 
@@ -256,7 +258,13 @@ class Gns3Compiler:
                                 igp_network_list = igp_network_list, 
                                 logfile = "/var/log/zebra/ospfd.log",
                             ))
-            
 
-
-
+        # create .tgz
+# create .tgz
+        tar_filename = "gns3_%s.tar.gz" % time.strftime("%Y%m%d_%H%M", time.localtime())
+        tar = tarfile.open(os.path.join(config.ank_main_dir, tar_filename), "w:gz")
+# arcname to flatten file structure
+        print lab_dir()
+        tar.add(lab_dir(), arcname="gns3_lab")
+        self.network.compiled_labs['gns3'] = tar_filename
+        tar.close()

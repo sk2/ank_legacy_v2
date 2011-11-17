@@ -1,4 +1,4 @@
-autostart = False
+autostart = True
 [${hypervisor}]
     workingdir = ${working_dir}
     udp = 10000
