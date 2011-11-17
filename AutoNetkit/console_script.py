@@ -42,8 +42,8 @@ def main():
                                         " This is the default in Netkit, "
                                         " but not ANK due to "
                                             "potentially large number of VMs"))
-    opt.add_option('--gns_image',  default= None, help="Image to use for dynagen") 
-    opt.add_option('--gns_hypervisor',  default= "localhost:7200", help="Hypervisor to use for dynagen") 
+    opt.add_option('--dynagen_image',  default= None, help="Image to use for dynagen") 
+    opt.add_option('--dynagen_hypervisor',  default= "localhost:7200", help="Hypervisor to use for dynagen") 
 
     opt.add_option('--debug',  action="store_true", default=False, help="Debugging output")
 
@@ -94,9 +94,9 @@ def main():
         sys.exit(0)
 
     # set properties
-    inet.gns_hypervisor = options.gns_hypervisor
-    if options.gns_image:
-        inet.gns_image = options.gns_image
+    inet.dynagen_hypervisor = options.dynagen_hypervisor
+    if options.dynagen_image:
+        inet.dynagen_image = options.dynagen_image
 
     inet.add_dns()
 

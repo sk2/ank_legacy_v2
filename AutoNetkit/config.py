@@ -35,8 +35,8 @@ lab_dir = os.path.join(ank_main_dir, lab_dir)
 cbgp_dir = settings.get('Lab', 'cbgp_dir')
 cbgp_dir = os.path.join(ank_main_dir, cbgp_dir)
 
-gns3_dir = settings.get('Lab', 'gns3_dir')
-gns3_dir = os.path.join(ank_main_dir, gns3_dir)
+dynagen_dir = settings.get('Lab', 'dynagen_dir')
+dynagen_dir = os.path.join(ank_main_dir, dynagen_dir)
 
 junos_dir = settings.get('Lab', 'junos_dir')
 junos_dir = os.path.join(ank_main_dir, junos_dir)

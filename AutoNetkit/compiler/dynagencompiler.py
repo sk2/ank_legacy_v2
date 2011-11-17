@@ -99,7 +99,7 @@ class dynagenCompiler:
 
     def configure(self):  
         """Generates dynagen specific configuration files."""
-        LOG.info("Configuring dynagen")
+        LOG.info("Configuring Dynagen")
 
         # Location of IOS binary
         working_dir = "/tmp" 

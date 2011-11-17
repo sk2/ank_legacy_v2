@@ -71,8 +71,8 @@ class Internet:
         if filename:
             self.load(filename)
 
-        self.gns_image = None
-        self.gns_hypervisor = None
+        self.dynagen_image = None
+        self.dynagen_hypervisor = None
         
         self.services = []
          
@@ -241,7 +241,7 @@ class Internet:
 
         if self.compile_targets['dynagen']:
             dynagen_comp = ank.dynagenCompiler(self.network, self.services, 
-                    self.gns_image, self.gns_hypervisor)
+                    self.dynagen_image, self.dynagen_hypervisor)
             dynagen_comp.initialise()     
             dynagen_comp.configure()
 
