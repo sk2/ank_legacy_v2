@@ -165,7 +165,13 @@ class dynagenCompiler:
 
             router_info['console'] = console_port.next() 
             #TODO: tidy this up - want relative reference to config dir
-            router_info['cnfg'] = os.path.join("configs", "%s.cfg" % hostname)
+            rtr_conf_file = os.path.join("configs", "%s.cfg" % hostname)
+            #router_info['cnfg'] = rtr_conf_file
+            # Absolute configs for remote dynagen deployment
+#TODO: make this dependent on remote host - if localhost then don't use
+# and if do use, then 
+            rtr_conf_file_with_path = os.path.join(lab_dir(), rtr_conf_file)
+            router_info['cnfg'] = os.path.abspath(rtr_conf_file_with_path)
 
             # Max of 3 connections out
             # todo: check symmetric
@@ -210,6 +216,7 @@ class dynagenCompiler:
 
         # And configure the router
         cisco_template = lookup.get_template("cisco/cisco.mako") 
+        self.network.set_default_edge_property('weight', 1)
 
         as_graphs = ank.get_as_graphs(self.network)    
         for my_as in as_graphs:  
