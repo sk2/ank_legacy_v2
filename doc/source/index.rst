@@ -1,6 +1,6 @@
 AutoNetkit
 ======================================
-.. image:: images/multi_as.*
+.. image:: images/splash_network.*
 
 AutoNetkit allows you to create and deploy large-scale emulated networks based on the `Netkit <http://www.netkit.org>`_ emulation platform.
 It also has support for `Junosphere <http://www.juniper.net/as/en/products-services/software/junos-platform/junosphere/>`_,

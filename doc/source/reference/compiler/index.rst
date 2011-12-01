@@ -8,5 +8,5 @@ Compile network to target platform
 
    netkitcompiler
    cbgpcompiler
-   gns3compiler
+   dynagencompiler
    junoscompiler
