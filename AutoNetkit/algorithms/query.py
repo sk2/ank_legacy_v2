@@ -52,12 +52,14 @@ boolean_and = Literal("&").setResultsName("&")
 boolean_or = Literal("|").setResultsName("|")
 boolean = (boolean_and | boolean_or).setResultsName("boolean")
 
-numericQuery = Group(attribute + comparison + integer)
-stringQuery =  Group(attribute + stringComparison +
-        quotedString.setResultsName("value").setParseAction(removeQuotes))
+numericQuery = Group(attribute + comparison + integer).setResultsName( "stringQuery", listAllMatches=True)
 
-singleQuery = numericQuery("numericQuery") | stringQuery("stringQuery")
-query = singleQuery + Optional(boolean + singleQuery)
+stringQuery =  Group(attribute + stringComparison +
+        quotedString.setResultsName("value").setParseAction(removeQuotes)
+        ).setResultsName( "numericQuery", listAllMatches=True)
+
+singleQuery = numericQuery | stringQuery
+query = singleQuery + OneOrMore(boolean + singleQuery)
 
 tests = [
         #'A = "aaaaa"',
@@ -65,15 +67,23 @@ tests = [
         #'A = 1',
         #'A = 1 & b = 2',
         #'A = 1 & b = "aaa"',
-        'Network = "ACOnet" & asn = 680',
+        'Network = "ACOnet" & asn = 680 & Latitude < 50',
         #'asn = 680',
         ]
+
+def evaluate(stack):
+    print "Stack:"
+    for item in stack:
+        print item
+
+
 
 for test in tests:
     print "--------------------------"
     print test
     result = query.parseString(test)
     print result.dump()
+
     print "----"
 #TODO: function factories???
     def comp_fn_string(token):
@@ -82,26 +92,41 @@ for test in tests:
     def comp_fn_numeric(token):
         return opn[token.comparison](float(graph.node[n].get(token.attribute)), token.value)
 
-    for key, token in result.items():
+    stack = []
+    for token in result:
+        print token
+
+
+    print "numeric:"
+    print result.numericQuery
+    print "string:"
+    print result.stringQuery
+
+    for token in result.asList():
+        print
+        print "TOKEN IS %s" % token
         #TODO: work out why get & as literal in the tokens
         comp_fn = None
-        print "key is " + key
-        if key == "boolean":
-            print "boolean joiner"
+#THIS IS HACKY AND NEED TO FIND WAY TO look at type using named tokens without dict collisions
+        if token in boolean:
+            stack.append(token)
             continue
 
-        if key == "numericQuery":
+        print result.numericQuery
+        print token in result.numericQuery
+        print token == result.numericQuery
+
+        if token == result.numericQuery:
+            print "is numeric"
             comp_fn = comp_fn_numeric
-        elif key == "stringQuery":
+        if token in result.stringQuery:
             comp_fn = comp_fn_string
        
-# evaluate
-        print "continuing"
         if comp_fn:
-            result_set = [n for n in graph if comp_fn(token) ]
-            print result_set
+            result_set = (n for n in graph if comp_fn(token) )
+            stack.append(result_set)
 
-
+    evaluate(stack)
 
 
 # can set parse action to be return string?
