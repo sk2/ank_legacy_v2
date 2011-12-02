@@ -35,8 +35,8 @@ opn = {
         '=': operator.eq,
         '>=': operator.ge,
         '>': operator.gt,
-        '&': operator.and_,
-        '|': operator.or_,
+        '&': set.intersection,
+        '|': set.union,
         }
 
 # Both are of comparison to access in same manner when evaluating
@@ -52,11 +52,10 @@ boolean_and = Literal("&").setResultsName("&")
 boolean_or = Literal("|").setResultsName("|")
 boolean = (boolean_and | boolean_or).setResultsName("boolean")
 
-numericQuery = Group(attribute + comparison + integer).setResultsName( "stringQuery", listAllMatches=True)
+numericQuery = Group(attribute + comparison + integer).setResultsName( "stringQuery")
 
 stringQuery =  Group(attribute + stringComparison +
-        quotedString.setResultsName("value").setParseAction(removeQuotes)
-        ).setResultsName( "numericQuery", listAllMatches=True)
+        quotedString.setResultsName("value").setParseAction(removeQuotes)).setResultsName( "numericQuery")
 
 singleQuery = numericQuery | stringQuery
 query = singleQuery + OneOrMore(boolean + singleQuery)
@@ -67,14 +66,17 @@ tests = [
         #'A = 1',
         #'A = 1 & b = 2',
         #'A = 1 & b = "aaa"',
-        'Network = "ACOnet" & asn = 680 & Latitude < 50',
+        'Network = "ACOnet" & asn = 1853 & Latitude < 50',
         #'asn = 680',
         ]
 
 def evaluate(stack):
-    print "Stack:"
-    for item in stack:
-        print item
+    if len(stack) == 1:
+        return set(stack.pop())
+    else:
+        a = set(stack.pop())
+        op = stack.pop()
+        return opn[op](a, evaluate(stack))
 
 
 
@@ -96,37 +98,29 @@ for test in tests:
     for token in result:
         print token
 
-
-    print "numeric:"
-    print result.numericQuery
-    print "string:"
-    print result.stringQuery
-
-    for token in result.asList():
-        print
-        print "TOKEN IS %s" % token
-        #TODO: work out why get & as literal in the tokens
-        comp_fn = None
-#THIS IS HACKY AND NEED TO FIND WAY TO look at type using named tokens without dict collisions
+    for token in result:
+        print "token is %s" % token
         if token in boolean:
             stack.append(token)
             continue
 
-        print result.numericQuery
-        print token in result.numericQuery
-        print token == result.numericQuery
+# different function depending on value type: numeric or string
 
-        if token == result.numericQuery:
-            print "is numeric"
-            comp_fn = comp_fn_numeric
-        if token in result.stringQuery:
+        if isinstance(token.value, str):
             comp_fn = comp_fn_string
+        if isinstance(token.value, int):
+            comp_fn = comp_fn_numeric
        
+        for n in graph:
+            print graph.node[n].get("label")
+            print graph.node[n].get(token.attribute)
         if comp_fn:
-            result_set = (n for n in graph if comp_fn(token) )
+            #TODO: change to generator expressions and evaluate as sets in the evaluate function
+            result_set = (n for n in graph if token.attribute in graph.node[n] and comp_fn(token) )
             stack.append(result_set)
 
-    evaluate(stack)
+    final_set = evaluate(stack)
+    print final_set
 
 
 # can set parse action to be return string?
