@@ -87,6 +87,12 @@ for test in tests:
     result = query.parseString(test)
     #print result.dump()
 
+#TODO: rearrange so remove stack and iterate over nodes only once
+# so execute the boolean as function, rather than using stack on node sets
+# ie test each node for all the required matches in one step
+# and use data(=True) so get the dictionary reference once -> faster
+# especially if using short circuits so when false stop executing
+
     def comp_fn_string(token, n):
         return opn[token.comparison](graph.node[n].get(token.attribute), token.value)
 
