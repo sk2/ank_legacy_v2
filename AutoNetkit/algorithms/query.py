@@ -67,15 +67,20 @@ tests = [
         #'A = 1 & b = 2',
         #'A = 1 & b = "aaa"',
         'Network = "ACOnet" & asn = 1853 & Latitude < 50',
-        #'asn = 680',
+        'Network = "ACOnet" & Longitude < 14',
+        'asn = 680',
         ]
 
 def evaluate(stack):
     if len(stack) == 1:
-        return set(stack.pop())
+        x = set(stack.pop())
+        print "x is %s" % x
+        return x
     else:
         a = set(stack.pop())
+        print "a is %s" % a
         op = stack.pop()
+        print "op is %s" % op
         return opn[op](a, evaluate(stack))
 
 
@@ -88,10 +93,10 @@ for test in tests:
 
     print "----"
 #TODO: function factories???
-    def comp_fn_string(token):
+    def comp_fn_string(token, n):
         return opn[token.comparison](graph.node[n].get(token.attribute), token.value)
 
-    def comp_fn_numeric(token):
+    def comp_fn_numeric(token, n):
         return opn[token.comparison](float(graph.node[n].get(token.attribute)), token.value)
 
     stack = []
@@ -116,11 +121,12 @@ for test in tests:
             print graph.node[n].get(token.attribute)
         if comp_fn:
             #TODO: change to generator expressions and evaluate as sets in the evaluate function
-            result_set = (n for n in graph if token.attribute in graph.node[n] and comp_fn(token) )
+            result_set = set(n for n in graph if token.attribute in graph.node[n] and comp_fn(token, n) )
             stack.append(result_set)
 
     final_set = evaluate(stack)
     print final_set
+    print ", ".join(graph.node[n].get('label') for n in final_set)
 
 
 # can set parse action to be return string?
