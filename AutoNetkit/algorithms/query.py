@@ -50,10 +50,11 @@ integer = Word(nums).setResultsName("value").setParseAction(lambda t: int(t[0]))
 
 boolean_and = Literal("&").setResultsName("&")
 boolean_or = Literal("|").setResultsName("|")
-boolean = boolean_and | boolean_or
+boolean = (boolean_and | boolean_or).setResultsName("boolean")
 
 numericQuery = Group(attribute + comparison + integer)
-stringQuery =  Group(attribute + stringComparison + quotedString.setResultsName("value"))
+stringQuery =  Group(attribute + stringComparison +
+        quotedString.setResultsName("value").setParseAction(removeQuotes))
 
 singleQuery = numericQuery("numericQuery") | stringQuery("stringQuery")
 query = singleQuery + Optional(boolean + singleQuery)
@@ -64,15 +65,9 @@ tests = [
         #'A = 1',
         #'A = 1 & b = 2',
         #'A = 1 & b = "aaa"',
-        'Network = "ACOnet"',
-        'asn = 680',
+        'Network = "ACOnet" & asn = 680',
+        #'asn = 680',
         ]
-
-
-def evaluate(s):
-    """ Evaluates the stack"""
-    # baed on fourFn.py
-    pass
 
 for test in tests:
     print "--------------------------"
@@ -87,16 +82,24 @@ for test in tests:
     def comp_fn_numeric(token):
         return opn[token.comparison](float(graph.node[n].get(token.attribute)), token.value)
 
-
     for key, token in result.items():
+        #TODO: work out why get & as literal in the tokens
+        comp_fn = None
+        print "key is " + key
+        if key == "boolean":
+            print "boolean joiner"
+            continue
+
         if key == "numericQuery":
             comp_fn = comp_fn_numeric
         elif key == "stringQuery":
             comp_fn = comp_fn_string
-
-# evalue
-        result_set = [n for n in graph if comp_fn(token) ]
-        print result_set
+       
+# evaluate
+        print "continuing"
+        if comp_fn:
+            result_set = [n for n in graph if comp_fn(token) ]
+            print result_set
 
 
 
