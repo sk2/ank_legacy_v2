@@ -64,7 +64,7 @@ tests = [
         #'A = 1',
         #'A = 1 & b = 2',
         #'A = 1 & b = "aaa"',
-        #'Network = "ACOnet"',
+        'Network = "ACOnet"',
         'asn = 680',
         ]
 
