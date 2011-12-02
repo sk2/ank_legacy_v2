@@ -11,42 +11,98 @@ import logging
 LOG = logging.getLogger("ANK")
 #TODO: only import what is needed
 from pyparsing import *
+import operator
 
-class Query(object):
+graph = nx.read_gpickle("condensed_west_europe.pickle")
+#print graph.nodes(data=True)
 
-    def __init__(self, network):
-        self.network = network
-#Setup query here
-        attribute = Word(alphanums)
-        lt, le, eq, ge, gt = oneOf("< lt"), oneOf("<= le"), oneOf("== eq is"), oneOf(">= ge"), oneOf("> gt")
-        condition = oneOf("< lt <= le == is eq >= ge > gt")
-        condition = Or([lt("lt"), le("le"), eq("eq"), ge("ge"), gt("gt")])
-        value = Word(alphanums)
-        query_element = Group(attribute("attribute") + condition("condition") + value("value")).setResultsName("query_element")
-        booleans = oneOf("and && or || not !")
-#TODO: Add support for parentheses
-        self.query_parse = Group(query_element + ZeroOrMore(booleans + query_element)).setResultsName("Query")
-        return
-        
-    def query(self, qstring):
-        """ Query network property/properties
-        """
-        print "CALLED"
-        print qstring
-        result = self.query_parse.parseString(qstring)
-        print result.asXML("Query")
-        print "----------"
-        print result.dump()
-        print "----------"
-        print G.nodes(data=True)
-        print "----------"
-        for blah in result.Query:
-            print blah
+##### parser
+# Node selection syntax
 
-        return
+attribute = Word(alphas, alphanums+'_').setResultsName("attribute")
+#TODO: check how evaluation examples on pyparsing work out which comparison/operator is used
+
+lt = Literal("<").setResultsName("<")
+le = Literal("<=").setResultsName("<=")
+eq = Literal("=").setResultsName("=")
+ne = Literal("!=").setResultsName("!=")
+ge = Literal(">=").setResultsName(">=")
+gt = Literal(">").setResultsName(">")
+
+opn = {
+        '<': operator.lt,
+        '<=': operator.le,
+        '=': operator.eq,
+        '>=': operator.ge,
+        '>': operator.gt,
+        '&': operator.and_,
+        '|': operator.or_,
+        }
+
+# Both are of comparison to access in same manner when evaluating
+comparison = (lt | le | eq | ne | ge | gt).setResultsName("comparison")
+stringComparison = (eq | ne).setResultsName("comparison")
+#
+#quoted string is already present
+integer = Word(nums).setResultsName("value").setParseAction(lambda t: int(t[0]))
+
+#TODO: allow parentheses? - should be ok as pass to the python parser
+
+boolean_and = Literal("&").setResultsName("&")
+boolean_or = Literal("|").setResultsName("|")
+boolean = boolean_and | boolean_or
+
+numericQuery = Group(attribute + comparison + integer)
+stringQuery =  Group(attribute + stringComparison + quotedString.setResultsName("value"))
+
+singleQuery = numericQuery("numericQuery") | stringQuery("stringQuery")
+query = singleQuery + Optional(boolean + singleQuery)
+
+tests = [
+        #'A = "aaaaa"',
+        #'A = "aaaaa aa"',
+        #'A = 1',
+        #'A = 1 & b = 2',
+        #'A = 1 & b = "aaa"',
+        #'Network = "ACOnet"',
+        'asn = 680',
+        ]
 
 
-G = nx.Graph()
-Q = Query(G)
-Q.query("A > 4 and B == 5 || c is AA")
-Q.query("A > 4 and B == 5")
+def evaluate(s):
+    """ Evaluates the stack"""
+    # baed on fourFn.py
+    pass
+
+for test in tests:
+    print "--------------------------"
+    print test
+    result = query.parseString(test)
+    print result.dump()
+    print "----"
+#TODO: function factories???
+    def comp_fn_string(token):
+        return opn[token.comparison](graph.node[n].get(token.attribute), token.value)
+
+    def comp_fn_numeric(token):
+        return opn[token.comparison](float(graph.node[n].get(token.attribute)), token.value)
+
+
+    for key, token in result.items():
+        if key == "numericQuery":
+            comp_fn = comp_fn_numeric
+        elif key == "stringQuery":
+            comp_fn = comp_fn_string
+
+# evalue
+        result_set = [n for n in graph if comp_fn(token) ]
+        print result_set
+
+
+
+
+# can set parse action to be return string?
+
+#TODO: create function from the parsed result
+# eg a lambda, and then apply this function to the nodes in the graph
+# eg G.node[n].get(attribute) = "quotedstring"  operator 
