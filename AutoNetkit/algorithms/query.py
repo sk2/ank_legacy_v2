@@ -22,6 +22,9 @@ graph = nx.read_gpickle("condensed_west_europe.pickle")
 attribute = Word(alphas, alphanums+'_').setResultsName("attribute")
 #TODO: check how evaluation examples on pyparsing work out which comparison/operator is used
 
+
+#TODO: allow wildcards
+
 lt = Literal("<").setResultsName("<")
 le = Literal("<=").setResultsName("<=")
 eq = Literal("=").setResultsName("=")
@@ -59,7 +62,7 @@ stringValues = (Word(alphanums) | quotedString.setParseAction(removeQuotes)).set
 stringQuery =  Group(attribute + stringComparison + stringValues).setResultsName( "stringQuery")
 
 singleQuery = numericQuery | stringQuery
-queryParser = singleQuery + ZeroOrMore(boolean + singleQuery)
+nodeQuery = singleQuery + ZeroOrMore(boolean + singleQuery)
 
 tests = [
         'Network = ACOnet & asn = 1853 & Latitude < 50',
@@ -79,12 +82,12 @@ def evaluate(stack):
         op = stack.pop()
         return opn[op](a, evaluate(stack))
 
-
-
-
-
 def query(qstring):
-    result = queryParser.parseString(qstring)
+    if isinstance(qstring, str):
+        result = nodeQuery.parseString(qstring)
+    else:
+# don't parse as likely came from edge parser
+        result = qstring
 
 #TODO: rearrange so remove stack and iterate over nodes only once
 # so execute the boolean as function, rather than using stack on node sets
@@ -118,17 +121,20 @@ def query(qstring):
             stack.append(result_set)
 
     final_set = evaluate(stack)
-    #print ", ".join(graph.node[n].get('label') for n in final_set)
     return final_set
 
+def nodes_to_labels(nodes):
+    return  ", ".join(graph.node[n].get('label') for n in nodes)
+
+def edges_to_labels(edges):
+    return  ", ".join("%s->%s" % 
+            (graph.node[u].get('label'), graph.node[v].get('label')) for (u,v) in edges)
 
 # can set parse action to be return string?
 
 #TODO: create function from the parsed result
 # eg a lambda, and then apply this function to the nodes in the graph
 # eg G.node[n].get(attribute) = "quotedstring"  operator 
-
-
 
 """
 for test in tests:
@@ -139,40 +145,51 @@ for test in tests:
 """
 
 set_a =  query('Network = GEANT')     
-set_a =  query('Network = ACOnet')     
-set_b = query('Network = CESNET')
-print set_a
-print set_b
+set_b =  query('Network = GARR')     
 
-node_set = set_a | set_b
-print node_set
 
-edges = graph.edges(node_set)
-print edges
+edgeType = oneOf("<- <-> ->").setResultsName("edgeType")
+edgeQuery = ("(" + nodeQuery.setResultsName("query_a") + ")"
+        + edgeType
+        + "(" + nodeQuery.setResultsName("query_b") + ")")
+
+
+def find_edges(qstring):
+    result = edgeQuery.parseString(qstring)
+    set_a = query(result.query_a)
+    set_b = query(result.query_b)
+    select_type = result.edgeType
+
+    node_set = set_a | set_b
+
+    edges = graph.edges(node_set)
 # 1 ->, 2 <-, 3 <->
 
+    def select_fn_u_to_v( (u, v), src_set, dst_set):
+        """ u -> v"""
+        return (u in src_set and v in dst_set)
 
-def select_fn_u_to_v( (u, v), src_set, dst_set):
-    """ u -> v"""
-    return (u in src_set and v in dst_set)
+    def select_fn_u_from_v( (u, v), src_set, dst_set):
+        """ u <- v"""
+        return (u in dst_set and v in src_set)
 
-def select_fn_u_from_v( (u, v), src_set, dst_set):
-    """ u <- v"""
-    return (u in dst_set and v in src_set)
+    def select_fn_v_to_from_u( (u, v), src_set, dst_set):
+        """ u <- v"""
+        return (u in src_set and v in dst_set) or (u in dst_set and v in src_set)
 
-def select_fn_v_to_from_u( (u, v), src_set, dst_set):
-    """ u <- v"""
-    return (u in src_set and v in dst_set) or (u in dst_set and v in src_set)
+    if select_type == "->":
+        select_function = select_fn_u_to_v
+    elif select_type == "<-":
+        select_function = select_fn_u_from_v
+    elif select_type == "<->":
+        select_function = select_fn_v_to_from_u 
 
-select_type = 1
-if select_type == 1:
-    select_function = select_fn_u_to_v
-elif select_type == 2:
-    select_function = select_fn_u_from_v
-elif select_type == 3:
-    select_function = select_fn_v_to_from_u 
+    return ( e for e in edges if select_function(e, set_a, set_b))
 
-matching_edges = ( e for e in edges if select_function(e, set_a, set_b))
 
-print list(matching_edges)
+#TODO: check if "<->" means join <- and -> or means bidirectional edge... or depends om Graph vs DiGraph?
+
+matching_edges = find_edges('(Network = GEANT) <-> (Network = GARR)')
+matching_edges = find_edges('(Network = GEANT) <-> (asn = 680)')
+print edges_to_labels(matching_edges)
 
