@@ -47,7 +47,7 @@ comparison = (lt | le | eq | ne | ge | gt).setResultsName("comparison")
 stringComparison = (eq | ne).setResultsName("comparison")
 #
 #quoted string is already present
-integer = Word(nums).setResultsName("value").setParseAction(lambda t: int(t[0]))
+float_string = Word(nums).setResultsName("value").setParseAction(lambda t: float(t[0]))
 
 #TODO: allow parentheses? - should be ok as pass to the python parser
 
@@ -55,7 +55,7 @@ boolean_and = Literal("&").setResultsName("&")
 boolean_or = Literal("|").setResultsName("|")
 boolean = (boolean_and | boolean_or).setResultsName("boolean")
 
-numericQuery = Group(attribute + comparison + integer).setResultsName( "numericQuery")
+numericQuery = Group(attribute + comparison + float_string).setResultsName( "numericQuery")
 
 stringValues = (Word(alphanums) | quotedString.setParseAction(removeQuotes)).setResultsName("value")
 
@@ -112,7 +112,7 @@ def query(qstring):
 
         if isinstance(token.value, str):
             comp_fn = comp_fn_string
-        if isinstance(token.value, int):
+        if isinstance(token.value, float):
             comp_fn = comp_fn_numeric
        
         if comp_fn:
@@ -144,9 +144,6 @@ for test in tests:
     #print result.dump()
 """
 
-set_a =  query('Network = GEANT')     
-set_b =  query('Network = GARR')     
-
 
 edgeType = oneOf("<- <-> ->").setResultsName("edgeType")
 edgeQuery = ("(" + nodeQuery.setResultsName("query_a") + ")"
@@ -160,6 +157,7 @@ def find_edges(qstring):
     set_b = query(result.query_b)
     select_type = result.edgeType
 
+# use nbunch feature of networkx to limit edges to look at
     node_set = set_a | set_b
 
     edges = graph.edges(node_set)
@@ -190,6 +188,7 @@ def find_edges(qstring):
 #TODO: check if "<->" means join <- and -> or means bidirectional edge... or depends om Graph vs DiGraph?
 
 matching_edges = find_edges('(Network = GEANT) <-> (Network = GARR)')
+print edges_to_labels(matching_edges)
 matching_edges = find_edges('(Network = GEANT) <-> (asn = 680)')
 print edges_to_labels(matching_edges)
 
