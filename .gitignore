@@ -18,3 +18,4 @@ tags
 AutoNetkit-*/
 doc/build/
 .tox/*
+*.pdf

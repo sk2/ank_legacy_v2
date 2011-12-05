@@ -12,6 +12,12 @@ LOG = logging.getLogger("ANK")
 from pyparsing import *
 import operator
 import os
+import pprint
+import itertools
+import TopZooTools
+import TopZooTools.geoplot
+
+
 
 graph = nx.read_gpickle("condensed_west_europe.pickle")
 #print graph.nodes(data=True)
@@ -281,20 +287,84 @@ plt.savefig("G_business_relationship.pdf")
 # or just use search matching? slower??
 # need to know remapping of node ids...
 # do remapping on load, based on size of previous loaded graphs? using generator...
-top_zoo_dir = "/Users/sk2/zoo/networks/master/sources/zoogml_geocoded"
 
 alias = Word(alphanums).setResultsName("alias")
-fileAlias = (alias + "=" + quotedString.setResultsName("file"))
+fileAlias = (alias + "=" + quotedString.setResultsName("file")).setResultsName("fileAlias")
+graphNodeTuple = ("(" + stringValues.setResultsName("graph") + "," + stringValues.setResultsName("node") + ")")
+interconnectString = (graphNodeTuple.setResultsName("gn_a") + "<->" 
+        + graphNodeTuple.setResultsName("gn_b")).setResultsName("interconnectString")
+graphDirString = ('graphdir =' + quotedString.setResultsName("dir")).setResultsName("graphDir")
+stitchString = fileAlias | interconnectString | graphDirString
 
 tests = [
-        'abilene = "Abilene.gml"',
-
+        'dt = "Deutschetelekom.gml"',
+        'hibernia = "Hiberniauk.gml"',
+        'abvt = "Abvt.gml"',
+        "(dt, Berlin) <-> (abvt, London)",
+        '(dt, "New York") <-> (abvt, "New York")',
+        "(dt, London) <-> (hibernia, London)",
         ]
 
-graphs = {}
+graph_directory = "/Users/sk2/zoo/networks/master/sources/zoogml_geocoded"
+graph_dict = {}
+graph_interconnects = []
+node_relabel_gen = itertools.count()
 
 for test in tests:
-    result = fileAlias.parseString(test)
-    print result.dump()
-    filename = os.path.join(
+    result = stitchString.parseString(test)
+    if "graphDir" in result:
+        graph_directory = result.graphdir
+    elif "fileAlias" in result:
+        filename = os.path.join(graph_directory, result.file)
+#TODO: make support gml and graphml properly
+        if "gml" in filename:
+            graph = nx.read_gml(filename)
+        elif "graphml" in filename:
+            graph = nx.read_graphml(filename)
+        # relabel
+        graph = graph.to_undirected()
+        mapping=dict(zip(graph.nodes(), node_relabel_gen))
+        graph = nx.relabel_nodes(graph, mapping)
+        graph_dict[result.alias] = graph
+    elif "interconnectString" in result:
+        graph_a = graph_dict[result.gn_a.graph]
+        graph_b = graph_dict[result.gn_b.graph]
+#pop to convert list of one item to single node
+        node_a = [n for n in graph_a if graph_a.node[n].get("label") == result.gn_a.node].pop()
+        node_b = [n for n in graph_b if graph_b.node[n].get("label") == result.gn_b.node].pop()
+# And store for interconnects
+        graph_interconnects.append( (node_a, node_b))
+
+G_interconnect = nx.Graph()
+for G in graph_dict.values():
+    G_interconnect = nx.union(G_interconnect, G)
+
+# and apply interconnectString
+G_interconnect.add_edges_from(graph_interconnects)
+
+#print G_interconnect.nodes(data=True)
+
+plt.clf()
+pos=nx.spring_layout(G_interconnect)
+labels = dict( (n, G_interconnect.node[n].get('label')) for n in G_interconnect)
+
+nx.draw(G_interconnect, pos, labels=labels, arrows=False, font_size = 5, node_size = 20, node_color = "0.8", edge_color="0.8")
+plt.savefig("G_interconnect.pdf")
+
+G_interconnect.graph['name'] = "G_interconnect"
+
+
+output_path = os.getcwd()
+TopZooTools.geoplot.plot_graph(G_interconnect, output_path,
+                    explode_scale=5,
+                    use_labels=True,
+                    edge_label_attribute= "speed",
+                    label_font_size=4,
+                    #use_bluemarble=True,
+                    node_size = 20,
+                    edge_font_size=8,
+                    pdf=True,
+                    country_color="#99CC99",
+                    show_figure=True,
+                    )
 
