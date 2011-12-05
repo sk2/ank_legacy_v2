@@ -6,12 +6,12 @@ __author__ = "\n".join(['Simon Knight'])
 #    Copyright (C) 2009-2011 by Simon Knight, Hung Nguyen
 
 import networkx as nx
-import AutoNetkit as ank
 import logging
 LOG = logging.getLogger("ANK")
 #TODO: only import what is needed
 from pyparsing import *
 import operator
+import os
 
 graph = nx.read_gpickle("condensed_west_europe.pickle")
 #print graph.nodes(data=True)
@@ -48,6 +48,7 @@ stringComparison = (eq | ne).setResultsName("comparison")
 #
 #quoted string is already present
 float_string = Word(nums).setResultsName("value").setParseAction(lambda t: float(t[0]))
+integer_string = Word(nums).setResultsName("value").setParseAction(lambda t: int(t[0]))
 
 #TODO: allow parentheses? - should be ok as pass to the python parser
 
@@ -136,13 +137,12 @@ def edges_to_labels(edges):
 # eg a lambda, and then apply this function to the nodes in the graph
 # eg G.node[n].get(attribute) = "quotedstring"  operator 
 
-"""
 for test in tests:
     print "--------------------------"
     print test
-    print query(test)
+    test_result = query(test)
+    print nodes_to_labels(test_result)
     #print result.dump()
-"""
 
 
 edgeType = oneOf("<- <-> ->").setResultsName("edgeType")
@@ -187,8 +187,114 @@ def find_edges(qstring):
 
 #TODO: check if "<->" means join <- and -> or means bidirectional edge... or depends om Graph vs DiGraph?
 
-matching_edges = find_edges('(Network = GEANT) <-> (Network = GARR)')
-print edges_to_labels(matching_edges)
-matching_edges = find_edges('(Network = GEANT) <-> (asn = 680)')
-print edges_to_labels(matching_edges)
+
+#TODO: allow access to edge properties, eg (bob<->alice).freq returns 10
+test_queries = [
+        '(Network = GEANT) <-> (Network = GARR)',
+        '(Network = GEANT) <-> (asn = 680)',
+        ]
+
+print "----edges:----"
+for test in test_queries:
+    print test
+    matching_edges = find_edges(test)
+    print edges_to_labels(matching_edges)
+    print "---"
+
+
+asn = "ASN"
+asnAlias = (stringValues.setResultsName("network") + 
+        "is" + asn + integer_string.setResultsName("asn")).setResultsName("asnAlias")
+# eg AARNET is 213, sets asn of node AARNET
+#'GEANT is ASN 123',
+
+serviceString = (stringValues.setResultsName("provider")
+        + "provides" + stringValues.setResultsName("service") 
+        + "to" + stringValues.setResultsName("client")).setResultsName("serviceString")
+
+relationshipString = (stringValues.setResultsName("provider")
+        + "is a" + stringValues.setResultsName("relationship") 
+        + "of" + stringValues.setResultsName("client")).setResultsName("relationshipString")
+
+
+br_query = asnAlias | serviceString | relationshipString
+
+
+test_queries = [
+        'GEANT provides FBH to "Deutsche Telekom"',
+        "ACOnet is a customer of GEANT",
+        "ACOnet is a peer of 'Deutsche Telekom'",
+        ]
+
+
+test_queries = [
+        "B is a customer of A",
+"C is a customer of A",
+"B is a peer of C",
+"A provides freeBH to B",
+"A provides freeBH to C",
+]
+
+
+G_business_relationship = nx.DiGraph()
+
+print "----bus rel:----"
+for test in test_queries:
+    print test
+    result = br_query.parseString(test)
+    if "relationshipString" in result:
+        G_business_relationship.add_edge(result.provider, result.client, attr=result.relationship)
+    elif "serviceString" in result:
+        G_business_relationship.add_edge(result.provider, result.client, attr=result.service)
+    elif "asnAlias" in result:
+        print "is service"
+
+    print "---"
+
+print G_business_relationship.edges(data=True)
+
+import matplotlib.pyplot as plt
+pos=nx.spring_layout(G_business_relationship)
+
+nx.draw(G_business_relationship, pos, font_size=18, arrows=False, node_color = "0.8", edge_color="0.8")
+
+# NetworkX will automatically put a box behind label, make invisible
+# by setting alpha to zero
+bbox = dict(boxstyle='round',
+        ec=(1.0, 1.0, 1.0, 0),
+        fc=(1.0, 1.0, 1.0, 0.0),
+        )      
+
+
+edge_labels = dict( ((s,t), d.get('attr')) for s,t,d in G_business_relationship.edges(data=True))
+nx.draw_networkx_edge_labels(G_business_relationship, pos, edge_labels, font_size=16, label_pos = 0.8, bbox = bbox)
+plt.savefig("G_business_relationship.pdf")
+
+
+#------------------------------
+# Stitching together
+# alias = file
+# gml or graphml
+# abilene = "abilene.graphml"
+# Connection: 
+# push these into a dict indexed by alias
+# or just use search matching? slower??
+# need to know remapping of node ids...
+# do remapping on load, based on size of previous loaded graphs? using generator...
+top_zoo_dir = "/Users/sk2/zoo/networks/master/sources/zoogml_geocoded"
+
+alias = Word(alphanums).setResultsName("alias")
+fileAlias = (alias + "=" + quotedString.setResultsName("file"))
+
+tests = [
+        'abilene = "Abilene.gml"',
+
+        ]
+
+graphs = {}
+
+for test in tests:
+    result = fileAlias.parseString(test)
+    print result.dump()
+    filename = os.path.join(
 
