@@ -427,23 +427,37 @@ bgpSessionQuery << (
 tests = [
         "if prefix_list = pl_1 then setComm 100 else setComm 200",
         "if prefix_list =  pl_1 then setComm 100 else if prefix_list = pl_2 then setComm 200",
+        "if prefix_list =  pl_1 then setComm 100 else if prefix_list = pl_2 then setComm 200 else setComm 300",
+        ("if prefix_list =  pl_1 then setComm 100 else if prefix_list = pl_2 " 
+        "then setComm 200 else if prefix_list = pl_3 then setComm 300 else setComm 400"),
 ]
 
+
 def process_if_then_else(parsed_query):
-    print 
     if "bgpSessionQuery" in parsed_query.else_clause:
-                return [ 
-                ['if', parsed_query.if_clause.attribute, parsed_query.if_clause.comparison, 
+# Nested query
+                return { 
+                'if': [parsed_query.if_clause.attribute, parsed_query.if_clause.comparison, 
                     parsed_query.if_clause.value],
-                ['then', parsed_query.then_clause.attribute, parsed_query.then_clause.value],
-                ['else', process_if_then_else(parsed_query.else_clause.bgpSessionQuery)],
-                ]
+                'then': [parsed_query.then_clause.attribute, parsed_query.then_clause.value],
+                'else': [process_if_then_else(parsed_query.else_clause.bgpSessionQuery)],
+                }
+
+    elif parsed_query.else_clause:
+                return {
+                'if': [parsed_query.if_clause.attribute, parsed_query.if_clause.comparison, 
+                    parsed_query.if_clause.value],
+                'then': [parsed_query.then_clause.attribute, parsed_query.then_clause.value],
+                'else': [parsed_query.else_clause.attribute, parsed_query.else_clause.value],
+                }
     else:
-        return [
-                ['if', parsed_query.if_clause.attribute, parsed_query.if_clause.comparison, 
+        return {
+                'if': [parsed_query.if_clause.attribute, parsed_query.if_clause.comparison, 
                     parsed_query.if_clause.value],
-                ['then', parsed_query.then_clause.attribute, parsed_query.then_clause.value]
-                ]
+                'then': [parsed_query.then_clause.attribute, parsed_query.then_clause.value]
+                }
+
+parsedSessionResults = []
 
 for test in tests:
     print test
@@ -453,7 +467,8 @@ for test in tests:
     #res = ", ".join(['if', result.if_clause.attribute, result.if_clause.value,
     #    'then', result.then_clause.attribute, str(result.then_clause.value)])
     #pprint.pprint(res)
-    print 
+    parsedSessionResults.append(process_if_then_else(result))
+    print
 
 # need recursive function to process result
 
