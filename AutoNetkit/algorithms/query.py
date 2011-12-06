@@ -417,32 +417,34 @@ setLP = (Literal("setLP").setResultsName("attribute")
 setMED = (Literal("setMED").setResultsName("attribute") 
         + integer_string.setResultsName("value")).setResultsName("setMED")
 
+addTag = (Literal("addTag").setResultsName("attribute") 
+        + attribute.setResultsName("value")).setResultsName("addTag")
+removeTag = (Literal("removeTag").setResultsName("attribute") 
+        + attribute.setResultsName("value")).setResultsName("removeTag")
+
 setOriginAttribute = (Literal("setOriginAttribute").setResultsName("attribute") 
         + (oneOf("IGP BGP None").setResultsName("value"))).setResultsName("setOriginAttribute")
 
-bgpAction = (setComm | setLP | setMED | setOriginAttribute).setResultsName("bgpAction")
+bgpAction = (setComm | setLP | setMED | addTag | removeTag | setOriginAttribute).setResultsName("bgpAction")
 
 # Query may contain itself (nested)
 bgpSessionQuery = Forward()
 bgpSessionQuery << (
-        Optional("(") + 
-        Group(Literal("if").suppress() + bgpMatchQuery).setResultsName("if_clause") +
-        Group(Literal("then").suppress() + bgpAction).setResultsName("then_clause")
+        Suppress("(") + 
+        Group(Suppress("if") + bgpMatchQuery).setResultsName("if_clause") +
+        Group(Suppress("then") + bgpAction).setResultsName("then_clause")
         + 
-        Optional( Group(Literal("else") + ( bgpAction | bgpSessionQuery )).setResultsName("else_clause"))
-        + Optional(")") 
-        + stringEnd
+        Optional( Group(Suppress("else") + ( bgpAction | bgpSessionQuery )).setResultsName("else_clause"))
+        + Suppress(")")
         ).setResultsName("bgpSessionQuery")
 
 tests = [
-        "if prefix_list = pl_1 then setComm 100 else setComm 200",
-        "if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 then setLP 200)",
-        "if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 then setOriginAttribute BGP else setComm 300)",
-        ("if prefix_list =  pl_1 then setComm 100 else if prefix_list = pl_2 " 
-        "then setComm 200 else (if prefix_list = pl_3 then setLP 300 else setComm 400)"),
+        "(if prefix_list = pl_1 then setComm 100 else setComm 200)",
+        "(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 then setLP 200))",
+        "(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 then setOriginAttribute BGP else setComm 300))",
+        ("(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 " 
+        "then addTag free_bh else (if prefix_list = pl_3 then setLP 300 else setComm 400)))"),
 ]
-
-#TODO: look at problem with (if then else (if then else )) parentheses
 
 
 def process_if_then_else(parsed_query):
@@ -452,7 +454,7 @@ def process_if_then_else(parsed_query):
                 'if': [parsed_query.if_clause.attribute, parsed_query.if_clause.comparison, 
                     parsed_query.if_clause.value],
                 'then': [parsed_query.then_clause.attribute, parsed_query.then_clause.value],
-                'else': [process_if_then_else(parsed_query.else_clause.bgpSessionQuery)],
+                'else': process_if_then_else(parsed_query.else_clause.bgpSessionQuery),
                 }
 
     elif parsed_query.else_clause:
@@ -480,6 +482,20 @@ for test in tests:
     #    'then', result.then_clause.attribute, str(result.then_clause.value)])
     #pprint.pprint(res)
     parsedSessionResults.append(process_if_then_else(result))
+    print
+
+def printParsedSession(parseString, indent=""):
+    print indent + "if (" + " ".join(elem for elem in parseString.get("if")) + "):"
+    print indent + "  "  + " ".join(str(elem) for elem in parseString.get("then")) 
+    if "else" in parseString:
+        if isinstance(parseString.get("else"), dict):
+            printParsedSession(parseString.get("else"), indent=indent + "  ")
+        else:
+            print indent + "else:"
+            print indent + "  " + " ".join(str(elem) for elem in parseString.get("else")) 
+
+for res in parsedSessionResults:
+    printParsedSession (res)
     print
 
 # need recursive function to process result
