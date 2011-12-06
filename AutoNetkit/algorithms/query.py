@@ -412,25 +412,37 @@ bgpMatchQuery = (matchComm).setResultsName("bgpMatchQuery")
 
 setComm = (Literal("setComm").setResultsName("attribute") 
         + integer_string.setResultsName("value")).setResultsName("setComm")
-bgpAction = (setComm).setResultsName("bgpAction")
+setLP = (Literal("setLP").setResultsName("attribute") 
+        + integer_string.setResultsName("value")).setResultsName("setLP")
+setMED = (Literal("setMED").setResultsName("attribute") 
+        + integer_string.setResultsName("value")).setResultsName("setMED")
+
+setOriginAttribute = (Literal("setOriginAttribute").setResultsName("attribute") 
+        + (oneOf("IGP BGP None").setResultsName("value"))).setResultsName("setOriginAttribute")
+
+bgpAction = (setComm | setLP | setMED | setOriginAttribute).setResultsName("bgpAction")
 
 # Query may contain itself (nested)
 bgpSessionQuery = Forward()
 bgpSessionQuery << (
+        Optional("(") + 
         Group(Literal("if").suppress() + bgpMatchQuery).setResultsName("if_clause") +
         Group(Literal("then").suppress() + bgpAction).setResultsName("then_clause")
         + 
         Optional( Group(Literal("else") + ( bgpAction | bgpSessionQuery )).setResultsName("else_clause"))
+        + Optional(")") 
         + stringEnd
         ).setResultsName("bgpSessionQuery")
 
 tests = [
         "if prefix_list = pl_1 then setComm 100 else setComm 200",
-        "if prefix_list =  pl_1 then setComm 100 else if prefix_list = pl_2 then setComm 200",
-        "if prefix_list =  pl_1 then setComm 100 else if prefix_list = pl_2 then setComm 200 else setComm 300",
+        "if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 then setLP 200)",
+        "if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 then setOriginAttribute BGP else setComm 300)",
         ("if prefix_list =  pl_1 then setComm 100 else if prefix_list = pl_2 " 
-        "then setComm 200 else if prefix_list = pl_3 then setComm 300 else setComm 400"),
+        "then setComm 200 else (if prefix_list = pl_3 then setLP 300 else setComm 400)"),
 ]
+
+#TODO: look at problem with (if then else (if then else )) parentheses
 
 
 def process_if_then_else(parsed_query):
