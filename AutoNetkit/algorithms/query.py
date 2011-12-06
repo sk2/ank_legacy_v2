@@ -18,6 +18,7 @@ import TopZooTools
 import TopZooTools.geoplot
 
 
+#TODO: apply stringEnd to the matching parse queries to ensure have parsed all
 
 graph = nx.read_gpickle("condensed_west_europe.pickle")
 #print graph.nodes(data=True)
@@ -55,6 +56,7 @@ stringComparison = (eq | ne).setResultsName("comparison")
 #quoted string is already present
 float_string = Word(nums).setResultsName("value").setParseAction(lambda t: float(t[0]))
 integer_string = Word(nums).setResultsName("value").setParseAction(lambda t: int(t[0]))
+#TODO: use numString, and make integer if fiull stop
 
 #TODO: allow parentheses? - should be ok as pass to the python parser
 
@@ -202,7 +204,6 @@ test_queries = [
 
 print "----edges:----"
 for test in test_queries:
-    print test
     matching_edges = find_edges(test)
     print edges_to_labels(matching_edges)
     print "---"
@@ -259,6 +260,7 @@ for test in test_queries:
 
 print G_business_relationship.edges(data=True)
 
+"""
 import matplotlib.pyplot as plt
 pos=nx.spring_layout(G_business_relationship)
 
@@ -275,6 +277,7 @@ bbox = dict(boxstyle='round',
 edge_labels = dict( ((s,t), d.get('attr')) for s,t,d in G_business_relationship.edges(data=True))
 nx.draw_networkx_edge_labels(G_business_relationship, pos, edge_labels, font_size=16, label_pos = 0.8, bbox = bbox)
 plt.savefig("G_business_relationship.pdf")
+"""
 
 
 #------------------------------
@@ -318,14 +321,14 @@ for test in tests:
         filename = os.path.join(graph_directory, result.file)
 #TODO: make support gml and graphml properly
         if "gml" in filename:
-            graph = nx.read_gml(filename)
+            graph_to_merge = nx.read_gml(filename)
         elif "graphml" in filename:
-            graph = nx.read_graphml(filename)
+            graph_to_merge = nx.read_graphml(filename)
         # relabel
-        graph = graph.to_undirected()
-        mapping=dict(zip(graph.nodes(), node_relabel_gen))
-        graph = nx.relabel_nodes(graph, mapping)
-        graph_dict[result.alias] = graph
+        graph_to_merge = graph_to_merge.to_undirected()
+        mapping=dict(zip(graph_to_merge.nodes(), node_relabel_gen))
+        graph_to_merge = nx.relabel_nodes(graph_to_merge, mapping)
+        graph_dict[result.alias] = graph_to_merge
     elif "interconnectString" in result:
         graph_a = graph_dict[result.gn_a.graph]
         graph_b = graph_dict[result.gn_b.graph]
@@ -344,6 +347,7 @@ G_interconnect.add_edges_from(graph_interconnects)
 
 #print G_interconnect.nodes(data=True)
 
+"""
 plt.clf()
 pos=nx.spring_layout(G_interconnect)
 labels = dict( (n, G_interconnect.node[n].get('label')) for n in G_interconnect)
@@ -355,6 +359,9 @@ G_interconnect.graph['name'] = "G_interconnect"
 
 
 output_path = os.getcwd()
+"""
+
+"""
 TopZooTools.geoplot.plot_graph(G_interconnect, output_path,
                     explode_scale=5,
                     use_labels=True,
@@ -367,4 +374,77 @@ TopZooTools.geoplot.plot_graph(G_interconnect, output_path,
                     country_color="#99CC99",
                     show_figure=True,
                     )
+"""
+
+
+originQuery = ("O(" +  
+        nodeQuery.setResultsName("nodeQuery") + ")").setResultsName("originQuery")
+transitQuery = ("T(" +  
+        nodeQuery.setResultsName("nodeQuery") + ")").setResultsName("transitQuery")
+
+bgpQuery = originQuery | transitQuery
+tests = [
+        'O(asn = 680)',
+        'T(Network = GEANT)',
+        ]
+
+
+for test in tests:
+    print test
+    result = bgpQuery.parseString(test)
+    matching_nodes = query(result.nodeQuery)
+    print "matching nodes " + nodes_to_labels(matching_nodes)
+    if "originQuery" in result:
+        print "origin"
+
+    elif "transitQuery" in result:
+        print "transit"
+
+
+bgpMatchAttribute = oneOf("prefix_list").setResultsName("bgpMatchAttribute")
+
+prefixList = Literal("prefix_list")
+matchComm = (prefixList.setResultsName("bgpMatchAttribute")
+        + comparison
+        + attribute.setResultsName("bgpMatchValue")).setResultsName("setComm")
+
+bgpMatchQuery = (matchComm).setResultsName("bgpMatchQuery")
+
+setComm = (Literal("setComm").setResultsName("bgpActionAttribute") 
+        + integer_string.setResultsName("bgpActionValue").setResultsName("setComm"))
+bgpAction = (setComm).setResultsName("bgpAction")
+
+# Query may contain itself (nested)
+bgpSessionQuery = Forward()
+bgpSessionQuery << (
+        "if" + bgpMatchQuery + "then"
+        + bgpAction + 
+        Optional( "else" + ( bgpAction | bgpSessionQuery )).setResultsName("else")
+        + stringEnd
+        ).setResultsName("bgpSessionQuery")
+
+tests = [
+        "if prefix_list = pl_1 then setComm 200 else setComm 300",
+        "if prefix_list =  pl_1 then setComm 200 else if prefix_list = pl_2 then setComm 100",
+]
+
+def process_if_then_else(parsed_query):
+    if "bgpSessionQuery" not in parsed_query:
+        return [
+                ['if', parsed_query.bgpMatchAttribute, parsed_query.comparison, parsed_query.bgpMatchValue],
+                ['then', parsed_query.bgpActionAttribute, parsed_query.bgpActionValue]
+                ]
+    else:
+        return [ 
+                ['if', parsed_query.bgpMatchAttribute, parsed_query.comparison, parsed_query.bgpMatchValue],
+                ['then', parsed_query.bgpActionAttribute, parsed_query.bgpActionValue],
+                ['else', process_if_then_else(parsed_query.bgpSessionQuery)],
+                ]
+
+for test in tests:
+    result =  bgpSessionQuery.parseString(test)
+    #print result.dump()
+    pprint.pprint( process_if_then_else(result))
+
+# need recursive function to process result
 
