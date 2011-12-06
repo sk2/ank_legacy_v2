@@ -417,10 +417,10 @@ bgpAction = (setComm).setResultsName("bgpAction")
 # Query may contain itself (nested)
 bgpSessionQuery = Forward()
 bgpSessionQuery << (
-        ("if" + bgpMatchQuery).setResultsName("if_clause") +
-        ("then" + bgpAction).setResultsName("then_clause")
+        Group(Literal("if").suppress() + bgpMatchQuery).setResultsName("if_clause") +
+        Group(Literal("then").suppress() + bgpAction).setResultsName("then_clause")
         + 
-        Optional( "else" + ( bgpAction | bgpSessionQuery )).setResultsName("else_clause")
+        Optional( Group(Literal("else") + ( bgpAction | bgpSessionQuery )).setResultsName("else_clause"))
         + stringEnd
         ).setResultsName("bgpSessionQuery")
 
@@ -431,13 +431,12 @@ tests = [
 
 def process_if_then_else(parsed_query):
     print 
-    print parsed_query.dump()
-    if "bgpSessionQuery" in parsed_query:
+    if "bgpSessionQuery" in parsed_query.else_clause:
                 return [ 
                 ['if', parsed_query.if_clause.attribute, parsed_query.if_clause.comparison, 
                     parsed_query.if_clause.value],
                 ['then', parsed_query.then_clause.attribute, parsed_query.then_clause.value],
-                ['else', process_if_then_else(parsed_query.bgpSessionQuery)],
+                ['else', process_if_then_else(parsed_query.else_clause.bgpSessionQuery)],
                 ]
     else:
         return [
@@ -449,9 +448,6 @@ def process_if_then_else(parsed_query):
 for test in tests:
     print test
     result =  bgpSessionQuery.parseString(test)
-    print result.dump()
-    #for key, token in result.items():
-    #     print key, token
     #print result.dump()
     pprint.pprint( process_if_then_else(result))
     #res = ", ".join(['if', result.if_clause.attribute, result.if_clause.value,
