@@ -404,47 +404,60 @@ for test in tests:
 bgpMatchAttribute = oneOf("prefix_list").setResultsName("bgpMatchAttribute")
 
 prefixList = Literal("prefix_list")
-matchComm = (prefixList.setResultsName("bgpMatchAttribute")
+matchComm = (prefixList.setResultsName("attribute")
         + comparison
-        + attribute.setResultsName("bgpMatchValue")).setResultsName("setComm")
+        + attribute.setResultsName("value"))
 
 bgpMatchQuery = (matchComm).setResultsName("bgpMatchQuery")
 
-setComm = (Literal("setComm").setResultsName("bgpActionAttribute") 
-        + integer_string.setResultsName("bgpActionValue").setResultsName("setComm"))
+setComm = (Literal("setComm").setResultsName("attribute") 
+        + integer_string.setResultsName("value")).setResultsName("setComm")
 bgpAction = (setComm).setResultsName("bgpAction")
 
 # Query may contain itself (nested)
 bgpSessionQuery = Forward()
 bgpSessionQuery << (
-        "if" + bgpMatchQuery + "then"
-        + bgpAction + 
-        Optional( "else" + ( bgpAction | bgpSessionQuery )).setResultsName("else")
+        ("if" + bgpMatchQuery).setResultsName("if_clause") +
+        ("then" + bgpAction).setResultsName("then_clause")
+        + 
+        Optional( "else" + ( bgpAction | bgpSessionQuery )).setResultsName("else_clause")
         + stringEnd
         ).setResultsName("bgpSessionQuery")
 
 tests = [
-        "if prefix_list = pl_1 then setComm 200 else setComm 300",
-        "if prefix_list =  pl_1 then setComm 200 else if prefix_list = pl_2 then setComm 100",
+        "if prefix_list = pl_1 then setComm 100 else setComm 200",
+        "if prefix_list =  pl_1 then setComm 100 else if prefix_list = pl_2 then setComm 200",
 ]
 
 def process_if_then_else(parsed_query):
-    if "bgpSessionQuery" not in parsed_query:
-        return [
-                ['if', parsed_query.bgpMatchAttribute, parsed_query.comparison, parsed_query.bgpMatchValue],
-                ['then', parsed_query.bgpActionAttribute, parsed_query.bgpActionValue]
+    print 
+    print parsed_query.dump()
+    if "bgpSessionQuery" in parsed_query:
+                return [ 
+                ['if', parsed_query.if_clause.attribute, parsed_query.if_clause.comparison, 
+                    parsed_query.if_clause.value],
+                ['then', parsed_query.then_clause.attribute, parsed_query.then_clause.value],
+                ['else', process_if_then_else(parsed_query.bgpSessionQuery)],
                 ]
     else:
-        return [ 
-                ['if', parsed_query.bgpMatchAttribute, parsed_query.comparison, parsed_query.bgpMatchValue],
-                ['then', parsed_query.bgpActionAttribute, parsed_query.bgpActionValue],
-                ['else', process_if_then_else(parsed_query.bgpSessionQuery)],
+        return [
+                ['if', parsed_query.if_clause.attribute, parsed_query.if_clause.comparison, 
+                    parsed_query.if_clause.value],
+                ['then', parsed_query.then_clause.attribute, parsed_query.then_clause.value]
                 ]
 
 for test in tests:
+    print test
     result =  bgpSessionQuery.parseString(test)
+    print result.dump()
+    #for key, token in result.items():
+    #     print key, token
     #print result.dump()
     pprint.pprint( process_if_then_else(result))
+    #res = ", ".join(['if', result.if_clause.attribute, result.if_clause.value,
+    #    'then', result.then_clause.attribute, str(result.then_clause.value)])
+    #pprint.pprint(res)
+    print 
 
 # need recursive function to process result
 
