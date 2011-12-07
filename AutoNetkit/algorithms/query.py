@@ -8,7 +8,7 @@ __author__ = "\n".join(['Simon Knight'])
 import networkx as nx
 import logging
 LOG = logging.getLogger("ANK")
-#TODO: only import what is needed
+#TODO: only import from pyparsing what is needed
 from pyparsing import *
 import operator
 import os
@@ -16,7 +16,6 @@ import pprint
 import itertools
 import TopZooTools
 import TopZooTools.geoplot
-
 
 #TODO: apply stringEnd to the matching parse queries to ensure have parsed all
 
@@ -404,11 +403,15 @@ for test in tests:
 bgpMatchAttribute = oneOf("prefix_list").setResultsName("bgpMatchAttribute")
 
 prefixList = Literal("prefix_list")
-matchComm = (prefixList.setResultsName("attribute")
+matchPl = (prefixList.setResultsName("attribute")
         + comparison
         + attribute.setResultsName("value"))
 
-bgpMatchQuery = (matchComm).setResultsName("bgpMatchQuery")
+matchComm = (Literal("tag").setResultsName("attribute")
+        + comparison
+        + attribute.setResultsName("value"))
+
+bgpMatchQuery = Group(matchPl | matchComm).setResultsName("bgpMatchQuery")
 
 setComm = (Literal("setComm").setResultsName("attribute") 
         + integer_string.setResultsName("value")).setResultsName("setComm")
@@ -427,23 +430,31 @@ setOriginAttribute = (Literal("setOriginAttribute").setResultsName("attribute")
 
 bgpAction = (setComm | setLP | setMED | addTag | removeTag | setOriginAttribute).setResultsName("bgpAction")
 
+boolean
+ifClause = Forward()
+ifClause << Group(Suppress("if") +
+        bgpMatchQuery + ZeroOrMore(boolean + bgpMatchQuery)).setResultsName("if_clause")
+
+
 # Query may contain itself (nested)
 bgpSessionQuery = Forward()
 bgpSessionQuery << (
         Suppress("(") + 
-        Group(Suppress("if") + bgpMatchQuery).setResultsName("if_clause") +
+        ifClause +
         Group(Suppress("then") + bgpAction).setResultsName("then_clause")
         + 
         Optional( Group(Suppress("else") + ( bgpAction | bgpSessionQuery )).setResultsName("else_clause"))
         + Suppress(")")
         ).setResultsName("bgpSessionQuery")
 
+#TODO: do we need an elif?
 tests = [
-        "(if prefix_list = pl_1 then setComm 100 else setComm 200)",
-        "(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 then setLP 200))",
-        "(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 then setOriginAttribute BGP else setComm 300))",
-        ("(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 " 
-        "then addTag free_bh else (if prefix_list = pl_3 then setLP 300 else setComm 400)))"),
+        #"(if prefix_list = pl_1 then setComm 100 else setComm 200)",
+        "(if prefix_list = pl_1 & tag = aaa then setComm 100 else setComm 200)",
+        #"(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 then setLP 200))",
+        #"(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 then setOriginAttribute BGP else setComm 300))",
+        #("(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 " 
+        #"then addTag free_bh else (if prefix_list = pl_3 then setLP 300 else setComm 400)))"),
 ]
 
 
@@ -476,11 +487,10 @@ parsedSessionResults = []
 for test in tests:
     print test
     result =  bgpSessionQuery.parseString(test)
-    #print result.dump()
+    print result.dump()
     pprint.pprint( process_if_then_else(result))
     #res = ", ".join(['if', result.if_clause.attribute, result.if_clause.value,
     #    'then', result.then_clause.attribute, str(result.then_clause.value)])
-    #pprint.pprint(res)
     parsedSessionResults.append(process_if_then_else(result))
     print
 
@@ -495,7 +505,8 @@ def printParsedSession(parseString, indent=""):
             print indent + "  " + " ".join(str(elem) for elem in parseString.get("else")) 
 
 for res in parsedSessionResults:
-    printParsedSession (res)
+    #printParsedSession (res)
+    pprint.pprint(res)
     print
 
 # need recursive function to process result
