@@ -453,10 +453,10 @@ bgpSessionQuery << (
 tests = [
         #"(if prefix_list = pl_1 then setComm 100 else setComm 200)",
         #"(if prefix_list = pl_1 then setComm 100 & setLP 90 else setComm 200)",
-        "(if prefix_list = pl_1 then setComm 100 & setLP 90 else setComm 200 & setLP 100)",
+        #"(if prefix_list = pl_1 then setComm 100 & setLP 90 else setComm 200 & setLP 100)",
         #"(if prefix_list = pl_1 & tag = aaa then setComm 100 else setComm 200)",
         ##"(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 then setLP 200))",
-        #"(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 then setOriginAttribute BGP else setComm 300))",
+        "(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 then setOriginAttribute BGP else setComm 300))",
         #("(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 " 
         #"then addTag free_bh else (if prefix_list = pl_3 then setLP 300 else setComm 400)))"),
 ]
@@ -534,11 +534,11 @@ def parsedSessionVis(parsedSession):
     def add_children(parent_node, parse_children, level):
         if_node_id = next_node_id.next()
         then_node_id = next_node_id.next()
-        parsed_graph.add_node(if_node_id, label=parse_children.get("if"),
+        parsed_graph.add_node(if_node_id, label="if %s" % parse_children.get("if"),
                 y = level*100, x = 0)
         parsed_graph.add_edge(parent_node, if_node_id, label="else")
         parsed_graph.add_node(then_node_id, label=parse_children.get("then"),
-                y = level*100, x = 20)
+                y = level*100, x = 1)
         parsed_graph.add_edge(if_node_id, then_node_id, label="then")
         print "----"
         print parse_children
