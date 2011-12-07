@@ -451,9 +451,9 @@ bgpSessionQuery << (
 
 #TODO: do we need an elif?
 tests = [
-        "(if prefix_list = pl_1 then setComm 100 else setComm 200)",
+        #"(if prefix_list = pl_1 then setComm 100 else setComm 200)",
         #"(if prefix_list = pl_1 then setComm 100 & setLP 90 else setComm 200)",
-        #"(if prefix_list = pl_1 then setComm 100 & setLP 90 else setComm 200 & setLP 100)",
+        "(if prefix_list = pl_1 then setComm 100 & setLP 90 else setComm 200 & setLP 100)",
         #"(if prefix_list = pl_1 & tag = aaa then setComm 100 else setComm 200)",
         ##"(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 then setLP 200))",
         #"(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 then setOriginAttribute BGP else setComm 300))",
@@ -524,31 +524,61 @@ def printParsedSession(parseString, indent=""):
             print indent + "  " + " ".join(str(elem) for elem in parseString.get("else")) 
 
 def parsedSessionVis(parsedSession):
+    bbox = dict(boxstyle='round',
+        ec=(1.0, 1.0, 1.0, 0),
+        fc=(1.0, 1.0, 1.0, 0.0),
+        )      
+
     parsed_graph = nx.DiGraph()
     next_node_id = itertools.count()
-    def add_children(parent_node, parse_children):
+    def add_children(parent_node, parse_children, level):
         if_node_id = next_node_id.next()
         then_node_id = next_node_id.next()
-        parsed_graph.add_node(if_node_id, label=parse_children.get("if"))
-        parsed_graph.add_edge(parent_node, if_node_id)
-        parsed_graph.add_node(then_node_id, label=parse_children.get("then"))
+        parsed_graph.add_node(if_node_id, label=parse_children.get("if"),
+                y = level*100, x = 0)
+        parsed_graph.add_edge(parent_node, if_node_id, label="else")
+        parsed_graph.add_node(then_node_id, label=parse_children.get("then"),
+                y = level*100, x = 20)
         parsed_graph.add_edge(if_node_id, then_node_id, label="then")
+        print "----"
         print parse_children
+        if 'else' in parse_children:
+            print "ELSE"
+            if isinstance(parse_children.get("else"), dict):
+# nested else
+                add_children(if_node_id, parse_children.get("else"), level +1)
+            else:
+                print "add node"
+                else_node_id = next_node_id.next()
+                parsed_graph.add_node(else_node_id, label=parse_children.get("else"),
+                        y = level*100 + 50, x=0)
+                parsed_graph.add_edge(if_node_id, else_node_id, label="else")
+
+        print "----"
         print
 #TODO: add position info
     root_id = next_node_id.next()
     parsed_graph.add_node(root_id, label="start")
-    add_children(root_id, parsedSession)
+    add_children(root_id, parsedSession, level=1)
 
     print parsed_graph.nodes(data=True)
+    print parsed_graph.edges(data=True)
 
+# remove placeholder node
+    parsed_graph.remove_node(root_id)
 
     plt.clf()
     pos=nx.spring_layout(parsed_graph)
+    print pos
+    pos = dict( (n, (d['x'], -1*d['y'])) for n,d in parsed_graph.nodes(data=True))
     labels = dict( (n, parsed_graph.node[n].get('label')) for n in parsed_graph)
-    nx.draw(parsed_graph, pos, labels=labels, arrows=False, font_size = 12, node_size = 20, node_color = "0.8", edge_color="0.8")
+    nx.draw(parsed_graph, pos, labels=labels, arrows=False,
+            font_size = 12, node_size = 50, node_color = "0.8", edge_color="0.8")
+    edge_labels = dict( ((s,t), d.get('label')) 
+            for s,t,d in parsed_graph.edges(data=True))
+    nx.draw_networkx_edge_labels(parsed_graph, pos, 
+        edge_labels, font_size=16, label_pos = 0.5, bbox = bbox)
     plt.savefig("parsed_graph.pdf")
-
 
 
 
