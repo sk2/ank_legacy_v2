@@ -259,8 +259,8 @@ for test in test_queries:
 
 print G_business_relationship.edges(data=True)
 
-"""
 import matplotlib.pyplot as plt
+"""
 pos=nx.spring_layout(G_business_relationship)
 
 nx.draw(G_business_relationship, pos, font_size=18, arrows=False, node_color = "0.8", edge_color="0.8")
@@ -451,11 +451,11 @@ bgpSessionQuery << (
 
 #TODO: do we need an elif?
 tests = [
-        #"(if prefix_list = pl_1 then setComm 100 else setComm 200)",
-        "(if prefix_list = pl_1 then setComm 100 & setLP 90 else setComm 200)",
-        "(if prefix_list = pl_1 then setComm 100 & setLP 90 else setComm 200 & setLP 100)",
+        "(if prefix_list = pl_1 then setComm 100 else setComm 200)",
+        #"(if prefix_list = pl_1 then setComm 100 & setLP 90 else setComm 200)",
+        #"(if prefix_list = pl_1 then setComm 100 & setLP 90 else setComm 200 & setLP 100)",
         #"(if prefix_list = pl_1 & tag = aaa then setComm 100 else setComm 200)",
-        #"(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 then setLP 200))",
+        ##"(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 then setLP 200))",
         #"(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 then setOriginAttribute BGP else setComm 300))",
         #("(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 " 
         #"then addTag free_bh else (if prefix_list = pl_3 then setLP 300 else setComm 400)))"),
@@ -513,6 +513,7 @@ for test in tests:
     print
 
 def printParsedSession(parseString, indent=""):
+    #TODO: make this work for multiple nesteds.....
     print indent + "if (" + " ".join(elem for elem in parseString.get("if")) + "):"
     print indent + "  "  + " ".join(str(elem) for elem in parseString.get("then")) 
     if "else" in parseString:
@@ -522,9 +523,40 @@ def printParsedSession(parseString, indent=""):
             print indent + "else:"
             print indent + "  " + " ".join(str(elem) for elem in parseString.get("else")) 
 
+def parsedSessionVis(parsedSession):
+    parsed_graph = nx.DiGraph()
+    next_node_id = itertools.count()
+    def add_children(parent_node, parse_children):
+        if_node_id = next_node_id.next()
+        then_node_id = next_node_id.next()
+        parsed_graph.add_node(if_node_id, label=parse_children.get("if"))
+        parsed_graph.add_edge(parent_node, if_node_id)
+        parsed_graph.add_node(then_node_id, label=parse_children.get("then"))
+        parsed_graph.add_edge(if_node_id, then_node_id, label="then")
+        print parse_children
+        print
+#TODO: add position info
+    root_id = next_node_id.next()
+    parsed_graph.add_node(root_id, label="start")
+    add_children(root_id, parsedSession)
+
+    print parsed_graph.nodes(data=True)
+
+
+    plt.clf()
+    pos=nx.spring_layout(parsed_graph)
+    labels = dict( (n, parsed_graph.node[n].get('label')) for n in parsed_graph)
+    nx.draw(parsed_graph, pos, labels=labels, arrows=False, font_size = 12, node_size = 20, node_color = "0.8", edge_color="0.8")
+    plt.savefig("parsed_graph.pdf")
+
+
+
+
 for res in parsedSessionResults:
     #printParsedSession (res)
     pprint.pprint(res)
+    parsedSessionVis(res)
+
     print
 
 # need recursive function to process result
