@@ -107,6 +107,58 @@ class queryParser:
 
         self.bgpQuery = originQuery | transitQuery
 
+# bgp session query
+        bgpMatchAttribute = oneOf("prefix_list").setResultsName("bgpMatchAttribute")
+
+        prefixList = Literal("prefix_list")
+        matchPl = (prefixList.setResultsName("attribute")
+                + comparison
+                + attribute.setResultsName("value"))
+
+        matchComm = (Literal("tag").setResultsName("attribute")
+                + comparison
+                + attribute.setResultsName("value"))
+
+        bgpMatchQuery = Group(matchPl | matchComm).setResultsName("bgpMatchQuery")
+
+        setComm = (Literal("setComm").setResultsName("attribute") 
+                + integer_string.setResultsName("value")).setResultsName("setComm")
+        setLP = (Literal("setLP").setResultsName("attribute") 
+                + integer_string.setResultsName("value")).setResultsName("setLP")
+        setMED = (Literal("setMED").setResultsName("attribute") 
+                + integer_string.setResultsName("value")).setResultsName("setMED")
+
+        addTag = (Literal("addTag").setResultsName("attribute") 
+                + attribute.setResultsName("value")).setResultsName("addTag")
+        removeTag = (Literal("removeTag").setResultsName("attribute") 
+                + attribute.setResultsName("value")).setResultsName("removeTag")
+
+        setOriginAttribute = (Literal("setOriginAttribute").setResultsName("attribute") 
+                + (oneOf("IGP BGP None").setResultsName("value"))).setResultsName("setOriginAttribute")
+
+        bgpAction = Group(setComm | setLP | setMED | addTag | removeTag | setOriginAttribute).setResultsName("bgpAction")
+
+        ifClause = Forward()
+        ifClause << Group(Suppress("if") +
+                bgpMatchQuery + ZeroOrMore(boolean + bgpMatchQuery)).setResultsName("if_clause")
+
+        thenClause = Forward()
+        thenClause << Group(Suppress("then") + bgpAction
+                + ZeroOrMore(boolean_and + bgpAction)).setResultsName("then_clause")
+
+# Query may contain itself (nested)
+        bgpSessionQuery = Forward()
+        bgpSessionQuery << (
+                Suppress("(") + 
+                ifClause +
+                thenClause + 
+                Optional( Group(Suppress("else") + 
+                    ( bgpAction + ZeroOrMore(boolean_and + bgpAction) | bgpSessionQuery )).setResultsName("else_clause"))
+                + Suppress(")")
+                ).setResultsName("bgpSessionQuery")
+        self.bgpSessionQuery = bgpSessionQuery
+
+
 
     def find_edges(self, qstring):
         result = self.edgeQuery.parseString(qstring)
@@ -191,6 +243,46 @@ class queryParser:
         return final_set
 
 
+    def process_if_then_else(self, parsed_query):
+        def parse_if(if_query):
+            retval = []
+            for token in if_query:
+                if token in self._boolean:
+                    retval.append(token)
+                else:
+                    retval.append([token.attribute, token.comparison, token.value])
+            return retval
+
+        def parse_then(then_query):
+            retval = []
+            for token in then_query:
+                if token in self._boolean:
+                    retval.append(token)
+                else:
+                    retval.append([token.attribute, token.value])
+            return retval
+
+        if "bgpSessionQuery" in parsed_query.else_clause:
+# Nested query
+                    return { 
+                    'if': parse_if(parsed_query.if_clause),
+                    'then': parse_then(parsed_query.then_clause),
+                    'else': self.process_if_then_else(parsed_query.else_clause.bgpSessionQuery),
+                    }
+
+        elif parsed_query.else_clause:
+                    return {
+                    'if': parse_if(parsed_query.if_clause),
+                    'then': parse_then(parsed_query.then_clause),
+                    'else': parse_then(parsed_query.else_clause),
+                    }
+        else:
+            return {
+                    'if': parse_if(parsed_query.if_clause),
+                    'then': parse_then(parsed_query.then_clause),
+                    }
+
+
 
 
 #TODO: apply stringEnd to the matching parse queries to ensure have parsed all
@@ -233,8 +325,6 @@ for test in tests:
     test_result = qparser.node_select_query(test)
     print nodes_to_labels(test_result)
     #print result.dump()
-
-
 
 
 #TODO: check if "<->" means join <- and -> or means bidirectional edge... or depends om Graph vs DiGraph?
@@ -400,9 +490,6 @@ TopZooTools.geoplot.plot_graph(G_interconnect, output_path,
                     )
 """
 
-
-
-
 tests = [
         'O(asn = 680)',
         'T(Network = GEANT)',
@@ -419,57 +506,8 @@ for test in tests:
     elif "transitQuery" in result:
         print "transit"
 
-sys.exit(0)
 
 
-bgpMatchAttribute = oneOf("prefix_list").setResultsName("bgpMatchAttribute")
-
-prefixList = Literal("prefix_list")
-matchPl = (prefixList.setResultsName("attribute")
-        + comparison
-        + attribute.setResultsName("value"))
-
-matchComm = (Literal("tag").setResultsName("attribute")
-        + comparison
-        + attribute.setResultsName("value"))
-
-bgpMatchQuery = Group(matchPl | matchComm).setResultsName("bgpMatchQuery")
-
-setComm = (Literal("setComm").setResultsName("attribute") 
-        + integer_string.setResultsName("value")).setResultsName("setComm")
-setLP = (Literal("setLP").setResultsName("attribute") 
-        + integer_string.setResultsName("value")).setResultsName("setLP")
-setMED = (Literal("setMED").setResultsName("attribute") 
-        + integer_string.setResultsName("value")).setResultsName("setMED")
-
-addTag = (Literal("addTag").setResultsName("attribute") 
-        + attribute.setResultsName("value")).setResultsName("addTag")
-removeTag = (Literal("removeTag").setResultsName("attribute") 
-        + attribute.setResultsName("value")).setResultsName("removeTag")
-
-setOriginAttribute = (Literal("setOriginAttribute").setResultsName("attribute") 
-        + (oneOf("IGP BGP None").setResultsName("value"))).setResultsName("setOriginAttribute")
-
-bgpAction = Group(setComm | setLP | setMED | addTag | removeTag | setOriginAttribute).setResultsName("bgpAction")
-
-ifClause = Forward()
-ifClause << Group(Suppress("if") +
-        bgpMatchQuery + ZeroOrMore(boolean + bgpMatchQuery)).setResultsName("if_clause")
-
-thenClause = Forward()
-thenClause << Group(Suppress("then") + bgpAction
-        + ZeroOrMore(boolean_and + bgpAction)).setResultsName("then_clause")
-
-# Query may contain itself (nested)
-bgpSessionQuery = Forward()
-bgpSessionQuery << (
-        Suppress("(") + 
-        ifClause +
-        thenClause + 
-        Optional( Group(Suppress("else") + 
-            ( bgpAction + ZeroOrMore(boolean_and + bgpAction) | bgpSessionQuery )).setResultsName("else_clause"))
-        + Suppress(")")
-        ).setResultsName("bgpSessionQuery")
 
 #TODO: do we need an elif?
 tests = [
@@ -484,54 +522,16 @@ tests = [
 ]
 
 
-def process_if_then_else(parsed_query):
-    def parse_if(if_query):
-        retval = []
-        for token in if_query:
-            if token in boolean:
-                retval.append(token)
-            else:
-                retval.append([token.attribute, token.comparison, token.value])
-        return retval
-
-    def parse_then(then_query):
-        retval = []
-        for token in then_query:
-            if token in boolean:
-                retval.append(token)
-            else:
-                retval.append([token.attribute, token.value])
-        return retval
-
-    if "bgpSessionQuery" in parsed_query.else_clause:
-# Nested query
-                return { 
-                'if': parse_if(parsed_query.if_clause),
-                'then': parse_then(parsed_query.then_clause),
-                'else': process_if_then_else(parsed_query.else_clause.bgpSessionQuery),
-                }
-
-    elif parsed_query.else_clause:
-                return {
-                'if': parse_if(parsed_query.if_clause),
-                'then': parse_then(parsed_query.then_clause),
-                'else': parse_then(parsed_query.else_clause),
-                }
-    else:
-        return {
-                'if': parse_if(parsed_query.if_clause),
-                'then': parse_then(parsed_query.then_clause),
-                }
 
 parsedSessionResults = []
 
 for test in tests:
     print test
-    result =  bgpSessionQuery.parseString(test)
+    result =  qparser.bgpSessionQuery.parseString(test)
     print result.dump()
     #res = ", ".join(['if', result.if_clause.attribute, result.if_clause.value,
     #    'then', result.then_clause.attribute, str(result.then_clause.value)])
-    parsedSessionResults.append(process_if_then_else(result))
+    parsedSessionResults.append(qparser.process_if_then_else(result))
     print
 
 def printParsedSession(parseString, indent=""):
