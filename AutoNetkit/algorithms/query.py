@@ -582,6 +582,8 @@ def parsedSessionVis(parsedSession):
 
 
 
+
+
 for res in parsedSessionResults:
     #printParsedSession (res)
     pprint.pprint(res)
