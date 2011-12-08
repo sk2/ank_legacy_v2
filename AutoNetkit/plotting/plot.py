@@ -20,7 +20,6 @@ LOG = logging.getLogger("ANK")
 #TODO: add option to show plots, or save them
 
 
-
 def cmap_index(network, subgraph, attr='asn'):
     #TODO: see if more pythonic way to do this
 # List of attributes
@@ -73,7 +72,8 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
     try:
         import matplotlib.pyplot as plt
     except:
-        raise
+        print "Matplotlib not found, not plotting using Matplotlib"
+        return
 
     # Colors
     if not node_color:
