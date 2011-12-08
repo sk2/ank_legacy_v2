@@ -16,17 +16,12 @@ from mako.lookup import TemplateLookup
 
 # TODO: merge these imports but make consistent across compilers
 from pkg_resources import resource_filename
-import pkg_resources
-
-import os
 
 #import network as network
 
 LOG = logging.getLogger("ANK")
 
 import shutil
-import glob
-import itertools
 
 import AutoNetkit as ank
 from AutoNetkit import config
@@ -81,7 +76,8 @@ def jsplot(network, show=False, save=True):
                 edge_list = edge_list,
                 ))
 
-    html_filename = os.path.join(jsplot_dir, "index.html")
+    # put html file in main plot directory
+    html_filename = os.path.join(plot_dir, "plot.html")
     with open( html_filename, 'w') as f_html:
             f_html.write( html_template.render())
 

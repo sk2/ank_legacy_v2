@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup (
      name = "AutoNetkit",
-     version = "0.5.58",
+     version = "0.5.61",
      description = 'Automated configuration generator for cBGP, Netkit and Junosphere',
      long_description = 'Automated configuration generator for cBGP, Netkit and Junosphere',
 
@@ -23,7 +23,9 @@ setup (
          'AutoNetkit.deploy', 'AutoNetkit.internal',
          'AutoNetkit.readwrite', 'AutoNetkit.plotting'],
 
-     package_data = {'': ['settings.cfg', 'lib/templates/*/*.mako',
+     package_data = {'': ['settings.cfg', 
+         'lib/templates/*/*.mako',
+         'lib/templates/*/*.js',
                           'lib/shadow', 'lib/autonetkit.cfg',
                           'lib/authorized_keys', 'plugins/*', 'plugins/*.py',
                           'algorithms/*.py', 'plotting/*.py', 'deploy/*.py',
