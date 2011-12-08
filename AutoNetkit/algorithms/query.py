@@ -516,9 +516,9 @@ tests = [
         #"(if prefix_list = pl_1 then setComm 100 & setLP 90 else setComm 200 & setLP 100)",
         #"(if prefix_list = pl_1 & tag = aaa then setComm 100 else setComm 200)",
         ##"(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 then setLP 200))",
-        "(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 then setOriginAttribute BGP else setComm 300))",
-        #("(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 " 
-        #"then addTag free_bh else (if prefix_list = pl_3 then setLP 300 else setComm 400)))"),
+        #"(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 then setOriginAttribute BGP else setComm 300))",
+        ("(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 " 
+        "then addTag free_bh else (if prefix_list = pl_3 then setLP 300 else setComm 400)))"),
 ]
 
 
