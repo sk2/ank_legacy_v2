@@ -16,6 +16,182 @@ import pprint
 import itertools
 import TopZooTools
 import TopZooTools.geoplot
+import sys
+
+
+class queryParser:
+    def __init__(self):
+        attribute = Word(alphas, alphanums+'_').setResultsName("attribute")
+
+        lt = Literal("<").setResultsName("<")
+        le = Literal("<=").setResultsName("<=")
+        eq = Literal("=").setResultsName("=")
+        ne = Literal("!=").setResultsName("!=")
+        ge = Literal(">=").setResultsName(">=")
+        gt = Literal(">").setResultsName(">")
+
+        self._opn = {
+                '<': operator.lt,
+                '<=': operator.le,
+                '=': operator.eq,
+                '>=': operator.ge,
+                '>': operator.gt,
+                '&': set.intersection,
+                '|': set.union,
+                }
+
+# Both are of comparison to access in same manner when evaluating
+        comparison = (lt | le | eq | ne | ge | gt).setResultsName("comparison")
+        stringComparison = (eq | ne).setResultsName("comparison")
+#
+#quoted string is already present
+        float_string = Word(nums).setResultsName("value").setParseAction(lambda t: float(t[0]))
+        integer_string = Word(nums).setResultsName("value").setParseAction(lambda t: int(t[0]))
+#TODO: use numString, and make integer if fiull stop
+
+#TODO: allow parentheses? - should be ok as pass to the python parser
+
+        boolean_and = Literal("&").setResultsName("&")
+        boolean_or = Literal("|").setResultsName("|")
+        boolean = (boolean_and | boolean_or).setResultsName("boolean")
+        self._boolean = boolean # need to use in checking
+
+        numericQuery = Group(attribute + comparison + float_string).setResultsName( "numericQuery")
+
+        stringValues = (Word(alphanums) | quotedString.setParseAction(removeQuotes)).setResultsName("value")
+
+        stringQuery =  Group(attribute + stringComparison + stringValues).setResultsName( "stringQuery")
+
+        singleQuery = numericQuery | stringQuery
+        self.nodeQuery = singleQuery + ZeroOrMore(boolean + singleQuery)
+
+# edges
+        edgeType = oneOf("<- <-> ->").setResultsName("edgeType")
+        self.edgeQuery = ("(" + self.nodeQuery.setResultsName("query_a") + ")"
+                + edgeType
+                + "(" + self.nodeQuery.setResultsName("query_b") + ")")
+
+# business relationship
+        asn = "ASN"
+        asnAlias = (stringValues.setResultsName("network") + 
+                "is" + asn + integer_string.setResultsName("asn")).setResultsName("asnAlias")
+# eg AARNET is 213, sets asn of node AARNET
+#'GEANT is ASN 123',
+
+        serviceString = (stringValues.setResultsName("provider")
+                + "provides" + stringValues.setResultsName("service") 
+                + "to" + stringValues.setResultsName("client")).setResultsName("serviceString")
+
+        relationshipString = (stringValues.setResultsName("provider")
+                + "is a" + stringValues.setResultsName("relationship") 
+                + "of" + stringValues.setResultsName("client")).setResultsName("relationshipString")
+
+
+        self.br_query = asnAlias | serviceString | relationshipString
+
+# Stitching
+        alias = Word(alphanums).setResultsName("alias")
+        fileAlias = (alias + "=" + quotedString.setResultsName("file")).setResultsName("fileAlias")
+        graphNodeTuple = ("(" + stringValues.setResultsName("graph") + "," + stringValues.setResultsName("node") + ")")
+        interconnectString = (graphNodeTuple.setResultsName("gn_a") + "<->" 
+                + graphNodeTuple.setResultsName("gn_b")).setResultsName("interconnectString")
+        graphDirString = ('graphdir =' + quotedString.setResultsName("dir")).setResultsName("graphDir")
+        self.stitchString = fileAlias | interconnectString | graphDirString
+
+
+#start of BGP queries
+        originQuery = ("O(" +  
+                self.nodeQuery.setResultsName("nodeQuery") + ")").setResultsName("originQuery")
+        transitQuery = ("T(" +  
+                self.nodeQuery.setResultsName("nodeQuery") + ")").setResultsName("transitQuery")
+
+        self.bgpQuery = originQuery | transitQuery
+
+
+    def find_edges(self, qstring):
+        result = self.edgeQuery.parseString(qstring)
+        set_a = self.node_select_query(result.query_a)
+        set_b = self.node_select_query(result.query_b)
+        select_type = result.edgeType
+
+# use nbunch feature of networkx to limit edges to look at
+        node_set = set_a | set_b
+
+        edges = graph.edges(node_set)
+# 1 ->, 2 <-, 3 <->
+
+        def select_fn_u_to_v( (u, v), src_set, dst_set):
+            """ u -> v"""
+            return (u in src_set and v in dst_set)
+
+        def select_fn_u_from_v( (u, v), src_set, dst_set):
+            """ u <- v"""
+            return (u in dst_set and v in src_set)
+
+        def select_fn_v_to_from_u( (u, v), src_set, dst_set):
+            """ u <- v"""
+            return (u in src_set and v in dst_set) or (u in dst_set and v in src_set)
+
+        if select_type == "->":
+            select_function = select_fn_u_to_v
+        elif select_type == "<-":
+            select_function = select_fn_u_from_v
+        elif select_type == "<->":
+            select_function = select_fn_v_to_from_u 
+
+        return ( e for e in edges if select_function(e, set_a, set_b))
+
+    def evaluate_node_stack(self, stack):
+        if len(stack) == 1:
+            return set(stack.pop())
+        else:
+            a = set(stack.pop())
+            op = stack.pop()
+            return self._opn[op](a, self.evaluate_node_stack(stack))
+
+    def node_select_query(self, qstring):
+        if isinstance(qstring, str):
+            result = self.nodeQuery.parseString(qstring)
+        else:
+# don't parse as likely came from edge parser
+            result = qstring
+
+#TODO: rearrange so remove stack and iterate over nodes only once
+# so execute the boolean as function, rather than using stack on node sets
+# ie test each node for all the required matches in one step
+# and use data(=True) so get the dictionary reference once -> faster
+# especially if using short circuits so when false stop executing
+
+        def comp_fn_string(token, n):
+            return self._opn[token.comparison](graph.node[n].get(token.attribute), token.value)
+
+        def comp_fn_numeric(token, n):
+            return self._opn[token.comparison](float(graph.node[n].get(token.attribute)), token.value)
+
+        stack = []
+
+        for token in result:
+            if token in self._boolean:
+                stack.append(token)
+                continue
+
+# different function depending on value type: numeric or string
+
+            if isinstance(token.value, str):
+                comp_fn = comp_fn_string
+            if isinstance(token.value, float):
+                comp_fn = comp_fn_numeric
+        
+            if comp_fn:
+                #TODO: change to generator expressions and evaluate as sets in the evaluate function
+                result_set = set(n for n in graph if token.attribute in graph.node[n] and comp_fn(token, n) )
+                stack.append(result_set)
+
+        final_set = self.evaluate_node_stack(stack)
+        return final_set
+
+
+
 
 #TODO: apply stringEnd to the matching parse queries to ensure have parsed all
 
@@ -25,52 +201,7 @@ graph = nx.read_gpickle("condensed_west_europe.pickle")
 ##### parser
 # Node selection syntax
 
-attribute = Word(alphas, alphanums+'_').setResultsName("attribute")
-#TODO: check how evaluation examples on pyparsing work out which comparison/operator is used
-
-
-#TODO: allow wildcards
-
-lt = Literal("<").setResultsName("<")
-le = Literal("<=").setResultsName("<=")
-eq = Literal("=").setResultsName("=")
-ne = Literal("!=").setResultsName("!=")
-ge = Literal(">=").setResultsName(">=")
-gt = Literal(">").setResultsName(">")
-
-opn = {
-        '<': operator.lt,
-        '<=': operator.le,
-        '=': operator.eq,
-        '>=': operator.ge,
-        '>': operator.gt,
-        '&': set.intersection,
-        '|': set.union,
-        }
-
-# Both are of comparison to access in same manner when evaluating
-comparison = (lt | le | eq | ne | ge | gt).setResultsName("comparison")
-stringComparison = (eq | ne).setResultsName("comparison")
-#
-#quoted string is already present
-float_string = Word(nums).setResultsName("value").setParseAction(lambda t: float(t[0]))
-integer_string = Word(nums).setResultsName("value").setParseAction(lambda t: int(t[0]))
-#TODO: use numString, and make integer if fiull stop
-
-#TODO: allow parentheses? - should be ok as pass to the python parser
-
-boolean_and = Literal("&").setResultsName("&")
-boolean_or = Literal("|").setResultsName("|")
-boolean = (boolean_and | boolean_or).setResultsName("boolean")
-
-numericQuery = Group(attribute + comparison + float_string).setResultsName( "numericQuery")
-
-stringValues = (Word(alphanums) | quotedString.setParseAction(removeQuotes)).setResultsName("value")
-
-stringQuery =  Group(attribute + stringComparison + stringValues).setResultsName( "stringQuery")
-
-singleQuery = numericQuery | stringQuery
-nodeQuery = singleQuery + ZeroOrMore(boolean + singleQuery)
+qparser = queryParser()
 
 tests = [
         'Network = ACOnet & asn = 1853 & Latitude < 50',
@@ -82,54 +213,6 @@ tests = [
         'Network = GEANT & type = "Fully Featured"',
         ]
 
-def evaluate(stack):
-    if len(stack) == 1:
-        return set(stack.pop())
-    else:
-        a = set(stack.pop())
-        op = stack.pop()
-        return opn[op](a, evaluate(stack))
-
-def query(qstring):
-    if isinstance(qstring, str):
-        result = nodeQuery.parseString(qstring)
-    else:
-# don't parse as likely came from edge parser
-        result = qstring
-
-#TODO: rearrange so remove stack and iterate over nodes only once
-# so execute the boolean as function, rather than using stack on node sets
-# ie test each node for all the required matches in one step
-# and use data(=True) so get the dictionary reference once -> faster
-# especially if using short circuits so when false stop executing
-
-    def comp_fn_string(token, n):
-        return opn[token.comparison](graph.node[n].get(token.attribute), token.value)
-
-    def comp_fn_numeric(token, n):
-        return opn[token.comparison](float(graph.node[n].get(token.attribute)), token.value)
-
-    stack = []
-
-    for token in result:
-        if token in boolean:
-            stack.append(token)
-            continue
-
-# different function depending on value type: numeric or string
-
-        if isinstance(token.value, str):
-            comp_fn = comp_fn_string
-        if isinstance(token.value, float):
-            comp_fn = comp_fn_numeric
-       
-        if comp_fn:
-            #TODO: change to generator expressions and evaluate as sets in the evaluate function
-            result_set = set(n for n in graph if token.attribute in graph.node[n] and comp_fn(token, n) )
-            stack.append(result_set)
-
-    final_set = evaluate(stack)
-    return final_set
 
 def nodes_to_labels(nodes):
     return  ", ".join(graph.node[n].get('label') for n in nodes)
@@ -147,49 +230,11 @@ def edges_to_labels(edges):
 for test in tests:
     print "--------------------------"
     print test
-    test_result = query(test)
+    test_result = qparser.node_select_query(test)
     print nodes_to_labels(test_result)
     #print result.dump()
 
 
-edgeType = oneOf("<- <-> ->").setResultsName("edgeType")
-edgeQuery = ("(" + nodeQuery.setResultsName("query_a") + ")"
-        + edgeType
-        + "(" + nodeQuery.setResultsName("query_b") + ")")
-
-
-def find_edges(qstring):
-    result = edgeQuery.parseString(qstring)
-    set_a = query(result.query_a)
-    set_b = query(result.query_b)
-    select_type = result.edgeType
-
-# use nbunch feature of networkx to limit edges to look at
-    node_set = set_a | set_b
-
-    edges = graph.edges(node_set)
-# 1 ->, 2 <-, 3 <->
-
-    def select_fn_u_to_v( (u, v), src_set, dst_set):
-        """ u -> v"""
-        return (u in src_set and v in dst_set)
-
-    def select_fn_u_from_v( (u, v), src_set, dst_set):
-        """ u <- v"""
-        return (u in dst_set and v in src_set)
-
-    def select_fn_v_to_from_u( (u, v), src_set, dst_set):
-        """ u <- v"""
-        return (u in src_set and v in dst_set) or (u in dst_set and v in src_set)
-
-    if select_type == "->":
-        select_function = select_fn_u_to_v
-    elif select_type == "<-":
-        select_function = select_fn_u_from_v
-    elif select_type == "<->":
-        select_function = select_fn_v_to_from_u 
-
-    return ( e for e in edges if select_function(e, set_a, set_b))
 
 
 #TODO: check if "<->" means join <- and -> or means bidirectional edge... or depends om Graph vs DiGraph?
@@ -203,27 +248,12 @@ test_queries = [
 
 print "----edges:----"
 for test in test_queries:
-    matching_edges = find_edges(test)
+    matching_edges = qparser.find_edges(test)
     print edges_to_labels(matching_edges)
     print "---"
 
 
-asn = "ASN"
-asnAlias = (stringValues.setResultsName("network") + 
-        "is" + asn + integer_string.setResultsName("asn")).setResultsName("asnAlias")
-# eg AARNET is 213, sets asn of node AARNET
-#'GEANT is ASN 123',
 
-serviceString = (stringValues.setResultsName("provider")
-        + "provides" + stringValues.setResultsName("service") 
-        + "to" + stringValues.setResultsName("client")).setResultsName("serviceString")
-
-relationshipString = (stringValues.setResultsName("provider")
-        + "is a" + stringValues.setResultsName("relationship") 
-        + "of" + stringValues.setResultsName("client")).setResultsName("relationshipString")
-
-
-br_query = asnAlias | serviceString | relationshipString
 
 
 test_queries = [
@@ -247,7 +277,7 @@ G_business_relationship = nx.DiGraph()
 print "----bus rel:----"
 for test in test_queries:
     print test
-    result = br_query.parseString(test)
+    result = qparser.br_query.parseString(test)
     if "relationshipString" in result:
         G_business_relationship.add_edge(result.provider, result.client, attr=result.relationship)
     elif "serviceString" in result:
@@ -290,13 +320,7 @@ plt.savefig("G_business_relationship.pdf")
 # need to know remapping of node ids...
 # do remapping on load, based on size of previous loaded graphs? using generator...
 
-alias = Word(alphanums).setResultsName("alias")
-fileAlias = (alias + "=" + quotedString.setResultsName("file")).setResultsName("fileAlias")
-graphNodeTuple = ("(" + stringValues.setResultsName("graph") + "," + stringValues.setResultsName("node") + ")")
-interconnectString = (graphNodeTuple.setResultsName("gn_a") + "<->" 
-        + graphNodeTuple.setResultsName("gn_b")).setResultsName("interconnectString")
-graphDirString = ('graphdir =' + quotedString.setResultsName("dir")).setResultsName("graphDir")
-stitchString = fileAlias | interconnectString | graphDirString
+
 
 tests = [
         'dt = "Deutschetelekom.gml"',
@@ -313,7 +337,7 @@ graph_interconnects = []
 node_relabel_gen = itertools.count()
 
 for test in tests:
-    result = stitchString.parseString(test)
+    result = qparser.stitchString.parseString(test)
     if "graphDir" in result:
         graph_directory = result.graphdir
     elif "fileAlias" in result:
@@ -344,7 +368,8 @@ for G in graph_dict.values():
 # and apply interconnectString
 G_interconnect.add_edges_from(graph_interconnects)
 
-#print G_interconnect.nodes(data=True)
+print G_interconnect.nodes(data=True)
+#sys.exit(0)
 
 """
 plt.clf()
@@ -376,28 +401,25 @@ TopZooTools.geoplot.plot_graph(G_interconnect, output_path,
 """
 
 
-originQuery = ("O(" +  
-        nodeQuery.setResultsName("nodeQuery") + ")").setResultsName("originQuery")
-transitQuery = ("T(" +  
-        nodeQuery.setResultsName("nodeQuery") + ")").setResultsName("transitQuery")
 
-bgpQuery = originQuery | transitQuery
+
 tests = [
         'O(asn = 680)',
         'T(Network = GEANT)',
         ]
 
-
 for test in tests:
     print test
-    result = bgpQuery.parseString(test)
-    matching_nodes = query(result.nodeQuery)
+    result = qparser.bgpQuery.parseString(test)
+    matching_nodes = qparser.node_select_query(result.nodeQuery)
     print "matching nodes " + nodes_to_labels(matching_nodes)
     if "originQuery" in result:
         print "origin"
 
     elif "transitQuery" in result:
         print "transit"
+
+sys.exit(0)
 
 
 bgpMatchAttribute = oneOf("prefix_list").setResultsName("bgpMatchAttribute")
@@ -579,9 +601,6 @@ def parsedSessionVis(parsedSession):
     nx.draw_networkx_edge_labels(parsed_graph, pos, 
         edge_labels, font_size=16, label_pos = 0.5, bbox = bbox)
     plt.savefig("parsed_graph.pdf")
-
-
-
 
 
 for res in parsedSessionResults:
