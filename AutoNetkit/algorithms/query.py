@@ -507,18 +507,19 @@ for test in tests:
     elif "transitQuery" in result:
         print "transit"
 
-
-
+#TODO: allow tag = A or tag = B
+# by putting both tags into a community list?
+# similar for boolean or for prefix lists?
 
 #TODO: do we need an elif?
 tests = [
-        #"(if prefix_list = pl_1 then addTag a100 else addTag a200)",
-        #"(if prefix_list = pl_1 then addTag a100 & setLP 90 else addTag a200)",
-        #"(if prefix_list = pl_1 then addTag a100 & setLP 90 else addTag a200 & setLP 100)",
-        #"(if prefix_list = pl_1 & tag = aaa then addTag a100 else addTag a200)",
-        ##"(if prefix_list =  pl_1 then addTag a100 else (if prefix_list = pl_2 then setLP 200))",
-        #"(if prefix_list =  pl_1 then addTag a100 else (if prefix_list = pl_2 then setOriginAttribute BGP else addTag a300))",
-        ("(if tag = abc then addTag a100 else (if prefix_list = pl_2 " 
+        "(if prefix_list = pl_1 then addTag a100 else addTag a200)",
+        "(if prefix_list = pl_1 then addTag a100 & setLP 90 else addTag a200)",
+        "(if prefix_list = pl_1 then addTag a100 & setLP 90 else addTag a200 & setLP 100)",
+        "(if prefix_list = pl_1 & tag = aaa then addTag a100 else addTag a200)",
+        "(if prefix_list =  pl_1 then addTag a100 else (if prefix_list = pl_2 then setLP 200))",
+        "(if prefix_list =  pl_1 then addTag a100 else (if prefix_list = pl_2 then setOriginAttribute BGP else addTag a300))",
+        ("(if tag = abc & prefix_list = pl_4 then addTag a100 else (if prefix_list = pl_2 " 
         "then addTag free_bh else (if prefix_list = pl_3 then setLP 300 else addTag a400)))"),
 ]
 
@@ -622,17 +623,23 @@ def session_to_quagga(session):
 
     def flatten_nested_dicts(pol_dict):
         retval = []
-        retval.append((sequence_number.next(), pol_dict.get("if"), pol_dict.get("then")))
+# remove & as match on all conditions
+        if_clause = [item for item in pol_dict.get("if") if item != "&"]
+        then_clause = [item for item in pol_dict.get("then") if item != "&"]
+        print then_clause
+        retval.append((sequence_number.next(), if_clause, then_clause))
         if 'else' in pol_dict:
             if isinstance(pol_dict.get("else"), dict):
                 retval += flatten_nested_dicts(pol_dict.get("else"))
             else:
 # No match clause, so match clause is empty list 
-                retval.append((sequence_number.next(), [], pol_dict.get("else")))
+                else_clause = [item for item in pol_dict.get("else") if item != "&"]
+                retval.append((sequence_number.next(), [], else_clause))
 
         return retval
 
     route_maps["rm1"] =  flatten_nested_dicts(session)
+    pprint.pprint(route_maps)
     print bgp_policy_template.render(
             route_maps = route_maps
             )
