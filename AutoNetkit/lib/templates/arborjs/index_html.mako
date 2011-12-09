@@ -18,7 +18,7 @@
 
   <script src="./jsplot/main.js"></script>    
   
-  Plotted by <a href="http://http://packages.python.org/AutoNetkit/">AutoNetkit</a> using <a href="http://arborjs.org/">arbor.js</a>
+  Plotted by <a href="http://packages.python.org/AutoNetkit/">AutoNetkit</a> using <a href="http://arborjs.org/">arbor.js</a>
 
 </body>
 </html>
