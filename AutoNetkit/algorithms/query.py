@@ -614,23 +614,25 @@ lookup = TemplateLookup(directories=[ template_dir ],
 
 bgp_policy_template = lookup.get_template("quagga/bgp_policy.mako")
 
-
 def session_to_quagga(session):
     route_maps = {}
     sequence_number = itertools.count(10, 10)
+
+#TODO: need to reformat prefix list/matches
 
     def flatten_nested_dicts(pol_dict):
         retval = []
         retval.append((sequence_number.next(), pol_dict.get("if"), pol_dict.get("then")))
         if 'else' in pol_dict:
             if isinstance(pol_dict.get("else"), dict):
-                retval.append( flatten_nested_dicts(pol_dict.get("else")))
+                retval += flatten_nested_dicts(pol_dict.get("else"))
             else:
-                retval.append((sequence_number.next(), "", pol_dict.get("else")))
+# No match clause, so match clause is empty list 
+                retval.append((sequence_number.next(), [], pol_dict.get("else")))
 
         return retval
 
-    pprint.pprint(flatten_nested_dicts(session))
+    route_maps["rm1"] =  flatten_nested_dicts(session)
     print "rendered template:"
     print bgp_policy_template.render(
             route_maps = route_maps
