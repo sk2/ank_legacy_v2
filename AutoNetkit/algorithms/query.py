@@ -268,6 +268,7 @@ class queryParser:
                     return { 
                     'if': parse_if(parsed_query.if_clause),
                     'then': parse_then(parsed_query.then_clause),
+# recursive call
                     'else': self.process_if_then_else(parsed_query.else_clause.bgpSessionQuery),
                     }
 
@@ -528,13 +529,14 @@ tests = [
 parsedSessionResults = []
 
 for test in tests:
-    print test
-    result =  qparser.bgpSessionQuery.parseString(test)
+    pass
+    #print test
+    #result =  qparser.bgpSessionQuery.parseString(test)
     #print result.dump()
     #res = ", ".join(['if', result.if_clause.attribute, result.if_clause.value,
     #    'then', result.then_clause.attribute, str(result.then_clause.value)])
-    parsedSessionResults.append(qparser.process_if_then_else(result))
-    print
+    #parsedSessionResults.append(qparser.process_if_then_else(result))
+    #print
 
 def printParsedSession(parseString, indent=""):
     #TODO: make this work for multiple nesteds.....
@@ -626,7 +628,6 @@ def session_to_quagga(session):
 # remove & as match on all conditions
         if_clause = [item for item in pol_dict.get("if") if item != "&"]
         then_clause = [item for item in pol_dict.get("then") if item != "&"]
-        print then_clause
         retval.append((sequence_number.next(), if_clause, then_clause))
         if 'else' in pol_dict:
             if isinstance(pol_dict.get("else"), dict):
@@ -639,17 +640,19 @@ def session_to_quagga(session):
         return retval
 
     route_maps["rm1"] =  flatten_nested_dicts(session)
-    pprint.pprint(route_maps)
+#TODO: need to allocate community values (do this globally for network)
     print bgp_policy_template.render(
             route_maps = route_maps
             )
 
-
-for res in parsedSessionResults:
-    #printParsedSession (res)
-    #pprint.pprint(res)
-    #parsedSessionVis(res)
-    session_to_quagga(res)
+for test in tests:
+    print test
+    result =  qparser.bgpSessionQuery.parseString(test)
+    #print result.dump()
+    #res = ", ".join(['if', result.if_clause.attribute, result.if_clause.value,
+    #    'then', result.then_clause.attribute, str(result.then_clause.value)])
+    processed = qparser.process_if_then_else(result)
+    session_to_quagga(processed)
 
     print
 
