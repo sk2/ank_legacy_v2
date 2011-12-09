@@ -63,11 +63,12 @@ def jsplot(network, show=False, save=True):
     css_template = lookup.get_template("arborjs/style_css.mako")
     html_template = lookup.get_template("arborjs/index_html.mako")
 
-    node_list = {}
-    node_list = dict( (node, data) for node, data in network.graph.nodes(data=True))
-    edge_list = dict( ((src, dst), data) for src, dst, data in network.graph.edges(data=True))
-    node_list = network.graph.nodes(data=True)
+    node_list = []
     edge_list = network.graph.edges(data=True)
+    for node, data in network.graph.nodes(data=True):
+# Set label to be FQDN, so don't have multiple "Router A" nodes etc
+        data['label'] = ank.fqdn(network, node)
+        node_list.append( (node, data))
 
     js_filename = os.path.join(jsplot_dir, "main.js")
     with open( js_filename, 'w') as f_js:
