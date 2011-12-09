@@ -17,6 +17,9 @@ import itertools
 import TopZooTools
 import TopZooTools.geoplot
 import sys
+from AutoNetkit import config
+from pkg_resources import resource_filename
+from mako.lookup import TemplateLookup
 
 
 class queryParser:
@@ -115,14 +118,12 @@ class queryParser:
                 + comparison
                 + attribute.setResultsName("value"))
 
-        matchComm = (Literal("tag").setResultsName("attribute")
+        matchTag = (Literal("tag").setResultsName("attribute")
                 + comparison
                 + attribute.setResultsName("value"))
 
-        bgpMatchQuery = Group(matchPl | matchComm).setResultsName("bgpMatchQuery")
+        bgpMatchQuery = Group(matchPl | matchTag).setResultsName("bgpMatchQuery")
 
-        setComm = (Literal("setComm").setResultsName("attribute") 
-                + integer_string.setResultsName("value")).setResultsName("setComm")
         setLP = (Literal("setLP").setResultsName("attribute") 
                 + integer_string.setResultsName("value")).setResultsName("setLP")
         setMED = (Literal("setMED").setResultsName("attribute") 
@@ -136,7 +137,7 @@ class queryParser:
         setOriginAttribute = (Literal("setOriginAttribute").setResultsName("attribute") 
                 + (oneOf("IGP BGP None").setResultsName("value"))).setResultsName("setOriginAttribute")
 
-        bgpAction = Group(setComm | setLP | setMED | addTag | removeTag | setOriginAttribute).setResultsName("bgpAction")
+        bgpAction = Group(addTag | setLP | setMED | addTag | removeTag | setOriginAttribute).setResultsName("bgpAction")
 
         ifClause = Forward()
         ifClause << Group(Suppress("if") +
@@ -511,14 +512,14 @@ for test in tests:
 
 #TODO: do we need an elif?
 tests = [
-        #"(if prefix_list = pl_1 then setComm 100 else setComm 200)",
-        #"(if prefix_list = pl_1 then setComm 100 & setLP 90 else setComm 200)",
-        #"(if prefix_list = pl_1 then setComm 100 & setLP 90 else setComm 200 & setLP 100)",
-        #"(if prefix_list = pl_1 & tag = aaa then setComm 100 else setComm 200)",
-        ##"(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 then setLP 200))",
-        #"(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 then setOriginAttribute BGP else setComm 300))",
-        ("(if prefix_list =  pl_1 then setComm 100 else (if prefix_list = pl_2 " 
-        "then addTag free_bh else (if prefix_list = pl_3 then setLP 300 else setComm 400)))"),
+        #"(if prefix_list = pl_1 then addTag a100 else addTag a200)",
+        #"(if prefix_list = pl_1 then addTag a100 & setLP 90 else addTag a200)",
+        #"(if prefix_list = pl_1 then addTag a100 & setLP 90 else addTag a200 & setLP 100)",
+        #"(if prefix_list = pl_1 & tag = aaa then addTag a100 else addTag a200)",
+        ##"(if prefix_list =  pl_1 then addTag a100 else (if prefix_list = pl_2 then setLP 200))",
+        #"(if prefix_list =  pl_1 then addTag a100 else (if prefix_list = pl_2 then setOriginAttribute BGP else addTag a300))",
+        ("(if tag = abc then addTag a100 else (if prefix_list = pl_2 " 
+        "then addTag free_bh else (if prefix_list = pl_3 then setLP 300 else addTag a400)))"),
 ]
 
 
@@ -583,8 +584,8 @@ def parsedSessionVis(parsedSession):
     parsed_graph.add_node(root_id, label="start")
     add_children(root_id, parsedSession, level=1)
 
-    print parsed_graph.nodes(data=True)
-    print parsed_graph.edges(data=True)
+    #print parsed_graph.nodes(data=True)
+    #print parsed_graph.edges(data=True)
 
 # remove placeholder node
     parsed_graph.remove_node(root_id)
@@ -603,10 +604,44 @@ def parsedSessionVis(parsedSession):
     plt.savefig("parsed_graph.pdf")
 
 
+template_cache_dir = config.template_cache_dir
+template_dir =  resource_filename("AutoNetkit","lib/templates")
+lookup = TemplateLookup(directories=[ template_dir ],
+        module_directory= template_cache_dir,
+        #cache_type='memory',
+        #cache_enabled=True,
+        )
+
+bgp_policy_template = lookup.get_template("quagga/bgp_policy.mako")
+
+
+def session_to_quagga(session):
+    route_maps = {}
+    sequence_number = itertools.count(10, 10)
+
+    def flatten_nested_dicts(pol_dict):
+        retval = []
+        retval.append((sequence_number.next(), pol_dict.get("if"), pol_dict.get("then")))
+        if 'else' in pol_dict:
+            if isinstance(pol_dict.get("else"), dict):
+                retval.append( flatten_nested_dicts(pol_dict.get("else")))
+            else:
+                retval.append((sequence_number.next(), "", pol_dict.get("else")))
+
+        return retval
+
+    pprint.pprint(flatten_nested_dicts(session))
+    print "rendered template:"
+    print bgp_policy_template.render(
+            route_maps = route_maps
+            )
+
+
 for res in parsedSessionResults:
     #printParsedSession (res)
     pprint.pprint(res)
-    parsedSessionVis(res)
+    #parsedSessionVis(res)
+    session_to_quagga(res)
 
     print
 

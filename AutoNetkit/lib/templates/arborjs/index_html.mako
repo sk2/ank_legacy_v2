@@ -16,7 +16,7 @@
   <!-- run from the minified library file: -->
   <script src="./jsplot/arbor.js"></script>  
 
-  <script src="./jsplot/main.js"></script>         
+  <script src="./jsplot/main.js"></script>    
   
   Plotted by <a href="http://http://packages.python.org/AutoNetkit/">AutoNetkit</a> using <a href="http://arborjs.org/">arbor.js</a>
 

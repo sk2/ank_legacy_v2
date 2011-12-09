@@ -74,7 +74,35 @@ def jsplot(network, show=False, save=True):
             f_js.write( js_template.render(
                 node_list = node_list,
                 edge_list = edge_list,
+                physical_graph = True,
                 ))
+
+    
+    """
+            TODO: work out how to do multiple on one page
+    ebgp_graph = ank.get_ebgp_graph(network)
+    labels = dict( (n, network.label(n)) for n in ebgp_graph)
+    ebgp_graph = nx.relabel_nodes(ebgp_graph, labels)
+    js_filename = os.path.join(jsplot_dir, "ebgp.js")
+    with open( js_filename, 'w') as f_js:
+            f_js.write( js_template.render(
+                node_list = ebgp_graph.nodes(data=True),
+                edge_list = ebgp_graph.edges(data=True),
+                bgp_graph = True,
+                ))
+
+    ibgp_graph = ank.get_ibgp_graph(network)
+    labels = dict( (n, network.label(n)) for n in ibgp_graph)
+    ibgp_graph = nx.relabel_nodes(ibgp_graph, labels)
+    js_filename = os.path.join(jsplot_dir, "ibgp.js")
+    with open( js_filename, 'w') as f_js:
+            f_js.write( js_template.render(
+                node_list = ibgp_graph.nodes(data=True),
+                edge_list = ibgp_graph.edges(data=True),
+                bgp_graph = True,
+                ))
+    """
+
 
     # put html file in main plot directory
     html_filename = os.path.join(plot_dir, "plot.html")
