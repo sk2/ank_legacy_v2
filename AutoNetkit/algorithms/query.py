@@ -529,7 +529,7 @@ parsedSessionResults = []
 for test in tests:
     print test
     result =  qparser.bgpSessionQuery.parseString(test)
-    print result.dump()
+    #print result.dump()
     #res = ", ".join(['if', result.if_clause.attribute, result.if_clause.value,
     #    'then', result.then_clause.attribute, str(result.then_clause.value)])
     parsedSessionResults.append(qparser.process_if_then_else(result))
@@ -633,7 +633,6 @@ def session_to_quagga(session):
         return retval
 
     route_maps["rm1"] =  flatten_nested_dicts(session)
-    print "rendered template:"
     print bgp_policy_template.render(
             route_maps = route_maps
             )
@@ -641,7 +640,7 @@ def session_to_quagga(session):
 
 for res in parsedSessionResults:
     #printParsedSession (res)
-    pprint.pprint(res)
+    #pprint.pprint(res)
     #parsedSessionVis(res)
     session_to_quagga(res)
 
