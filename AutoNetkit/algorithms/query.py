@@ -520,8 +520,7 @@ tests = [
         "(if prefix_list = pl_1 & tag = aaa then addTag a100 else addTag a200)",
         "(if prefix_list =  pl_1 then addTag a100 else (if prefix_list = pl_2 then setLP 200))",
         "(if prefix_list =  pl_1 then addTag a100 else (if prefix_list = pl_2 then setOriginAttribute BGP else addTag a300))",
-        ("(if tag = abc & prefix_list = pl_4 then addTag a100 else (if prefix_list = pl_2 " 
-        "then addTag free_bh else (if prefix_list = pl_3 then setLP 300 else addTag a400)))"),
+
 ]
 
 
@@ -645,16 +644,31 @@ def session_to_quagga(session):
             route_maps = route_maps
             )
 
+def parser2(result):
+    retval = []
+    print result.dump()
+    print "-----"
+
+    #TODO: remove when move into qparser
+    boolean = qparser._boolean
+    retval = []
+
+    print
+
+
 for test in tests:
     print test
     result =  qparser.bgpSessionQuery.parseString(test)
     #print result.dump()
     #res = ", ".join(['if', result.if_clause.attribute, result.if_clause.value,
     #    'then', result.then_clause.attribute, str(result.then_clause.value)])
+    print result
+    parser2(result)
+    print
+    continue
     processed = qparser.process_if_then_else(result)
     session_to_quagga(processed)
 
-    print
 
 # need recursive function to process result
 
