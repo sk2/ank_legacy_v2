@@ -25,6 +25,7 @@ import shutil
 
 import AutoNetkit as ank
 from AutoNetkit import config
+import itertools
 
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
@@ -70,45 +71,56 @@ def jsplot(network):
         data['label'] = ank.fqdn(network, node)
         node_list.append( (node, data))
 
+    canvas_id = itertools.count(0)
+    js_files = []
+
     js_filename = os.path.join(jsplot_dir, "main.js")
+    js_files.append("main.js")
     with open( js_filename, 'w') as f_js:
             f_js.write( js_template.render(
                 node_list = node_list,
                 edge_list = edge_list,
                 physical_graph = True,
+                canvas_id = canvas_id.next(),
                 ))
 
     
     """
-            TODO: work out how to do multiple on one page
+    #TODO: work out how to do multiple on one page
     ebgp_graph = ank.get_ebgp_graph(network)
     labels = dict( (n, network.label(n)) for n in ebgp_graph)
     ebgp_graph = nx.relabel_nodes(ebgp_graph, labels)
     js_filename = os.path.join(jsplot_dir, "ebgp.js")
+    js_files.append("ebgp.js")
     with open( js_filename, 'w') as f_js:
             f_js.write( js_template.render(
                 node_list = ebgp_graph.nodes(data=True),
                 edge_list = ebgp_graph.edges(data=True),
                 bgp_graph = True,
+                canvas_id = canvas_id.next(),
                 ))
 
     ibgp_graph = ank.get_ibgp_graph(network)
     labels = dict( (n, network.label(n)) for n in ibgp_graph)
     ibgp_graph = nx.relabel_nodes(ibgp_graph, labels)
     js_filename = os.path.join(jsplot_dir, "ibgp.js")
+    js_files.append("ibgp.js")
     with open( js_filename, 'w') as f_js:
             f_js.write( js_template.render(
                 node_list = ibgp_graph.nodes(data=True),
                 edge_list = ibgp_graph.edges(data=True),
                 bgp_graph = True,
+                canvas_id = canvas_id.next(),
                 ))
     """
-
 
     # put html file in main plot directory
     html_filename = os.path.join(plot_dir, "plot.html")
     with open( html_filename, 'w') as f_html:
-            f_html.write( html_template.render())
+            f_html.write( html_template.render(
+                    js_files = js_files,
+                    )
+                    )
 
     css_filename = os.path.join(jsplot_dir, "style.css")
     with open( css_filename, 'w') as f_css:
