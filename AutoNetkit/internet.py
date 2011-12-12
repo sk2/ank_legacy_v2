@@ -163,7 +163,7 @@ class Internet:
         """              
         LOG.info("Plotting")      
         ank.plot(self.network, show, save)        
-        ank.jsplot(self.network, show, save)        
+        ank.jsplot(self.network)        
        
     def save(self):  
         LOG.info("Saving")
