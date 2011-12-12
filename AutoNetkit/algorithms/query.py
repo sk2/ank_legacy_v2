@@ -53,6 +53,8 @@ class queryParser:
 #TODO: use numString, and make integer if fiull stop
 
 #TODO: allow parentheses? - should be ok as pass to the python parser
+        ipField = Word(nums, max=3)
+        ipAddress = Combine( ipField + "." + ipField + "." + ipField + "." + ipField ).setResultsName("ipAddress")
 
         boolean_and = Literal("&").setResultsName("&")
         boolean_or = Literal("|").setResultsName("|")
@@ -111,7 +113,6 @@ class queryParser:
         self.bgpQuery = originQuery | transitQuery
 
 # bgp session query
-        bgpMatchAttribute = oneOf("prefix_list").setResultsName("bgpMatchAttribute")
 
         prefixList = Literal("prefix_list")
         matchPl = (prefixList.setResultsName("attribute")
@@ -133,11 +134,15 @@ class queryParser:
                 + attribute.setResultsName("value")).setResultsName("addTag")
         removeTag = (Literal("removeTag").setResultsName("attribute") 
                 + attribute.setResultsName("value")).setResultsName("removeTag")
+        #TODO: need to set blank value
+        rejectAction = Group(Literal("reject").setResultsName("attribute")).setResultsName("reject")
+        setNextHop = (Literal("setNextHop").setResultsName("attribute") + ipAddress.setResultsName("value")).setResultsName("setNextHop")
 
         setOriginAttribute = (Literal("setOriginAttribute").setResultsName("attribute") 
                 + (oneOf("IGP BGP None").setResultsName("value"))).setResultsName("setOriginAttribute")
 
-        bgpAction = Group(addTag | setLP | setMED | addTag | removeTag | setOriginAttribute).setResultsName("bgpAction")
+        bgpAction = Group(addTag | setLP | setMED | addTag | removeTag |
+                setNextHop | setOriginAttribute | rejectAction).setResultsName("bgpAction")
 
         ifClause = Forward()
         ifClause << Group(Suppress("if") +
@@ -515,11 +520,11 @@ for test in tests:
 #TODO: do we need an elif?
 tests = [
         "(if prefix_list = pl_1 then addTag a100 else addTag a200)",
-        "(if prefix_list = pl_1 then addTag a100 & setLP 90 else addTag a200)",
+        "(if prefix_list = pl_1 then addTag a100 & setLP 90 else removeTag a200)",
         "(if prefix_list = pl_1 then addTag a100 & setLP 90 else addTag a200 & setLP 100)",
         "(if prefix_list = pl_1 & tag = aaa then addTag a100 else addTag a200)",
         "(if prefix_list =  pl_1 then addTag a100 else (if prefix_list = pl_2 then setLP 200))",
-        "(if prefix_list =  pl_1 then addTag a100 else (if prefix_list = pl_2 then setOriginAttribute BGP else addTag a300))",
+        "(if prefix_list =  pl_1 then addTag a100 else (if prefix_list = pl_2 then setNextHop 1.2.3.4 else addTag a300))",
 
 ]
 
@@ -614,7 +619,8 @@ lookup = TemplateLookup(directories=[ template_dir ],
         #cache_enabled=True,
         )
 
-bgp_policy_template = lookup.get_template("quagga/bgp_policy.mako")
+quagga_bgp_policy_template = lookup.get_template("quagga/bgp_policy.mako")
+junos_bgp_policy_template = lookup.get_template("junos/bgp_policy.mako")
 
 def session_to_quagga(session):
     route_maps = {}
@@ -640,9 +646,36 @@ def session_to_quagga(session):
 
     route_maps["rm1"] =  flatten_nested_dicts(session)
 #TODO: need to allocate community values (do this globally for network)
-    print bgp_policy_template.render(
+    print quagga_bgp_policy_template.render(
             route_maps = route_maps
             )
+
+def session_to_junos(session):
+    route_maps = {}
+#TODO: need to reformat prefix list/matches
+
+    def flatten_nested_dicts(pol_dict):
+        retval = []
+# remove & as match on all conditions
+        if_clause = [item for item in pol_dict.get("if") if item != "&"]
+        then_clause = [item for item in pol_dict.get("then") if item != "&"]
+        retval.append((if_clause, then_clause))
+        if 'else' in pol_dict:
+            if isinstance(pol_dict.get("else"), dict):
+                retval += flatten_nested_dicts(pol_dict.get("else"))
+            else:
+# No match clause, so match clause is empty list 
+                else_clause = [item for item in pol_dict.get("else") if item != "&"]
+                retval.append(([], else_clause))
+
+        return retval
+
+    route_maps["rm1"] =  flatten_nested_dicts(session)
+#TODO: need to allocate community values (do this globally for network)
+    print junos_bgp_policy_template.render(
+            route_maps = route_maps
+            )
+
 
 def parser2(result):
     retval = []
@@ -662,12 +695,9 @@ for test in tests:
     #print result.dump()
     #res = ", ".join(['if', result.if_clause.attribute, result.if_clause.value,
     #    'then', result.then_clause.attribute, str(result.then_clause.value)])
-    print result
-    parser2(result)
-    print
-    continue
     processed = qparser.process_if_then_else(result)
     session_to_quagga(processed)
+    session_to_junos(processed)
 
 
 # need recursive function to process result
