@@ -50,7 +50,7 @@ LOG = logging.getLogger("ANK")
 #TODO: add option to show plots, or save them
 
 
-def jsplot(network, show=False, save=True):
+def jsplot(network):
     """ Plot the network """
     plot_dir = config.plot_dir
     if not os.path.isdir(plot_dir):

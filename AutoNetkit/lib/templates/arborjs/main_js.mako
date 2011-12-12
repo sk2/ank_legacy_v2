@@ -139,7 +139,7 @@
     // add some nodes to the graph and watch it go...  
     % if physical_graph:
         % for src, dst, data in edge_list:
-        sys.addEdge('${src}', '${dst}', {name: "${data['sn']}"})        
+        sys.addEdge('${src}', '${dst}', {name: "${data.get('sn')}"})        
         % endfor
     
         % for node, data in node_list:
