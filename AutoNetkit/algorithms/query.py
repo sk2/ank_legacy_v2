@@ -332,7 +332,7 @@ def get_prefixes(inet, nodes):
         prefixes.update([data.get("sn")
             for u, v, data in inet.network.graph.out_edges(node, data=True) 
             if data.get("sn")])
-    #print prefixes
+    print prefixes
     
 
 def nodes_to_labels(nodes):
@@ -362,6 +362,7 @@ for test in tests:
 test_queries = [
         '(Network = GEANT) <-> (Network = GARR)',
         '(Network = GEANT) <-> (asn = 680)',
+# and iBGP
         '(Network = GEANT) <-> (Network = GEANT)',
         ]
 
@@ -371,7 +372,8 @@ for test in test_queries:
     print edges_to_labels(matching_edges)
     print "matches are %s" % matching_edges
     for (u,v) in matching_edges:
-        print inet.network.g_session[u][v]
+        #print inet.network.g_session[u][v]
+        pass
     print "---"
 
 sys.exit(0)
