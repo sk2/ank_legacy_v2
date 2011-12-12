@@ -9,7 +9,7 @@
 </head>
 <body>                   
 <h1>AutoNetkit plot</h1>
-  <canvas id="viewport" width="800" height="600"></canvas>
+  <canvas id="viewport" width="1280" height="1024"></canvas>
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
 
