@@ -303,11 +303,11 @@ graph = nx.read_gpickle("condensed_west_europe.pickle")
 inet = ank.internet.Internet()
 inet.load("condensed_west_europe.pickle")
 ank.allocate_subnets(inet.network, IPNetwork("10.0.0.0/8")) 
+print inet.network.graph.edges(data=True)
+#ank.jsplot(inet.network)
 #TODO: initialise BGP sessions
 
-
 print inet.network.graph.nodes()
-sys.exit(0)
 
 #print graph.nodes(data=True)
 
@@ -326,14 +326,14 @@ tests = [
         'Network = GEANT & type = "Fully Featured"',
         ]
 
-def get_prefixes(graph, nodes):
+def get_prefixes(inet, nodes):
     prefixes = set()
-    print "getting prefixes"
-    print nodes
     for node in nodes:
         # Arbitrary choice of out edges, as bi-directional edge for each subnet
-        pr = [data.get("sn") for u, v, data in graph.out_edges(node)]
-        print pr
+        prefixes.update([data.get("sn")
+            for u, v, data in inet.network.graph.out_edges(node, data=True) 
+            if data.get("sn")])
+    print prefixes
     
 
 def nodes_to_labels(nodes):
@@ -354,7 +354,7 @@ for test in tests:
     print test
     test_result = qparser.node_select_query(test)
     print nodes_to_labels(test_result)
-    get_prefixes(graph, test_result)
+    get_prefixes(inet, test_result)
     #print result.dump()
 
 sys.exit(0)
