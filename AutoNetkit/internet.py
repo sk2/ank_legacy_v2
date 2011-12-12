@@ -138,9 +138,13 @@ class Internet:
             ank.load_zoo(self.network, filename)
         elif ext == ".graphml":
             ank.load_graphml(self.network, filename)
+        elif ext == ".pickle":
+            ank.load_pickle(self.network, filename)
         elif ext == ".yaml":
             # Legacy ANK file format
             LOG.warn("AutoNetkit no longer supports yaml file format")
+        else:
+            LOG.warn("AutoNetkit does not support file format %s" % ext)
     
     def plot(self, show=False, save=True): 
         """Plot the network topology

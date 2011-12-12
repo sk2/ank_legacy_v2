@@ -7,6 +7,8 @@ __author__ = "\n".join(['Simon Knight'])
 
 import networkx as nx
 import logging
+import AutoNetkit as ank
+from AutoNetkit import config
 LOG = logging.getLogger("ANK")
 #TODO: only import from pyparsing what is needed
 from pyparsing import *
@@ -17,9 +19,9 @@ import itertools
 import TopZooTools
 import TopZooTools.geoplot
 import sys
-from AutoNetkit import config
 from pkg_resources import resource_filename
 from mako.lookup import TemplateLookup
+from netaddr import IPNetwork
 
 
 class queryParser:
@@ -135,7 +137,10 @@ class queryParser:
         removeTag = (Literal("removeTag").setResultsName("attribute") 
                 + attribute.setResultsName("value")).setResultsName("removeTag")
         #TODO: need to set blank value
-        rejectAction = Group(Literal("reject").setResultsName("attribute")).setResultsName("reject")
+        reject = Literal("reject")
+#TODO: remove once move quagga output inside module
+        self.reject = reject
+        rejectAction = (reject.setResultsName("attribute") + Empty().setResultsName("value")).setResultsName("reject")
         setNextHop = (Literal("setNextHop").setResultsName("attribute") + ipAddress.setResultsName("value")).setResultsName("setNextHop")
 
         setOriginAttribute = (Literal("setOriginAttribute").setResultsName("attribute") 
@@ -163,8 +168,6 @@ class queryParser:
                 + Suppress(")")
                 ).setResultsName("bgpSessionQuery")
         self.bgpSessionQuery = bgpSessionQuery
-
-
 
     def find_edges(self, qstring):
         result = self.edgeQuery.parseString(qstring)
@@ -295,6 +298,17 @@ class queryParser:
 #TODO: apply stringEnd to the matching parse queries to ensure have parsed all
 
 graph = nx.read_gpickle("condensed_west_europe.pickle")
+
+
+inet = ank.internet.Internet()
+inet.load("condensed_west_europe.pickle")
+ank.allocate_subnets(inet.network, IPNetwork("10.0.0.0/8")) 
+#TODO: initialise BGP sessions
+
+
+print inet.network.graph.nodes()
+sys.exit(0)
+
 #print graph.nodes(data=True)
 
 ##### parser
@@ -312,6 +326,15 @@ tests = [
         'Network = GEANT & type = "Fully Featured"',
         ]
 
+def get_prefixes(graph, nodes):
+    prefixes = set()
+    print "getting prefixes"
+    print nodes
+    for node in nodes:
+        # Arbitrary choice of out edges, as bi-directional edge for each subnet
+        pr = [data.get("sn") for u, v, data in graph.out_edges(node)]
+        print pr
+    
 
 def nodes_to_labels(nodes):
     return  ", ".join(graph.node[n].get('label') for n in nodes)
@@ -331,11 +354,12 @@ for test in tests:
     print test
     test_result = qparser.node_select_query(test)
     print nodes_to_labels(test_result)
+    get_prefixes(graph, test_result)
     #print result.dump()
 
+sys.exit(0)
 
 #TODO: check if "<->" means join <- and -> or means bidirectional edge... or depends om Graph vs DiGraph?
-
 
 #TODO: allow access to edge properties, eg (bob<->alice).freq returns 10
 test_queries = [
@@ -348,6 +372,8 @@ for test in test_queries:
     matching_edges = qparser.find_edges(test)
     print edges_to_labels(matching_edges)
     print "---"
+
+
 
 
 
@@ -524,7 +550,7 @@ tests = [
         "(if prefix_list = pl_1 then addTag a100 & setLP 90 else addTag a200 & setLP 100)",
         "(if prefix_list = pl_1 & tag = aaa then addTag a100 else addTag a200)",
         "(if prefix_list =  pl_1 then addTag a100 else (if prefix_list = pl_2 then setLP 200))",
-        "(if prefix_list =  pl_1 then addTag a100 else (if prefix_list = pl_2 then setNextHop 1.2.3.4 else addTag a300))",
+        "(if prefix_list =  pl_1 then addTag a100 & reject else (if prefix_list = pl_2 then setNextHop 1.2.3.4 else addTag a300))",
 
 ]
 
@@ -633,14 +659,16 @@ def session_to_quagga(session):
 # remove & as match on all conditions
         if_clause = [item for item in pol_dict.get("if") if item != "&"]
         then_clause = [item for item in pol_dict.get("then") if item != "&"]
-        retval.append((sequence_number.next(), if_clause, then_clause))
+        reject = any(True for (attribute, value) in then_clause if attribute == qparser.reject)
+        retval.append((sequence_number.next(), if_clause, then_clause, reject))
         if 'else' in pol_dict:
             if isinstance(pol_dict.get("else"), dict):
                 retval += flatten_nested_dicts(pol_dict.get("else"))
             else:
 # No match clause, so match clause is empty list 
                 else_clause = [item for item in pol_dict.get("else") if item != "&"]
-                retval.append((sequence_number.next(), [], else_clause))
+                reject = any(True for (attribute, value) in else_clause if attribute == qparser.reject)
+                retval.append((sequence_number.next(), [], else_clause, reject))
 
         return retval
 
@@ -653,20 +681,25 @@ def session_to_quagga(session):
 def session_to_junos(session):
     route_maps = {}
 #TODO: need to reformat prefix list/matches
+    term_number = itertools.count(1)
 
     def flatten_nested_dicts(pol_dict):
         retval = []
 # remove & as match on all conditions
         if_clause = [item for item in pol_dict.get("if") if item != "&"]
         then_clause = [item for item in pol_dict.get("then") if item != "&"]
-        retval.append((if_clause, then_clause))
+#TODO: move the reject handling into the parser itself
+        reject = any(True for (attribute, value) in then_clause if attribute == qparser.reject)
+#TODO: use named tuples
+        retval.append((term_number.next(), if_clause, then_clause, reject))
         if 'else' in pol_dict:
             if isinstance(pol_dict.get("else"), dict):
                 retval += flatten_nested_dicts(pol_dict.get("else"))
             else:
 # No match clause, so match clause is empty list 
                 else_clause = [item for item in pol_dict.get("else") if item != "&"]
-                retval.append(([], else_clause))
+                reject = any(True for (attribute, value) in else_clause if attribute == qparser.reject)
+                retval.append((term_number.next(), [], else_clause, reject))
 
         return retval
 
@@ -679,7 +712,6 @@ def session_to_junos(session):
 
 def parser2(result):
     retval = []
-    print result.dump()
     print "-----"
 
     #TODO: remove when move into qparser
