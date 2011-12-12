@@ -169,16 +169,16 @@ class queryParser:
                 ).setResultsName("bgpSessionQuery")
         self.bgpSessionQuery = bgpSessionQuery
 
-    def find_edges(self, qstring):
+    def find_bgp_sessions(self, network, qstring):
         result = self.edgeQuery.parseString(qstring)
-        set_a = self.node_select_query(result.query_a)
-        set_b = self.node_select_query(result.query_b)
+        set_a = self.node_select_query(network, result.query_a)
+        set_b = self.node_select_query(network, result.query_b)
         select_type = result.edgeType
 
 # use nbunch feature of networkx to limit edges to look at
         node_set = set_a | set_b
 
-        edges = graph.edges(node_set)
+        edges = network.g_session.edges(node_set)
 # 1 ->, 2 <-, 3 <->
 
         def select_fn_u_to_v( (u, v), src_set, dst_set):
@@ -210,7 +210,7 @@ class queryParser:
             op = stack.pop()
             return self._opn[op](a, self.evaluate_node_stack(stack))
 
-    def node_select_query(self, qstring):
+    def node_select_query(self, network, qstring):
         if isinstance(qstring, str):
             result = self.nodeQuery.parseString(qstring)
         else:
@@ -224,10 +224,10 @@ class queryParser:
 # especially if using short circuits so when false stop executing
 
         def comp_fn_string(token, n):
-            return self._opn[token.comparison](graph.node[n].get(token.attribute), token.value)
+            return self._opn[token.comparison](network.graph.node[n].get(token.attribute), token.value)
 
         def comp_fn_numeric(token, n):
-            return self._opn[token.comparison](float(graph.node[n].get(token.attribute)), token.value)
+            return self._opn[token.comparison](float(network.graph.node[n].get(token.attribute)), token.value)
 
         stack = []
 
@@ -245,7 +245,8 @@ class queryParser:
         
             if comp_fn:
                 #TODO: change to generator expressions and evaluate as sets in the evaluate function
-                result_set = set(n for n in graph if token.attribute in graph.node[n] and comp_fn(token, n) )
+                result_set = set(n for n in network.graph 
+                        if token.attribute in network.graph.node[n] and comp_fn(token, n) )
                 stack.append(result_set)
 
         final_set = self.evaluate_node_stack(stack)
@@ -293,17 +294,15 @@ class queryParser:
                     }
 
 
-
-
 #TODO: apply stringEnd to the matching parse queries to ensure have parsed all
 
 graph = nx.read_gpickle("condensed_west_europe.pickle")
 
-
 inet = ank.internet.Internet()
 inet.load("condensed_west_europe.pickle")
 ank.allocate_subnets(inet.network, IPNetwork("10.0.0.0/8")) 
-print inet.network.graph.edges(data=True)
+ank.initialise_bgp(inet.network)
+
 #ank.jsplot(inet.network)
 #TODO: initialise BGP sessions
 
@@ -333,7 +332,7 @@ def get_prefixes(inet, nodes):
         prefixes.update([data.get("sn")
             for u, v, data in inet.network.graph.out_edges(node, data=True) 
             if data.get("sn")])
-    print prefixes
+    #print prefixes
     
 
 def nodes_to_labels(nodes):
@@ -351,13 +350,11 @@ def edges_to_labels(edges):
 
 for test in tests:
     print "--------------------------"
-    print test
-    test_result = qparser.node_select_query(test)
+    test_result = qparser.node_select_query(inet.network, test)
     print nodes_to_labels(test_result)
     get_prefixes(inet, test_result)
     #print result.dump()
 
-sys.exit(0)
 
 #TODO: check if "<->" means join <- and -> or means bidirectional edge... or depends om Graph vs DiGraph?
 
@@ -365,19 +362,19 @@ sys.exit(0)
 test_queries = [
         '(Network = GEANT) <-> (Network = GARR)',
         '(Network = GEANT) <-> (asn = 680)',
+        '(Network = GEANT) <-> (Network = GEANT)',
         ]
 
 print "----edges:----"
 for test in test_queries:
-    matching_edges = qparser.find_edges(test)
+    matching_edges = list(qparser.find_bgp_sessions(inet.network, test))
     print edges_to_labels(matching_edges)
+    print "matches are %s" % matching_edges
+    for (u,v) in matching_edges:
+        print inet.network.g_session[u][v]
     print "---"
 
-
-
-
-
-
+sys.exit(0)
 
 test_queries = [
         'GEANT provides FBH to "Deutsche Telekom"',

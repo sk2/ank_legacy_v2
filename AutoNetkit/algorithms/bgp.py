@@ -43,7 +43,7 @@ def initialise_ebgp(network):
     """
     edges_to_add = ( (src, dst) for src, dst in network.graph.edges()
             if network.asn(src) != network.asn(dst))
-    network.g_session.add_edges_from(edges_to_add, ingress=[], edgress=[])
+    network.g_session.add_edges_from(edges_to_add, ingress=[], egress=[])
 
 def initialise_ibgp(network):
     edges_to_add = ( (s,t) for s in network.graph for t in network.graph 
