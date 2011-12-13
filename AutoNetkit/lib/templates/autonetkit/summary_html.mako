@@ -12,7 +12,8 @@
 <h2>Network Statistics</h2>
 	<table>
 		<tr> <th>Total Routers:</th> <td>${network_stats['node_count']}</td> </tr>     
-		<tr> <th>Total Links:</th> <td>${network_stats['edge_count']}</td> </tr>       
+		<tr> <th>Total Links:</th> <td>${network_stats['edge_count']}</
+			td> </tr>       
 		<tr> <th>Autonomous Systems:</th> <td>${network_stats['as_count']}</td> </tr>                         
 	</table>
   

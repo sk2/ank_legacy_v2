@@ -371,7 +371,7 @@ print "----edges:----"
 for test in test_queries:
     matching_edges = list(qparser.find_bgp_sessions(inet.network, test))
     print edges_to_labels(matching_edges)
-    print "matches are %s" % matching_edges
+    #print "matches are %s" % matching_edges
     for (u,v) in matching_edges:
         #print inet.network.g_session[u][v]
         pass
