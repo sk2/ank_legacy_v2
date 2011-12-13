@@ -234,6 +234,9 @@ class Internet:
         ank.alloc_interfaces(self.network)
 
         ank.alloc_tap_hosts(self.network, self.tapsn)
+    
+        # Summary
+        ank.summarydoc(self.network)
         
         # now configure
         if self.compile_targets['netkit']:
