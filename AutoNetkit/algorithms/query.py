@@ -24,6 +24,7 @@ from mako.lookup import TemplateLookup
 from netaddr import IPNetwork
 
 
+
 class queryParser:
     def __init__(self):
         attribute = Word(alphas, alphanums+'_').setResultsName("attribute")
