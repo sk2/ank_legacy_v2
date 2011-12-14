@@ -487,6 +487,7 @@ class NetkitCompiler:
                         route_maps = route_maps,
                         logfile = "/var/log/zebra/bgpd.log",
                         debug=True,
+                        use_debug=True,
                         dump=False,
                         snmp=False,
                 ))

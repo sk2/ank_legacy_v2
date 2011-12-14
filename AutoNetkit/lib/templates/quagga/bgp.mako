@@ -25,7 +25,8 @@ router bgp ${asn}
 	! Route-Reflector clients
 	% endif      
 	% for n in ibgp_rr_client_list:
-	neighbor ${n['remote_ip']} route-reflector-client
+	neighbor ${n['remote_ip']} route-reflector-client    
+	neighbor ${n['remote_ip']} remote-as ${asn}
 	neighbor ${n['remote_ip']} update-source ${router_id}  
 	neighbor ${n['remote_ip']} description ${n['description']} (iBGP) 
 	% endfor
