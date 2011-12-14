@@ -152,17 +152,18 @@ class queryParser:
 
         # The Clauses
         ifClause = Group(Suppress("if") + bgpMatchQuery 
-                + ZeroOrMore(boolean + bgpMatchQuery)).setResultsName("if_clause")
-        actionClause = bgpAction + ZeroOrMore(boolean_and + bgpAction)
+                + ZeroOrMore(Suppress(boolean_and) + bgpMatchQuery)).setResultsName("if_clause")
+        actionClause = bgpAction + ZeroOrMore(Suppress(boolean_and) + bgpAction)
         thenClause = Group(Suppress("then") + actionClause).setResultsName("then_clause")
-        ifThenClause = Suppress("(") + ifClause + thenClause + Suppress(")")
+        ifThenClause = Group(Suppress("(") + ifClause + 
+                thenClause + Suppress(")")).setResultsName("ifThenClause")
         elseActionClause = Group(Suppress("(") + actionClause 
                 + Suppress(")")).setResultsName("else_clause")
 
 # Query may contain itself (nested)
         bgpSessionQuery = Forward()
         bgpSessionQuery << ( ifThenClause +
-                Optional( Suppress("else") + (elseActionClause + bgpSessionQuery))
+                Optional( Suppress("else") + (elseActionClause | bgpSessionQuery))
 #+ ZeroOrMore(boolean_and + bgpAction) | bgpSessionQuery )).setResultsName("else_clause"))
                 ).setResultsName("bgpSessionQuery")
         self.bgpSessionQuery = bgpSessionQuery
@@ -252,7 +253,8 @@ class queryParser:
 
 
     def process_if_then_else(self, parsed_query):
-        print parsed_query.dump()
+        for token in parsed_query:
+            print token
         return
 
         def parse_if(if_query):
@@ -545,7 +547,7 @@ for test in tests:
         pass
 
 tests = [
-        #"(if prefix_list = pl_1 then addTag a100)",
+        "(if prefix_list = pl_1 then addTag a100)",
         "(if prefix_list = pl_1 then addTag a100) else (addTag a200)",
         "(if prefix_list = pl_1 then addTag a100 & setLP 90) else (removeTag a200)",
         "(if prefix_list = pl_1 then addTag a100 & setLP 90) else (addTag a200 & setLP 100)",
@@ -558,85 +560,6 @@ tests = [
 
 
 parsedSessionResults = []
-
-for test in tests:
-    pass
-    #print test
-    #result =  qparser.bgpSessionQuery.parseString(test)
-    #print result.dump()
-    #res = ", ".join(['if', result.if_clause.attribute, result.if_clause.value,
-    #    'then', result.then_clause.attribute, str(result.then_clause.value)])
-    #parsedSessionResults.append(qparser.process_if_then_else(result))
-    #print
-
-def printParsedSession(parseString, indent=""):
-    #TODO: make this work for multiple nesteds.....
-    print indent + "if (" + " ".join(elem for elem in parseString.get("if")) + "):"
-    print indent + "  "  + " ".join(str(elem) for elem in parseString.get("then")) 
-    if "else" in parseString:
-        if isinstance(parseString.get("else"), dict):
-            printParsedSession(parseString.get("else"), indent=indent + "  ")
-        else:
-            print indent + "else:"
-            print indent + "  " + " ".join(str(elem) for elem in parseString.get("else")) 
-
-def parsedSessionVis(parsedSession):
-    bbox = dict(boxstyle='round',
-        ec=(1.0, 1.0, 1.0, 0),
-        fc=(1.0, 1.0, 1.0, 0.0),
-        )      
-
-    parsed_graph = nx.DiGraph()
-    next_node_id = itertools.count()
-    def add_children(parent_node, parse_children, level):
-        if_node_id = next_node_id.next()
-        then_node_id = next_node_id.next()
-        parsed_graph.add_node(if_node_id, label="if %s" % parse_children.get("if"),
-                y = level*100, x = 0)
-        parsed_graph.add_edge(parent_node, if_node_id, label="else")
-        parsed_graph.add_node(then_node_id, label=parse_children.get("then"),
-                y = level*100, x = 1)
-        parsed_graph.add_edge(if_node_id, then_node_id, label="then")
-        print "----"
-        print parse_children
-        if 'else' in parse_children:
-            print "ELSE"
-            if isinstance(parse_children.get("else"), dict):
-# nested else
-                add_children(if_node_id, parse_children.get("else"), level +1)
-            else:
-                print "add node"
-                else_node_id = next_node_id.next()
-                parsed_graph.add_node(else_node_id, label=parse_children.get("else"),
-                        y = level*100 + 50, x=0)
-                parsed_graph.add_edge(if_node_id, else_node_id, label="else")
-
-        print "----"
-        print
-#TODO: add position info
-    root_id = next_node_id.next()
-    parsed_graph.add_node(root_id, label="start")
-    add_children(root_id, parsedSession, level=1)
-
-    #print parsed_graph.nodes(data=True)
-    #print parsed_graph.edges(data=True)
-
-# remove placeholder node
-    parsed_graph.remove_node(root_id)
-
-    plt.clf()
-    pos=nx.spring_layout(parsed_graph)
-    print pos
-    pos = dict( (n, (d['x'], -1*d['y'])) for n,d in parsed_graph.nodes(data=True))
-    labels = dict( (n, parsed_graph.node[n].get('label')) for n in parsed_graph)
-    nx.draw(parsed_graph, pos, labels=labels, arrows=False,
-            font_size = 12, node_size = 50, node_color = "0.8", edge_color="0.8")
-    edge_labels = dict( ((s,t), d.get('label')) 
-            for s,t,d in parsed_graph.edges(data=True))
-    nx.draw_networkx_edge_labels(parsed_graph, pos, 
-        edge_labels, font_size=16, label_pos = 0.5, bbox = bbox)
-    plt.savefig("parsed_graph.pdf")
-
 
 template_cache_dir = config.template_cache_dir
 template_dir =  resource_filename("AutoNetkit","lib/templates")
