@@ -168,6 +168,9 @@ def alloc_tap_hosts(network, address_block=IPNetwork("172.16.0.0/16")):
     for x in [24, 16, 8]:
         if lower_bound < x < upper_bound:
             prefix_len = x
+        elif lower_bound < upper_bound < x:
+# eg both fit inside a class A, B or C
+            prefix_len = x
 
     def set_tap_ips(network, nodes, host_ips):
         # Allocate in order of node name
