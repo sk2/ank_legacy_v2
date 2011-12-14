@@ -150,23 +150,20 @@ class queryParser:
         bgpAction = Group(addTag | setLP | setMED | addTag | removeTag |
                 setNextHop | setOriginAttribute | rejectAction).setResultsName("bgpAction")
 
-        ifClause = Forward()
-        ifClause << Group(Suppress("if") +
-                bgpMatchQuery + ZeroOrMore(boolean + bgpMatchQuery)).setResultsName("if_clause")
-
-        thenClause = Forward()
-        thenClause << Group(Suppress("then") + bgpAction
-                + ZeroOrMore(boolean_and + bgpAction)).setResultsName("then_clause")
+        # The Clauses
+        ifClause = Group(Suppress("if") + bgpMatchQuery 
+                + ZeroOrMore(boolean + bgpMatchQuery)).setResultsName("if_clause")
+        actionClause = bgpAction + ZeroOrMore(boolean_and + bgpAction)
+        thenClause = Group(Suppress("then") + actionClause).setResultsName("then_clause")
+        ifThenClause = Suppress("(") + ifClause + thenClause + Suppress(")")
+        elseActionClause = Group(Suppress("(") + actionClause 
+                + Suppress(")")).setResultsName("else_clause")
 
 # Query may contain itself (nested)
         bgpSessionQuery = Forward()
-        bgpSessionQuery << (
-                Suppress("(") + 
-                ifClause +
-                thenClause + 
-                Optional( Group(Suppress("else") + 
-                    ( bgpAction + ZeroOrMore(boolean_and + bgpAction) | bgpSessionQuery )).setResultsName("else_clause"))
-                + Suppress(")")
+        bgpSessionQuery << ( ifThenClause +
+                Optional( Suppress("else") + (elseActionClause + bgpSessionQuery))
+#+ ZeroOrMore(boolean_and + bgpAction) | bgpSessionQuery )).setResultsName("else_clause"))
                 ).setResultsName("bgpSessionQuery")
         self.bgpSessionQuery = bgpSessionQuery
 
@@ -255,6 +252,9 @@ class queryParser:
 
 
     def process_if_then_else(self, parsed_query):
+        print parsed_query.dump()
+        return
+
         def parse_if(if_query):
             retval = []
             for token in if_query:
@@ -360,12 +360,15 @@ for test in tests:
 #TODO: check if "<->" means join <- and -> or means bidirectional edge... or depends om Graph vs DiGraph?
 
 #TODO: allow access to edge properties, eg (bob<->alice).freq returns 10
+#TODO: add ingress/egress to this
 test_queries = [
         '(Network = GEANT) <-> (Network = GARR)',
         '(Network = GEANT) <-> (asn = 680)',
 # and iBGP
         '(Network = GEANT) <-> (Network = GEANT)',
         ]
+
+#TODO: wrap so have edge selection and policy combined
 
 #print "----edges:----"
 for test in test_queries:
@@ -529,28 +532,26 @@ tests = [
         ]
 
 for test in tests:
-    print test
+    #print test
     result = qparser.bgpQuery.parseString(test)
     matching_nodes = qparser.node_select_query(inet.network, result.nodeQuery)
     #print "matching nodes " + nodes_to_labels(matching_nodes)
     if "originQuery" in result:
-        print "origin"
+        #print "origin"
+        pass
 
     elif "transitQuery" in result:
-        print "transit"
+        #print "transit"
+        pass
 
-#TODO: allow tag = A or tag = B
-# by putting both tags into a community list?
-# similar for boolean or for prefix lists?
-
-#TODO: do we need an elif?
 tests = [
-        "(if prefix_list = pl_1 then addTag a100 else addTag a200)",
-        #"(if prefix_list = pl_1 then addTag a100 & setLP 90 else removeTag a200)",
-        #"(if prefix_list = pl_1 then addTag a100 & setLP 90 else addTag a200 & setLP 100)",
-        #"(if prefix_list = pl_1 & tag = aaa then addTag a100 else addTag a200)",
-        #"(if prefix_list =  pl_1 then addTag a100 else (if prefix_list = pl_2 then setLP 200))",
-        #"(if prefix_list =  pl_1 then addTag a100 & reject else (if prefix_list = pl_2 then setNextHop 1.2.3.4 else addTag a300))",
+        #"(if prefix_list = pl_1 then addTag a100)",
+        "(if prefix_list = pl_1 then addTag a100) else (addTag a200)",
+        "(if prefix_list = pl_1 then addTag a100 & setLP 90) else (removeTag a200)",
+        "(if prefix_list = pl_1 then addTag a100 & setLP 90) else (addTag a200 & setLP 100)",
+        "(if prefix_list = pl_1 & tag = aaa then addTag a100) else (addTag a200)",
+        "(if prefix_list =  pl_1 then addTag a100) else (if prefix_list = pl_2 then setLP 200))",
+        "(if prefix_list =  pl_1 then addTag a100 & reject) else (if prefix_list = pl_2 then setNextHop 1.2.3.4) else (addTag a300)",
 
 ]
 
@@ -728,8 +729,8 @@ for test in tests:
     #res = ", ".join(['if', result.if_clause.attribute, result.if_clause.value,
     #    'then', result.then_clause.attribute, str(result.then_clause.value)])
     processed = qparser.process_if_then_else(result)
-    session_to_quagga(processed)
-    session_to_junos(processed)
+    #session_to_quagga(processed)
+    #session_to_junos(processed)
 
 
 # need recursive function to process result
