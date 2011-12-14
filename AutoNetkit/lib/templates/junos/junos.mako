@@ -159,7 +159,9 @@ protocols {
 		% for groupname, group_data in bgp_groups.items():   
 			group ${groupname} {
 				type ${group_data['type']};    
-			    local-address ${router_id};    
+				% if group_data['type'] == 'internal':
+			    local-address ${router_id};           
+			    % endif
 			    % if 'cluster' in group_data:
 			    cluster ${group_data['cluster']}
 			    % endif
@@ -167,7 +169,7 @@ protocols {
 				   % if 'peer_as' in neighbor:      
 			    neighbor  ${neighbor['id']} {
 					peer-as ${neighbor['peer_as']};
-				   }
+				}
 				   % else:          
 			    neighbor  ${neighbor['id']};
 				   % endif
