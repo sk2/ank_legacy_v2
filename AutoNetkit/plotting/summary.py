@@ -67,10 +67,10 @@ def summarydoc(network):
     as_stats = {}
 
     for single_as in as_graphs:
-        print single_as.nodes(data=True)
+        #print single_as.nodes(data=True)
 # Get ASN of first node
         asn = network.asn(single_as.nodes()[0])
-        print asn
+        #print asn
         asn_nodes = []
         for node, data in single_as.nodes(data=True):
             pass
@@ -80,7 +80,7 @@ def summarydoc(network):
 
     # put html file in main plot directory
     html_filename = os.path.join(ank_main_dir, "summary.html")
-    print html_filename
+    #print html_filename
     with open( html_filename, 'w') as f_html:
             f_html.write( html_template.render(
                 network_stats = network_stats,
