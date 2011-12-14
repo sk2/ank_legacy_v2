@@ -307,7 +307,7 @@ ank.initialise_bgp(inet.network)
 #ank.jsplot(inet.network)
 #TODO: initialise BGP sessions
 
-print inet.network.graph.nodes()
+#print inet.network.graph.nodes()
 
 #print graph.nodes(data=True)
 
@@ -333,7 +333,7 @@ def get_prefixes(inet, nodes):
         prefixes.update([data.get("sn")
             for u, v, data in inet.network.graph.out_edges(node, data=True) 
             if data.get("sn")])
-    print prefixes
+    #print prefixes
     
 
 def nodes_to_labels(nodes):
@@ -350,9 +350,9 @@ def edges_to_labels(edges):
 # eg G.node[n].get(attribute) = "quotedstring"  operator 
 
 for test in tests:
-    print "--------------------------"
+    #print "--------------------------"
     test_result = qparser.node_select_query(inet.network, test)
-    print nodes_to_labels(test_result)
+    #print nodes_to_labels(test_result)
     get_prefixes(inet, test_result)
     #print result.dump()
 
@@ -367,17 +367,17 @@ test_queries = [
         '(Network = GEANT) <-> (Network = GEANT)',
         ]
 
-print "----edges:----"
+#print "----edges:----"
 for test in test_queries:
     matching_edges = list(qparser.find_bgp_sessions(inet.network, test))
-    print edges_to_labels(matching_edges)
+    #print edges_to_labels(matching_edges)
     #print "matches are %s" % matching_edges
     for (u,v) in matching_edges:
         #print inet.network.g_session[u][v]
         pass
-    print "---"
+    #print "---"
 
-sys.exit(0)
+#sys.exit(0)
 
 test_queries = [
         'GEANT provides FBH to "Deutsche Telekom"',
@@ -397,9 +397,9 @@ test_queries = [
 
 G_business_relationship = nx.DiGraph()
 
-print "----bus rel:----"
+#print "----bus rel:----"
 for test in test_queries:
-    print test
+    #print test
     result = qparser.br_query.parseString(test)
     if "relationshipString" in result:
         G_business_relationship.add_edge(result.provider, result.client, attr=result.relationship)
@@ -408,9 +408,9 @@ for test in test_queries:
     elif "asnAlias" in result:
         print "is service"
 
-    print "---"
+    #print "---"
 
-print G_business_relationship.edges(data=True)
+#print G_business_relationship.edges(data=True)
 
 import matplotlib.pyplot as plt
 """
@@ -491,7 +491,7 @@ for G in graph_dict.values():
 # and apply interconnectString
 G_interconnect.add_edges_from(graph_interconnects)
 
-print G_interconnect.nodes(data=True)
+#print G_interconnect.nodes(data=True)
 #sys.exit(0)
 
 """
@@ -531,8 +531,8 @@ tests = [
 for test in tests:
     print test
     result = qparser.bgpQuery.parseString(test)
-    matching_nodes = qparser.node_select_query(result.nodeQuery)
-    print "matching nodes " + nodes_to_labels(matching_nodes)
+    matching_nodes = qparser.node_select_query(inet.network, result.nodeQuery)
+    #print "matching nodes " + nodes_to_labels(matching_nodes)
     if "originQuery" in result:
         print "origin"
 
@@ -546,11 +546,11 @@ for test in tests:
 #TODO: do we need an elif?
 tests = [
         "(if prefix_list = pl_1 then addTag a100 else addTag a200)",
-        "(if prefix_list = pl_1 then addTag a100 & setLP 90 else removeTag a200)",
-        "(if prefix_list = pl_1 then addTag a100 & setLP 90 else addTag a200 & setLP 100)",
-        "(if prefix_list = pl_1 & tag = aaa then addTag a100 else addTag a200)",
-        "(if prefix_list =  pl_1 then addTag a100 else (if prefix_list = pl_2 then setLP 200))",
-        "(if prefix_list =  pl_1 then addTag a100 & reject else (if prefix_list = pl_2 then setNextHop 1.2.3.4 else addTag a300))",
+        #"(if prefix_list = pl_1 then addTag a100 & setLP 90 else removeTag a200)",
+        #"(if prefix_list = pl_1 then addTag a100 & setLP 90 else addTag a200 & setLP 100)",
+        #"(if prefix_list = pl_1 & tag = aaa then addTag a100 else addTag a200)",
+        #"(if prefix_list =  pl_1 then addTag a100 else (if prefix_list = pl_2 then setLP 200))",
+        #"(if prefix_list =  pl_1 then addTag a100 & reject else (if prefix_list = pl_2 then setNextHop 1.2.3.4 else addTag a300))",
 
 ]
 
