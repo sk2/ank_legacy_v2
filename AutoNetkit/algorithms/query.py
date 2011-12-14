@@ -47,6 +47,11 @@ class queryParser:
                 '|': set.union,
                 }
 
+        self.if_then_tuple = namedtuple('if_then_tuple', "if_clause, then_clause, reject")
+        self.else_tuple = namedtuple('else_tuple', 'else_clause, reject')
+        self.match_tuple = namedtuple('match_tuple', 'attribute, comparison, value')
+        self.action_tuple = namedtuple('action_tuple', 'action, value')
+
 # Both are of comparison to access in same manner when evaluating
         comparison = (lt | le | eq | ne | ge | gt).setResultsName("comparison")
         stringComparison = (eq | ne).setResultsName("comparison")
@@ -142,7 +147,8 @@ class queryParser:
         reject = Literal("reject")
 #TODO: remove once move quagga output inside module
         self.reject = reject
-        rejectAction = (reject.setResultsName("attribute") + Empty().setResultsName("value")).setResultsName("reject")
+        rejectAction = (reject.setResultsName("attribute") +
+                Literal("route").setResultsName("value")).setResultsName("reject")
         setNextHop = (Literal("setNextHop").setResultsName("attribute") + ipAddress.setResultsName("value")).setResultsName("setNextHop")
 
         setOriginAttribute = (Literal("setOriginAttribute").setResultsName("attribute") 
@@ -254,71 +260,27 @@ class queryParser:
 
 
     def process_if_then_else(self, parsed_query):
-        if_then_tuple = namedtuple('if_then_tuple', "if_clause, then_clause")
-        else_tuple = namedtuple('else_tuple', 'else_clause')
-        match_tuple = namedtuple('match_tuple', 'attribute, comparison, value')
-        action_tuple = namedtuple('action_tuple', 'action, value')
         retval = []
         for token in parsed_query:
-            print "token is %s" % token
             if token == parsed_query.else_clause:
-                else_tuples = [action_tuple(action, value) for
-                        (action, value) in token]
-                retval.append(else_tuple(else_tuples))
+# Special case of else (at end)
+                reject = any(True for (action, value) in token if action == self.reject)
+                else_tuples = [self.action_tuple(action, value) for
+                        (action, value) in token
+                        if action != self.reject]
+                retval.append(self.else_tuple(else_tuples, reject))
             else:
                 #TODO: check is in ifthen
                 (if_clause, else_clause) = token
-                if_tuples = [match_tuple(attribute, comparison, value) for
+# Check for reject
+                reject = any(True for (action, value) in else_clause if action == self.reject)
+                if_tuples = [self.match_tuple(attribute, comparison, value) for
                         (attribute, comparison, value) in if_clause]
-                then_tuples = [action_tuple(action, value) for
-                        (action, value) in else_clause]
-                retval.append(if_then_tuple(if_tuples, then_tuples))
-
-
-
-
-        pprint.pprint(retval)
-
-        return
-
-        def parse_if(if_query):
-            retval = []
-            for token in if_query:
-                if token in self._boolean:
-                    retval.append(token)
-                else:
-                    retval.append()
-            return retval
-
-        def parse_then(then_query):
-            retval = []
-            for token in then_query:
-                if token in self._boolean:
-                    retval.append(token)
-                else:
-                    retval.append([token.attribute, token.value])
-            return retval
-
-        if "bgpSessionQuery" in parsed_query.else_clause:
-# Nested query
-                    return { 
-                    'if': parse_if(parsed_query.if_clause),
-                    'then': parse_then(parsed_query.then_clause),
-# recursive call
-                    'else': self.process_if_then_else(parsed_query.else_clause.bgpSessionQuery),
-                    }
-
-        elif parsed_query.else_clause:
-                    return {
-                    'if': parse_if(parsed_query.if_clause),
-                    'then': parse_then(parsed_query.then_clause),
-                    'else': parse_then(parsed_query.else_clause),
-                    }
-        else:
-            return {
-                    'if': parse_if(parsed_query.if_clause),
-                    'then': parse_then(parsed_query.then_clause),
-                    }
+                then_tuples = [self.action_tuple(action, value) for
+                        (action, value) in else_clause
+                        if action != self.reject]
+                retval.append(self.if_then_tuple(if_tuples, then_tuples, reject))
+        return retval
 
 
 #TODO: apply stringEnd to the matching parse queries to ensure have parsed all
@@ -572,12 +534,12 @@ for test in tests:
 
 tests = [
         #"(if prefix_list = pl_1 then addTag a100)",
-        #"(if prefix_list = pl_1 then addTag a100) else (addTag a200)",
-        "(if prefix_list = pl_1 & tag = aaa then addTag a100 & setLP 90) else (removeTag a200)",
-        "(if prefix_list = pl_1 then addTag a100 & setLP 90) else (addTag a200 & setLP 100)",
+        "(if prefix_list = pl_1 then addTag a100 & reject route) else (addTag a200)",
+        "(if prefix_list = pl_1 & tag = aaa then addTag a100 & setLP 90) else (removeTag a200 & reject route)",
+        #"(if prefix_list = pl_1 then addTag a100 & setLP 90) else (addTag a200 & setLP 100)",
         #"(if prefix_list = pl_1 & tag = aaa then addTag a100) else (addTag a200)",
-        "(if prefix_list =  pl_1 then addTag a100) else (if prefix_list = pl_2 then setLP 200)",
-        #"(if prefix_list =  pl_1 then addTag a100 & reject) else (if prefix_list = pl_2 then setNextHop 1.2.3.4) else (addTag a300)",
+        #"(if prefix_list =  pl_1 then addTag a100) else (if prefix_list = pl_2 then setLP 200)",
+        #"(if prefix_list =  pl_1 then addTag a100 & reject route) else (if prefix_list = pl_2 then setNextHop 1.2.3.4) else (addTag a300)",
 
 ]
 
@@ -599,6 +561,16 @@ junos_bgp_policy_template = lookup.get_template("junos/bgp_policy.mako")
 def session_to_quagga(session):
     route_maps = {}
     sequence_number = itertools.count(10, 10)
+    for token in processed:
+        print token
+        if isinstance(token, qparser.if_then_tuple):
+            print "TOKEN IS IF THEN"
+        if isinstance(token, qparser.else_tuple):
+            print "TOKEN IS ELSE"
+
+    return
+
+
 
 #TODO: need to reformat prefix list/matches
 
@@ -670,15 +642,23 @@ def parser2(result):
 
 
 for test in tests:
-    print test
+    print "Test: ", test
     result =  qparser.bgpSessionQuery.parseString(test)
     #print result.dump()
     #res = ", ".join(['if', result.if_clause.attribute, result.if_clause.value,
     #    'then', result.then_clause.attribute, str(result.then_clause.value)])
     processed = qparser.process_if_then_else(result)
-    print
+    for token in processed:
+        print token
+    """
+        if isinstance(token, qparser.if_then_tuple):
+            print "TOKEN IS IF THEN"
+        if isinstance(token, qparser.else_tuple):
+            print "TOKEN IS ELSE"
+    """
     #session_to_quagga(processed)
     #session_to_junos(processed)
+    print
 
 
 # need recursive function to process result
