@@ -1,6 +1,6 @@
-%for name, route_map_items in route_maps.items():    
+%for name, match_tuples in route_maps.items():    
 !
-%for (seq_no, match_tuple) in route_map_items:        
+%for (seq_no, match_tuple) in match_tuples:        
 % if match_tuple.reject:
      route-map ${name} deny ${seq_no}             
 	!TODO: rejected, need to continue to next seqno

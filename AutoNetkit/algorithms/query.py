@@ -573,23 +573,12 @@ def session_to_junos(session):
     route_maps = {}
 #TODO: need to reformat prefix list/matches
     term_number = itertools.count(1)
-    route_maps['rm1'] = [ (term_number.next(), token) for token in session]
+    route_maps['rm1'] = [ (term_number.next(), match_tuples) for match_tuples in session]
 #TODO: need to allocate community values (do this globally for network)
     print "Junos:"
     print junos_bgp_policy_template.render(
             route_maps = route_maps
             )
-
-
-def parser2(result):
-    retval = []
-    print "-----"
-
-    #TODO: remove when move into qparser
-    boolean = qparser._boolean
-    retval = []
-
-    print
 
 
 for test in tests:

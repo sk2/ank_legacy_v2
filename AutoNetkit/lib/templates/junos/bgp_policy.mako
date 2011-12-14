@@ -1,6 +1,6 @@
-%for name, route_map_items in route_maps.items():    
+%for name, match_tuples in route_maps.items():    
 policy-statement ${name} { 
-	%for (term_number, match_tuple) in route_map_items:        
+	%for (term_number, match_tuple) in match_tuples:        
 	term ${term_number} {
 	    %if len(match_tuple.match_clauses):
 	    from  {
