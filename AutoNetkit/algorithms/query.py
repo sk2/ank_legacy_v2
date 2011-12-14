@@ -47,10 +47,9 @@ class queryParser:
                 '|': set.union,
                 }
 
-        self.if_then_tuple = namedtuple('if_then_tuple', "if_clause, then_clause, reject")
-        self.else_tuple = namedtuple('else_tuple', 'else_clause, reject')
-        self.match_tuple = namedtuple('match_tuple', 'attribute, comparison, value')
-        self.action_tuple = namedtuple('action_tuple', 'action, value')
+        self.match_tuple = namedtuple('match_tuple', "match_clauses, action_clauses, reject")
+        self.match_clause = namedtuple('match_clause', 'type, comparison, value')
+        self.action_clause = namedtuple('action_clause', 'action, value')
 
 # Both are of comparison to access in same manner when evaluating
         comparison = (lt | le | eq | ne | ge | gt).setResultsName("comparison")
@@ -265,21 +264,21 @@ class queryParser:
             if token == parsed_query.else_clause:
 # Special case of else (at end)
                 reject = any(True for (action, value) in token if action == self.reject)
-                else_tuples = [self.action_tuple(action, value) for
+                else_tuples = [self.action_clause(action, value) for
                         (action, value) in token
                         if action != self.reject]
-                retval.append(self.else_tuple(else_tuples, reject))
+                retval.append(self.match_tuple([], else_tuples, reject))
             else:
                 #TODO: check is in ifthen
                 (if_clause, else_clause) = token
 # Check for reject
                 reject = any(True for (action, value) in else_clause if action == self.reject)
-                if_tuples = [self.match_tuple(attribute, comparison, value) for
+                if_tuples = [self.match_clause(attribute, comparison, value) for
                         (attribute, comparison, value) in if_clause]
-                then_tuples = [self.action_tuple(action, value) for
+                then_tuples = [self.action_clause(action, value) for
                         (action, value) in else_clause
                         if action != self.reject]
-                retval.append(self.if_then_tuple(if_tuples, then_tuples, reject))
+                retval.append(self.match_tuple(if_tuples, then_tuples, reject))
         return retval
 
 
@@ -533,13 +532,13 @@ for test in tests:
         pass
 
 tests = [
-        #"(if prefix_list = pl_1 then addTag a100)",
+        "(if prefix_list = pl_1 then addTag a100)",
         "(if prefix_list = pl_1 then addTag a100 & reject route) else (addTag a200)",
         "(if prefix_list = pl_1 & tag = aaa then addTag a100 & setLP 90) else (removeTag a200 & reject route)",
-        #"(if prefix_list = pl_1 then addTag a100 & setLP 90) else (addTag a200 & setLP 100)",
-        #"(if prefix_list = pl_1 & tag = aaa then addTag a100) else (addTag a200)",
-        #"(if prefix_list =  pl_1 then addTag a100) else (if prefix_list = pl_2 then setLP 200)",
-        #"(if prefix_list =  pl_1 then addTag a100 & reject route) else (if prefix_list = pl_2 then setNextHop 1.2.3.4) else (addTag a300)",
+        "(if prefix_list = pl_1 then addTag a100 & setLP 90) else (addTag a200 & setLP 100)",
+        "(if prefix_list = pl_1 & tag = aaa then addTag a100) else (addTag a200)",
+        "(if prefix_list =  pl_1 then addTag a100) else (if prefix_list = pl_2 then setLP 200)",
+        "(if prefix_list =  pl_1 then addTag a100 & reject route) else (if prefix_list = pl_2 then setNextHop 1.2.3.4) else (addTag a300)",
 
 ]
 
@@ -561,70 +560,22 @@ junos_bgp_policy_template = lookup.get_template("junos/bgp_policy.mako")
 def session_to_quagga(session):
     route_maps = {}
     sequence_number = itertools.count(10, 10)
-    for token in processed:
-        print token
-        if isinstance(token, qparser.if_then_tuple):
-            print "TOKEN IS IF THEN"
-        if isinstance(token, qparser.else_tuple):
-            print "TOKEN IS ELSE"
-
-    return
-
-
-
-#TODO: need to reformat prefix list/matches
-
-    def flatten_nested_dicts(pol_dict):
-        retval = []
-# remove & as match on all conditions
-        if_clause = [item for item in pol_dict.get("if") if item != "&"]
-        then_clause = [item for item in pol_dict.get("then") if item != "&"]
-        reject = any(True for (attribute, value) in then_clause if attribute == qparser.reject)
-        retval.append((sequence_number.next(), if_clause, then_clause, reject))
-        if 'else' in pol_dict:
-            if isinstance(pol_dict.get("else"), dict):
-                retval += flatten_nested_dicts(pol_dict.get("else"))
-            else:
-# No match clause, so match clause is empty list 
-                else_clause = [item for item in pol_dict.get("else") if item != "&"]
-                reject = any(True for (attribute, value) in else_clause if attribute == qparser.reject)
-                retval.append((sequence_number.next(), [], else_clause, reject))
-
-        return retval
-
-    route_maps["rm1"] =  flatten_nested_dicts(session)
+    route_maps['rm1'] = [ (sequence_number.next(), token) for token in session]
 #TODO: need to allocate community values (do this globally for network)
+    print "Quagga:"
     print quagga_bgp_policy_template.render(
             route_maps = route_maps
             )
+
+
 
 def session_to_junos(session):
     route_maps = {}
 #TODO: need to reformat prefix list/matches
     term_number = itertools.count(1)
-
-    def flatten_nested_dicts(pol_dict):
-        retval = []
-# remove & as match on all conditions
-        if_clause = [item for item in pol_dict.get("if") if item != "&"]
-        then_clause = [item for item in pol_dict.get("then") if item != "&"]
-#TODO: move the reject handling into the parser itself
-        reject = any(True for (attribute, value) in then_clause if attribute == qparser.reject)
-#TODO: use named tuples
-        retval.append((term_number.next(), if_clause, then_clause, reject))
-        if 'else' in pol_dict:
-            if isinstance(pol_dict.get("else"), dict):
-                retval += flatten_nested_dicts(pol_dict.get("else"))
-            else:
-# No match clause, so match clause is empty list 
-                else_clause = [item for item in pol_dict.get("else") if item != "&"]
-                reject = any(True for (attribute, value) in else_clause if attribute == qparser.reject)
-                retval.append((term_number.next(), [], else_clause, reject))
-
-        return retval
-
-    route_maps["rm1"] =  flatten_nested_dicts(session)
+    route_maps['rm1'] = [ (term_number.next(), token) for token in session]
 #TODO: need to allocate community values (do this globally for network)
+    print "Junos:"
     print junos_bgp_policy_template.render(
             route_maps = route_maps
             )
@@ -642,23 +593,22 @@ def parser2(result):
 
 
 for test in tests:
-    print "Test: ", test
+    print "Policy:"
+    print test
     result =  qparser.bgpSessionQuery.parseString(test)
     #print result.dump()
     #res = ", ".join(['if', result.if_clause.attribute, result.if_clause.value,
     #    'then', result.then_clause.attribute, str(result.then_clause.value)])
     processed = qparser.process_if_then_else(result)
-    for token in processed:
-        print token
     """
-        if isinstance(token, qparser.if_then_tuple):
+        if isinstance(token, qparser.match_tuple):
             print "TOKEN IS IF THEN"
         if isinstance(token, qparser.else_tuple):
             print "TOKEN IS ELSE"
     """
-    #session_to_quagga(processed)
-    #session_to_junos(processed)
-    print
+    session_to_quagga(processed)
+    session_to_junos(processed)
+    print "--------------------"
 
 
 # need recursive function to process result

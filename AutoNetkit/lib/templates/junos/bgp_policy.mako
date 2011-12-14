@@ -1,33 +1,32 @@
 %for name, route_map_items in route_maps.items():    
-
 policy-statement ${name} { 
-%for (term_number, match_clause, action_clause, reject) in route_map_items:    
+	%for (term_number, match_tuple) in route_map_items:        
 	term ${term_number} {
-	    %if len(match_clause):
+	    %if len(match_tuple.match_clauses):
 	    from  {
-	    %for (match_type, comparison, match_value) in match_clause:
-	        % if match_type == "prefix_list":
-	        prefix-list ${match_value};
-	        % elif match_type == "tag":
-	        community [${match_value}];
+	    %for match_clause in match_tuple.match_clauses:
+	        % if match_clause.type == "prefix_list":
+	        prefix-list ${match_clause.value};
+	        % elif match_clause.type == "tag":
+	        community [${match_clause.value}];
 	        % endif      
 	    %endfor
 	    }
 	    % endif             
-	    %if len(action_clause): 
+	    %if len(match_tuple.action_clauses): 
 	    then {                    
-	    %for (action_type, action_value) in action_clause:       
-	        % if action_type == "addTag":
-	        community set ${action_value};
-	        % elif action_type == "setLP":
-	        set local-preference ${action_value};      
-	        % elif action_type == "setNextHop":
-	        next-hop ${action_value};  
-	        % elif action_type == "removeTag":
-	        community delete ${action_value};
+	    %for action_clause in match_tuple.action_clauses:
+	        % if action_clause.action == "addTag":
+	        community set ${action_clause.value};
+	        % elif action_clause.action == "setLP":
+	        set local-preference ${action_clause.value};      
+	        % elif action_clause.action == "setNextHop":
+	        next-hop ${action_clause.value};  
+	        % elif action_clause.action == "removeTag":
+	        community delete ${action_clause.value};
 	        % endif     
 	    %endfor   
-	    % if reject:
+	    % if match_tuple.reject:
 	        reject;
 	    % else: 
 	        accept;
@@ -37,6 +36,4 @@ policy-statement ${name} {
 	} 
 %endfor            
 }
-
-
 %endfor
