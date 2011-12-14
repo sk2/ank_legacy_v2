@@ -72,7 +72,7 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
     try:
         import matplotlib.pyplot as plt
     except:
-        print "Matplotlib not found, not plotting using Matplotlib"
+        LOG.debug("Matplotlib not found, not plotting using Matplotlib")
         return
 
     # Colors
