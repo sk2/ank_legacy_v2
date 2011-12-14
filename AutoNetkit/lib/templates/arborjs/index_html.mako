@@ -9,18 +9,14 @@
 </head>
 <body>                   
 <h1>AutoNetkit plot</h1>                                 
-  % for val in js_files:
   <canvas id="viewport" width="1024" height="768"></canvas>
-   % endfor
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
 
   <!-- run from the minified library file: -->
   <script src="./jsplot/arbor.js"></script>  
                                               
-  % for filename in js_files:
-  <script src="./jsplot/${filename}"></script>       
-  % endfor
+  <script src="./jsplot/${js_file}"></script>       
   
   Plotted by <a href="http://packages.python.org/AutoNetkit/">AutoNetkit</a> using <a href="http://arborjs.org/">arbor.js</a>
 

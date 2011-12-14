@@ -189,6 +189,7 @@ class JunosCompiler:
                 'description':  description,
             })
 
+
         return interfaces
 
 
@@ -201,9 +202,13 @@ class JunosCompiler:
             igp_interfaces.append({ 'id': 'lo0', 'passive': True})
             for src, dst, data in igp_graph.edges(node, data=True):
                 int_id = logical_int_id_ge(data['id'])
+                description = 'Interface %s -> %s' % (
+                    ank.fqdn(self.network, src), 
+                    ank.fqdn(self.network, dst))
                 igp_interfaces.append({
                     'id':       int_id,
-                    'weight':   data.get('weight', default_weight)
+                    'weight':   data.get('weight', default_weight),
+                    'description': description,
                     })
         return igp_interfaces
 
@@ -236,7 +241,7 @@ class JunosCompiler:
                             {
                                 'id':  self.network.lo_ip(neigh).ip,
                                 'description':      description,
-                    })
+                                })
                 elif (data.get('rr_dir') in set(['up', 'over', 'peer'])
                         or data.get('rr_dir') is None):
                     ibgp_neighbor_list.append(
