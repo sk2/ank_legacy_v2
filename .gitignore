@@ -13,6 +13,7 @@ ank_lab/*
 */ank_lab/*
 AutoNetkit/ank_lab/*
 AutoNetkit.egg-info/*
+AutoNetkit/algorithms/ank_lab/*
 tags
 *.gz
 AutoNetkit-*/
