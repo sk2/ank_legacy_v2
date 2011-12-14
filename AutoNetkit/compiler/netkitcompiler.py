@@ -404,7 +404,7 @@ class NetkitCompiler:
             # get ibgp graph that contains only nodes from this AS
 
             for node in my_as.nodes():
-                #TODO: look at making this a set for greatre comparison efficiency
+                #TODO: look at making this a set for greater comparison efficiency
                 network_list = []
 
                 # iBGP
@@ -412,6 +412,8 @@ class NetkitCompiler:
                 ibgp_rr_client_list = []
                 route_reflector = False
                 if node in ibgp_graph:
+                    #TODO: look at replacing this with a check to len of ibgp_rr_client_list
+#TODO: set cluster id explicitly from python, not auto in mako (decisions/logic in python)
                     if self.network.route_reflector(node):
                         route_reflector = True
                     for src, neigh, data in ibgp_graph.edges(node, data=True):
