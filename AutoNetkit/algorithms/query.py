@@ -17,6 +17,7 @@ import os
 import pprint
 import itertools
 import TopZooTools
+from collections import namedtuple
 import TopZooTools.geoplot
 import sys
 from pkg_resources import resource_filename
@@ -253,8 +254,31 @@ class queryParser:
 
 
     def process_if_then_else(self, parsed_query):
+        if_then_tuple = namedtuple('if_then_tuple', "if_clause, then_clause")
+        else_tuple = namedtuple('else_tuple', 'else_clause')
+        match_tuple = namedtuple('match_tuple', 'attribute, comparison, value')
+        action_tuple = namedtuple('action_tuple', 'action, value')
+        retval = []
         for token in parsed_query:
-            print token
+            print "token is %s" % token
+            if token == parsed_query.else_clause:
+                else_tuples = [action_tuple(action, value) for
+                        (action, value) in token]
+                retval.append(else_tuple(else_tuples))
+            else:
+                #TODO: check is in ifthen
+                (if_clause, else_clause) = token
+                if_tuples = [match_tuple(attribute, comparison, value) for
+                        (attribute, comparison, value) in if_clause]
+                then_tuples = [action_tuple(action, value) for
+                        (action, value) in else_clause]
+                retval.append(if_then_tuple(if_tuples, then_tuples))
+
+
+
+
+        pprint.pprint(retval)
+
         return
 
         def parse_if(if_query):
@@ -263,7 +287,7 @@ class queryParser:
                 if token in self._boolean:
                     retval.append(token)
                 else:
-                    retval.append([token.attribute, token.comparison, token.value])
+                    retval.append()
             return retval
 
         def parse_then(then_query):
@@ -547,13 +571,13 @@ for test in tests:
         pass
 
 tests = [
-        "(if prefix_list = pl_1 then addTag a100)",
-        "(if prefix_list = pl_1 then addTag a100) else (addTag a200)",
-        "(if prefix_list = pl_1 then addTag a100 & setLP 90) else (removeTag a200)",
+        #"(if prefix_list = pl_1 then addTag a100)",
+        #"(if prefix_list = pl_1 then addTag a100) else (addTag a200)",
+        "(if prefix_list = pl_1 & tag = aaa then addTag a100 & setLP 90) else (removeTag a200)",
         "(if prefix_list = pl_1 then addTag a100 & setLP 90) else (addTag a200 & setLP 100)",
-        "(if prefix_list = pl_1 & tag = aaa then addTag a100) else (addTag a200)",
-        "(if prefix_list =  pl_1 then addTag a100) else (if prefix_list = pl_2 then setLP 200))",
-        "(if prefix_list =  pl_1 then addTag a100 & reject) else (if prefix_list = pl_2 then setNextHop 1.2.3.4) else (addTag a300)",
+        #"(if prefix_list = pl_1 & tag = aaa then addTag a100) else (addTag a200)",
+        "(if prefix_list =  pl_1 then addTag a100) else (if prefix_list = pl_2 then setLP 200)",
+        #"(if prefix_list =  pl_1 then addTag a100 & reject) else (if prefix_list = pl_2 then setNextHop 1.2.3.4) else (addTag a300)",
 
 ]
 
@@ -652,6 +676,7 @@ for test in tests:
     #res = ", ".join(['if', result.if_clause.attribute, result.if_clause.value,
     #    'then', result.then_clause.attribute, str(result.then_clause.value)])
     processed = qparser.process_if_then_else(result)
+    print
     #session_to_quagga(processed)
     #session_to_junos(processed)
 
