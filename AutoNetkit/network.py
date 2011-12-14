@@ -213,6 +213,19 @@ class Network(object):
         """ syntactic sugar for accessing loopback IP of a node """
         return self.graph.node[node].get('lo_ip')
 
+    def pop(self, node):
+        """ syntactic sugar for accessing pop of a node """
+        return self.graph.node[node].get('pop')
+
+    def ibgp_cluster(self, node):
+        """ syntactic sugar for accessing ibgp_cluster of a node """
+        return self.graph.node[node].get('ibgp_cluster')
+
+    def ibgp_level(self, node):
+        """ syntactic sugar for accessing ibgp_level of a node """
+#TODO: catch int cast exception
+        return int(self.graph.node[node].get('ibgp_level'))
+
     def label(self, node):
         """ syntactic sugar for accessing label of a node """
         #return ('label' for n in nodes)

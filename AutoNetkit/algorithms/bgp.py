@@ -10,6 +10,7 @@ __all__ = ['ebgp_routers', 'get_ebgp_graph',
            'initialise_bgp']
 
 import networkx as nx
+import pprint
 import AutoNetkit as ank
 import logging
 LOG = logging.getLogger("ANK")
@@ -33,6 +34,67 @@ def ibgp_edges(network):
     return ( (s,t) for s,t in network.g_session.edges()
             if network.asn(s) == network.asn(t))
 
+def ibgp_level_set_for_all_nodes(network):
+    """Test if ibgp_level property set for all nodes in network"""
+    ibgp_set_per_node = [d.get("ibgp_level") for n, d in network.graph.nodes(data=True)]
+    are_all_set = all(ibgp_set_per_node)
+    if are_all_set != any(ibgp_set_per_node):
+# some nodes have ibgp_level set, but not all nodes, warn possible error
+        set_node_count =  sum(True for n in ibgp_set_per_node if n)
+        total_nodes = len(ibgp_set_per_node)
+        LOG.warn("Possible mistake: ibgp_level is set for %s/%s nodes. Using full-mesh iBGP topology." 
+                % (set_node_count, total_nodes))
+    return are_all_set
+
+def configure_ibgp_rr(network):
+    """Configures route-reflection properties based on work in (NEED CITE)"""
+    G_session = nx.DiGraph()
+    edges_to_add = []
+    for (s,t) in ((s,t) for s in network.graph.nodes() for t in network.graph.nodes() 
+            if (s!= t # not same node
+                and network.asn(s) == network.asn(t) # Only iBGP for nodes in same ASes
+                )):
+        s_level = network.ibgp_level(s)
+        t_level = network.ibgp_level(t)
+        print ("pop for %s is %s and asn is %s and pop for %s is %s and asn is %s" 
+                % (network.label(s), network.pop(s), network.asn(s),
+                network.label(t), network.pop(t), network.asn(t)))
+# Intra-PoP
+#TODO: also make Intra-Cluster
+        if (
+                (network.pop(s) == network.pop(t)) # same PoP
+                or (network.ibgp_cluster(s) == network.ibgp_cluster(t) != None) # same cluster and cluster is set
+                ):
+            if s_level == t_level == 1:
+                # client to client: do nothing
+                pass
+            elif (s_level == 1) and (t_level == 2):
+                # client -> server: up
+                edges_to_add.append( (s, t, {'rr_dir': 'up'}) )
+            elif (s_level == 2) and (t_level == 1):
+                # server -> client: down
+                edges_to_add.append( (s, t, {'rr_dir': 'down'}) )
+            elif s_level == t_level == 2:
+                # server -> server: over
+                edges_to_add.append( (s, t, {'rr_dir': 'over'}) )
+    else:
+        print "inter pop from %s to %s" % (network.label(s), network.label(t))
+# Inter-PoP
+        if s_level == t_level == 2:
+            print "here"
+            edges_to_add.append( (s, t, {'rr_dir': 'over'}) )
+
+    # Add with placeholders for ingress/egress policy
+    network.g_session.add_edges_from(edges_to_add, ingress=[], egress=[])
+    pprint.pprint(network.g_session.edges(data=True))
+
+    # And mark route-reflector on physical graph
+    for node, data in network.graph.nodes(data=True):
+        route_reflector = False
+        if int(data.get("ibgp_level")) > 1:
+            route_reflector = True
+        network.graph.node[node]['route_reflector'] = route_reflector
+
 def initialise_ebgp(network):
     """Adds edge for links that have router in different ASes
 
@@ -46,10 +108,15 @@ def initialise_ebgp(network):
     network.g_session.add_edges_from(edges_to_add, ingress=[], egress=[])
 
 def initialise_ibgp(network):
-    edges_to_add = ( (s,t) for s in network.graph for t in network.graph 
-            if (s is not t and
-                network.asn(s) == network.asn(t)))
-    network.g_session.add_edges_from(edges_to_add, ingress=[], egress=[])
+    if ibgp_level_set_for_all_nodes(network):
+        print "use route reflection"
+        configure_ibgp_rr(network)
+    else:
+# Full mesh
+        edges_to_add = ( (s,t) for s in network.graph for t in network.graph 
+                if (s is not t and
+                    network.asn(s) == network.asn(t)))
+        network.g_session.add_edges_from(edges_to_add, rr_dir = 'peer', ingress=[], egress=[])
 
 def initialise_bgp(network):
     if len(network.g_session):

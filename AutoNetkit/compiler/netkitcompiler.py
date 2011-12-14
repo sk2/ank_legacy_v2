@@ -404,19 +404,34 @@ class NetkitCompiler:
             # get ibgp graph that contains only nodes from this AS
 
             for node in my_as.nodes():
+                #TODO: look at making this a set for greatre comparison efficiency
                 network_list = []
 
                 # iBGP
                 ibgp_neighbor_list = []
+                ibgp_rr_client_list = []
+                route_reflector = False
                 if node in ibgp_graph:
-                    for neigh in ibgp_graph.neighbors(node):
-                        description = ank.fqdn(self.network, neigh)
-                        ibgp_neighbor_list.append(
-                            {
-                                'remote_ip':  self.network.lo_ip(neigh).ip,
-                                'remote_router':    neigh,
-                                'description':      description,
+                    if self.network.graph.node[node].get("route_reflector"):
+                        route_reflector = True
+                    print ibgp_graph.edges(node, data=True)
+                    for src, neigh, data in ibgp_graph.edges(node, data=True):
+                        description = data.get("rr_dir") + " to " + ank.fqdn(self.network, neigh)
+                        if data.get('rr_dir') == 'down':
+                            ibgp_rr_client_list.append(
+                                    {
+                                        'remote_ip':  self.network.lo_ip(neigh).ip,
+                                        'remote_router':    neigh,
+                                        'description':      description,
                             })
+                        elif (data.get('rr_dir') in set(['up', 'over', 'peer'])
+                                or data.get('rr_dir') is None):
+                            ibgp_neighbor_list.append(
+                                    {
+                                        'remote_ip':  self.network.lo_ip(neigh).ip,
+                                        'remote_router':    neigh,
+                                        'description':      description,
+                                        })
 
                 # iBGP
                 ebgp_neighbor_list = []
@@ -443,9 +458,17 @@ class NetkitCompiler:
                 adv_subnet = ip_as_allocs[self.network.asn(node)]
                 # advertise this subnet
                 if not adv_subnet in network_list:
+# Not already listed to be advertised, advertise
                     network_list.append(adv_subnet)
                 f_handle = open(os.path.join(zebra_dir(self.network, node),
                                              "bgpd.conf"),'w')
+                """
+                print
+                print ank.fqdn(self.network, node)
+                print "is rr: %s" % route_reflector
+                print "ibgp neighbours: %s" % ibgp_neighbor_list
+                print " ibgp_rr_client_list: %s" % ibgp_rr_client_list 
+                """
                 f_handle.write(template.render(
                         hostname = ank.fqdn(self.network, node),
                         asn = self.network.asn(node),
@@ -459,6 +482,8 @@ class NetkitCompiler:
                         identifying_loopback = self.network.lo_ip(node),
                         ibgp_neighbor_list = ibgp_neighbor_list,
                         ebgp_neighbor_list = ebgp_neighbor_list,
+                        route_reflector = route_reflector,
+                        ibgp_rr_client_list = ibgp_rr_client_list,
                         route_maps = route_maps,
                         logfile = "/var/log/zebra/bgpd.log",
                         debug=True,
