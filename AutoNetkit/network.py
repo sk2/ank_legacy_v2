@@ -58,15 +58,6 @@ class Network(object):
         self._graphs['bgp_session'] = nx.DiGraph()
         self.compiled_labs = {} # Record compiled lab filenames
 
-    #### IO Functions ###
-    def save(self, filename="net_out.gml"):    
-        """Write network topology to file."""
-        nx.write_gml(self.graph, filename)  
-
-    #TODO: also add pickle support
-
-    #TODO: make sure use asn not as_id for consistency
-
     @deprecated
     def update_node_type(self, default_type):
         """ Updates any node in graph that has no type set to be default_type"""
@@ -225,6 +216,10 @@ class Network(object):
         """ syntactic sugar for accessing ibgp_level of a node """
 #TODO: catch int cast exception
         return int(self.graph.node[node].get('ibgp_level'))
+
+    def route_reflector(self, node):
+        """ syntactic sugar for accessing if a ndoe is a route_reflector"""
+        return self.graph.node[node].get('route_reflector')
 
     def label(self, node):
         """ syntactic sugar for accessing label of a node """

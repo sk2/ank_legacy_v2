@@ -8,36 +8,49 @@ router bgp ${asn}
 	redistribute kernel
     redistribute connected
    	!
-	#Networks
+	! Networks
 	% for n in network_list:  
 	network ${n}
         aggregate-address ${n} summary-only
-
 	%endfor
-	!       
-	%if len(ibgp_neighbor_list) > 0:
-	#iBGP neighbors   
-	%endif   
+	!      
+	% if route_reflector:       
+	! Route-Reflector
+	bgp cluster-id ${router_id}       
+	!
+	% endif
+	% if len(ibgp_neighbor_list) > 0:
+	% endif               
+	% if len(ibgp_rr_client_list):       
+	! Route-Reflector clients
+	% endif      
+	% for n in ibgp_rr_client_list:
+	neighbor ${n['remote_ip']} route-reflector-client
+	neighbor ${n['remote_ip']} update-source ${router_id}  
+	neighbor ${n['remote_ip']} description ${n['description']} (iBGP) 
+	% endfor
+	!           
+	! iBGP neighbors  
 	% for n in ibgp_neighbor_list:
 	neighbor ${n['remote_ip']} remote-as ${asn}
 	neighbor ${n['remote_ip']} update-source ${router_id}  
 	neighbor ${n['remote_ip']} description ${n['description']} (iBGP) 
-	%endfor
+	% endfor
 	!
-	%if len(ebgp_neighbor_list) > 0:
+	% if len(ebgp_neighbor_list) > 0:
 	#eBGP neighbors   
-	%endif
+	% endif
 	% for n in ebgp_neighbor_list:
 	neighbor ${n['remote_ip']} remote-as ${n['remote_as']} 
 	neighbor ${n['remote_ip']} description ${n['description']} (eBGP)   
-	%if "route_map_in" in n and n['route_map_in'] != None:
+	% if "route_map_in" in n and n['route_map_in'] != None:
 	neighbor ${n['remote_ip']} route-map rm-${n['route_map_in']} in     
-	%endif   
-	%if "route_map_out" in n and n['route_map_out'] != None:
+	% endif   
+	% if "route_map_out" in n and n['route_map_out'] != None:
 	neighbor ${n['remote_ip']} route-map rm-${n['route_map_out']} out  
-	%endif        
+	% endif        
 	!
-	%endfor
+	% endfor
 	!       
 	
 	! Route-maps 

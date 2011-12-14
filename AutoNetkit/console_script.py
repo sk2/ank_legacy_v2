@@ -29,9 +29,9 @@ def main():
                     default=False, help="Deploy lab to Netkit host")
     opt.add_option('--file', '-f', default= None, 
                     help="Load configuration from FILE")        
-    opt.add_option('--netkithost', '-n', default=None,
+    opt.add_option('--netkithost', default=None,
                     help="Netkit host machine (if located on another machine)") 
-    opt.add_option('--username', '-u', default=None, 
+    opt.add_option('--netkitusername', default=None, 
                     help=("Username for Netkit host machine (if connecting to "
                     " external Netkit machine)"))
     opt.add_option('--verify', '-v', action="store_true", dest="verify",
@@ -108,11 +108,11 @@ def main():
         inet.plot()      
 
     if(options.deploy):
-        inet.deploy(host = options.netkithost, username = options.username,
+        inet.deploy(host = options.netkithost, username = options.netkitusername,
                     xterm = options.xterm)     
 
     if(options.verify):
-        inet.verify(host = options.netkithost, username = options.username)    
+        inet.verify(host = options.netkithost, username = options.netkitusername)    
 
 if __name__ == "__main__":
     try:

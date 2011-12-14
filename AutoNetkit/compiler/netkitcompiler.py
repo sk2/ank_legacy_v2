@@ -412,7 +412,7 @@ class NetkitCompiler:
                 ibgp_rr_client_list = []
                 route_reflector = False
                 if node in ibgp_graph:
-                    if self.network.graph.node[node].get("route_reflector"):
+                    if self.network.route_reflector(node):
                         route_reflector = True
                     for src, neigh, data in ibgp_graph.edges(node, data=True):
                         description = data.get("rr_dir") + " to " + ank.fqdn(self.network, neigh)
