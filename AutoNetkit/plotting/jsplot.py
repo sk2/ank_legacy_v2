@@ -113,7 +113,7 @@ def jsplot(network):
     # put html file in main plot directory
     html_filename = os.path.join(plot_dir, "plot.html")
     with open( html_filename, 'w') as f_html:
-            f_html.write( html_template.render( js_file = js_filename,))
+            f_html.write( html_template.render( js_file = "main.js",))
 
     html_filename = os.path.join(plot_dir, "ibgp.html")
     with open( html_filename, 'w') as f_html:
