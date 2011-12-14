@@ -461,11 +461,14 @@ class NetkitCompiler:
                     network_list.append(adv_subnet)
                 f_handle = open(os.path.join(zebra_dir(self.network, node),
                                              "bgpd.conf"),'w')
+
+                """
                 print
                 print ank.fqdn(self.network, node)
                 print "is rr: %s" % route_reflector
                 print "ibgp neighbours: %s" % ibgp_neighbor_list
                 print " ibgp_rr_client_list: %s" % ibgp_rr_client_list 
+                """
                 f_handle.write(template.render(
                         hostname = ank.fqdn(self.network, node),
                         asn = self.network.asn(node),
