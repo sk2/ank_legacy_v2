@@ -35,7 +35,8 @@ def ibgp_edges(network):
             if network.asn(s) == network.asn(t))
 
 def ibgp_level_set_for_all_nodes(network):
-    """Test if ibgp_level property set for all nodes in network"""
+    """Test if ibgp_level property set for all nodes in network.
+    Warn user if ibgp_level set for some nodes, but not for all."""
     ibgp_set_per_node = [d.get("ibgp_level") for n, d in network.graph.nodes(data=True)]
     are_all_set = all(ibgp_set_per_node)
     if are_all_set != any(ibgp_set_per_node):
@@ -47,8 +48,10 @@ def ibgp_level_set_for_all_nodes(network):
     return are_all_set
 
 def configure_ibgp_rr(network):
-    """Configures route-reflection properties based on work in (NEED CITE)"""
-    G_session = nx.DiGraph()
+    """Configures route-reflection properties based on work in (NEED CITE).
+
+    Note: this currently needs ibgp_level to be set globally for route-reflection to work.
+    Future work will implement on a per-AS basis."""
     edges_to_add = []
     for (s,t) in ((s,t) for s in network.graph.nodes() for t in network.graph.nodes() 
             if (s!= t # not same node
@@ -56,9 +59,6 @@ def configure_ibgp_rr(network):
                 )):
         s_level = network.ibgp_level(s)
         t_level = network.ibgp_level(t)
-        print ("pop for %s is %s and asn is %s and pop for %s is %s and asn is %s" 
-                % (network.label(s), network.pop(s), network.asn(s),
-                network.label(t), network.pop(t), network.asn(t)))
 # Intra-PoP
 #TODO: also make Intra-Cluster
         if (
@@ -77,16 +77,14 @@ def configure_ibgp_rr(network):
             elif s_level == t_level == 2:
                 # server -> server: over
                 edges_to_add.append( (s, t, {'rr_dir': 'over'}) )
-    else:
-        print "inter pop from %s to %s" % (network.label(s), network.label(t))
+        else:
 # Inter-PoP
-        if s_level == t_level == 2:
-            print "here"
-            edges_to_add.append( (s, t, {'rr_dir': 'over'}) )
+            if s_level == t_level == 2:
+                edges_to_add.append( (s, t, {'rr_dir': 'over'}) )
+
 
     # Add with placeholders for ingress/egress policy
     network.g_session.add_edges_from(edges_to_add, ingress=[], egress=[])
-    pprint.pprint(network.g_session.edges(data=True))
 
     # And mark route-reflector on physical graph
     for node, data in network.graph.nodes(data=True):
@@ -109,7 +107,6 @@ def initialise_ebgp(network):
 
 def initialise_ibgp(network):
     if ibgp_level_set_for_all_nodes(network):
-        print "use route reflection"
         configure_ibgp_rr(network)
     else:
 # Full mesh

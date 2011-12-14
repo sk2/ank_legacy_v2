@@ -414,7 +414,6 @@ class NetkitCompiler:
                 if node in ibgp_graph:
                     if self.network.graph.node[node].get("route_reflector"):
                         route_reflector = True
-                    print ibgp_graph.edges(node, data=True)
                     for src, neigh, data in ibgp_graph.edges(node, data=True):
                         description = data.get("rr_dir") + " to " + ank.fqdn(self.network, neigh)
                         if data.get('rr_dir') == 'down':
@@ -462,13 +461,11 @@ class NetkitCompiler:
                     network_list.append(adv_subnet)
                 f_handle = open(os.path.join(zebra_dir(self.network, node),
                                              "bgpd.conf"),'w')
-                """
                 print
                 print ank.fqdn(self.network, node)
                 print "is rr: %s" % route_reflector
                 print "ibgp neighbours: %s" % ibgp_neighbor_list
                 print " ibgp_rr_client_list: %s" % ibgp_rr_client_list 
-                """
                 f_handle.write(template.render(
                         hostname = ank.fqdn(self.network, node),
                         asn = self.network.asn(node),
