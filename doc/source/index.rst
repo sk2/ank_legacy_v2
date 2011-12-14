@@ -16,7 +16,8 @@ ________________
    installation             
    quickstart 
    tutorial
-   reference/index
+   reference/index 
+   about
 
 Feedback and Citing
 ____________________
