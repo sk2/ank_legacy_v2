@@ -18,6 +18,9 @@ import pxssh
 import sys
 import AutoNetkit as ank
 import itertools
+import netaddr
+import random
+
 
 # Used for EOF and TIMEOUT variables
 import pexpect
@@ -119,7 +122,9 @@ class OliveDeploy():
         LOG.debug(  "SCP result %s"% child.before.strip())
         return 
 
-    def unallocated_ports(self):
+    def unallocated_ports(self, start=11000):
+        """ checks for allocated ports and returns a generator,
+        which returns a free port"""
         shell = self.shell
         pattern = "tcp\s+\d\s+\d\s\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}:(\d+)"
         allocated_ports = []
@@ -137,7 +142,14 @@ class OliveDeploy():
                 #netstat command echoed
             elif i==3:
                 break
-        return (port for port in itertools.count(11000, 1) if port not in allocated_ports)
+        return (port for port in itertools.count(start, 1) if port not in allocated_ports)
+
+    def random_mac_addresses(self):
+        """Returns a generator of random 48-bit MAC addresses"""
+        return (netaddr.EUI(random.randint(1, 2**48-1), version=48)
+                #TODO: see if better way to repeat the function
+                for a in itertools.count(0))
+
 
     def check_required_programs(self):
         # check prerequisites
@@ -224,15 +236,29 @@ class OliveDeploy():
 # give name to machine
 
 # create bash script from template to start olives
+    
+        unallocated_ports = self.unallocated_ports()
+        print unallocated_ports.next()
+        print unallocated_ports.next()
+        print unallocated_ports.next()
+        print unallocated_ports.next()
+        print unallocated_ports.next()
+        print unallocated_ports.next()
+        print unallocated_ports.next()
 
+        mac_addresses = self.random_mac_addresses()
+        print mac_addresses.next()
+        print mac_addresses.next()
+        print mac_addresses.next()
+        print mac_addresses.next()
+        print mac_addresses.next()
+        print mac_addresses.next()
+        print mac_addresses.next()
+        print mac_addresses.next()
+        print mac_addresses.next()
+        print mac_addresses.next()
 
-        print unallocated_ports.next()
-        print unallocated_ports.next()
-        print unallocated_ports.next()
-        print unallocated_ports.next()
-        print unallocated_ports.next()
-        print unallocated_ports.next()
-        print unallocated_ports.next()
+#
 
         return
 
@@ -275,6 +301,8 @@ class OliveDeploy():
             print "vde_switch already running"
 
         return
+
+
 
 
 
