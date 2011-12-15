@@ -117,6 +117,25 @@ class OliveDeploy():
         LOG.debug(  "SCP result %s"% child.before.strip())
         return 
 
+    def allocated_ports(self):
+        shell = self.shell
+        pattern = "tcp\s+\d\s+\d\s\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}:(\d+)"
+        allocated_ports = []
+        netstat_command = "netstat -ant | grep LISTEN ; echo 'done'"
+        shell.sendline(netstat_command)    
+        for dummy in range (0, 1000):  
+            i = shell.expect ([pattern, pexpect.EOF, netstat_command, 'done'])   
+            if i == 0:
+                port = shell.match.group(1)  
+                allocated_ports.append(port)
+            elif i == 1:
+                return allocated_ports
+            elif i==2:
+                pass
+                #netstat command echoed
+            elif i==3:
+                return allocated_ports
+
     def check_required_programs(self):
         # check prerequisites
         shell = self.shell
@@ -140,7 +159,7 @@ class OliveDeploy():
         3. Start bash script as sudo
         """
         shell = self.shell
-        print "starting olives"
+        print "Starting Olives"
 
         base_image = "/space/base-image.img"
         snapshot_folder = "/space/snapshots"
@@ -152,6 +171,8 @@ class OliveDeploy():
             chk_cmd = '[ -d %s ] && echo "Present" || echo >&2 "Absent"\n' % folder 
             shell.sendline(chk_cmd)
             program_installed = shell.expect (["Absent", "Present"])    
+#TODO: check if got chk_cmd back, if so was just an echo, ignore
+#(need to redirect the command itself like for hash)
             if program_installed:
                 print "%s exists" % folder
             else:
@@ -162,6 +183,8 @@ class OliveDeploy():
         """
 
 # transfer over junos lab
+        """
+
         tar_file = os.path.join(config.ank_main_dir, self.network.compiled_labs['junos'])
         self.transfer_file(tar_file)
 # Tar file copied across (if remote host) to local directory
@@ -181,9 +204,8 @@ class OliveDeploy():
         
         configset_directory = os.path.join(self.lab_dir, "configset")
         print "configs are in ", configset_directory
+        """
         
-        
-
 # make iso image
 
 # create mac address for each node
@@ -195,6 +217,15 @@ class OliveDeploy():
 # create bash script from template to start olives
 
 
+        allocated_port_list = self.allocated_ports()
+        usable_ports = (port for port in itertools.count(11000, 1) if port not in allocated_port_list)
+        print usable_ports.next()
+        print usable_ports.next()
+        print usable_ports.next()
+        print usable_ports.next()
+        print usable_ports.next()
+        print usable_ports.next()
+        print usable_ports.next()
 
         return
 
