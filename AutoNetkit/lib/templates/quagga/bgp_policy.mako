@@ -1,11 +1,11 @@
-%for name, match_tuples in route_maps.items():    
+%for route_map in route_maps:    
 !
-%for (seq_no, match_tuple) in match_tuples:        
+%for (seq_no, match_tuple) in route_map.match_tuples:        
 % if match_tuple.reject:
-     route-map ${name} deny ${seq_no}             
+     route-map ${route_map.name} deny ${seq_no}             
 	!TODO: rejected, need to continue to next seqno
 %else:
-     route-map ${name} permit ${seq_no} 
+     route-map ${route_map.name} permit ${seq_no} 
 % endif
     %for match_clause in match_tuple.match_clauses:
         % if match_clause.type == "prefix_list":

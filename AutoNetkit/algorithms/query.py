@@ -427,8 +427,8 @@ for test in test_queries:
 
 #print G_business_relationship.edges(data=True)
 
-import matplotlib.pyplot as plt
 """
+import matplotlib.pyplot as plt
 pos=nx.spring_layout(G_business_relationship)
 
 nx.draw(G_business_relationship, pos, font_size=18, arrows=False, node_color = "0.8", edge_color="0.8")
@@ -582,25 +582,30 @@ lookup = TemplateLookup(directories=[ template_dir ],
 quagga_bgp_policy_template = lookup.get_template("quagga/bgp_policy.mako")
 junos_bgp_policy_template = lookup.get_template("junos/bgp_policy.mako")
 
+route_map_tuple = namedtuple('route_map', "name, match_tuples")
+
 def session_to_quagga(session_list):
-    route_maps = {}
+    route_maps = []
     route_map_id = ("rm" + str(x) for x in itertools.count(1)) 
     for session in session_list: 
         sequence_number = itertools.count(10, 10)
-        route_maps[route_map_id.next()] = [ (sequence_number.next(), match_tuples) for match_tuples in session]
+        route_maps.append(route_map_tuple(route_map_id.next(), 
+            [(sequence_number.next(), match_tuples) for match_tuples in session]))
 #TODO: need to allocate community values (do this globally for network)
     print "Quagga:"
+    pprint.pprint(route_maps)
     print quagga_bgp_policy_template.render(
             route_maps = route_maps
             )
 
 def session_to_junos(session_list):
-    route_maps = {}
+    route_maps = []
     route_map_id = ("rm" + str(x) for x in itertools.count(1)) 
     for session in session_list: 
 #TODO: need to reformat prefix list/matches
         term_number = itertools.count(1)
-        route_maps[route_map_id.next()] = [ (term_number.next(), match_tuples) for match_tuples in session]
+        route_maps.append(route_map_tuple(route_map_id.next(), 
+            [(term_number.next(), match_tuples) for match_tuples in session]))
 #TODO: need to allocate community values (do this globally for network)
     print "Junos:"
     print junos_bgp_policy_template.render(
