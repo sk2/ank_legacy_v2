@@ -8,8 +8,8 @@ __author__ = "\n".join(['Simon Knight'])
 import logging
 LOG = logging.getLogger("ANK")
                                  
+from collections import namedtuple
                                  
-
 import time
 import os
 import time
@@ -52,7 +52,9 @@ class OliveDeploy():
         self.shell = None
         self.shell_type ="bash"
         self.logfile = open( os.path.join(config.log_dir, "pxssh.log"), 'w')
-        print os.path.join(config.log_dir, "pxssh.log")
+        self.tap_name = "ank_tap_olive"
+        self.vde_socket_name = "ank_vde_olive"
+        self.vde_mgmt_socket_name = "ank_vde_olive_mgmt"
 
         self.local_server = True
         if self.host and self.username:
@@ -236,31 +238,33 @@ class OliveDeploy():
 # give name to machine
 
 # create bash script from template to start olives
+        bios_image = "test.bios"
     
         unallocated_ports = self.unallocated_ports()
-        print unallocated_ports.next()
-        print unallocated_ports.next()
-        print unallocated_ports.next()
-        print unallocated_ports.next()
-        print unallocated_ports.next()
-        print unallocated_ports.next()
-        print unallocated_ports.next()
-
         mac_addresses = self.random_mac_addresses()
-        print mac_addresses.next()
-        print mac_addresses.next()
-        print mac_addresses.next()
-        print mac_addresses.next()
-        print mac_addresses.next()
-        print mac_addresses.next()
-        print mac_addresses.next()
-        print mac_addresses.next()
-        print mac_addresses.next()
-        print mac_addresses.next()
+        qemu_routers = []
 
-#
+        router_info_tuple = namedtuple('route_info', 'router_name, iso_image, img_image, mac_addresses, telnet_port, switch_socket, monitor_socket')
 
-        return
+        iso_image = "tst.iso"
+        img_image = "tst.img"
+        monitor_socket = "test.socket"
+        
+
+        for router in self.network.graph:
+            router_info = router_info_tuple(
+                    self.network.label(router),
+                    iso_image,
+                    img_image,
+# create 6 mac addresses, the maximum per Olive
+                    [mac_addresses.next() for i in range(0,6)],
+                    unallocated_ports.next(),
+                    self.vde_socket_name,
+                    monitor_socket,
+                    )
+            qemu_routers.append(router_info)
+
+
 
 
         bash_template = lookup.get_template("autonetkit/olive_startup.mako")
@@ -270,17 +274,14 @@ class OliveDeploy():
         bash_script_filename = os.path.join(junos_dir, "start_olive.sh")
         with open( bash_script_filename, 'w') as f_bash:
             f_bash.write( bash_template.render(
-                test = "AAAAAAA",
+                routers = qemu_routers,
                 ))
         
     def start_switch(self):
-        tap_name = "ank_tap_olive"
-        vde_socket_name = "ank_vde_olive"
-        vde_mgmt_socket_name = "ank_vde_olive_mgmt"
         shell = self.shell
 
         print "Please enter sudo password and type '^]' to return to AutoNetkit"
-        shell.sendline('sudo tunctl -t %s' % tap_name)
+        shell.sendline('sudo tunctl -t %s' % self.tap_name)
 	sys.stdout.write (shell.after)
 	sys.stdout.flush()
         shell.interact()
@@ -288,11 +289,11 @@ class OliveDeploy():
         print "Starting vde_switch"
 
 # start vde switch
-        start_vde_switch_cmd = "vde_switch -d -t %s -n 2000 -s /tmp/%s -M /tmp/%s" % (tap_name, 
-                vde_socket_name, vde_mgmt_socket_name)
+        start_vde_switch_cmd = "vde_switch -d -t %s -n 2000 -s /tmp/%s -M /tmp/%s" % (self.tap_name, 
+                self.vde_socket_name, self.vde_mgmt_socket_name)
         shell.sendline('sudo %s' % start_vde_switch_cmd)
         i = shell.expect ([
-            "vde_switch: Could not bind to socket '/tmp/%s/ctl': Address already in use"%vde_socket_name,
+            "vde_switch: Could not bind to socket '/tmp/%s/ctl': Address already in use" % self.vde_socket_name,
                 pexpect.EOF])
         if i:
 # started ok
