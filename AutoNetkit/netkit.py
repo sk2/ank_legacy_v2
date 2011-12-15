@@ -202,6 +202,7 @@ class Netkit:
             #todo: ping tap host machine ie tap_host ip to check is active   
             return True                                                       
         else:
+            #TODO: use interactive mode for sudo like in the junos deployment module
             LOG.warn("Please setup tap network link manually")
             LOG.warn(("eg vstart {0} --con0=none --eth0=tap,{1},{2}").format( 
                 self.tap_hostname, self.tap_host, self.tap_ip))
