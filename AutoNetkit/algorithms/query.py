@@ -370,9 +370,9 @@ policy1 = "(if prefix_list = pl_1 then addTag a100 & reject route) else (addTag 
 policy2 = "(if prefix_list = pl_1 then addTag a100)"
 
 test_queries = [
-        '(Network = GEANT) egress-> (Network = GARR): ' + policy1,
-        '(Network = GEANT) egress-> (Network = GARR): ' + policy2,
-        #'(Network = GEANT) ->ingress (Network = JANET)',
+        #'(Network = GEANT) egress-> (Network = GARR): ' + policy1,
+        '(Network = GEANT ) egress-> (Network = GEANT): ' + policy2,
+        #'(Network = GEANT) egress-> (Network = JANET): ' + policy2,
         #'(Network = GEANT) ingress<- (Network = JANET)',
         #'(Network = GEANT) <-> (asn = 680)',
         #'(Network = GEANT) <-> (Network = GEANT)',
@@ -593,7 +593,6 @@ def session_to_quagga(session_list):
             [(sequence_number.next(), match_tuples) for match_tuples in session]))
 #TODO: need to allocate community values (do this globally for network)
     print "Quagga:"
-    pprint.pprint(route_maps)
     print quagga_bgp_policy_template.render(
             route_maps = route_maps
             )
@@ -624,7 +623,7 @@ for node in inet.network.g_session:
     # check sessions from this node
     for (src, dst, session_data) in inet.network.g_session.edges(node, data=True):
         if len(session_data['ingress']):
-            print "session from: %s.%s" % (inet.network.label(src), inet.network.network(src))
+            print "session to: %s.%s" % (inet.network.label(dst), inet.network.network(dst))
             print "ingress:"
             policy = session_data['ingress']
             session_to_quagga(policy)
