@@ -12,6 +12,7 @@ __all__ = ['example_single_as', 'example_multi_as']
 
 import AutoNetkit
 import logging
+import networkx as nx
 LOG = logging.getLogger("ANK")
 
 
@@ -28,18 +29,23 @@ def example_single_as():
 
     """
     network = AutoNetkit.network.Network()
-    network.graph.add_nodes_from( [
+    graph = nx.Graph()
+    graph.add_nodes_from( [
             ('1a', {'asn': 1}), ('1b', {'asn': 1}),
             ('1c', {'asn': 1}), ('1d', {'asn': 1})])
 
-    network.graph.add_edges_from( [
+    graph.add_edges_from( [
             ('1a', '1b'), ('1b', '1c'),
             ('1c', '1d'), ('1d', '1b')])
+
+    network.graph = graph.to_directed()
 
     return network
 
 def example_multi_as():
     """ Multi AS example topology
+
+#TODO: update these with bi-directional edges
 
     >>> network = example_multi_as()
 
@@ -51,18 +57,21 @@ def example_multi_as():
        
     """
     network = AutoNetkit.network.Network()
-    network.graph.add_nodes_from( [
+    graph = nx.Graph()
+    graph.add_nodes_from( [
             ('1a', {'asn': 1}), ('1c', {'asn': 1}),
             ('1b', {'asn': 1}), ('2a', {'asn': 2}),
             ('2b', {'asn': 2}), ('2c', {'asn': 2}),
             ('2d', {'asn': 2}), ('3a', {'asn': 3})])
 
-    network.graph.add_edges_from( [
+    graph.add_edges_from( [
             ('1a', '1b'), ('1a', '1c'),
             ('1b', '1c'), ('2a', '2b'),
             ('2b', '2c'), ('2c', '2d'),
             ('2d', '2a'), ('1c', '2a'),
             ('2d', '3a'), ('3a', '1b')])
+
+    network.graph = graph.to_directed()
 
     return network
 
