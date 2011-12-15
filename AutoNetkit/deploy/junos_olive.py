@@ -49,6 +49,8 @@ class OliveDeploy():
         self.shell = None
         self.shell_type ="bash"
         self.logfile = open( os.path.join(config.log_dir, "pxssh.log"), 'w')
+        print os.path.join(config.log_dir, "pxssh.log")
+
         self.local_server = True
         if self.host and self.username:
             # Host and Username set, so ssh will be used
@@ -117,7 +119,7 @@ class OliveDeploy():
         LOG.debug(  "SCP result %s"% child.before.strip())
         return 
 
-    def allocated_ports(self):
+    def unallocated_ports(self):
         shell = self.shell
         pattern = "tcp\s+\d\s+\d\s\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}:(\d+)"
         allocated_ports = []
@@ -129,12 +131,13 @@ class OliveDeploy():
                 port = shell.match.group(1)  
                 allocated_ports.append(port)
             elif i == 1:
-                return allocated_ports
+                break
             elif i==2:
                 pass
                 #netstat command echoed
             elif i==3:
-                return allocated_ports
+                break
+        return (port for port in itertools.count(11000, 1) if port not in allocated_ports)
 
     def check_required_programs(self):
         # check prerequisites
@@ -166,20 +169,26 @@ class OliveDeploy():
 # need to create this folder if not present
         socket_folder = "/space/sockets"
         """
-        required_folders = [snapshot_folder, socket_folder, test_folder]
+        required_folders = [snapshot_folder, socket_folder]
         for folder in required_folders:
-            chk_cmd = '[ -d %s ] && echo "Present" || echo >&2 "Absent"\n' % folder 
+            chk_cmd = '[ -d %s ] && echo "Present" "|" || echo "Absent" "|" \n\n' % folder 
             shell.sendline(chk_cmd)
-            program_installed = shell.expect (["Absent", "Present"])    
+            print "expecting for ", folder
+            i = shell.expect (["Present |", "Absent |"])    
+            print shell.before
+            print shell.after
+            print "got i ", i
 #TODO: check if got chk_cmd back, if so was just an echo, ignore
 #(need to redirect the command itself like for hash)
-            if program_installed:
-                print "%s exists" % folder
-            else:
+            if i == 0:
+                print "%s doesn't exist" % folder
+            elif i == 1:
                 #TODO: convert print to LOGs
-                print "%s not exists" % folder
-                return False
+                print "%s  exists" % folder
             shell.prompt() 
+
+        shell.prompt() 
+        return
         """
 
 # transfer over junos lab
@@ -217,15 +226,13 @@ class OliveDeploy():
 # create bash script from template to start olives
 
 
-        allocated_port_list = self.allocated_ports()
-        usable_ports = (port for port in itertools.count(11000, 1) if port not in allocated_port_list)
-        print usable_ports.next()
-        print usable_ports.next()
-        print usable_ports.next()
-        print usable_ports.next()
-        print usable_ports.next()
-        print usable_ports.next()
-        print usable_ports.next()
+        print unallocated_ports.next()
+        print unallocated_ports.next()
+        print unallocated_ports.next()
+        print unallocated_ports.next()
+        print unallocated_ports.next()
+        print unallocated_ports.next()
+        print unallocated_ports.next()
 
         return
 
