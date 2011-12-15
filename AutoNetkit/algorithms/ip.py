@@ -19,7 +19,7 @@ def get_ip_as_allocs(network):
     """ Returns list of Subnets allocated, by network"""
     return network.ip_as_allocs
 
-def allocate_subnets(network, address_block):
+def allocate_subnets(network, address_block=IPNetwork("10.0.0.0/8")):
 
     """Allocates subnets and IP addresses to links in the network.
 
