@@ -8,10 +8,14 @@ __author__ = "\n".join(['Simon Knight'])
 import logging
 LOG = logging.getLogger("ANK")
                                  
+                                 
+
+import time
 import os
 import time
 import AutoNetkit.config as config
 import pxssh
+import sys
 
 # Used for EOF and TIMEOUT variables
 import pexpect
@@ -42,8 +46,6 @@ class OliveDeploy():
         self.shell = None
         self.shell_type ="bash"
         self.logfile = open( os.path.join(config.log_dir, "pxssh.log"), 'w')
-        
-        
 
     def connect_to_server(self):  
         """Connects to Netkit server (if remote)"""   
@@ -92,48 +94,94 @@ class OliveDeploy():
         self.shell = shell   
         return
 
-    def create_bash_script(self):
-        bash_template = lookup.get_template("autonetkit/olive_startup.mako")
-        
-
-    def start_switch(self):
+    def check_required_programs(self):
+        # check prerequisites
         shell = self.shell
-        chk_cmd = 'hash vde_switch 2>&- && echo "Present" || echo >&2 "Absent"\n'
-        shell.sendline(chk_cmd)
-        vde_switch_installed = shell.expect (["Absent", "Present"])    
-        if vde_switch_installed:
-            print "vde switch installed"
-        else:
-            #TODO: convert print to LOGs
-            print "vde switch not installed"
-            return False
-        shell.prompt() 
-        chk_cmd = 'hash tunctl 2>&- && echo "Present" || echo >&2 "Absent"\n'
-        shell.sendline(chk_cmd)
-        tunctl_switch_installed = shell.expect (["Absent", "Present"])    
-        if tunctl_switch_installed:
-            print "tunctl installed"
-        else:
-            print "tunctl not installed"
-            return False
-        shell.prompt() 
-        tapname = "ank_tap_olive"
-        print "Please enter sudo password and type 'exit' to return to AutoNetkit"
-        shell.sendline('sudo tunctl -t %s' % tapname)
-        shell.interact()
+        for program in ['tunctl', 'vde_switch', 'qemu', 'qemu-img', 'mkisofs']:
+            chk_cmd = 'hash %s 2>&- && echo "Present" || echo >&2 "Absent"\n' % program
+            shell.sendline(chk_cmd)
+            program_installed = shell.expect (["Absent", "Present"])    
+            if program_installed:
+                print "%s installed" % program
+            else:
+                #TODO: convert print to LOGs
+                print "%s not installed" % program
+                return False
+            shell.prompt() 
+
+    def start_olive(self):
+        """ Starts Olives inside Qemu
+        Steps:
+        1. Create bash script to start the Olives
+        2. Copy bash script to remote host
+        3. Start bash script as sudo
+        """
+        shell = self.shell
+        print "starting olives"
+
+        base_image = "/space/base-image.img"
+        snapshot_folder = "/space/snapshots"
+# need to create this folder if not present
+        socket_folder = "/space/sockets"
+        test_folder = "/space/test"
+        required_folders = [snapshot_folder, socket_folder, test_folder]
+        shell.setecho(False)
+        for folder in required_folders:
+                shell.sendline('[ -d ' + folder + ' ] && echo >&2 "Present" || echo >&2 "Absent"\n')
+                folder_exists = shell.expect (["Absent", "Present"])    
+                print "folder %s exists %s " % (folder, folder_exists)
+                if folder_exists:
+                    print "%s exists" % folder
+                else:
+                    #TODO: convert print to LOGs
+                    print "%s not exists" % folder
+                shell.prompt() 
+
+
+# need to create this folder if not present
+        #config_folder 
+
         return
 
-# check if tunnel active
 
-        chk_cmd = "ifconfig ank_tap_olive"
-        shell.sendline(chk_cmd)
+        bash_template = lookup.get_template("autonetkit/olive_startup.mako")
+        junos_dir = config.junos_dir
+        if not os.path.isdir(junos_dir):
+            os.mkdir(junos_dir)
+        bash_script_filename = os.path.join(junos_dir, "start_olive.sh")
+        with open( bash_script_filename, 'w') as f_bash:
+            f_bash.write( bash_template.render(
+                test = "AAAAAAA",
+                ))
+        
+    def start_switch(self):
+        tap_name = "ank_tap_olive"
+        vde_socket_name = "ank_vde_olive"
+        vde_mgmt_socket_name = "ank_vde_olive_mgmt"
+        shell = self.shell
 
-        shell.sendline('tunctl -t %s' % tapname)
-        shell.prompt() 
-        result = shell.before 
-        result = shell.after
-        print "result from starting is ", result
+        print "Please enter sudo password and type '^]' to return to AutoNetkit"
+        shell.sendline('sudo tunctl -t %s' % tap_name)
+	sys.stdout.write (shell.after)
+	sys.stdout.flush()
+        shell.interact()
+        print
+        print "Starting vde_switch"
 
+# start vde switch
+        start_vde_switch_cmd = "vde_switch -d -t %s -n 2000 -s /tmp/%s -M /tmp/%s" % (tap_name, 
+                vde_socket_name, vde_mgmt_socket_name)
+        shell.sendline('sudo %s' % start_vde_switch_cmd)
+        i = shell.expect ([
+            "vde_switch: Could not bind to socket '/tmp/%s/ctl': Address already in use"%vde_socket_name,
+                pexpect.EOF])
+        if i:
+# started ok
+            pass
+        else:
+            print "vde_switch already running"
+
+        return
 
 
 
@@ -141,6 +189,7 @@ class OliveDeploy():
 
 olive_deploy = OliveDeploy(host="trc1", username="sknight")
 olive_deploy.connect_to_server()
-olive_deploy.start_switch()
-olive_deploy.create_bash_script()
+olive_deploy.check_required_programs()
+#olive_deploy.start_switch()
+olive_deploy.start_olive()
 
