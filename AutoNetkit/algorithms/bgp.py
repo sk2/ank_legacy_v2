@@ -84,7 +84,7 @@ def configure_ibgp_rr(network):
 
 
     # Add with placeholders for ingress/egress policy
-    network.g_session.add_edges_from(edges_to_add, ingress=[], egress=[])
+    network.g_session.add_edges_from(edges_to_add)
 
     # And mark route-reflector on physical graph
     for node, data in network.graph.nodes(data=True):
@@ -103,7 +103,8 @@ def initialise_ebgp(network):
     """
     edges_to_add = ( (src, dst) for src, dst in network.graph.edges()
             if network.asn(src) != network.asn(dst))
-    network.g_session.add_edges_from(edges_to_add, ingress=[], egress=[])
+    edges_to_add = list(edges_to_add)
+    network.g_session.add_edges_from(edges_to_add)
 
 def initialise_ibgp(network):
     if ibgp_level_set_for_all_nodes(network):
@@ -113,7 +114,19 @@ def initialise_ibgp(network):
         edges_to_add = ( (s,t) for s in network.graph for t in network.graph 
                 if (s is not t and
                     network.asn(s) == network.asn(t)))
-        network.g_session.add_edges_from(edges_to_add, rr_dir = 'peer', ingress=[], egress=[])
+        network.g_session.add_edges_from(edges_to_add, rr_dir = 'peer')
+
+def initialise_bgp_sessions(network):
+    """ add empty ingress/egress lists to each session.
+    Note: can't do in add_edges_from due to:
+    http://www.ferg.org/projects/python_gotchas.html#contents_item_6
+    """
+    for (u,v) in network.g_session.edges():
+        network.g_session[u][v]['ingress'] = []
+        network.g_session[u][v]['egress'] = []
+
+    return
+
 
 def initialise_bgp(network):
     if len(network.g_session):
@@ -123,6 +136,7 @@ def initialise_bgp(network):
         return
     initialise_ebgp(network)
     initialise_ibgp(network)
+    initialise_bgp_sessions(network)
 
 def ebgp_routers(network):
     """List of all routers with an eBGP link
