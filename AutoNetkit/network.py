@@ -234,7 +234,12 @@ class Network(object):
         """ syntactic sugar for accessing label of a node """
         #return ('label' for n in nodes)
         #return (self.graph.node[n]['label'] for n in nodes)
-        return self.graph.node[node].get('label')
+        label = self.graph.node[node].get('label')
+        if label:
+            return label
+# no label set, return node name
+        return str(node)
+
 
     # For dealing with BGP Sessions graphs
 #TODO: expand this to work with arbitrary graphs

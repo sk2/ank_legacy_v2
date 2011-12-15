@@ -108,8 +108,7 @@ class JunosCompiler:
         bridge_id_generator = ('private%s'%i for i in itertools.count(0))
         collision_to_bridge_mapping = {}
 
-     #TODO: correct this router type selector
-        for node in self.network.q(platform="NETKIT"):
+        for node in self.network.graph:
             hostname = ank.fqdn(self.network, node)
             topology_data[hostname] = {
                     'image': 'VJX1000_LATEST',
@@ -117,6 +116,7 @@ class JunosCompiler:
                     'interfaces': [],
                     }
             for src, dst, data in self.network.graph.edges(node, data=True):
+                print "data", data
                 subnet = data['sn']
                 description = 'Interface %s -> %s' % (
                         ank.fqdn(self.network, src), 
