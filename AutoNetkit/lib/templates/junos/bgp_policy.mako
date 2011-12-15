@@ -13,7 +13,7 @@ policy-statement ${route_map.name} {
 	    %endfor
 	    }
 	    % endif             
-	    %if len(match_tuple.action_clauses): 
+	    %if len(match_tuple.action_clauses) or match_tuple.reject: 
 	    then {                    
 	    %for action_clause in match_tuple.action_clauses:
 	        % if action_clause.action == "addTag":
