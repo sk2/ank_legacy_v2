@@ -179,11 +179,14 @@ class queryParser:
                 ).setResultsName("bgpSessionQuery")
         self.bgpSessionQuery = bgpSessionQuery
 
+        self.bgpApplicationQuery = self.edgeQuery + Suppress(":") + self.bgpSessionQuery
+
     def find_bgp_sessions(self, network, qstring):
-        result = self.edgeQuery.parseString(qstring)
+        result = self.bgpApplicationQuery.parseString(qstring)
         set_a = self.node_select_query(network, result.query_a)
         set_b = self.node_select_query(network, result.query_b)
         select_type = result.edgeType
+        per_session_policy = qparser.process_if_then_else(result.bgpSessionQuery)
 
 # use nbunch feature of networkx to limit edges to look at
         node_set = set_a | set_b
@@ -210,7 +213,6 @@ class queryParser:
 # u <- v
             select_function = select_fn_u_from_v
 
-
         # Determine which direction to apply policy to
         ingress_or_egress = None
         if select_type in [self.u_ingress, self.v_ingress]:
@@ -221,8 +223,7 @@ class queryParser:
         # apply policy to edges
         selected_edges = ( e for e in edges if select_function(e, set_a, set_b))
         for u,v in selected_edges:
-            policy = "aaaa%s" % random.randint(0,500)
-            network.g_session[u][v][ingress_or_egress].append(policy)
+            network.g_session[u][v][ingress_or_egress].append(per_session_policy)
 
     def evaluate_node_stack(self, stack):
         if len(stack) == 1:
@@ -365,10 +366,11 @@ for test in tests:
 
 #TODO: allow access to edge properties, eg (bob<->alice).freq returns 10
 #TODO: add ingress/egress to this
+policy = "(if prefix_list = pl_1 then addTag a100 & reject route) else (addTag a200)"
 test_queries = [
-        '(Network = GEANT) egress-> (Network = GARR)',
-        '(Network = GEANT) ->ingress (Network = JANET)',
-        '(Network = GEANT) ingress<- (Network = JANET)',
+        '(Network = GEANT) egress-> (Network = GARR): ' + policy,
+        #'(Network = GEANT) ->ingress (Network = JANET)',
+        #'(Network = GEANT) ingress<- (Network = JANET)',
         #'(Network = GEANT) <-> (asn = 680)',
         #'(Network = GEANT) <-> (Network = GEANT)',
         ]
@@ -380,14 +382,14 @@ for test in test_queries:
     qparser.find_bgp_sessions(inet.network, test)
     #print edges_to_labels(matching_edges)
     #print "matches are %s" % matching_edges
+    """
     for (u,v) in inet.network.g_session.edges():
         session_data = inet.network.g_session[u][v]
         if len(session_data['ingress']) or len(session_data['egress']):
             print inet.network.label(u), inet.network.asn(u), inet.network.label(v), inet.network.asn(v), session_data
         pass
+    """
     #print "---"
-
-sys.exit(0)
 
 test_queries = [
         'GEANT provides FBH to "Deutsche Telekom"',
@@ -577,31 +579,60 @@ lookup = TemplateLookup(directories=[ template_dir ],
 quagga_bgp_policy_template = lookup.get_template("quagga/bgp_policy.mako")
 junos_bgp_policy_template = lookup.get_template("junos/bgp_policy.mako")
 
-def session_to_quagga(session):
+def session_to_quagga(session_list):
     route_maps = {}
-    sequence_number = itertools.count(10, 10)
-    route_maps['rm1'] = [ (sequence_number.next(), token) for token in session]
+    route_map_id = ("rm" + str(x) for x in itertools.count(1)) 
+    for session in session_list: 
+        sequence_number = itertools.count(10, 10)
+        route_maps[route_map_id.next()] = [ (sequence_number.next(), match_tuples) for match_tuples in session]
 #TODO: need to allocate community values (do this globally for network)
     print "Quagga:"
     print quagga_bgp_policy_template.render(
             route_maps = route_maps
             )
 
-
-
-def session_to_junos(session):
+def session_to_junos(session_list):
     route_maps = {}
+    route_map_id = ("rm" + str(x) for x in itertools.count(1)) 
+    for session in session_list: 
 #TODO: need to reformat prefix list/matches
-    term_number = itertools.count(1)
-    route_maps['rm1'] = [ (term_number.next(), match_tuples) for match_tuples in session]
+        term_number = itertools.count(1)
+        route_maps[route_map_id.next()] = [ (term_number.next(), match_tuples) for match_tuples in session]
 #TODO: need to allocate community values (do this globally for network)
     print "Junos:"
     print junos_bgp_policy_template.render(
             route_maps = route_maps
             )
 
+for node in inet.network.g_session:
+
+    has_session_set = any( True for (src, dst, session_data) in inet.network.g_session.edges(node, data=True)
+            if len(session_data['ingress']) or len(session_data['egress']))
+
+    if has_session_set:
+# only print name if session, otherwise huge list of nodes
+        print "------------------------------"
+        print "Policy on %s.%s" % (inet.network.label(node), inet.network.network(node))
+    # check sessions from this node
+    for (src, dst, session_data) in inet.network.g_session.edges(node, data=True):
+        if len(session_data['ingress']):
+            print "session from: %s.%s" % (inet.network.label(src), inet.network.network(src))
+            print "ingress:"
+            policy = session_data['ingress']
+            session_to_quagga(policy)
+            session_to_junos(policy)
+        if len(session_data['egress']):
+            print "session to: %s.%s" % (inet.network.label(dst), inet.network.network(dst))
+            print "egress:"
+            policy = session_data['egress']
+            session_to_quagga(policy)
+            session_to_junos(policy)
+            
+        
+
 
 for test in tests:
+    continue
     print "Policy:"
     print test
     result =  qparser.bgpSessionQuery.parseString(test)
@@ -615,6 +646,7 @@ for test in tests:
         if isinstance(token, qparser.else_tuple):
             print "TOKEN IS ELSE"
     """
+
     session_to_quagga(processed)
     session_to_junos(processed)
     print "--------------------"
