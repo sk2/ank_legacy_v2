@@ -208,6 +208,15 @@ class Network(object):
         """ syntactic sugar for accessing pop of a node """
         return self.graph.node[node].get('pop')
 
+    def network(self, node):
+        """ syntactic sugar for accessing network of a node """
+        retval = self.graph.node[node].get('network')
+        if retval:
+            return retval
+        else:
+# try "Network"
+            return self.graph.node[node].get('Network')
+
     def ibgp_cluster(self, node):
         """ syntactic sugar for accessing ibgp_cluster of a node """
         return self.graph.node[node].get('ibgp_cluster')
