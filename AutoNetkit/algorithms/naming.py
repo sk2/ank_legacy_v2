@@ -27,7 +27,7 @@ def fqdn(network, node):
     node r in graph graph."""
     asn = network.asn(node)
     node_domain = domain(network, asn)
-    node_label = network.graph.node[node]['label']
+    node_label = network.label(node)
     if not node_label:
         # Numeric ID, so unique
         node_label = str(node) 
@@ -41,7 +41,7 @@ def fqdn(network, node):
 def hostname(network, node):
     """ Returns name with spaces, underscores and other illegal characters
     removed. Useful for Bind/DNS"""
-    name = network.graph.node[node]['label']
+    name = network.label(node)
     if not name:
         # Numeric ID, so unique
         name = str(node) 
@@ -60,7 +60,7 @@ def rtr_folder_name(network, node):
 
     #TODO: come up with shortest unique name, eg Adelaide, Aarnet becomes
     # adl.aar, as want descriptive, but also short name
-    label = network.graph.node[node]['label']
+    label = network.label(node)
     if not label:
         # Numeric ID, so unique
         label = str(node) 
