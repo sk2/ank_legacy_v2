@@ -243,6 +243,7 @@ class OliveDeploy():
 
 inet = ank.internet.Internet()
 inet.load("singleas")
+ank.alloc_interfaces(inet.network)
 ank.allocate_subnets(inet.network) 
 junos_comp = ank.JunosCompiler(inet.network, inet.services, inet.igp)
 junos_comp.initialise()
