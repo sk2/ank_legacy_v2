@@ -8,6 +8,7 @@ __author__ = "\n".join(['Simon Knight'])
 import networkx as nx
 import logging
 import AutoNetkit as ank
+import random
 from AutoNetkit import config
 LOG = logging.getLogger("ANK")
 #TODO: only import from pyparsing what is needed
@@ -218,11 +219,10 @@ class queryParser:
             ingress_or_egress = 'egress'
 
         # apply policy to edges
-        policy = "aaaa"
         selected_edges = ( e for e in edges if select_function(e, set_a, set_b))
         for u,v in selected_edges:
+            policy = "aaaa%s" % random.randint(0,500)
             network.g_session[u][v][ingress_or_egress].append(policy)
-
 
     def evaluate_node_stack(self, stack):
         if len(stack) == 1:
@@ -367,6 +367,8 @@ for test in tests:
 #TODO: add ingress/egress to this
 test_queries = [
         '(Network = GEANT) egress-> (Network = GARR)',
+        '(Network = GEANT) ->ingress (Network = JANET)',
+        '(Network = GEANT) ingress<- (Network = JANET)',
         #'(Network = GEANT) <-> (asn = 680)',
         #'(Network = GEANT) <-> (Network = GEANT)',
         ]
@@ -381,7 +383,7 @@ for test in test_queries:
     for (u,v) in inet.network.g_session.edges():
         session_data = inet.network.g_session[u][v]
         if len(session_data['ingress']) or len(session_data['egress']):
-            print inet.network.label(u), inet.network.label(v), session_data
+            print inet.network.label(u), inet.network.asn(u), inet.network.label(v), inet.network.asn(v), session_data
         pass
     #print "---"
 
