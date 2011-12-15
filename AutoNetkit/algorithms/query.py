@@ -366,9 +366,12 @@ for test in tests:
 
 #TODO: allow access to edge properties, eg (bob<->alice).freq returns 10
 #TODO: add ingress/egress to this
-policy = "(if prefix_list = pl_1 then addTag a100 & reject route) else (addTag a200)"
+policy1 = "(if prefix_list = pl_1 then addTag a100 & reject route) else (addTag a200)"
+policy2 = "(if prefix_list = pl_1 then addTag a100)"
+
 test_queries = [
-        '(Network = GEANT) egress-> (Network = GARR): ' + policy,
+        '(Network = GEANT) egress-> (Network = GARR): ' + policy1,
+        '(Network = GEANT) egress-> (Network = GARR): ' + policy2,
         #'(Network = GEANT) ->ingress (Network = JANET)',
         #'(Network = GEANT) ingress<- (Network = JANET)',
         #'(Network = GEANT) <-> (asn = 680)',
