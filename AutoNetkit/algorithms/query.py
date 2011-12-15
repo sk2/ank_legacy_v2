@@ -23,7 +23,6 @@ import TopZooTools.geoplot
 import sys
 from pkg_resources import resource_filename
 from mako.lookup import TemplateLookup
-from netaddr import IPNetwork
 
 
 
@@ -306,8 +305,7 @@ graph = nx.read_gpickle("condensed_west_europe.pickle")
 
 inet = ank.internet.Internet()
 inet.load("condensed_west_europe.pickle")
-ank.allocate_subnets(inet.network, IPNetwork("10.0.0.0/8")) 
-ank.initialise_bgp(inet.network)
+ank.allocate_subnets(inet.network)
 
 #ank.jsplot(inet.network)
 #TODO: initialise BGP sessions
