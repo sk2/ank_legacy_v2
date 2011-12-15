@@ -16,6 +16,7 @@ import time
 import AutoNetkit.config as config
 import pxssh
 import sys
+import AutoNetkit as ank
 
 # Used for EOF and TIMEOUT variables
 import pexpect
@@ -37,10 +38,10 @@ lookup = TemplateLookup(directories=[ template_dir ],
 class OliveDeploy():  
     """ Deploy a given Junos lab to an Olive Host"""
 
-    def __init__(self, host=None, username=None):
+    def __init__(self, host=None, username=None, network=None):
         self.server = None    
         self.lab_dir = None
-        self.network = None
+        self.network = network 
         self.host = host
         self.username = username
         self.shell = None
@@ -123,19 +124,20 @@ class OliveDeploy():
         snapshot_folder = "/space/snapshots"
 # need to create this folder if not present
         socket_folder = "/space/sockets"
-        test_folder = "/space/test"
+        """
         required_folders = [snapshot_folder, socket_folder, test_folder]
-        shell.setecho(False)
         for folder in required_folders:
-                shell.sendline('[ -d ' + folder + ' ] && echo >&2 "Present" || echo >&2 "Absent"\n')
-                folder_exists = shell.expect (["Absent", "Present"])    
-                print "folder %s exists %s " % (folder, folder_exists)
-                if folder_exists:
-                    print "%s exists" % folder
-                else:
-                    #TODO: convert print to LOGs
-                    print "%s not exists" % folder
-                shell.prompt() 
+            chk_cmd = '[ -d %s ] && echo "Present" || echo >&2 "Absent"\n' % folder 
+            shell.sendline(chk_cmd)
+            program_installed = shell.expect (["Absent", "Present"])    
+            if program_installed:
+                print "%s exists" % folder
+            else:
+                #TODO: convert print to LOGs
+                print "%s not exists" % folder
+                return False
+            shell.prompt() 
+        """
 
 
 # need to create this folder if not present
@@ -186,10 +188,13 @@ class OliveDeploy():
 
 
 
+inet = ank.internet.Internet()
+inet.load("singleas")
+ank.allocate_subnets(inet.network) 
 
-olive_deploy = OliveDeploy(host="trc1", username="sknight")
+olive_deploy = OliveDeploy(host="trc1", username="sknight", network=inet.network)
 olive_deploy.connect_to_server()
-olive_deploy.check_required_programs()
+#olive_deploy.check_required_programs()
 #olive_deploy.start_switch()
 olive_deploy.start_olive()
 
