@@ -41,6 +41,7 @@ class queryParser:
                 '<': operator.lt,
                 '<=': operator.le,
                 '=': operator.eq,
+                '!=': operator.ne,
                 '>=': operator.ge,
                 '>': operator.gt,
                 '&': set.intersection,
@@ -180,7 +181,7 @@ class queryParser:
 
         self.bgpApplicationQuery = self.edgeQuery + Suppress(":") + self.bgpSessionQuery
 
-    def find_bgp_sessions(self, network, qstring):
+    def apply_bgp_policy(self, network, qstring):
         result = self.bgpApplicationQuery.parseString(qstring)
         set_a = self.node_select_query(network, result.query_a)
         set_b = self.node_select_query(network, result.query_b)
@@ -306,6 +307,7 @@ graph = nx.read_gpickle("condensed_west_europe.pickle")
 inet = ank.internet.Internet()
 inet.load("condensed_west_europe.pickle")
 ank.allocate_subnets(inet.network)
+ank.initialise_bgp(inet.network)
 
 #ank.jsplot(inet.network)
 #TODO: initialise BGP sessions
@@ -378,20 +380,26 @@ test_queries = [
 
 #TODO: wrap so have edge selection and policy combined
 
+policy_in_file = "policy.txt"
+with open( policy_in_file, 'r') as f_pol:
+    for line in f_pol.readlines():
+        qparser.apply_bgp_policy(inet.network, line)
+
+
+"""
+
 #print "----edges:----"
 for test in test_queries:
-    qparser.find_bgp_sessions(inet.network, test)
     #print edges_to_labels(matching_edges)
     #print "matches are %s" % matching_edges
-    """
     for (u,v) in inet.network.g_session.edges():
         session_data = inet.network.g_session[u][v]
         if len(session_data['ingress']) or len(session_data['egress']):
             print inet.network.label(u), inet.network.asn(u), inet.network.label(v), inet.network.asn(v), session_data
         pass
-    """
     #print "---"
 
+"""
 test_queries = [
         'GEANT provides FBH to "Deutsche Telekom"',
         "ACOnet is a customer of GEANT",
@@ -590,8 +598,7 @@ def session_to_quagga(session_list):
         route_maps.append(route_map_tuple(route_map_id.next(), 
             [(sequence_number.next(), match_tuples) for match_tuples in session]))
 #TODO: need to allocate community values (do this globally for network)
-    print "Quagga:"
-    print quagga_bgp_policy_template.render(
+    return quagga_bgp_policy_template.render(
             route_maps = route_maps
             )
 
@@ -604,34 +611,41 @@ def session_to_junos(session_list):
         route_maps.append(route_map_tuple(route_map_id.next(), 
             [(term_number.next(), match_tuples) for match_tuples in session]))
 #TODO: need to allocate community values (do this globally for network)
-    print "Junos:"
-    print junos_bgp_policy_template.render(
+    return junos_bgp_policy_template.render(
             route_maps = route_maps
             )
 
-for node in inet.network.g_session:
+policy_out_file = "policy_output.txt"
+with open( policy_out_file, 'w+') as f_pol:
 
-    has_session_set = any( True for (src, dst, session_data) in inet.network.g_session.edges(node, data=True)
-            if len(session_data['ingress']) or len(session_data['egress']))
+    for node in inet.network.g_session:
 
-    if has_session_set:
+        has_session_set = any( True for (src, dst, session_data) 
+                in inet.network.g_session.in_edges(node, data=True) if len(session_data['ingress']) )
+        if not has_session_set:
+# check egress also
+            has_session_set = any( True for (src, dst, session_data) 
+                    in inet.network.g_session.out_edges(node, data=True) if len(session_data['egress']) )
+
+        if has_session_set:
 # only print name if session, otherwise huge list of nodes
-        print "------------------------------"
-        print "Policy on %s.%s" % (inet.network.label(node), inet.network.network(node))
-    # check sessions from this node
-    for (src, dst, session_data) in inet.network.g_session.edges(node, data=True):
-        if len(session_data['ingress']):
-            print "session to: %s.%s" % (inet.network.label(dst), inet.network.network(dst))
-            print "ingress:"
-            policy = session_data['ingress']
-            session_to_quagga(policy)
-            session_to_junos(policy)
-        if len(session_data['egress']):
-            print "session to: %s.%s" % (inet.network.label(dst), inet.network.network(dst))
-            print "egress:"
-            policy = session_data['egress']
-            session_to_quagga(policy)
-            session_to_junos(policy)
+            f_pol.write( "------------------------------\n")
+            f_pol.write( "Policy on %s.%s\n" % (inet.network.label(node), inet.network.network(node)))
+        # check sessions from this node
+        for (src, dst, session_data) in inet.network.g_session.in_edges(node, data=True):
+            if len(session_data['ingress']):
+                f_pol.write( "session to: %s.%s\n" % (inet.network.label(src), inet.network.network(src)))
+                f_pol.write( "ingress:\n")
+                policy = session_data['ingress']
+                f_pol.write(session_to_quagga(policy) + "\n")
+                f_pol.write(session_to_junos(policy) + "\n")
+        for (src, dst, session_data) in inet.network.g_session.out_edges(node, data=True):
+            if len(session_data['egress']):
+                f_pol.write( "session to: %s.%s\n" % (inet.network.label(dst), inet.network.network(dst)))
+                f_pol.write( "egress:\n")
+                policy = session_data['egress']
+                f_pol.write(session_to_quagga(policy) + "\n")
+                f_pol.write(session_to_junos(policy) +  "\n")
             
         
 
