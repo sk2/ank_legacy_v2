@@ -79,7 +79,11 @@ class queryParser:
         self.nodeQuery = singleQuery + ZeroOrMore(boolean + singleQuery)
 
 # edges
-        edgeType = oneOf("<- <-> ->").setResultsName("edgeType")
+        self.u_egress = Literal("egress->").setResultsName("u_egress") 
+        self.v_ingress = Literal("->ingress").setResultsName("v_ingress")
+        self.u_ingress = Literal("ingress<-").setResultsName("u_ingress")
+        self.v_egress = Literal("<-egress").setResultsName("v_egress") 
+        edgeType = ( self.u_egress | self.u_ingress | self.v_egress | self.v_ingress).setResultsName("edgeType")
         self.edgeQuery = ("(" + self.nodeQuery.setResultsName("query_a") + ")"
                 + edgeType
                 + "(" + self.nodeQuery.setResultsName("query_b") + ")")
@@ -198,14 +202,27 @@ class queryParser:
             """ u <- v"""
             return (u in src_set and v in dst_set) or (u in dst_set and v in src_set)
 
-        if select_type == "->":
+        if select_type in [self.u_egress, self.v_ingress]:
+# u -> v
             select_function = select_fn_u_to_v
-        elif select_type == "<-":
+        if select_type in [self.u_ingress, self.v_egress]:
+# u <- v
             select_function = select_fn_u_from_v
-        elif select_type == "<->":
-            select_function = select_fn_v_to_from_u 
 
-        return ( e for e in edges if select_function(e, set_a, set_b))
+
+        # Determine which direction to apply policy to
+        ingress_or_egress = None
+        if select_type in [self.u_ingress, self.v_ingress]:
+            ingress_or_egress = 'ingress'
+        if select_type in [self.u_egress, self.v_egress]:
+            ingress_or_egress = 'egress'
+
+        # apply policy to edges
+        policy = "aaaa"
+        selected_edges = ( e for e in edges if select_function(e, set_a, set_b))
+        for u,v in selected_edges:
+            network.g_session[u][v][ingress_or_egress].append(policy)
+
 
     def evaluate_node_stack(self, stack):
         if len(stack) == 1:
@@ -349,25 +366,26 @@ for test in tests:
 #TODO: allow access to edge properties, eg (bob<->alice).freq returns 10
 #TODO: add ingress/egress to this
 test_queries = [
-        '(Network = GEANT) <-> (Network = GARR)',
-        '(Network = GEANT) <-> (asn = 680)',
-# and iBGP
-        '(Network = GEANT) <-> (Network = GEANT)',
+        '(Network = GEANT) egress-> (Network = GARR)',
+        #'(Network = GEANT) <-> (asn = 680)',
+        #'(Network = GEANT) <-> (Network = GEANT)',
         ]
 
 #TODO: wrap so have edge selection and policy combined
 
 #print "----edges:----"
 for test in test_queries:
-    matching_edges = list(qparser.find_bgp_sessions(inet.network, test))
+    qparser.find_bgp_sessions(inet.network, test)
     #print edges_to_labels(matching_edges)
     #print "matches are %s" % matching_edges
-    for (u,v) in matching_edges:
-        #print inet.network.g_session[u][v]
+    for (u,v) in inet.network.g_session.edges():
+        session_data = inet.network.g_session[u][v]
+        if len(session_data['ingress']) or len(session_data['egress']):
+            print inet.network.label(u), inet.network.label(v), session_data
         pass
     #print "---"
 
-#sys.exit(0)
+sys.exit(0)
 
 test_queries = [
         'GEANT provides FBH to "Deutsche Telekom"',
