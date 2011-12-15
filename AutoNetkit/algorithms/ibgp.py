@@ -2,6 +2,8 @@ import networkx as nx
 import pprint
 import itertools
 
+#TODO: can remove this
+
 G_physical = nx.read_graphml("ibgp_example.graphml")
 pprint.pprint(G_physical.nodes(data=True))
 
