@@ -2,7 +2,7 @@
 !
 %for (seq_no, match_tuple) in route_map.match_tuples:        
 % if match_tuple.reject:
-     route-map ${route_map.name} deny ${seq_no}             
+    route-map ${route_map.name} deny ${seq_no}             
 	!TODO: rejected, need to continue to next seqno
 %else:
      route-map ${route_map.name} permit ${seq_no} 
