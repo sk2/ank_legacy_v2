@@ -17,6 +17,7 @@ import AutoNetkit.config as config
 import pxssh
 import sys
 import AutoNetkit as ank
+import itertools
 
 # Used for EOF and TIMEOUT variables
 import pexpect
@@ -38,15 +39,21 @@ lookup = TemplateLookup(directories=[ template_dir ],
 class OliveDeploy():  
     """ Deploy a given Junos lab to an Olive Host"""
 
-    def __init__(self, host=None, username=None, network=None):
+    def __init__(self, host=None, username=None, network=None,
+            lab_dir="junos_config_dir"):
         self.server = None    
-        self.lab_dir = None
+        self.lab_dir = lab_dir
         self.network = network 
         self.host = host
         self.username = username
         self.shell = None
         self.shell_type ="bash"
         self.logfile = open( os.path.join(config.log_dir, "pxssh.log"), 'w')
+        self.local_server = True
+        if self.host and self.username:
+            # Host and Username set, so ssh will be used
+            #TODO: make sure these are confirmed by the connect_server function
+            self.local_server = False       
 
     def connect_to_server(self):  
         """Connects to Netkit server (if remote)"""   
@@ -95,6 +102,21 @@ class OliveDeploy():
         self.shell = shell   
         return
 
+    def transfer_file(self, local_file):
+        """Transfers file to remote host using SCP"""
+        # Sanity check
+        if self.local_server:
+            LOG.warn("Can only SCP to remote Netkit server")
+            return
+
+        child = pexpect.spawn("scp {0} {1}@{2}:.".format(local_file,
+            self.username, self.host))      
+        child.logfile = self.logfile
+
+        child.expect(pexpect.EOF) 
+        LOG.debug(  "SCP result %s"% child.before.strip())
+        return 
+
     def check_required_programs(self):
         # check prerequisites
         shell = self.shell
@@ -139,9 +161,40 @@ class OliveDeploy():
             shell.prompt() 
         """
 
+# transfer over junos lab
+        tar_file = os.path.join(config.ank_main_dir, self.network.compiled_labs['junos'])
+        self.transfer_file(tar_file)
+# Tar file copied across (if remote host) to local directory
+        shell.sendline("cd ") 
+# Remove any previous lab
+        shell.sendline("rm -rf  " + self.lab_dir)
+        shell.prompt() 
+        shell.sendline("mkdir  " + self.lab_dir )
+        shell.prompt() 
 
-# need to create this folder if not present
-        #config_folder 
+        tar_basename = os.path.basename(tar_file)
+        
+        # Need to force directory to extract to (junosphere format for tar extracts to cwd)
+        shell.sendline("tar -xzf %s -C %s " % (tar_basename, self.lab_dir))
+        shell.prompt() 
+        print "Extracted new lab"
+        
+        configset_directory = os.path.join(self.lab_dir, "configset")
+        print "configs are in ", configset_directory
+        
+        
+
+# make iso image
+
+# create mac address for each node
+
+# pass bios option (optional based on param)
+
+# give name to machine
+
+# create bash script from template to start olives
+
+
 
         return
 
@@ -191,6 +244,9 @@ class OliveDeploy():
 inet = ank.internet.Internet()
 inet.load("singleas")
 ank.allocate_subnets(inet.network) 
+junos_comp = ank.JunosCompiler(inet.network, inet.services, inet.igp)
+junos_comp.initialise()
+junos_comp.configure()
 
 olive_deploy = OliveDeploy(host="trc1", username="sknight", network=inet.network)
 olive_deploy.connect_to_server()

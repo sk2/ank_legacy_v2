@@ -1,0 +1,10 @@
+// description - global definitions.
+//
+#include "/vmm/bin/common.defs"
+config "config" {
+display "NULL";                            
+
+
+    
+  PRIVATE_BRIDGES
+};
