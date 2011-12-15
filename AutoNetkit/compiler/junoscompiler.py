@@ -285,7 +285,7 @@ class JunosCompiler:
         ebgp_graph = ank.get_ebgp_graph(self.network)
 
         #TODO: correct this router type selector
-        for node in self.network.q(platform="NETKIT"):
+        for node in self.network.graph:
             asn = self.network.asn(node)
             network_list = []
             lo_ip = self.network.lo_ip(node)
