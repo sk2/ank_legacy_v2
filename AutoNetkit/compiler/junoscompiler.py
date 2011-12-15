@@ -116,7 +116,6 @@ class JunosCompiler:
                     'interfaces': [],
                     }
             for src, dst, data in self.network.graph.edges(node, data=True):
-                print "data", data
                 subnet = data['sn']
                 description = 'Interface %s -> %s' % (
                         ank.fqdn(self.network, src), 
