@@ -50,6 +50,7 @@ class OliveDeploy():
         self.host = host
         self.username = username
         self.shell = None
+# For use on local machine
         self.shell_type ="bash"
         self.logfile = open( os.path.join(config.log_dir, "pxssh.log"), 'w')
         self.tap_name = "ank_tap_olive"
@@ -61,6 +62,20 @@ class OliveDeploy():
             # Host and Username set, so ssh will be used
             #TODO: make sure these are confirmed by the connect_server function
             self.local_server = False       
+
+
+    def get_cwd(self):
+        """ get current working directory"""
+        # workaround for pexpect echoing the command back
+        shell = self.shell
+        cmd = "pwd"
+        shell.sendline (cmd)  # run a command
+        shell.prompt()
+        result = shell.before
+        result = [res.strip() for res in shell.before.split("\n")]
+        if result[0] == cmd:
+# First line is echo, return the next line
+            return result[1]
 
     def connect_to_server(self):  
         """Connects to Netkit server (if remote)"""   
@@ -87,18 +102,20 @@ class OliveDeploy():
             # with pass: shell.login(self.host, self.username, self.password)
 
             LOG.info(  "Connected to " + self.host )  
+            shell.setecho(False)  
             #TODO: set state to Netkit
         else:   
             shell = pexpect.spawn (self.shell_type) 
             shell.sendline("uname")
             
             shell.logfile = self.logfile    
-            shell.setecho(True)  
+            shell.setecho(False)  
             # Check Linux machine (Netkit won't run on other Unixes)   
             i = shell.expect(["Linux", "Darwin", pexpect.EOF, LINUX_PROMPT]) 
             if i == 0:
                 # Machine is running Linux. Send test command (ignore result)
                 shell.sendline("ls") 
+                shell.prompt()
             elif i == 1:
                 LOG.warn("Specified Netkit host is running Mac OS X, "
                     "please specify a Linux Netkit host.")
@@ -168,6 +185,8 @@ class OliveDeploy():
                 return False
             shell.prompt() 
 
+
+
     def start_olive(self):
         """ Starts Olives inside Qemu
         Steps:
@@ -206,7 +225,6 @@ class OliveDeploy():
         """
 
 # transfer over junos lab
-        """
 
         tar_file = os.path.join(config.ank_main_dir, self.network.compiled_labs['junos'])
         self.transfer_file(tar_file)
@@ -221,21 +239,24 @@ class OliveDeploy():
         tar_basename = os.path.basename(tar_file)
         
         # Need to force directory to extract to (junosphere format for tar extracts to cwd)
-        shell.sendline("tar -xzf %s -C %s " % (tar_basename, self.lab_dir))
-        shell.prompt() 
-        print "Extracted new lab"
-        
+        shell.sendline("tar -xzf %s -C %s \n" % (tar_basename, self.lab_dir))
+
         configset_directory = os.path.join(self.lab_dir, "configset")
         print "configs are in ", configset_directory
-        """
+# TODO: store these from junos compiler in network.compiled_labs dict
+        config_list = []
+        for node in self.network.graph.nodes():
+            config_file = "%s.conf" % ank.rtr_folder_name(self.network, node)
+            config_list.append(os.path.join(configset_directory, config_file))
+
+        print config_list 
         
 # make iso image
 
-# create mac address for each node
+        
+        return
 
 # pass bios option (optional based on param)
-
-# give name to machine
 
 # create bash script from template to start olives
         bios_image = "test.bios"
@@ -292,14 +313,12 @@ class OliveDeploy():
         start_vde_switch_cmd = "vde_switch -d -t %s -n 2000 -s /tmp/%s -M /tmp/%s" % (self.tap_name, 
                 self.vde_socket_name, self.vde_mgmt_socket_name)
         shell.sendline('sudo %s' % start_vde_switch_cmd)
-        i = shell.expect ([
-            "vde_switch: Could not bind to socket '/tmp/%s/ctl': Address already in use" % self.vde_socket_name,
-                pexpect.EOF])
+        i = shell.expect ([ "Address already in use" , pexpect.EOF])
         if i:
 # started ok
             pass
         else:
-            print "vde_switch already running"
+            print "WARNING: vde_switch already running"
 
         return
 
