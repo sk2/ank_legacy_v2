@@ -63,27 +63,26 @@ class OliveDeploy():
             #TODO: make sure these are confirmed by the connect_server function
             self.local_server = False       
 
-
     def get_cwd(self):
+        return self.get_command_output("pwd")
+
+    def get_command_output(self, cmd):
         """ get current working directory"""
         # workaround for pexpect echoing the command back
         shell = self.shell
-        cmd = "pwd"
-        shell.sendline (cmd)  # run a command
+        print "sending %s" % cmd
+        shell.sendline(cmd)  # run a command
         shell.prompt()
         result = shell.before
+        print "got result of %s" % result
         result = [res.strip() for res in shell.before.split("\n")]
         if result[0] == cmd:
 # First line is echo, return the next line
+            print "returning %s" % result[1]
             return result[1]
 
     def connect_to_server(self):  
         """Connects to Netkit server (if remote)"""   
-        
-        #TODO: make internal (private) function
-        
-        #TODO: check state is disconnected
-        
         # Connects to the Linux machine running the Netkit lab   
         shell = None     
         if self.host and self.username:  
@@ -124,6 +123,8 @@ class OliveDeploy():
                 LOG.warn("Provided Netkit host is not running Linux")
 
         self.shell = shell   
+        working_directory = self.get_cwd()
+        print "working dir is %s" % working_directory
         return
 
     def transfer_file(self, local_file):
@@ -185,8 +186,6 @@ class OliveDeploy():
                 return False
             shell.prompt() 
 
-
-
     def start_olive(self):
         """ Starts Olives inside Qemu
         Steps:
@@ -240,14 +239,21 @@ class OliveDeploy():
         
         # Need to force directory to extract to (junosphere format for tar extracts to cwd)
         shell.sendline("tar -xzf %s -C %s \n" % (tar_basename, self.lab_dir))
+        shell.prompt() 
+        shell.sendline("ls")
+        shell.prompt() 
+        print shell.before
 
         configset_directory = os.path.join(self.lab_dir, "configset")
         print "configs are in ", configset_directory
+        working_directory = self.get_cwd()
+        print "working dir is %s" % working_directory
+        return
 # TODO: store these from junos compiler in network.compiled_labs dict
         config_list = []
         for node in self.network.graph.nodes():
             config_file = "%s.conf" % ank.rtr_folder_name(self.network, node)
-            config_list.append(os.path.join(configset_directory, config_file))
+            config_list.append(os.path.join(working_directory, configset_directory, config_file))
 
         print config_list 
         
