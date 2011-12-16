@@ -11,7 +11,6 @@ import AutoNetkit as ank
 from AutoNetkit import config
 LOG = logging.getLogger("ANK")
 #TODO: only import from pyparsing what is needed
-#from pyparsing import *
 from pyparsing import Literal, Word, alphas, alphanums, nums, Combine, Group, ZeroOrMore, Suppress, quotedString, removeQuotes, oneOf, Forward, Optional
 import operator
 import os
