@@ -256,7 +256,6 @@ class OliveDeploy():
                 "%s.conf" % node_filename))
             config_files[node]['config_file_snapshot'] = os.path.join(snapshot_folder, "%s.iso" % node_filename)
             config_files[node]['base_image_snapshot'] = os.path.join(snapshot_folder, "%s.img" % node_filename)
-
         
         for node, data in config_files.items():
             cmd = "mkisofs -o %s %s " % (data.get('config_file_snapshot'), 
@@ -265,24 +264,11 @@ class OliveDeploy():
             shell.sendline(cmd)
 
         for node, data in config_files.items():
-            cmd = 
+            cmd =  "qemu-img create -f qcow2 -b %s %s" % (base_image,
+                    data['base_image_snapshot'])
+            print cmd
+            shell.sendline(cmd)
 
-    
-
-        base_image
-
-
-
-
-        
-# make iso image
-
-        
-        return
-
-# pass bios option (optional based on param)
-
-# create bash script from template to start olives
         bios_image = "test.bios"
     
         unallocated_ports = self.unallocated_ports()
@@ -310,16 +296,25 @@ class OliveDeploy():
 
 
 
+"""
+qemu \
+    -hda ${router_info.img_image} \
+    -hdb ${router_info.iso_image} \         
+	% for mac in router_info.mac_addresses: 
+    -net nic,macaddr=${mac},model=e1000 \
+	% endfor
+    -net vde,sock=${router_info.switch_socket} \
+    -enable-kvm \
+    -serial telnet:127.0.0.1:${router_info.telnet_port},server,nowait,nodelay \
+    -monitor unix:${router_info.monitor_socket},server,nowait \
+    -m 512 m  \
+    -nographic \
+    -localtime \
+    -name ${router_info.router_name} &
+    """
+                                                                
 
-        bash_template = lookup.get_template("autonetkit/olive_startup.mako")
-        junos_dir = config.junos_dir
-        if not os.path.isdir(junos_dir):
-            os.mkdir(junos_dir)
-        bash_script_filename = os.path.join(junos_dir, "start_olive.sh")
-        with open( bash_script_filename, 'w') as f_bash:
-            f_bash.write( bash_template.render(
-                routers = qemu_routers,
-                ))
+
         
     def start_switch(self):
         shell = self.shell
