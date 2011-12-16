@@ -8,18 +8,16 @@ __author__ = "\n".join(['Simon Knight'])
 import networkx as nx
 import logging
 import AutoNetkit as ank
-import random
 from AutoNetkit import config
 LOG = logging.getLogger("ANK")
 #TODO: only import from pyparsing what is needed
-from pyparsing import *
+#from pyparsing import *
+from pyparsing import Literal, Word, alphas, alphanums, nums, Combine, Group, ZeroOrMore, Suppress, quotedString, removeQuotes, oneOf, Forward, Optional
 import operator
 import os
 import pprint
 import itertools
-import TopZooTools
 from collections import namedtuple
-import TopZooTools.geoplot
 import sys
 from pkg_resources import resource_filename
 from mako.lookup import TemplateLookup
@@ -309,15 +307,6 @@ inet.load("condensed_west_europe.pickle")
 ank.allocate_subnets(inet.network)
 ank.initialise_bgp(inet.network)
 
-#ank.jsplot(inet.network)
-#TODO: initialise BGP sessions
-
-#print inet.network.graph.nodes()
-
-#print graph.nodes(data=True)
-
-##### parser
-# Node selection syntax
 
 qparser = queryParser()
 
@@ -348,58 +337,13 @@ def edges_to_labels(edges):
     return  ", ".join("%s->%s" % 
             (graph.node[u].get('label'), graph.node[v].get('label')) for (u,v) in edges)
 
-# can set parse action to be return string?
 
-#TODO: create function from the parsed result
-# eg a lambda, and then apply this function to the nodes in the graph
-# eg G.node[n].get(attribute) = "quotedstring"  operator 
-
-for test in tests:
-    #print "--------------------------"
-    test_result = qparser.node_select_query(inet.network, test)
-    #print nodes_to_labels(test_result)
-    get_prefixes(inet, test_result)
-    #print result.dump()
-
-
-#TODO: check if "<->" means join <- and -> or means bidirectional edge... or depends om Graph vs DiGraph?
-
-#TODO: allow access to edge properties, eg (bob<->alice).freq returns 10
-#TODO: add ingress/egress to this
-policy1 = "(if prefix_list = pl_1 then addTag a100 & reject route) else (addTag a200)"
-policy2 = "(if prefix_list = pl_1 then addTag a100)"
-
-test_queries = [
-        #'(Network = GEANT) egress-> (Network = GARR): ' + policy1,
-        '(Network = GEANT ) egress-> (Network = GEANT): ' + policy2,
-        #'(Network = GEANT) egress-> (Network = JANET): ' + policy2,
-        #'(Network = GEANT) ingress<- (Network = JANET)',
-        #'(Network = GEANT) <-> (asn = 680)',
-        #'(Network = GEANT) <-> (Network = GEANT)',
-        ]
-
-#TODO: wrap so have edge selection and policy combined
 
 policy_in_file = "policy.txt"
 with open( policy_in_file, 'r') as f_pol:
     for line in f_pol.readlines():
         qparser.apply_bgp_policy(inet.network, line)
 
-
-"""
-
-#print "----edges:----"
-for test in test_queries:
-    #print edges_to_labels(matching_edges)
-    #print "matches are %s" % matching_edges
-    for (u,v) in inet.network.g_session.edges():
-        session_data = inet.network.g_session[u][v]
-        if len(session_data['ingress']) or len(session_data['egress']):
-            print inet.network.label(u), inet.network.asn(u), inet.network.label(v), inet.network.asn(v), session_data
-        pass
-    #print "---"
-
-"""
 test_queries = [
         'GEANT provides FBH to "Deutsche Telekom"',
         "ACOnet is a customer of GEANT",
@@ -453,19 +397,6 @@ plt.savefig("G_business_relationship.pdf")
 """
 
 
-#------------------------------
-# Stitching together
-# alias = file
-# gml or graphml
-# abilene = "abilene.graphml"
-# Connection: 
-# push these into a dict indexed by alias
-# or just use search matching? slower??
-# need to know remapping of node ids...
-# do remapping on load, based on size of previous loaded graphs? using generator...
-
-
-
 tests = [
         'dt = "Deutschetelekom.gml"',
         'hibernia = "Hiberniauk.gml"',
@@ -474,6 +405,9 @@ tests = [
         '(dt, "New York") <-> (abvt, "New York")',
         "(dt, London) <-> (hibernia, London)",
         ]
+
+# Don't use for now
+tests = []
 
 graph_directory = "/Users/sk2/zoo/networks/master/sources/zoogml_geocoded"
 graph_dict = {}
@@ -512,43 +446,13 @@ for G in graph_dict.values():
 # and apply interconnectString
 G_interconnect.add_edges_from(graph_interconnects)
 
-#print G_interconnect.nodes(data=True)
-#sys.exit(0)
-
-"""
-plt.clf()
-pos=nx.spring_layout(G_interconnect)
-labels = dict( (n, G_interconnect.node[n].get('label')) for n in G_interconnect)
-
-nx.draw(G_interconnect, pos, labels=labels, arrows=False, font_size = 5, node_size = 20, node_color = "0.8", edge_color="0.8")
-plt.savefig("G_interconnect.pdf")
-
-G_interconnect.graph['name'] = "G_interconnect"
-
-
-output_path = os.getcwd()
-"""
-
-"""
-TopZooTools.geoplot.plot_graph(G_interconnect, output_path,
-                    explode_scale=5,
-                    use_labels=True,
-                    edge_label_attribute= "speed",
-                    label_font_size=4,
-                    #use_bluemarble=True,
-                    node_size = 20,
-                    edge_font_size=8,
-                    pdf=True,
-                    country_color="#99CC99",
-                    show_figure=True,
-                    )
-"""
-
 tests = [
         'O(asn = 680)',
         'T(Network = GEANT)',
         ]
 
+# don't use for now
+test = []
 for test in tests:
     #print test
     result = qparser.bgpQuery.parseString(test)
@@ -561,19 +465,6 @@ for test in tests:
     elif "transitQuery" in result:
         #print "transit"
         pass
-
-tests = [
-        "(if prefix_list = pl_1 then addTag a100)",
-        "(if prefix_list = pl_1 then addTag a100 & reject route) else (addTag a200)",
-        "(if prefix_list = pl_1 & tag = aaa then addTag a100 & setLP 90) else (removeTag a200 & reject route)",
-        "(if prefix_list = pl_1 then addTag a100 & setLP 90) else (addTag a200 & setLP 100)",
-        "(if prefix_list = pl_1 & tag = aaa then addTag a100) else (addTag a200)",
-        "(if prefix_list =  pl_1 then addTag a100) else (if prefix_list = pl_2 then setLP 200)",
-        "(if prefix_list =  pl_1 then addTag a100 & reject route) else (if prefix_list = pl_2 then setNextHop 1.2.3.4) else (addTag a300)",
-
-]
-
-
 
 parsedSessionResults = []
 
@@ -648,28 +539,3 @@ with open( policy_out_file, 'w+') as f_pol:
                 f_pol.write(session_to_junos(policy) +  "\n")
             
         
-
-
-for test in tests:
-    continue
-    print "Policy:"
-    print test
-    result =  qparser.bgpSessionQuery.parseString(test)
-    #print result.dump()
-    #res = ", ".join(['if', result.if_clause.attribute, result.if_clause.value,
-    #    'then', result.then_clause.attribute, str(result.then_clause.value)])
-    processed = qparser.process_if_then_else(result)
-    """
-        if isinstance(token, qparser.match_tuple):
-            print "TOKEN IS IF THEN"
-        if isinstance(token, qparser.else_tuple):
-            print "TOKEN IS ELSE"
-    """
-
-    session_to_quagga(processed)
-    session_to_junos(processed)
-    print "--------------------"
-
-
-# need recursive function to process result
-
