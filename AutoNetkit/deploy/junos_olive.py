@@ -18,6 +18,7 @@ import pxssh
 import sys
 import AutoNetkit as ank
 import itertools
+import pprint
 import netaddr
 import random
 
@@ -70,15 +71,12 @@ class OliveDeploy():
         """ get current working directory"""
         # workaround for pexpect echoing the command back
         shell = self.shell
-        print "sending %s" % cmd
         shell.sendline(cmd)  # run a command
         shell.prompt()
         result = shell.before
-        print "got result of %s" % result
         result = [res.strip() for res in shell.before.split("\n")]
         if result[0] == cmd:
 # First line is echo, return the next line
-            print "returning %s" % result[1]
             return result[1]
 
     def connect_to_server(self):  
@@ -227,6 +225,8 @@ class OliveDeploy():
 
         tar_file = os.path.join(config.ank_main_dir, self.network.compiled_labs['junos'])
         self.transfer_file(tar_file)
+        print "working dir is %s" % self.get_cwd()
+        
 # Tar file copied across (if remote host) to local directory
         shell.sendline("cd ") 
 # Remove any previous lab
@@ -238,24 +238,42 @@ class OliveDeploy():
         tar_basename = os.path.basename(tar_file)
         
         # Need to force directory to extract to (junosphere format for tar extracts to cwd)
-        shell.sendline("tar -xzf %s -C %s \n" % (tar_basename, self.lab_dir))
+        print "extracting configs"
+        shell.sendline("tar -xzf %s -C %s" % (tar_basename, self.lab_dir))
+#Need this tar check or all else breaks!
+        shell.expect("tar: Removing leading")
         shell.prompt() 
-        shell.sendline("ls")
-        shell.prompt() 
-        print shell.before
 
         configset_directory = os.path.join(self.lab_dir, "configset")
         print "configs are in ", configset_directory
         working_directory = self.get_cwd()
-        print "working dir is %s" % working_directory
-        return
 # TODO: store these from junos compiler in network.compiled_labs dict
-        config_list = []
+        config_files = {}
         for node in self.network.graph.nodes():
-            config_file = "%s.conf" % ank.rtr_folder_name(self.network, node)
-            config_list.append(os.path.join(working_directory, configset_directory, config_file))
+            node_filename = ank.rtr_folder_name(self.network, node)
+            config_files[node] = {}
+            config_files[node]['config_file_full_path'] = (os.path.join(working_directory, configset_directory,
+                "%s.conf" % node_filename))
+            config_files[node]['config_file_snapshot'] = os.path.join(snapshot_folder, "%s.iso" % node_filename)
+            config_files[node]['base_image_snapshot'] = os.path.join(snapshot_folder, "%s.img" % node_filename)
 
-        print config_list 
+        
+        for node, data in config_files.items():
+            cmd = "mkisofs -o %s %s " % (data.get('config_file_snapshot'), 
+                    data.get('config_file_full_path'))
+            print cmd
+            shell.sendline(cmd)
+
+        for node, data in config_files.items():
+            cmd = 
+
+    
+
+        base_image
+
+
+
+
         
 # make iso image
 
@@ -277,7 +295,6 @@ class OliveDeploy():
         img_image = "tst.img"
         monitor_socket = "test.socket"
         
-
         for router in self.network.graph:
             router_info = router_info_tuple(
                     self.network.label(router),
