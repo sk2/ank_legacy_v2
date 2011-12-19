@@ -34,6 +34,9 @@ class queryParser:
         ge = Literal(">=").setResultsName(">=")
         gt = Literal(">").setResultsName(">")
 
+        self.tags = {}
+        self.prefixes = {}
+
         self._opn = {
                 '<': operator.lt,
                 '<=': operator.le,
@@ -182,6 +185,7 @@ class queryParser:
         set_b = self.node_select_query(network, result.query_b)
         select_type = result.edgeType
         per_session_policy = qparser.process_if_then_else(result.bgpSessionQuery)
+        print per_session_policy
 
 # use nbunch feature of networkx to limit edges to look at
         node_set = set_a | set_b
@@ -357,6 +361,7 @@ test_queries = [
 ]
 
 
+"""
 G_business_relationship = nx.DiGraph()
 
 #print "----bus rel:----"
@@ -374,7 +379,6 @@ for test in test_queries:
 
 #print G_business_relationship.edges(data=True)
 
-"""
 import matplotlib.pyplot as plt
 pos=nx.spring_layout(G_business_relationship)
 
