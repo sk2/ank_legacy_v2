@@ -217,7 +217,24 @@ class OliveDeploy():
     def telnet_and_override(self, telnet_port):
         shell = self.shell
         shell.sendline("telnet localhost %s" % telnet_port)
-        shell.expect("Escape character is ")
+
+        """TODO: capture these:
+Booting [/kernel]...               
+***** FILE SYSTEM MARKED CLEAN *****
+Creating initial configuration...
+
+"""
+
+
+        for loop_count in range(0, 100):
+            i = shell.expect([pexpect.TIMEOUT, "starting local daemons:."])
+            if i:
+# Matched, continue on
+                print "telnet is ready, attempting to login"
+                break
+            else:
+# timedout, wait
+                print "Waiting for machine to boot, iteration %s" % loop_count
         shell.sendline("")
         print shell.before
         print shell.after
@@ -228,10 +245,7 @@ class OliveDeploy():
         shell.expect("%")
 
 
-
-
-
-    def start_olive(self):
+    def start_olives(self):
         """ Starts Olives inside Qemu
         Steps:
         1. Create bash script to start the Olives
@@ -292,7 +306,6 @@ class OliveDeploy():
         for node, data in config_files.items():
             cmd =  "qemu-img create -f qcow2 -b %s %s" % (self.base_image,
                     data['base_image_snapshot'])
-            print cmd
             shell.sendline(cmd)
             shell.expect(["Formatting"])
             shell.sendline(cmd)
@@ -303,9 +316,13 @@ class OliveDeploy():
         mac_addresses = self.random_mac_addresses()
         qemu_routers = []
 
+
+        print "starting qemu"
+
         router_info_tuple = namedtuple('router_info', 'router_name, iso_image, img_image, mac_addresses, telnet_port, switch_socket, monitor_socket')
         
         for router in self.network.graph:
+            print "starting %s" % config_files[router].get('name')
             router_info = router_info_tuple(
                     config_files[router].get('name'),
                     config_files[router].get('config_file_snapshot'),
@@ -358,12 +375,9 @@ class OliveDeploy():
         else:
 # started ok
             pass
+        shell.prompt()
 
         return
-
-
-
-
 
 
 inet = ank.internet.Internet()
@@ -377,9 +391,9 @@ junos_comp.configure()
 olive_deploy = OliveDeploy(host="trc1", username="sknight", network=inet.network,
         base_image ="/space/base-image.img")
 olive_deploy.connect_to_server()
-olive_deploy.telnet_and_override("11000")
 #olive_deploy.check_required_programs()
-#olive_deploy.create_folders()
+olive_deploy.create_folders()
 #olive_deploy.start_switch()
-#olive_deploy.start_olive()
+olive_deploy.start_olives()
+olive_deploy.telnet_and_override("11000")
 
