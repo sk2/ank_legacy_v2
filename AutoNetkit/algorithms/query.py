@@ -334,9 +334,7 @@ class queryParser:
 # efficiency: check if query has already been executed (ie if already prefixes for this tag)
         if tag in self.prefix_lists:
             print "already executed prefix lookup for", tag
-        print "tag label is ", tag
         prefixes = self.get_prefixes(network, nodes)
-        print "prefixes are ", prefixes
         self.prefix_lists[tag] = prefixes
 # store tag
         self.global_tags_to_allocate.append(tag)
@@ -382,8 +380,6 @@ class queryParser:
 
 
 #TODO: apply stringEnd to the matching parse queries to ensure have parsed all
-
-graph = nx.read_gpickle("condensed_west_europe.pickle")
 
 inet = ank.internet.Internet()
 inet.load("condensed_west_europe.pickle")
