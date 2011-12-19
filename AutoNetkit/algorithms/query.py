@@ -405,8 +405,8 @@ class queryParser:
 #TODO: apply stringEnd to the matching parse queries to ensure have parsed all
 
 inet = ank.internet.Internet()
-inet.load("condensed_west_europe.pickle")
-#inet.load("gao_rex_example.graphml")
+#inet.load("condensed_west_europe.pickle")
+inet.load("gao_rex_example.graphml")
 ank.initialise_bgp(inet.network)
 ank.allocate_subnets(inet.network)
 ank.jsplot(inet.network)        
