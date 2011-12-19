@@ -629,9 +629,7 @@ cl_and_pl_per_node(inet.network)
 
 policy_out_file = "policy_output.txt"
 with open( policy_out_file, 'w+') as f_pol:
-    f_pol.write( "prefixes:\n")
     for tag, prefixes in qparser.prefix_lists.items():
-        f_pol.write( "%s: %s\n" % (tag, ",".join(str(item) for item in prefixes)))
         """
     f_pol.write( "tags:\n")
     for tag, comm_val in qparser.tags.items():
