@@ -38,7 +38,7 @@ class queryParser:
         self.wildcard = wildcard
 
         self.prefix_lists = {}
-        self.global_tags_to_allocate = []
+        self.tags_to_allocate = []
 
         self._opn = {
                 '<': operator.lt,
@@ -201,6 +201,7 @@ class queryParser:
         result = self.bgpApplicationQuery.parseString(qstring)
         set_a = self.node_select_query(network, result.query_a)
         set_b = self.node_select_query(network, result.query_b)
+        print "set a", set_a, "set_b", set_b
         select_type = result.edgeType
         per_session_policy = qparser.process_if_then_else(network, result.bgpSessionQuery)
 
@@ -264,6 +265,7 @@ class queryParser:
 # especially if using short circuits so when False stop executing
 
         def comp_fn_string(token, n):
+            #TODO: allow partial string matches - beginswith, endswith, etc - map to python functions
             return self._opn[token.comparison](network.graph.node[n].get(token.attribute), token.value)
 
         def comp_fn_numeric(token, n):
@@ -281,6 +283,10 @@ class queryParser:
             
             if token == self.wildcard:
                 result_set = set(n for n in network.graph )
+                stack.append(result_set)
+                continue
+            elif token.attribute == "node":
+                result_set = set([token.value])
                 stack.append(result_set)
                 continue
             elif isinstance(token.value, str):
@@ -325,19 +331,30 @@ class queryParser:
         return "_".join(retval)
 
 
-    def process_origin_transit_matches(self, network, ot_matches):
+    def proc_ot_match(self, network, match_type, match_query):
 # extract the node queryParser
-        ot_match = ot_matches[0]
-        match_type, match_query = ot_match
+#TODO: handle case of multiple matches......
+# rather than getting first element, iterate over
         nodes = self.node_select_query(network, match_query)
         tag = self.query_to_tag(match_query)
 # efficiency: check if query has already been executed (ie if already prefixes for this tag)
+#TODO: see if need to have uniquye name for prefix list and comm val: eg pl_tag and 
         if tag in self.prefix_lists:
             print "already executed prefix lookup for", tag
-        prefixes = self.get_prefixes(network, nodes)
-        self.prefix_lists[tag] = prefixes
+        else:
+            prefixes = self.get_prefixes(network, nodes)
+            self.prefix_lists[tag] = prefixes
+# and mark prefixes
+            for node in nodes:
+                apply_prefix_query = ("(node = %s) egress-> (*): "
+                        "(if prefix_list = %s then addTag %s)") % (node, tag, tag)
+                print apply_prefix_query
+                self.apply_bgp_policy(network, apply_prefix_query)
+
+
 # store tag
-        self.global_tags_to_allocate.append(tag)
+            self.tags_to_allocate.append(tag)
+        return self.match_clause("tag", "=", tag)
 
 
         #matching_nodes = self.node_select_query(network, ot_match.value)
@@ -358,22 +375,17 @@ class queryParser:
                 retval.append(self.match_tuple([], else_tuples, reject))
             else:
                 #TODO: check is in ifthen
-                (if_clause, else_clause) = token
+                (if_clause, then_clause) = token
 #TODO: base this on the keywords used in the parser itself for continuity
                 origin_transit_keywords = set(["Origin", "Transit"])
-                ot_matches = [(attribute, value) for
-                        (attribute, comparison, value) in if_clause
-                        if attribute in origin_transit_keywords]
-# now process these
-                self.process_origin_transit_matches(network, ot_matches)
-
 # Check for reject
-                reject = any(True for (action, value) in else_clause if action == self.reject)
-                if_tuples = [self.match_clause(attribute, comparison, value) for
-                        (attribute, comparison, value) in if_clause
-                        if attribute not in origin_transit_keywords]
+                if_tuples = [
+                        self.proc_ot_match(network, attribute, value) if attribute in origin_transit_keywords
+                        else self.match_clause(attribute, comparison, value)
+                        for (attribute, comparison, value) in if_clause]
+                reject = any(True for (action, value) in then_clause if action == self.reject)
                 then_tuples = [self.action_clause(action, value) for
-                        (action, value) in else_clause
+                        (action, value) in then_clause
                         if action != self.reject]
                 retval.append(self.match_tuple(if_tuples, then_tuples, reject))
         return retval
@@ -382,8 +394,8 @@ class queryParser:
 #TODO: apply stringEnd to the matching parse queries to ensure have parsed all
 
 inet = ank.internet.Internet()
-inet.load("condensed_west_europe.pickle")
-#inet.load("gao_rex_example.graphml")
+#inet.load("condensed_west_europe.pickle")
+inet.load("gao_rex_example.graphml")
 ank.initialise_bgp(inet.network)
 ank.allocate_subnets(inet.network)
 ank.jsplot(inet.network)        
@@ -588,6 +600,33 @@ def session_to_junos(session_list):
             route_maps = route_maps
             )
 
+
+def cl_and_pl_per_node(network):
+        print "test"
+        for node in network.g_session:
+            prefix_lists = []
+            tags = {}
+            for (src, dst, session_data) in inet.network.g_session.in_edges(node, data=True):
+                if len(session_data['ingress']):
+                    #print session_data['ingress']
+                    for match_tuple in session_data['ingress']:
+                        print match_tuple
+            for (src, dst, session_data) in inet.network.g_session.out_edges(node, data=True):
+                if len(session_data['egress']):
+                    print session_data['egress']
+                    prefixes = [match_clause 
+                            for aaa in session_data['ingress']
+                            for match_clause in aaa]
+                    print "prefixes", prefixes
+                    for match_tuple in session_data['egress']:
+                        print "tuple is", match_tuple
+                        for match_clause in match_tuple:
+                            print "clause", match_clause
+                    print
+                    pass
+
+cl_and_pl_per_node(inet.network)
+
 policy_out_file = "policy_output.txt"
 with open( policy_out_file, 'w+') as f_pol:
     f_pol.write( "prefixes:\n")
@@ -598,8 +637,8 @@ with open( policy_out_file, 'w+') as f_pol:
     for tag, comm_val in qparser.tags.items():
         f_pol.write( "%s: %s\n" % (tag, comm_val))
     """
-    f_pol.write( "global_tags_to_allocate:\n")
-    for tag  in qparser.global_tags_to_allocate:
+    f_pol.write( "tags_to_allocate:\n")
+    for tag  in qparser.tags_to_allocate:
         f_pol.write( "%s\n" % (tag))
 
     
@@ -616,18 +655,18 @@ with open( policy_out_file, 'w+') as f_pol:
         if has_session_set:
 # only print name if session, otherwise huge list of nodes
             f_pol.write( "------------------------------\n")
-            f_pol.write( "Policy on %s.%s\n" % (inet.network.label(node), inet.network.network(node)))
+            f_pol.write( "Policy on %s\n" % (inet.network.label(node)))
         # check sessions from this node
         for (src, dst, session_data) in inet.network.g_session.in_edges(node, data=True):
             if len(session_data['ingress']):
-                f_pol.write( "session to: %s.%s\n" % (inet.network.label(src), inet.network.network(src)))
+                f_pol.write( "session to: %s\n" % inet.network.label(src))
                 f_pol.write( "ingress:\n")
                 policy = session_data['ingress']
                 f_pol.write(session_to_quagga(policy) + "\n")
                 f_pol.write(session_to_junos(policy) + "\n")
         for (src, dst, session_data) in inet.network.g_session.out_edges(node, data=True):
             if len(session_data['egress']):
-                f_pol.write( "session to: %s.%s\n" % (inet.network.label(dst), inet.network.network(dst)))
+                f_pol.write( "session to: %s\n" % inet.network.label(dst) )
                 f_pol.write( "egress:\n")
                 policy = session_data['egress']
                 f_pol.write(session_to_quagga(policy) + "\n")
