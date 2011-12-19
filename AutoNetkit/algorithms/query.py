@@ -38,7 +38,8 @@ class queryParser:
         self.wildcard = wildcard
 
         self.prefix_lists = {}
-        self.tags_to_allocate = []
+        self.tags_to_allocate = set()
+        self.allocated_tags = {}
 
         self._opn = {
                 '<': operator.lt,
@@ -303,6 +304,12 @@ class queryParser:
         final_set = self.evaluate_node_stack(stack)
         return final_set
 
+    def allocate_tags(self):
+        tag_id = itertools.count(10,10)
+        for tag in self.tags_to_allocate:
+            self.allocated_tags[tag] = tag_id.next()
+
+
     def get_prefixes(inet, network, nodes):
         prefixes = set()
         for node in nodes:
@@ -330,6 +337,11 @@ class queryParser:
         retval = (str(item) for item in retval)
         return "_".join(retval)
 
+    def tag_to_pl(self, tag):
+        return "pl_%s" % tag
+
+    def tag_to_cl(self, tag):
+        return "cl_%s" % tag
 
     def proc_ot_match(self, network, match_type, match_query):
 # extract the node queryParser
@@ -337,23 +349,24 @@ class queryParser:
 # rather than getting first element, iterate over
         nodes = self.node_select_query(network, match_query)
         tag = self.query_to_tag(match_query)
+        tag_pl = self.tag_to_pl(tag)
+        tag_cl = self.tag_to_cl(tag)
 # efficiency: check if query has already been executed (ie if already prefixes for this tag)
 #TODO: see if need to have uniquye name for prefix list and comm val: eg pl_tag and 
-        if tag in self.prefix_lists:
-            print "already executed prefix lookup for", tag
+        if tag_pl in self.prefix_lists:
+            print "already executed prefix lookup for", tag_pl
         else:
             prefixes = self.get_prefixes(network, nodes)
-            self.prefix_lists[tag] = prefixes
+            self.prefix_lists[tag_pl] = prefixes
 # and mark prefixes
             for node in nodes:
                 apply_prefix_query = ("(node = %s) egress-> (*): "
-                        "(if prefix_list = %s then addTag %s)") % (node, tag, tag)
+                        "(if prefix_list = %s then addTag %s)") % (node, tag_pl, tag_cl)
                 print apply_prefix_query
                 self.apply_bgp_policy(network, apply_prefix_query)
 
-
 # store tag
-            self.tags_to_allocate.append(tag)
+            self.tags_to_allocate.update([tag])
         return self.match_clause("tag", "=", tag)
 
 
@@ -401,26 +414,6 @@ ank.allocate_subnets(inet.network)
 ank.jsplot(inet.network)        
 
 qparser = queryParser()
-
-tests = [
-        'Network = ACOnet & asn = 1853 & Latitude < 50',
-        'Network = ACOnet & Longitude < 14',
-        'asn = 680 & label = HAN',
-        'Network = GEANT',
-        'Network = GEANT & Country = Greece',
-        'Network = GEANT & Latitude > 55',
-        'Network = GEANT & type = "Fully Featured"',
-        ]
-
-
-
-def nodes_to_labels(nodes):
-    return  ", ".join(graph.node[n].get('label') for n in nodes)
-
-def edges_to_labels(edges):
-    return  ", ".join("%s->%s" % 
-            (graph.node[u].get('label'), graph.node[v].get('label')) for (u,v) in edges)
-
 
 policy_in_file = "policy.txt"
 with open( policy_in_file, 'r') as f_pol:
@@ -601,46 +594,49 @@ def session_to_junos(session_list):
             )
 
 
-def cl_and_pl_per_node(network):
-        print "test"
-        for node in network.g_session:
-            prefix_lists = []
-            tags = {}
-            for (src, dst, session_data) in inet.network.g_session.in_edges(node, data=True):
-                if len(session_data['ingress']):
-                    #print session_data['ingress']
-                    for match_tuple in session_data['ingress']:
-                        print match_tuple
-            for (src, dst, session_data) in inet.network.g_session.out_edges(node, data=True):
-                if len(session_data['egress']):
-                    print session_data['egress']
-                    prefixes = [match_clause 
-                            for aaa in session_data['ingress']
-                            for match_clause in aaa]
-                    print "prefixes", prefixes
-                    for match_tuple in session_data['egress']:
-                        print "tuple is", match_tuple
-                        for match_clause in match_tuple:
-                            print "clause", match_clause
-                    print
-                    pass
+def cl_and_pl_per_node(qparser, network):
+# allocate tags
+    for node in network.g_session:
+        prefixes = set()
+        tags = set()
+        for (src, dst, session_data) in inet.network.g_session.in_edges(node, data=True):
+            for match_tuples in session_data['ingress']:
+                for match_tuple in match_tuples:
+                    for match_clause in match_tuple.match_clauses:
+                        if 'prefix_list' in match_clause.type:
+                            prefixes.update([match_clause.value])
+                        if 'tag' in match_clause.type:
+                            tags.update([match_clause.value])
+                    for action_clause in match_tuple.action_clauses:
+                        if action_clause.action in set(['addTag']):
+                            tags.update([action_clause.value])
 
-cl_and_pl_per_node(inet.network)
+        for (src, dst, session_data) in inet.network.g_session.out_edges(node, data=True):
+            for match_tuples in session_data['egress']:
+                for match_tuple in match_tuples:
+                    for match_clause in match_tuple.match_clauses:
+                        if 'prefix_list' in match_clause.type:
+                            prefixes.update([match_clause.value])
+                        if 'tag' in match_clause.type:
+                            tags.update([match_clause.value])
+                    for action_clause in match_tuple.action_clauses:
+                        if action_clause.action in set(['addTag']):
+                            tags.update([action_clause.value])
+
+        network.g_session.node[node]['tags'] = tags
+        network.g_session.node[node]['prefixes'] = prefixes
+# and update the global list of tags with any new tags found
+        qparser.tags_to_allocate.update(tags)
+
+# fill in tags with their values
+
+cl_and_pl_per_node(qparser, inet.network)
+qparser.allocate_tags()
+
+pprint.pprint(inet.network.g_session.nodes(data=True))
 
 policy_out_file = "policy_output.txt"
 with open( policy_out_file, 'w+') as f_pol:
-    for tag, prefixes in qparser.prefix_lists.items():
-        """
-    f_pol.write( "tags:\n")
-    for tag, comm_val in qparser.tags.items():
-        f_pol.write( "%s: %s\n" % (tag, comm_val))
-    """
-    f_pol.write( "tags_to_allocate:\n")
-    for tag  in qparser.tags_to_allocate:
-        f_pol.write( "%s\n" % (tag))
-
-    
-
     for node in inet.network.g_session:
 
         has_session_set = any( True for (src, dst, session_data) 
@@ -654,6 +650,20 @@ with open( policy_out_file, 'w+') as f_pol:
 # only print name if session, otherwise huge list of nodes
             f_pol.write( "------------------------------\n")
             f_pol.write( "Policy on %s\n" % (inet.network.label(node)))
+
+            f_pol.write( "prefixes:\n")
+            for prefix in inet.network.g_session.node[node].get('prefixes'):
+                prefix_values = qparser.prefix_lists[prefix]
+                f_pol.write( "%s: %s\n" % (prefix, ",".join(str(prefix) for prefix in prefix_values)))
+            f_pol.write("\n")
+
+            f_pol.write( "tags:\n")
+            for tag in inet.network.g_session.node[node].get('tags'):
+                comm_val = qparser.allocated_tags[tag]
+                f_pol.write( "%s: %s\n" % (tag, comm_val))
+            f_pol.write("\n")
+
+
         # check sessions from this node
         for (src, dst, session_data) in inet.network.g_session.in_edges(node, data=True):
             if len(session_data['ingress']):
