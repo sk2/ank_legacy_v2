@@ -198,28 +198,19 @@ class OliveDeploy():
         snapshot_folder = "/space/snapshots"
 # need to create this folder if not present
         socket_folder = "/space/sockets"
-        """
         required_folders = [snapshot_folder, socket_folder]
         for folder in required_folders:
-            chk_cmd = '[ -d %s ] && echo "Present" "|" || echo "Absent" "|" \n\n' % folder 
-            shell.sendline(chk_cmd)
-            print "expecting for ", folder
-            i = shell.expect (["Present |", "Absent |"])    
-            print shell.before
-            print shell.after
-            print "got i ", i
-#TODO: check if got chk_cmd back, if so was just an echo, ignore
-#(need to redirect the command itself like for hash)
-            if i == 0:
-                print "%s doesn't exist" % folder
-            elif i == 1:
+            chk_cmd = '[ -d %s ] && echo "Present" || echo "Absent"' % folder 
+            result = self.get_command_output(chk_cmd)
+            if result == "Absent":
+                print "Creating folder %s exists" % folder
+                shell.sendline("mkdir %s" % folder)
+                shell.prompt() 
+            elif result == "Present":
                 #TODO: convert print to LOGs
-                print "%s  exists" % folder
-            shell.prompt() 
+                print "%s exists" % folder
 
-        shell.prompt() 
         return
-        """
 
 # transfer over junos lab
 
@@ -296,23 +287,23 @@ class OliveDeploy():
 
 
 
-"""
-qemu \
-    -hda ${router_info.img_image} \
-    -hdb ${router_info.iso_image} \         
-	% for mac in router_info.mac_addresses: 
-    -net nic,macaddr=${mac},model=e1000 \
-	% endfor
-    -net vde,sock=${router_info.switch_socket} \
-    -enable-kvm \
-    -serial telnet:127.0.0.1:${router_info.telnet_port},server,nowait,nodelay \
-    -monitor unix:${router_info.monitor_socket},server,nowait \
-    -m 512 m  \
-    -nographic \
-    -localtime \
-    -name ${router_info.router_name} &
-    """
-                                                                
+        """
+    qemu \
+        -hda ${router_info.img_image} \
+        -hdb ${router_info.iso_image} \         
+            % for mac in router_info.mac_addresses: 
+        -net nic,macaddr=${mac},model=e1000 \
+            % endfor
+        -net vde,sock=${router_info.switch_socket} \
+        -enable-kvm \
+        -serial telnet:127.0.0.1:${router_info.telnet_port},server,nowait,nodelay \
+        -monitor unix:${router_info.monitor_socket},server,nowait \
+        -m 512 m  \
+        -nographic \
+        -localtime \
+        -name ${router_info.router_name} &
+        """
+                                                                    
 
 
         
