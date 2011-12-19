@@ -58,7 +58,7 @@ class OliveDeploy():
         self.tap_name = "ank_tap_olive"
         self.vde_socket_name = None
         self.vde_mgmt_socket_name = None
-        self.base_image = None
+        self.base_image = base_image
         self.olive_foldername = "ank_olive"
 
         self.local_server = True
@@ -214,6 +214,22 @@ class OliveDeploy():
                 print "Got unknown folder result of %s" % result
         """
 
+    def telnet_and_override(self, telnet_port):
+        shell = self.shell
+        shell.sendline("telnet localhost %s" % telnet_port)
+        shell.expect("Escape character is ")
+        shell.sendline("")
+        print shell.before
+        print shell.after
+        shell.expect("login:")
+        shell.sendline("root")
+        shell.expect("Password:")
+        shell.sendline("junos321")
+        shell.expect("%")
+
+
+
+
 
     def start_olive(self):
         """ Starts Olives inside Qemu
@@ -229,26 +245,26 @@ class OliveDeploy():
 
         tar_file = os.path.join(config.ank_main_dir, self.network.compiled_labs['junos'])
         self.transfer_file(tar_file)
-        configset_directory = os.path.join(self.olive_dir, "configset")
+        junos_extract_directory = os.path.join(self.olive_dir, "configset")
         
 # Tar file copied across (if remote host) to local directory
         shell.sendline("cd ") 
 # Remove any previous lab
-        shell.sendline("rm -rf  " + configset_directory)
+        shell.sendline("rm -rf  " + junos_extract_directory)
         shell.prompt() 
-        shell.sendline("mkdir  " + configset_directory )
+        shell.sendline("mkdir  " + junos_extract_directory )
         shell.prompt() 
 
         tar_basename = os.path.basename(tar_file)
         
         # Need to force directory to extract to (junosphere format for tar extracts to cwd)
         print "extracting configs"
-        shell.sendline("tar -xzf %s -C %s" % (tar_basename, configset_directory))
+        shell.sendline("tar -xzf %s -C %s" % (tar_basename, junos_extract_directory))
 #Need this tar check or all else breaks!
         shell.expect("tar: Removing leading")
         shell.prompt() 
 
-        print "configs are in ", configset_directory
+        configset_directory = os.path.join(junos_extract_directory, "configset")
         working_directory = self.get_cwd()
         configset_directory_full_path = os.path.join(working_directory, configset_directory)
 # TODO: store these from junos compiler in network.compiled_labs dict
@@ -263,29 +279,31 @@ class OliveDeploy():
             config_files[node]['base_image_snapshot'] = os.path.join(self.snapshot_folder, "%s.img" % node_filename)
             config_files[node]['monitor_socket'] = os.path.join(configset_directory_full_path, "%s-monitor.sock" % node_filename)
         
+
+        print "Making ISO FS"
         for node, data in config_files.items():
             cmd = "mkisofs -o %s %s " % (data.get('config_file_snapshot'), 
                     data.get('config_file_full_path'))
-            print cmd
             shell.sendline(cmd)
+            shell.expect(["extents written"])
+        shell.prompt()
 
+        print "Running qemu-img"
         for node, data in config_files.items():
             cmd =  "qemu-img create -f qcow2 -b %s %s" % (self.base_image,
                     data['base_image_snapshot'])
             print cmd
             shell.sendline(cmd)
+            shell.expect(["Formatting"])
+            shell.sendline(cmd)
 
-        bios_image = "test.bios"
+        shell.prompt()
     
         unallocated_ports = self.unallocated_ports()
         mac_addresses = self.random_mac_addresses()
         qemu_routers = []
 
         router_info_tuple = namedtuple('router_info', 'router_name, iso_image, img_image, mac_addresses, telnet_port, switch_socket, monitor_socket')
-
-        iso_image = "tst.iso"
-        img_image = "tst.img"
-        monitor_socket = "test.socket"
         
         for router in self.network.graph:
             router_info = router_info_tuple(
@@ -309,15 +327,10 @@ class OliveDeploy():
                     )
 
 # flatten into single line
-            print startup_command
             startup_command = " ".join(item for item in startup_command.split("\n"))
-
             shell.sendline(startup_command)
+# Telnet in
             shell.prompt()
-            print shell.before
-            print shell.after
-            print
-            sys.exit(0)
 
 
         
@@ -364,8 +377,9 @@ junos_comp.configure()
 olive_deploy = OliveDeploy(host="trc1", username="sknight", network=inet.network,
         base_image ="/space/base-image.img")
 olive_deploy.connect_to_server()
-olive_deploy.check_required_programs()
-olive_deploy.create_folders()
-olive_deploy.start_switch()
-olive_deploy.start_olive()
+olive_deploy.telnet_and_override("11000")
+#olive_deploy.check_required_programs()
+#olive_deploy.create_folders()
+#olive_deploy.start_switch()
+#olive_deploy.start_olive()
 
