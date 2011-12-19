@@ -12,6 +12,7 @@ from AutoNetkit import config
 LOG = logging.getLogger("ANK")
 #TODO: only import from pyparsing what is needed
 from pyparsing import Literal, Word, alphas, alphanums, nums, Combine, Group, ZeroOrMore, Suppress, quotedString, removeQuotes, oneOf, Forward, Optional
+import pyparsing
 import operator
 import os
 import pprint
@@ -33,9 +34,11 @@ class queryParser:
         ne = Literal("!=").setResultsName("!=")
         ge = Literal(">=").setResultsName(">=")
         gt = Literal(">").setResultsName(">")
+        wildcard = Literal("*").setResultsName("wildcard")
+        self.wildcard = wildcard
 
-        self.tags = {}
         self.prefix_lists = {}
+        self.global_tags_to_allocate = []
 
         self._opn = {
                 '<': operator.lt,
@@ -48,7 +51,7 @@ class queryParser:
                 '|': set.union,
                 }
 
-        # invalid chars to ascii equivalents for tags
+        # map alphanum chars to alphanum equivalents for use in tags
         self._opn_to_tag = {
                 '<': "lt",
                 '<=': "le",
@@ -84,11 +87,13 @@ class queryParser:
 
         numericQuery = Group(attribute + comparison + float_string).setResultsName( "numericQuery")
 
-        stringValues = (Word(alphanums) | quotedString.setParseAction(removeQuotes)).setResultsName("value")
+        stringValues = (Word(alphanums) | quotedString.setParseAction(removeQuotes)
+                ).setResultsName("value")
 
         stringQuery =  Group(attribute + stringComparison + stringValues).setResultsName( "stringQuery")
+        wildcardQuery = wildcard.setResultsName("wildcardQuery")
 
-        singleQuery = numericQuery | stringQuery
+        singleQuery = numericQuery | stringQuery | wildcardQuery
         self.nodeQuery = singleQuery + ZeroOrMore(boolean + singleQuery)
 
 # edges
@@ -115,7 +120,6 @@ class queryParser:
         relationshipString = (stringValues.setResultsName("provider")
                 + "is a" + stringValues.setResultsName("relationship") 
                 + "of" + stringValues.setResultsName("client")).setResultsName("relationshipString")
-
 
         self.br_query = asnAlias | serviceString | relationshipString
 
@@ -274,9 +278,14 @@ class queryParser:
 
 # different function depending on value type: numeric or string
 
-            if isinstance(token.value, str):
+            
+            if token == self.wildcard:
+                result_set = set(n for n in network.graph )
+                stack.append(result_set)
+                continue
+            elif isinstance(token.value, str):
                 comp_fn = comp_fn_string
-            if isinstance(token.value, float):
+            elif isinstance(token.value, float):
                 comp_fn = comp_fn_numeric
         
             if comp_fn:
@@ -321,10 +330,16 @@ class queryParser:
         ot_match = ot_matches[0]
         match_type, match_query = ot_match
         nodes = self.node_select_query(network, match_query)
-        tag_label = self.query_to_tag(match_query)
-        print "tag label is ", tag_label
+        tag = self.query_to_tag(match_query)
+# efficiency: check if query has already been executed (ie if already prefixes for this tag)
+        if tag in self.prefix_lists:
+            print "already executed prefix lookup for", tag
+        print "tag label is ", tag
         prefixes = self.get_prefixes(network, nodes)
         print "prefixes are ", prefixes
+        self.prefix_lists[tag] = prefixes
+# store tag
+        self.global_tags_to_allocate.append(tag)
 
 
         #matching_nodes = self.node_select_query(network, ot_match.value)
@@ -371,8 +386,8 @@ class queryParser:
 graph = nx.read_gpickle("condensed_west_europe.pickle")
 
 inet = ank.internet.Internet()
-#inet.load("condensed_west_europe.pickle")
-inet.load("gao_rex_example.graphml")
+inet.load("condensed_west_europe.pickle")
+#inet.load("gao_rex_example.graphml")
 ank.initialise_bgp(inet.network)
 ank.allocate_subnets(inet.network)
 ank.jsplot(inet.network)        
@@ -402,7 +417,16 @@ def edges_to_labels(edges):
 policy_in_file = "policy.txt"
 with open( policy_in_file, 'r') as f_pol:
     for line in f_pol.readlines():
+        if line.strip() == "":
+# blank line
+            continue
         qparser.apply_bgp_policy(inet.network, line)
+        """
+        try:
+            qparser.apply_bgp_policy(inet.network, line)
+        except pyparsing.ParseException as e:
+            print "Unable to apply policy %s: %s" % (line, e)
+        """
 
 test_queries = [
         'GEANT provides FBH to "Deutsche Telekom"',
@@ -570,6 +594,19 @@ def session_to_junos(session_list):
 
 policy_out_file = "policy_output.txt"
 with open( policy_out_file, 'w+') as f_pol:
+    f_pol.write( "prefixes:\n")
+    for tag, prefixes in qparser.prefix_lists.items():
+        f_pol.write( "%s: %s\n" % (tag, ",".join(str(item) for item in prefixes)))
+        """
+    f_pol.write( "tags:\n")
+    for tag, comm_val in qparser.tags.items():
+        f_pol.write( "%s: %s\n" % (tag, comm_val))
+    """
+    f_pol.write( "global_tags_to_allocate:\n")
+    for tag  in qparser.global_tags_to_allocate:
+        f_pol.write( "%s\n" % (tag))
+
+    
 
     for node in inet.network.g_session:
 
