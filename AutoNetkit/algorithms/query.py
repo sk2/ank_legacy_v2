@@ -120,9 +120,7 @@ class queryParser:
         transitQuery = ("T(" +  
                 self.nodeQuery.setResultsName("nodeQuery") + ")").setResultsName("transitQuery")
 
-        self.bgpQuery = originQuery | transitQuery
-
-# bgp session query
+        bgpNodeSelectQuery = originQuery | transitQuery
 
         prefixList = Literal("prefix_list")
         matchPl = (prefixList.setResultsName("attribute")
@@ -133,7 +131,7 @@ class queryParser:
                 + comparison
                 + attribute.setResultsName("value"))
 
-        bgpMatchQuery = Group(matchPl | matchTag).setResultsName("bgpMatchQuery")
+        bgpMatchQuery = Group(matchPl | matchTag | bgpNodeSelectQuery ).setResultsName("bgpMatchQuery")
 
         setLP = (Literal("setLP").setResultsName("attribute") 
                 + integer_string.setResultsName("value")).setResultsName("setLP")
@@ -220,6 +218,7 @@ class queryParser:
         # apply policy to edges
         selected_edges = ( e for e in edges if select_function(e, set_a, set_b))
         for u,v in selected_edges:
+            print "setting for edge", network.label(u), "to", network.label(v)
             network.g_session[u][v][ingress_or_egress].append(per_session_policy)
 
     def evaluate_node_stack(self, stack):
@@ -302,10 +301,11 @@ class queryParser:
 graph = nx.read_gpickle("condensed_west_europe.pickle")
 
 inet = ank.internet.Internet()
-inet.load("condensed_west_europe.pickle")
-ank.allocate_subnets(inet.network)
+#inet.load("condensed_west_europe.pickle")
+inet.load("gao_rex_example.graphml")
 ank.initialise_bgp(inet.network)
-
+ank.allocate_subnets(inet.network)
+ank.jsplot(inet.network)        
 
 qparser = queryParser()
 
@@ -327,7 +327,6 @@ def get_prefixes(inet, nodes):
             for u, v, data in inet.network.graph.out_edges(node, data=True) 
             if data.get("sn")])
     #print prefixes
-    
 
 def nodes_to_labels(nodes):
     return  ", ".join(graph.node[n].get('label') for n in nodes)
@@ -335,7 +334,6 @@ def nodes_to_labels(nodes):
 def edges_to_labels(edges):
     return  ", ".join("%s->%s" % 
             (graph.node[u].get('label'), graph.node[v].get('label')) for (u,v) in edges)
-
 
 
 policy_in_file = "policy.txt"
@@ -405,6 +403,7 @@ tests = [
         "(dt, London) <-> (hibernia, London)",
         ]
 
+"""
 # Don't use for now
 tests = []
 
@@ -465,6 +464,7 @@ for test in tests:
         #print "transit"
         pass
 
+"""
 parsedSessionResults = []
 
 template_cache_dir = config.template_cache_dir
