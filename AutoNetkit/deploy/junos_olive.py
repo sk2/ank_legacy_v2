@@ -227,7 +227,8 @@ Creating initial configuration...
 
 
         for loop_count in range(0, 100):
-            i = shell.expect([pexpect.TIMEOUT, "starting local daemons:."])
+            #i = shell.expect([pexpect.TIMEOUT, "starting local daemons:."])
+            i = shell.expect([pexpect.TIMEOUT, "Escape character is"]) 
             if i:
 # Matched, continue on
                 print "telnet is ready, attempting to login"
@@ -242,7 +243,9 @@ Creating initial configuration...
         shell.sendline("root")
         shell.expect("Password:")
         shell.sendline("junos321")
-        shell.expect("%")
+        sys.stdout.write (shell.after)
+	sys.stdout.flush()
+        shell.interact()
 
 
     def start_olives(self):
@@ -394,6 +397,6 @@ olive_deploy.connect_to_server()
 #olive_deploy.check_required_programs()
 olive_deploy.create_folders()
 #olive_deploy.start_switch()
-olive_deploy.start_olives()
+#olive_deploy.start_olives()
 olive_deploy.telnet_and_override("11000")
 
