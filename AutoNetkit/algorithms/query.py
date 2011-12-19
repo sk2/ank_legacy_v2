@@ -202,7 +202,6 @@ class queryParser:
         result = self.bgpApplicationQuery.parseString(qstring)
         set_a = self.node_select_query(network, result.query_a)
         set_b = self.node_select_query(network, result.query_b)
-        print "set a", set_a, "set_b", set_b
         select_type = result.edgeType
         per_session_policy = qparser.process_if_then_else(network, result.bgpSessionQuery)
 
@@ -241,7 +240,6 @@ class queryParser:
         # apply policy to edges
         selected_edges = ( e for e in edges if select_function(e, set_a, set_b))
         for u,v in selected_edges:
-            print "setting for edge", network.label(u), "to", network.label(v)
             network.g_session[u][v][ingress_or_egress].append(per_session_policy)
 
     def evaluate_node_stack(self, stack):
@@ -334,7 +332,7 @@ class queryParser:
 # format integers as strings with no decimal points
         retval = ("%i"%item if isinstance(item, float) and int(item) == item else item
                 for item in retval)
-        retval = (str(item) for item in retval)
+        retval = (str(item).lower() for item in retval)
         return "_".join(retval)
 
     def tag_to_pl(self, tag):
@@ -352,7 +350,7 @@ class queryParser:
         tag_pl = self.tag_to_pl(tag)
         tag_cl = self.tag_to_cl(tag)
 # efficiency: check if query has already been executed (ie if already prefixes for this tag)
-#TODO: see if need to have uniquye name for prefix list and comm val: eg pl_tag and 
+#TODO: see if need to have unique name for prefix list and comm val: eg pl_tag and 
         if tag_pl in self.prefix_lists:
             print "already executed prefix lookup for", tag_pl
         else:
@@ -407,8 +405,8 @@ class queryParser:
 #TODO: apply stringEnd to the matching parse queries to ensure have parsed all
 
 inet = ank.internet.Internet()
-#inet.load("condensed_west_europe.pickle")
-inet.load("gao_rex_example.graphml")
+inet.load("condensed_west_europe.pickle")
+#inet.load("gao_rex_example.graphml")
 ank.initialise_bgp(inet.network)
 ank.allocate_subnets(inet.network)
 ank.jsplot(inet.network)        
@@ -633,8 +631,6 @@ def cl_and_pl_per_node(qparser, network):
 cl_and_pl_per_node(qparser, inet.network)
 qparser.allocate_tags()
 
-pprint.pprint(inet.network.g_session.nodes(data=True))
-
 policy_out_file = "policy_output.txt"
 with open( policy_out_file, 'w+') as f_pol:
     for node in inet.network.g_session:
@@ -662,7 +658,6 @@ with open( policy_out_file, 'w+') as f_pol:
                 comm_val = qparser.allocated_tags[tag]
                 f_pol.write( "%s: %s\n" % (tag, comm_val))
             f_pol.write("\n")
-
 
         # check sessions from this node
         for (src, dst, session_data) in inet.network.g_session.in_edges(node, data=True):
