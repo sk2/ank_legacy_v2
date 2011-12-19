@@ -35,7 +35,7 @@ class queryParser:
         gt = Literal(">").setResultsName(">")
 
         self.tags = {}
-        self.prefixes = {}
+        self.prefix_lists = {}
 
         self._opn = {
                 '<': operator.lt,
@@ -46,6 +46,18 @@ class queryParser:
                 '>': operator.gt,
                 '&': set.intersection,
                 '|': set.union,
+                }
+
+        # invalid chars to ascii equivalents for tags
+        self._opn_to_tag = {
+                '<': "lt",
+                '<=': "le",
+                '=': "eq",
+                '!=': "ne",
+                '>=': "ge",
+                '>': "gt",
+                '&': "and",
+                '|': "or",
                 }
 
         self.match_tuple = namedtuple('match_tuple', "match_clauses, action_clauses, reject")
@@ -118,12 +130,14 @@ class queryParser:
 
 
 #start of BGP queries
-        originQuery = ("O(" +  
-                self.nodeQuery.setResultsName("nodeQuery") + ")").setResultsName("originQuery")
-        transitQuery = ("T(" +  
-                self.nodeQuery.setResultsName("nodeQuery") + ")").setResultsName("transitQuery")
-
-        bgpNodeSelectQuery = originQuery | transitQuery
+        originQuery = (Literal("Origin").setResultsName("attribute") + 
+                #this is a workaround for the match, comparison, value 3-tuple in processing
+                Literal("(").setResultsName("comparison") +  
+                Group(self.nodeQuery).setResultsName("value") + Suppress(")")).setResultsName("originQuery")
+        transitQuery = (Literal("Transit").setResultsName("attribute") +
+                #this is a workaround for the match, comparison, value 3-tuple in processing
+                Literal("(").setResultsName("comparison") +  
+                Group(self.nodeQuery).setResultsName("value") + Suppress(")")).setResultsName("transitQuery")
 
         prefixList = Literal("prefix_list")
         matchPl = (prefixList.setResultsName("attribute")
@@ -134,7 +148,7 @@ class queryParser:
                 + comparison
                 + attribute.setResultsName("value"))
 
-        bgpMatchQuery = Group(matchPl | matchTag | bgpNodeSelectQuery ).setResultsName("bgpMatchQuery")
+        bgpMatchQuery = Group(matchPl | matchTag | originQuery | transitQuery ).setResultsName("bgpMatchQuery")
 
         setLP = (Literal("setLP").setResultsName("attribute") 
                 + integer_string.setResultsName("value")).setResultsName("setLP")
@@ -184,8 +198,7 @@ class queryParser:
         set_a = self.node_select_query(network, result.query_a)
         set_b = self.node_select_query(network, result.query_b)
         select_type = result.edgeType
-        per_session_policy = qparser.process_if_then_else(result.bgpSessionQuery)
-        print per_session_policy
+        per_session_policy = qparser.process_if_then_else(network, result.bgpSessionQuery)
 
 # use nbunch feature of networkx to limit edges to look at
         node_set = set_a | set_b
@@ -244,7 +257,7 @@ class queryParser:
 # so execute the boolean as function, rather than using stack on node sets
 # ie test each node for all the required matches in one step
 # and use data(=True) so get the dictionary reference once -> faster
-# especially if using short circuits so when false stop executing
+# especially if using short circuits so when False stop executing
 
         def comp_fn_string(token, n):
             return self._opn[token.comparison](network.graph.node[n].get(token.attribute), token.value)
@@ -275,8 +288,52 @@ class queryParser:
         final_set = self.evaluate_node_stack(stack)
         return final_set
 
+    def get_prefixes(inet, network, nodes):
+        prefixes = set()
+        for node in nodes:
+            # Arbitrary choice of out edges, as bi-directional edge for each subnet
+            prefixes.update([data.get("sn")
+                for u, v, data in network.graph.out_edges(node, data=True) 
+                if data.get("sn")])
 
-    def process_if_then_else(self, parsed_query):
+        return prefixes
+
+    def query_to_tag(self, query):
+        """ flattens a node select query into a tag
+        TODO: convert this to proper testable docstring
+        eg (asn=3) becomes asn_eq_3
+        """
+# flatten items into single list in lexicographic order
+        retval = (item for sublist in query for item in sublist)
+# replace char if in mapping, else leave, eg = -> eq
+        retval = (self._opn_to_tag[item] if item in self._opn_to_tag else item
+                for item in retval)
+# ensure all strings
+# format integers as strings with no decimal points
+        retval = ("%i"%item if isinstance(item, float) and int(item) == item else item
+                for item in retval)
+        retval = (str(item) for item in retval)
+        return "_".join(retval)
+
+
+    def process_origin_transit_matches(self, network, ot_matches):
+# extract the node queryParser
+        ot_match = ot_matches[0]
+        match_type, match_query = ot_match
+        nodes = self.node_select_query(network, match_query)
+        tag_label = self.query_to_tag(match_query)
+        print "tag label is ", tag_label
+        prefixes = self.get_prefixes(network, nodes)
+        print "prefixes are ", prefixes
+
+
+        #matching_nodes = self.node_select_query(network, ot_match.value)
+        #print "matching nodes", matching_nodes
+
+
+#TODO: make network a variable in the qparser class???
+
+    def process_if_then_else(self, network, parsed_query):
         retval = []
         for token in parsed_query:
             if token == parsed_query.else_clause:
@@ -289,10 +346,19 @@ class queryParser:
             else:
                 #TODO: check is in ifthen
                 (if_clause, else_clause) = token
+#TODO: base this on the keywords used in the parser itself for continuity
+                origin_transit_keywords = set(["Origin", "Transit"])
+                ot_matches = [(attribute, value) for
+                        (attribute, comparison, value) in if_clause
+                        if attribute in origin_transit_keywords]
+# now process these
+                self.process_origin_transit_matches(network, ot_matches)
+
 # Check for reject
                 reject = any(True for (action, value) in else_clause if action == self.reject)
                 if_tuples = [self.match_clause(attribute, comparison, value) for
-                        (attribute, comparison, value) in if_clause]
+                        (attribute, comparison, value) in if_clause
+                        if attribute not in origin_transit_keywords]
                 then_tuples = [self.action_clause(action, value) for
                         (action, value) in else_clause
                         if action != self.reject]
@@ -323,14 +389,7 @@ tests = [
         'Network = GEANT & type = "Fully Featured"',
         ]
 
-def get_prefixes(inet, nodes):
-    prefixes = set()
-    for node in nodes:
-        # Arbitrary choice of out edges, as bi-directional edge for each subnet
-        prefixes.update([data.get("sn")
-            for u, v, data in inet.network.graph.out_edges(node, data=True) 
-            if data.get("sn")])
-    #print prefixes
+
 
 def nodes_to_labels(nodes):
     return  ", ".join(graph.node[n].get('label') for n in nodes)
