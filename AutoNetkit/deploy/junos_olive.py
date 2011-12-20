@@ -128,15 +128,15 @@ class OliveDeploy():
         self.working_directory = self.get_cwd()
         return
 
-    def transfer_file(self, local_file):
+    def transfer_file(self, local_file, remote_folder):
         """Transfers file to remote host using SCP"""
         # Sanity check
         if self.local_server:
             LOG.warn("Can only SCP to remote Netkit server")
             return
 
-        child = pexpect.spawn("scp {0} {1}@{2}:.".format(local_file,
-            self.username, self.host))      
+        child = pexpect.spawn("scp %s %s@%s:%s" % (local_file,
+            self.username, self.host, remote_folder))      
         child.logfile = self.logfile
 
         child.expect(pexpect.EOF) 
@@ -185,7 +185,6 @@ class OliveDeploy():
                 print "%s not installed" % program
                 return False
             shell.prompt() 
-        shell.prompt() 
 
     def create_folders(self):
         shell = self.shell
@@ -265,11 +264,12 @@ class OliveDeploy():
 # transfer over junos lab
 
         tar_file = os.path.join(config.ank_main_dir, self.network.compiled_labs['junos'])
-        self.transfer_file(tar_file)
+        self.transfer_file(tar_file, self.olive_dir)
         junos_extract_directory = os.path.join(self.olive_dir, "configset")
+        print "junos_extract_directory", junos_extract_directory
         
 # Tar file copied across (if remote host) to local directory
-        shell.sendline("cd ") 
+        shell.sendline("cd %s" % self.olive_dir) 
 # Remove any previous lab
         shell.sendline("rm -rf  " + junos_extract_directory)
         shell.prompt() 
@@ -284,8 +284,6 @@ class OliveDeploy():
 #Need this tar check or all else breaks!
         shell.expect("tar: Removing leading")
         shell.prompt() 
-
-        return
 
         configset_directory = os.path.join(junos_extract_directory, "configset")
         working_directory = self.get_cwd()
@@ -401,9 +399,8 @@ junos_comp.configure()
 olive_deploy = OliveDeploy(host="trc1", username="sknight", network=inet.network,
         base_image ="/space/base-image.img")
 olive_deploy.connect_to_server()
-#olive_deploy.check_required_programs()
+olive_deploy.check_required_programs()
 olive_deploy.create_folders()
-#olive_deploy.start_switch()
+olive_deploy.start_switch()
 olive_deploy.start_olives()
-olive_deploy.telnet_and_override("11000")
 
