@@ -593,7 +593,7 @@ def session_to_junos(session_list):
 
 
 def cl_and_pl_per_node(qparser, network):
-# allocate tags
+    # extract tags and prefixes used from sessions
     for node in network.g_session:
         prefixes = set()
         tags = set()
