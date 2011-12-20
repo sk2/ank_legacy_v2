@@ -219,13 +219,26 @@ class OliveDeploy():
             ready_prompt = "Escape character is"
 
         for loop_count in range(0, 100):
-            i = shell.expect([pexpect.TIMEOUT, ready_prompt]) 
+            i = shell.expect([pexpect.TIMEOUT, ready_prompt, 
+                "Consoles: serial port",
+                "Booting \[/kernel\]\.",
+                "Initializing M/T platform properties",
+                "Trying to mount root",
+                "Creating initial configuration",
+                "Automatic reboot in progress...",
+                "Doing initial network setup",
+                "Doing additional network setup",
+                ]) 
             if i == 0:
 # Matched, continue on
                 pass
-            if i == 1:
+            elif i == 1:
                 LOG.info( "Logging into Olive")
                 break
+            else:
+                # print the progress status message
+                LOG.info("Startup progress: %s", shell.match.group(0))
+
 # timedout, wait
         shell.expect("login:")
         shell.sendline("root")
@@ -233,6 +246,7 @@ class OliveDeploy():
         shell.sendline("Clouds")
         shell.expect("root@base-image%")
 # Now load our ank config
+        LOG.info( "Commiting configuration")
         shell.sendline("/usr/sbin/cli -c 'configure; load override ANK.conf; commit'")
         shell.expect("commit complete")
 # logout, expect a new login prompt
