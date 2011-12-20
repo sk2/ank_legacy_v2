@@ -214,7 +214,7 @@ class OliveDeploy():
                 print "Got unknown folder result of %s" % result
         """
 
-    def telnet_and_override(self, telnet_port):
+    def telnet_and_override(self, telnet_port, wait_for_bootup=False):
         shell = self.shell
         shell.sendline("telnet localhost %s" % telnet_port)
 
@@ -225,10 +225,13 @@ Creating initial configuration...
 
 """
 
+        if wait_for_bootup:
+            ready_prompt = "starting local daemons"
+        else:
+            ready_prompt = "Escape character is"
 
         for loop_count in range(0, 100):
-            #i = shell.expect([pexpect.TIMEOUT, "starting local daemons:."])
-            i = shell.expect([pexpect.TIMEOUT, "Escape character is"]) 
+            i = shell.expect([pexpect.TIMEOUT, ready_prompt]) 
             if i:
 # Matched, continue on
                 print "telnet is ready, attempting to login"
@@ -236,16 +239,24 @@ Creating initial configuration...
             else:
 # timedout, wait
                 print "Waiting for machine to boot, iteration %s" % loop_count
-        shell.sendline("")
-        print shell.before
-        print shell.after
         shell.expect("login:")
         shell.sendline("root")
         shell.expect("Password:")
-        shell.sendline("junos321")
-        sys.stdout.write (shell.after)
-	sys.stdout.flush()
-        shell.interact()
+        shell.sendline("Clouds")
+        shell.expect("root@base-image%")
+# Now load our ank config
+        shell.sendline("/usr/sbin/cli -c 'configure; load override ANK.conf; commit'")
+        shell.expect("commit complete")
+# logout, expect a new login prompt
+        shell.sendline("exit")
+        shell.expect("login:")
+# Now disconnect telnet
+        shell.sendcontrol("]")
+        shell.expect("Connection closed")
+        shell.sendcontrol("D")
+        print "Terminated telnet session"
+        shell.prompt()
+        return
 
 
     def start_olives(self):
@@ -325,7 +336,6 @@ Creating initial configuration...
         router_info_tuple = namedtuple('router_info', 'router_name, iso_image, img_image, mac_addresses, telnet_port, switch_socket, monitor_socket')
         
         for router in self.network.graph:
-            print "starting %s" % config_files[router].get('name')
             router_info = router_info_tuple(
                     config_files[router].get('name'),
                     config_files[router].get('config_file_snapshot'),
@@ -342,6 +352,7 @@ Creating initial configuration...
 
     
         for router in qemu_routers:
+            print "starting %s" % config_files[router].get('name')
             startup_command = startup_template.render(
                     router_info = router
                     )
@@ -351,8 +362,7 @@ Creating initial configuration...
             shell.sendline(startup_command)
 # Telnet in
             shell.prompt()
-
-
+            self.telnet_and_override("11000", wait_for_bootup=True)
         
     def start_switch(self):
         shell = self.shell
@@ -396,7 +406,7 @@ olive_deploy = OliveDeploy(host="trc1", username="sknight", network=inet.network
 olive_deploy.connect_to_server()
 #olive_deploy.check_required_programs()
 olive_deploy.create_folders()
-#olive_deploy.start_switch()
-#olive_deploy.start_olives()
+olive_deploy.start_switch()
+olive_deploy.start_olives()
 olive_deploy.telnet_and_override("11000")
 
