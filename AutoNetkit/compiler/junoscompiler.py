@@ -223,7 +223,7 @@ class JunosCompiler:
 
         return interfaces
 
-    def configure_igp(self, node, igp_graph):
+    def configure_igp(self, node, igp_graph, ebgp_graph):
         """igp configuration"""
         default_weight = 1
         igp_interfaces = []
@@ -240,6 +240,22 @@ class JunosCompiler:
                     'weight':   data.get('weight', default_weight),
                     'description': description,
                     })
+
+# Need to add eBGP edges as passive interfaces
+            for src, dst in ebgp_graph.edges(node):
+# Get relevant edges from ebgp_graph, and edge data from physical graph
+                data = self.network.graph[src][dst]
+                int_id = logical_int_id_ge(self.int_id(data['id']))
+                description = 'Interface %s -> %s' % (
+                    ank.fqdn(self.network, src), 
+                    ank.fqdn(self.network, dst))
+                igp_interfaces.append({
+                    'id':       int_id,
+                    'weight':   data.get('weight', default_weight),
+                    'description': description,
+                    'passive': True,
+                    })
+
         return igp_interfaces
 
     def configure_bgp(self, node, physical_graph, ibgp_graph, ebgp_graph):
@@ -326,7 +342,7 @@ class JunosCompiler:
             lo_ip = self.network.lo_ip(node)
 
             interfaces = self.configure_interfaces(node)
-            igp_interfaces = self.configure_igp(node, igp_graph)
+            igp_interfaces = self.configure_igp(node, igp_graph,ebgp_graph)
             bgp_groups = self.configure_bgp(node, physical_graph, ibgp_graph, ebgp_graph)
 
             # advertise AS subnet
