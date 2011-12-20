@@ -164,10 +164,10 @@ class OliveDeploy():
                 break
         return (port for port in itertools.count(start, 1) if port not in allocated_ports)
 
-    def mac_address_list(self, count):
+    def mac_address_list(self, router_id, count):
         """Returns a generator of random 48-bit MAC addresses"""
 # integer representation of '00:11:22:fe:00:00
-        oui = 73601515520
+        oui = 73601515000 + router_id*(2**8)
         return [netaddr.EUI(oui+ei, version=48, dialect=netaddr.mac_unix)
                 #TODO: see if better way to repeat the function
                 for ei in range(0,count)]
@@ -310,7 +310,6 @@ class OliveDeploy():
             config_files[node]['config_file_snapshot'] = os.path.join(self.snapshot_folder, "%s.iso" % node_filename)
             config_files[node]['base_image_snapshot'] = os.path.join(self.snapshot_folder, "%s.img" % node_filename)
             config_files[node]['monitor_socket'] = os.path.join(configset_directory_full_path, "%s-monitor.sock" % node_filename)
-        
 
         LOG.debug("Making ISO FS")
         for node, data in config_files.items():
@@ -337,8 +336,10 @@ class OliveDeploy():
 
         router_info_tuple = namedtuple('router_info', 'router_name, iso_image, img_image, mac_addresses, telnet_port, switch_socket, monitor_socket')
         
-        for router in self.network.graph:
-            mac_list = self.mac_address_list(6)
+        for router_id, router in enumerate(self.network.graph):
+            mac_list = self.mac_address_list(router_id, 6)
+            print mac_list
+
             router_info = router_info_tuple(
                     config_files[router].get('name'),
                     config_files[router].get('config_file_snapshot'),
