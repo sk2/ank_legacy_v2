@@ -63,25 +63,55 @@ def int_id_em(numeric_id):
     numeric_id += 1
     return 'em%s' % numeric_id
 
-def int_id_ge(numeric_id):
+def int_id_olive_patched(numeric_id):
+    return 'em%s' % numeric_id
+
+def int_id_olive(numeric_id):
+    """remaps to em0, em1, em3, em4, em5"""
+    if numeric_id > 1:
+        numeric_id = numeric_id +1
+    return 'em%s' % numeric_id
+
+def int_id_junos(numeric_id):
     """Returns Junos format interface ID for an AutoNetkit interface ID
     eg ge-0/0/1"""
 # Junosphere uses ge/0/0/0 for external link
     numeric_id += 1
     return 'ge-0/0/%s' % numeric_id
 
-def logical_int_id_ge(numeric_id):
+def logical_int_id_ge(int_id):
     """ For routing protocols, refer to logical int id:
     ge-0/0/1 becomes ge-0/0/1.0"""
-    return int_id_ge(numeric_id) + ".0"
+    return int_id + ".0"
 
 class JunosCompiler:
     """Compiler main"""
 
-    def __init__(self, network, services, igp):
+    def __init__(self, network, services, igp, target, olive_qemu_patched=False):
         self.network = network
         self.services = services
         self.igp = igp
+        self.target = target
+# easy reference to junosphere or olive
+
+# Function mapping to get int_id, set depending on target platform
+        self.int_id = None
+
+        self.junosphere = False
+        if target in ['junosphere', 'junosphere_olive']:
+            self.junosphere = True
+            self.int_id = int_id_junos
+        self.olive = False
+        if target in ['olive', 'junosphere_olive']:
+            self.olive = True
+            self.int_id = int_id_olive
+        self.olive_qemu_patched = olive_qemu_patched
+
+        self.olive_interface_limit = 5
+        if self.olive_qemu_patched:
+# Patch allows 6 interfaces
+            self.olive_interface_limit = 6
+            self.int_id = int_id_olive_patched
 
     def initialise(self):
         """Creates lab folder structure"""
@@ -132,13 +162,13 @@ class JunosCompiler:
                 topology_data[hostname]['interfaces'].append({
                     'description': description,
                     'id': int_id_em(data['id']),
-                    'id_ge':  int_id_ge(data['id']),
+                    'id_ge':  self.int_id(data['id']),
                     'bridge_id': bridge_id,
                     })
 
         if len(collision_to_bridge_mapping) > 64:
             LOG.warn("AutoNetkit does not currently support more"
-                    " than 123 network links for Junosphere")
+                    " than 63 network links for Junosphere")
 
         vmm_file = os.path.join(lab_dir(), "topology.vmm")
         with open( vmm_file, 'w') as f_vmm:
@@ -174,7 +204,7 @@ class JunosCompiler:
 
         for src, dst, data in self.network.graph.edges(node, data=True):
             subnet = data['sn']
-            int_id = int_id_ge(data['id'])
+            int_id = self.int_id(data['id'])
             description = 'Interface %s -> %s' % (
                     ank.fqdn(self.network, src), 
                     ank.fqdn(self.network, dst))
@@ -188,9 +218,7 @@ class JunosCompiler:
                 'description':  description,
             })
 
-
         return interfaces
-
 
     def configure_igp(self, node, igp_graph):
         """igp configuration"""
@@ -200,7 +228,7 @@ class JunosCompiler:
             # Only start IGP process if IGP links
             igp_interfaces.append({ 'id': 'lo0', 'passive': True})
             for src, dst, data in igp_graph.edges(node, data=True):
-                int_id = logical_int_id_ge(data['id'])
+                int_id = logical_int_id_ge(self.int_id(data['id']))
                 description = 'Interface %s -> %s' % (
                     ank.fqdn(self.network, src), 
                     ank.fqdn(self.network, dst))
@@ -317,7 +345,8 @@ class JunosCompiler:
                     ))
 
     def configure(self):
-        self.configure_junosphere()
+        if self.junosphere:
+            self.configure_junosphere()
         self.configure_junos()
 # create .tgz
         tar_filename = "junos_%s.tar.gz" % time.strftime("%Y%m%d_%H%M",
