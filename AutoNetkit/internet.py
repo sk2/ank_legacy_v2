@@ -276,9 +276,10 @@ class Internet:
             junos_comp.configure()
 
         if self.compile_targets['junosphere_olive']:
-            junos_comp = ank.JunosCompiler(self.network, self.services, self.igp, target="junosphere_olive")
-            junos_comp.initialise()
-            junos_comp.configure()
+            LOG.warn("Junosphere Olive not currently supported")
+            #junos_comp = ank.JunosCompiler(self.network, self.services, self.igp, target="junosphere_olive")
+            #junos_comp.initialise()
+            #junos_comp.configure()
 
         if self.compile_targets['olive']:
             olive_qemu_patched = self.compile_targets['olive_qemu_patched']
