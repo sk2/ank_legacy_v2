@@ -34,6 +34,7 @@
     </node>
     <node id="n1">
       <data key="d4"><![CDATA[2]]></data>
+      <data key="d5"><![CDATA[yellow]]></data>
       <data key="d8">
         <y:ShapeNode>
           <y:Geometry height="30.0" width="30.0" x="460.0" y="239.0"/>
@@ -58,6 +59,7 @@
     </node>
     <node id="n3">
       <data key="d4"><![CDATA[3]]></data>
+      <data key="d5"><![CDATA[yellow]]></data>
       <data key="d8">
         <y:ShapeNode>
           <y:Geometry height="30.0" width="30.0" x="142.0" y="304.0"/>
