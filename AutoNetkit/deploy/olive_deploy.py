@@ -164,11 +164,13 @@ class OliveDeploy():
                 break
         return (port for port in itertools.count(start, 1) if port not in allocated_ports)
 
-    def random_mac_addresses(self):
+    def mac_address_list(self, count):
         """Returns a generator of random 48-bit MAC addresses"""
-        return (netaddr.EUI(random.randint(1, 2**48-1), version=48, dialect=netaddr.mac_unix)
+# integer representation of '00:11:22:fe:00:00
+        oui = 73601515520
+        return [netaddr.EUI(oui+ei, version=48, dialect=netaddr.mac_unix)
                 #TODO: see if better way to repeat the function
-                for a in itertools.count(0))
+                for ei in range(0,count)]
 
     def check_required_programs(self):
         shell = self.shell
@@ -329,7 +331,6 @@ class OliveDeploy():
         shell.prompt()
     
         unallocated_ports = self.unallocated_ports()
-        mac_addresses = self.random_mac_addresses()
         qemu_routers = []
 
         LOG.debug("Starting qemu machines")
@@ -337,12 +338,13 @@ class OliveDeploy():
         router_info_tuple = namedtuple('router_info', 'router_name, iso_image, img_image, mac_addresses, telnet_port, switch_socket, monitor_socket')
         
         for router in self.network.graph:
+            mac_list = self.mac_address_list(6)
             router_info = router_info_tuple(
                     config_files[router].get('name'),
                     config_files[router].get('config_file_snapshot'),
                     config_files[router].get('base_image_snapshot'),
 # create 6 mac addresses, the maximum per Olive
-                    [mac_addresses.next() for i in range(0,6)],
+                    mac_list,
                     unallocated_ports.next(),
                     self.vde_socket_name,
                     config_files[router].get('monitor_socket'),
