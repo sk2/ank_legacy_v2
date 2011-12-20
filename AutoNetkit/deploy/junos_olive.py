@@ -171,7 +171,6 @@ class OliveDeploy():
                 #TODO: see if better way to repeat the function
                 for a in itertools.count(0))
 
-
     def check_required_programs(self):
         shell = self.shell
         for program in ['tunctl', 'vde_switch', 'qemu', 'qemu-img', 'mkisofs']:
@@ -266,7 +265,6 @@ class OliveDeploy():
         tar_file = os.path.join(config.ank_main_dir, self.network.compiled_labs['junos'])
         self.transfer_file(tar_file, self.olive_dir)
         junos_extract_directory = os.path.join(self.olive_dir, "configset")
-        print "junos_extract_directory", junos_extract_directory
         
 # Tar file copied across (if remote host) to local directory
         shell.sendline("cd %s" % self.olive_dir) 
