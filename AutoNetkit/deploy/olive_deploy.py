@@ -77,7 +77,6 @@ class OliveDeploy():
         shell.sendline(cmd)  # run a command
         shell.prompt()
         result = shell.before
-        print
         result = [res.strip() for res in shell.before.split("\n")]
         if result[0] == cmd:
 # First line is echo, return the next line
@@ -178,10 +177,9 @@ class OliveDeploy():
             shell.sendline(chk_cmd)
             program_installed = shell.expect (["Absent", "Present"])    
             if program_installed:
-                print "%s installed" % program
+                LOG.debug( "Required program %s installed" % program)
             else:
-                #TODO: convert print to LOGs
-                print "%s not installed" % program
+                LOG.info( "Required program %s not installed" % program)
                 return False
             shell.prompt() 
 
@@ -200,12 +198,11 @@ class OliveDeploy():
             chk_cmd = "stat -t %s" % folder
             result = self.get_command_output(chk_cmd)
             if "stat: cannot stat" in result:
-                print "Creating folder %s" % folder
+                LOG.debug( "Creating folder %s" % folder)
                 shell.sendline("mkdir %s" % folder)
                 shell.prompt() 
             else:
-                #TODO: convert print to LOGs
-                print "%s exists" % folder
+                LOG.debug( "%s exists" % folder)
         ""
     def telnet_and_override(self, telnet_port, wait_for_bootup=False):
         shell = self.shell
@@ -225,9 +222,9 @@ class OliveDeploy():
             i = shell.expect([pexpect.TIMEOUT, ready_prompt]) 
             if i == 0:
 # Matched, continue on
-                print "Waiting for machine to boot, iteration %s" % loop_count
+                pass
             if i == 1:
-                print "telnet is ready, attempting to login"
+                LOG.info( "Logging into Olive")
                 break
 # timedout, wait
         shell.expect("login:")
@@ -246,7 +243,7 @@ class OliveDeploy():
         shell.expect("telnet>")
         shell.sendcontrol("D")
         shell.expect("Connection closed")
-        print "Terminated telnet session"
+        LOG.info( "Configuration committed to Olive")
         shell.prompt()
         return
 
@@ -258,7 +255,7 @@ class OliveDeploy():
         3. Start bash script as sudo
         """
         shell = self.shell
-        print "Starting Olives"
+        LOG.info( "Starting Olives")
 
 # transfer over junos lab
 
@@ -277,7 +274,7 @@ class OliveDeploy():
         tar_basename = os.path.basename(tar_file)
         
         # Need to force directory to extract to (junosphere format for tar extracts to cwd)
-        print "extracting configs"
+        LOG.debug( "Extracting Olive configurations")
         shell.sendline("tar -xzf %s -C %s" % (tar_basename, junos_extract_directory))
 #Need this tar check or all else breaks!
         shell.expect("tar: Removing leading")
@@ -299,7 +296,7 @@ class OliveDeploy():
             config_files[node]['monitor_socket'] = os.path.join(configset_directory_full_path, "%s-monitor.sock" % node_filename)
         
 
-        print "Making ISO FS"
+        LOG.debug("Making ISO FS")
         for node, data in config_files.items():
             cmd = "mkisofs -o %s %s " % (data.get('config_file_snapshot'), 
                     data.get('config_file_full_path'))
@@ -307,7 +304,7 @@ class OliveDeploy():
             shell.expect(["extents written"])
         shell.prompt()
 
-        print "Running qemu-img"
+        LOG.info("Running qemu-img")
         for node, data in config_files.items():
             cmd =  "qemu-img create -f qcow2 -b %s %s" % (self.base_image,
                     data['base_image_snapshot'])
@@ -322,7 +319,7 @@ class OliveDeploy():
         qemu_routers = []
 
 
-        print "starting qemu"
+        LOG.debug("Starting qemu machines")
 
         router_info_tuple = namedtuple('router_info', 'router_name, iso_image, img_image, mac_addresses, telnet_port, switch_socket, monitor_socket')
         
@@ -342,8 +339,10 @@ class OliveDeploy():
         startup_template = lookup.get_template("autonetkit/olive_startup.mako")
 
     
+#TODO: Sort routers by name so start in a more sensible order
+        qemu_routers = sorted(qemu_routers, key=lambda router: router.router_name)
         for router in qemu_routers:
-            print "starting %s" % router.router_name
+            LOG.info( "Starting %s" % router.router_name)
             startup_command = startup_template.render(
                     router_info = router
                     )
@@ -355,29 +354,28 @@ class OliveDeploy():
             shell.prompt()
             self.telnet_and_override(router.telnet_port, wait_for_bootup=True)
 
-        print "Successfully started all Olives"
+        LOG.info( "Successfully started all Olives")
         
     def start_switch(self):
         shell = self.shell
 
-        print "Please enter sudo password and type '^]' to return to AutoNetkit"
+        LOG.info("Please enter sudo password and type '^]' to return to AutoNetkit")
         shell.sendline('sudo tunctl -t %s' % self.tap_name)
 	sys.stdout.write (shell.after)
 	sys.stdout.flush()
         shell.interact()
-        print
-        print "Starting vde_switch"
+        LOG.info( "Starting vde_switch")
 
 # start vde switch
         start_vde_switch_cmd = "vde_switch -d -t %s -n 2000 -s %s -M %s" % (self.tap_name, 
                 self.vde_socket_name, self.vde_mgmt_socket_name)
-        print "start command %s " % start_vde_switch_cmd
+        LOG.info( "start command %s " % start_vde_switch_cmd)
         shell.sendline('sudo %s' % start_vde_switch_cmd)
         i = shell.expect ([ "Address already in use" , "TUNSETIFF: Device or resource busy", pexpect.EOF])
         if i == 0:
-            print "WARNING: vde_switch already running"
+            LOG.info( "vde_switch already running")
         elif i == 1:
-            print "WARNING: Device busy, unable to create switch"
+            LOG.info( "Device busy, unable to create switch")
         else:
 # started ok
             pass
