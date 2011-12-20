@@ -338,12 +338,15 @@ class OliveDeploy():
         router_info_tuple = namedtuple('router_info', 'router_name, iso_image, img_image, mac_addresses, telnet_port, switch_socket, monitor_socket')
         
         for router in self.network.graph:
+            mac_list = [mac_addresses.next() for i in range(0,6)],
+# Want ab:cd:ef format not ab-cd-ef
+            mac_list = [str(mac).replace("-", ":") for mac in mac_list]
             router_info = router_info_tuple(
                     config_files[router].get('name'),
                     config_files[router].get('config_file_snapshot'),
                     config_files[router].get('base_image_snapshot'),
 # create 6 mac addresses, the maximum per Olive
-                    [mac_addresses.next() for i in range(0,6)],
+                    mac_list,
                     unallocated_ports.next(),
                     self.vde_socket_name,
                     config_files[router].get('monitor_socket'),
