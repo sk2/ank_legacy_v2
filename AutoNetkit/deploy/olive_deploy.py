@@ -126,7 +126,7 @@ class OliveDeploy():
 
         self.shell = shell   
         self.working_directory = self.get_cwd()
-        return
+        return True
 
     def transfer_file(self, local_file, remote_folder):
         """Transfers file to remote host using SCP"""
@@ -385,20 +385,12 @@ class OliveDeploy():
 
         return
 
-
-inet = ank.internet.Internet()
-inet.load("singleas")
-ank.alloc_interfaces(inet.network)
-ank.allocate_subnets(inet.network) 
-junos_comp = ank.JunosCompiler(inet.network, inet.services, inet.igp)
-junos_comp.initialise()
-junos_comp.configure()
-
-olive_deploy = OliveDeploy(host="trc1", username="sknight", network=inet.network,
-        base_image ="/space/base-image.img")
-olive_deploy.connect_to_server()
-olive_deploy.check_required_programs()
-olive_deploy.create_folders()
-olive_deploy.start_switch()
-olive_deploy.start_olives()
+    def deploy(self):
+        if not self.connect_to_server():
+# Problem starting ssh
+            return
+        self.check_required_programs()
+        self.create_folders()
+        self.start_switch()
+        self.start_olives()
 

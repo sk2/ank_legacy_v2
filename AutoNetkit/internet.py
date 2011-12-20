@@ -289,7 +289,9 @@ class Internet:
             junos_comp.configure()
 
 
-    def deploy(self, host, username, xterm = False):  
+    def deploy(self, netkit_host=None, netkit_username=None, 
+            olive_host=None, olive_username=None, olive_base_image=None,
+            xterm = False):  
         """Deploy compiled configuration files."
 
         Args:
@@ -322,7 +324,16 @@ class Internet:
             # Need to tell deploy plugin where the netkit files are
             netkit_dir = config.lab_dir
             nkd.deploy(netkit_server, netkit_dir, self.network, xterm)
-        elif self.compile_targets['junos']:
+        elif self.compile_targets['olive']:
+            if not olive_base_image:
+                LOG.warn("Please specify Olive base image")
+                return
+            olive_deploy = ank.deploy.olive_deploy.OliveDeploy(host = olive_host, username = olive_username,
+                    network = self.network, base_image = olive_base_image)
+            # Need to tell deploy plugin where the netkit files are
+            olive_deploy.deploy()
+
+        elif self.compile_targets['junosphere']:
             LOG.warn("Junos automatic deployment not supported. "
                     "Please manually upload Junosphere configuration file")
         else:

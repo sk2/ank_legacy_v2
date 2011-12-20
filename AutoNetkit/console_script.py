@@ -25,15 +25,22 @@ def main():
 
     opt.add_option('--plot', '-p', action="store_true", dest="plot", 
                     default=False, help="Plot lab")
-    opt.add_option('--deploy', '-d', action="store_true", dest="deploy", 
+    opt.add_option('--deploy', '-d', action="store_true", 
                     default=False, help="Deploy lab to Netkit host")
     opt.add_option('--file', '-f', default= None, 
                     help="Load configuration from FILE")        
-    opt.add_option('--netkithost', default=None,
+    opt.add_option('--netkit_host', default=None,
                     help="Netkit host machine (if located on another machine)") 
-    opt.add_option('--netkitusername', default=None, 
+    opt.add_option('--netkit_username', default=None, 
                     help=("Username for Netkit host machine (if connecting to "
                     " external Netkit machine)"))
+    opt.add_option('--olive_host', default=None,
+                    help="Olive host machine (if located on another machine)") 
+    opt.add_option('--olive_username', default=None, 
+                    help=("Username for Olive host machine (if connecting to "
+                    " external Olive machine)"))
+    opt.add_option('--olive_base_image', default=None, help=("Base image to use on Olive"))
+
     opt.add_option('--verify', '-v', action="store_true", dest="verify",
                     default=False, help="Verify lab on Netkit host")      
 
@@ -76,7 +83,8 @@ def main():
         sys.exit(0)
         logging.setLevel(logging.DEBUG)
 
-    if not (options.netkit or options.cbgp or options.dynagen or options.junos):
+    if not (options.netkit or options.cbgp or options.dynagen or 
+            options.junosphere or options.junosphere_olive or options.olive):
         LOG.warn("Please specify a target environment, eg --netkit")
         sys.exit(0)
 
@@ -116,8 +124,10 @@ def main():
         inet.plot()      
 
     if(options.deploy):
-        inet.deploy(host = options.netkithost, username = options.netkitusername,
-                    xterm = options.xterm)     
+        inet.deploy(netkit_host = options.netkit_host, netkit_username = options.netkit_username,
+                olive_host = options.olive_host, olive_username = options.olive_username,
+                olive_base_image = options.olive_base_image,
+                xterm = options.xterm)     
 
     if(options.verify):
         inet.verify(host = options.netkithost, username = options.netkitusername)    
