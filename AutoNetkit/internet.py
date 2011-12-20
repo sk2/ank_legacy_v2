@@ -53,7 +53,9 @@ class Internet:
     """
     
     def __init__(self, filename=None, tapsn=IPNetwork("172.16.0.0/16"),
-            netkit=True, cbgp=False, dynagen=False, junos=False,
+            netkit=True, cbgp=False, dynagen=False,
+            junosphere=False, junosphere_olive=False, olive=False,
+                olive_qemu_patched=False,
             igp='ospf'): 
         self.network = network.Network()
         if isinstance(tapsn, str):
@@ -65,7 +67,10 @@ class Internet:
                 'netkit': netkit,
                 'cbgp': cbgp,
                 'dynagen': dynagen,
-                'junos': junos,
+                'junosphere': junosphere,
+                'junosphere_olive': junosphere_olive,
+                'olive': olive,
+                'olive_qemu_patched': olive_qemu_patched,
                 }
         self.igp = igp
         if filename:
@@ -257,10 +262,31 @@ class Internet:
             cbgp_comp = ank.CbgpCompiler(self.network, self.services)
             cbgp_comp.configure()
 
-        if self.compile_targets['junos']:
-            junos_comp = ank.JunosCompiler(self.network, self.services, self.igp)
+
+            """
+                'junosphere': junosphere,
+                'junosphere_olive': junosphere_olive,
+                'olive': olive,
+                'olive_qemu_patched': olive_qemu_patched,
+
+                """
+        if self.compile_targets['junosphere']:
+            junos_comp = ank.JunosCompiler(self.network, self.services, self.igp, target="junosphere")
             junos_comp.initialise()
             junos_comp.configure()
+
+        if self.compile_targets['junosphere_olive']:
+            junos_comp = ank.JunosCompiler(self.network, self.services, self.igp, target="junosphere_olive")
+            junos_comp.initialise()
+            junos_comp.configure()
+
+        if self.compile_targets['olive']:
+            olive_qemu_patched = self.compile_targets['olive_qemu_patched']
+            junos_comp = ank.JunosCompiler(self.network, self.services, self.igp, target="olive",
+                    olive_qemu_patched = olive_qemu_patched)
+            junos_comp.initialise()
+            junos_comp.configure()
+
 
     def deploy(self, host, username, xterm = False):  
         """Deploy compiled configuration files."

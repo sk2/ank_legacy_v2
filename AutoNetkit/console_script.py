@@ -51,7 +51,13 @@ def main():
     opt.add_option('--netkit',  action="store_true", default=False, help="Compile Netkit")
     opt.add_option('--cbgp',  action="store_true", default=False, help="Compile cBGP")
     opt.add_option('--dynagen',  action="store_true", default=False, help="Compile dynagen")
-    opt.add_option('--junos',  action="store_true", default=False, help="Compile JunOS")
+# Juniper options
+    opt.add_option('--junosphere',  action="store_true", default=False, help="Compile to Junosphere")
+    opt.add_option('--junosphere_olive',  action="store_true", default=False, 
+            help="Compile to Olive-based Junosphere")
+    opt.add_option('--olive',  action="store_true", default=False, help="Compile to Qemu-based Olive")
+    opt.add_option('--olive_qemu_patched',  action="store_true", default=False, 
+            help="Custom Qemu install (6 interface count")
     opt.add_option('--isis',  action="store_true", default=False, help="Use IS-IS as IGP")
     opt.add_option('--ospf',  action="store_true", default=False, help="Use OSPF as IGP")
 
@@ -74,7 +80,8 @@ def main():
         LOG.warn("Please specify a target environment, eg --netkit")
         sys.exit(0)
 
-    if options.junos and not (options.isis or options.ospf):
+    if ((options.junosphere or options.junosphere_olive or options.olive )
+        and not (options.isis or options.ospf)):
         LOG.warn("Please specify an IGP if using junos: --isis or --ospf")
         sys.exit(0)
                 
@@ -86,8 +93,9 @@ def main():
         if options.isis:
             igp = "isis"
         inet = Internet(tapsn = options.tapsn, netkit=options.netkit,
-                cbgp=options.cbgp, dynagen=options.dynagen, junos=options.junos,
-                igp=igp)
+                cbgp=options.cbgp, dynagen=options.dynagen, junosphere=options.junosphere,
+                junosphere_olive=options.junosphere_olive, olive=options.olive, 
+                olive_qemu_patched=options.olive_qemu_patched, igp=igp)
         inet.load(f_name)
     else:    
         LOG.warn("Topology file %s not found" % f_name)
