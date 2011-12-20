@@ -77,6 +77,7 @@ class OliveDeploy():
         shell.sendline(cmd)  # run a command
         shell.prompt()
         result = shell.before
+        print
         result = [res.strip() for res in shell.before.split("\n")]
         if result[0] == cmd:
 # First line is echo, return the next line
@@ -172,10 +173,9 @@ class OliveDeploy():
 
 
     def check_required_programs(self):
-        # check prerequisites
         shell = self.shell
         for program in ['tunctl', 'vde_switch', 'qemu', 'qemu-img', 'mkisofs']:
-            chk_cmd = 'hash %s 2>&- && echo "Present" || echo >&2 "Absent"\n' % program
+            chk_cmd = 'hash %s 2>&- && echo "Present" || echo >&2 "Absent"n' % program
             shell.sendline(chk_cmd)
             program_installed = shell.expect (["Absent", "Present"])    
             if program_installed:
@@ -198,33 +198,26 @@ class OliveDeploy():
 # need to create this folder if not present
         self.socket_folder = os.path.join(self.olive_dir, "sockets")
         required_folders = [self.olive_dir, self.snapshot_folder, self.socket_folder]
-        """
         for folder in required_folders:
-            print "testing folder", folder
-            chk_cmd = '[ -d %s ] && echo "Present" || echo "Absent"\n\r' % folder 
+            chk_cmd = "stat -t %s" % folder
             result = self.get_command_output(chk_cmd)
-            if result == "Absent":
+            if "stat: cannot stat" in result:
                 print "Creating folder %s" % folder
                 shell.sendline("mkdir %s" % folder)
                 shell.prompt() 
-            elif result == "Present":
+            else:
                 #TODO: convert print to LOGs
                 print "%s exists" % folder
-            else:
-                print "Got unknown folder result of %s" % result
-        """
-
+        ""
     def telnet_and_override(self, telnet_port, wait_for_bootup=False):
         shell = self.shell
         shell.sendline("telnet localhost %s" % telnet_port)
 
         """TODO: capture these:
-Booting [/kernel]...               
-***** FILE SYSTEM MARKED CLEAN *****
-Creating initial configuration...
-
-"""
-
+        Booting [/kernel]...               
+        ***** FILE SYSTEM MARKED CLEAN *****
+        Creating initial configuration...
+        """
         if wait_for_bootup:
             ready_prompt = "starting local daemons"
         else:
@@ -259,7 +252,6 @@ Creating initial configuration...
         shell.prompt()
         return
 
-
     def start_olives(self):
         """ Starts Olives inside Qemu
         Steps:
@@ -292,6 +284,8 @@ Creating initial configuration...
 #Need this tar check or all else breaks!
         shell.expect("tar: Removing leading")
         shell.prompt() 
+
+        return
 
         configset_directory = os.path.join(junos_extract_directory, "configset")
         working_directory = self.get_cwd()
@@ -364,6 +358,8 @@ Creating initial configuration...
 # Telnet in
             shell.prompt()
             self.telnet_and_override(router.telnet_port, wait_for_bootup=True)
+
+        print "Successfully started all Olives"
         
     def start_switch(self):
         shell = self.shell
