@@ -147,14 +147,14 @@ class OliveDeploy():
         which returns a free port"""
         shell = self.shell
         pattern = "tcp\s+\d\s+\d\s\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}:(\d+)"
-        allocated_ports = []
+        allocated_ports = set()
         netstat_command = "netstat -ant | grep LISTEN ; echo 'done'"
         shell.sendline(netstat_command)    
         for dummy in range (0, 1000):  
             i = shell.expect ([pattern, pexpect.EOF, netstat_command, 'done'])   
             if i == 0:
                 port = shell.match.group(1)  
-                allocated_ports.append(port)
+                allocated_ports.add(int(port))
             elif i == 1:
                 break
             elif i==2:
@@ -232,13 +232,13 @@ Creating initial configuration...
 
         for loop_count in range(0, 100):
             i = shell.expect([pexpect.TIMEOUT, ready_prompt]) 
-            if i:
+            if i == 0:
 # Matched, continue on
+                print "Waiting for machine to boot, iteration %s" % loop_count
+            if i == 1:
                 print "telnet is ready, attempting to login"
                 break
-            else:
 # timedout, wait
-                print "Waiting for machine to boot, iteration %s" % loop_count
         shell.expect("login:")
         shell.sendline("root")
         shell.expect("Password:")
@@ -252,8 +252,9 @@ Creating initial configuration...
         shell.expect("login:")
 # Now disconnect telnet
         shell.sendcontrol("]")
-        shell.expect("Connection closed")
+        shell.expect("telnet>")
         shell.sendcontrol("D")
+        shell.expect("Connection closed")
         print "Terminated telnet session"
         shell.prompt()
         return
@@ -352,7 +353,7 @@ Creating initial configuration...
 
     
         for router in qemu_routers:
-            print "starting %s" % config_files[router].get('name')
+            print "starting %s" % router.router_name
             startup_command = startup_template.render(
                     router_info = router
                     )
@@ -362,7 +363,7 @@ Creating initial configuration...
             shell.sendline(startup_command)
 # Telnet in
             shell.prompt()
-            self.telnet_and_override("11000", wait_for_bootup=True)
+            self.telnet_and_override(router.telnet_port, wait_for_bootup=True)
         
     def start_switch(self):
         shell = self.shell
@@ -406,7 +407,7 @@ olive_deploy = OliveDeploy(host="trc1", username="sknight", network=inet.network
 olive_deploy.connect_to_server()
 #olive_deploy.check_required_programs()
 olive_deploy.create_folders()
-olive_deploy.start_switch()
+#olive_deploy.start_switch()
 olive_deploy.start_olives()
 olive_deploy.telnet_and_override("11000")
 
