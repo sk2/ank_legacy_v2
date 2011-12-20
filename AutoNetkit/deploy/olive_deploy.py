@@ -166,7 +166,7 @@ class OliveDeploy():
 
     def random_mac_addresses(self):
         """Returns a generator of random 48-bit MAC addresses"""
-        return (netaddr.EUI(random.randint(1, 2**48-1), version=48)
+        return (netaddr.EUI(random.randint(1, 2**48-1), version=48, dialect=netaddr.mac_unix)
                 #TODO: see if better way to repeat the function
                 for a in itertools.count(0))
 
@@ -332,21 +332,17 @@ class OliveDeploy():
         mac_addresses = self.random_mac_addresses()
         qemu_routers = []
 
-
         LOG.debug("Starting qemu machines")
 
         router_info_tuple = namedtuple('router_info', 'router_name, iso_image, img_image, mac_addresses, telnet_port, switch_socket, monitor_socket')
         
         for router in self.network.graph:
-            mac_list = [mac_addresses.next() for i in range(0,6)],
-# Want ab:cd:ef format not ab-cd-ef
-            mac_list = [str(mac).replace("-", ":") for mac in mac_list]
             router_info = router_info_tuple(
                     config_files[router].get('name'),
                     config_files[router].get('config_file_snapshot'),
                     config_files[router].get('base_image_snapshot'),
 # create 6 mac addresses, the maximum per Olive
-                    mac_list,
+                    [mac_addresses.next() for i in range(0,6)],
                     unallocated_ports.next(),
                     self.vde_socket_name,
                     config_files[router].get('monitor_socket'),
