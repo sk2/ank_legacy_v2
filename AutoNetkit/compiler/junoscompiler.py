@@ -96,21 +96,24 @@ class JunosCompiler:
 
 # Function mapping to get int_id, set depending on target platform
         self.int_id = None
+        self.interface_limit = 0
 
         self.junosphere = False
         if target in ['junosphere', 'junosphere_olive']:
             self.junosphere = True
             self.int_id = int_id_junos
+            self.interface_limit = 32
         self.olive = False
         if target in ['olive', 'junosphere_olive']:
             self.olive = True
             self.int_id = int_id_olive
         self.olive_qemu_patched = olive_qemu_patched
 
-        self.olive_interface_limit = 5
+        if self.olive:
+            self.interface_limit = 5
         if self.olive_qemu_patched:
 # Patch allows 6 interfaces
-            self.olive_interface_limit = 6
+            self.interface_limit = 6
             self.int_id = int_id_olive_patched
 
     def initialise(self):
@@ -314,6 +317,10 @@ class JunosCompiler:
 
         #TODO: correct this router type selector
         for node in self.network.graph:
+            #check interfaces feasible
+            if self.network.graph.in_degree(node) > self.interface_limit:
+                LOG.warn("%s exceeds interface count: %s (max %s)" % (self.network.label(node),
+                    self.network.graph.in_degree(node), self.interface_limit))
             asn = self.network.asn(node)
             network_list = []
             lo_ip = self.network.lo_ip(node)
