@@ -317,7 +317,7 @@ class Internet:
                 return
             LOG.info("Deploying to Netkit")   
             #TODO: make netkit a plugin also
-            netkit_server = netkit.Netkit(host, username, tapsn=self.tapsn)
+            netkit_server = netkit.Netkit(netkit_host, netkit_username, tapsn=self.tapsn)
 
             # Get the deployment plugin
             nkd = ank.deploy.netkit_deploy.NetkitDeploy()
