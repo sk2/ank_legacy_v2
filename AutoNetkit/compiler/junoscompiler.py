@@ -355,8 +355,8 @@ class JunosCompiler:
 
         node_bgp_data = self.network.g_session.node[node]
         policy_options = {
-                'community_lists': node_bgp_data['tags'],
-                'prefix_lists': node_bgp_data['prefixes'],
+                'community_lists': node_bgp_data.get('tags'),
+                'prefix_lists': node_bgp_data.get('prefixes'),
                 'route_maps': route_maps,
                 }
 

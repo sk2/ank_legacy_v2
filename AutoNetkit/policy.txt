@@ -1,0 +1,3 @@
+(asn = 1) egress-> (asn = 3): (if Origin(asn=2) then addTag a100 )
+  
+                                                                        

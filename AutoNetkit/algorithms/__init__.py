@@ -1,5 +1,6 @@
 from AutoNetkit.algorithms.autonomous_system import *
 from AutoNetkit.algorithms.bgp import *
+from AutoNetkit.algorithms.bgp_policy import *
 from AutoNetkit.algorithms.dns import *
 from AutoNetkit.algorithms.housekeeping import *
 from AutoNetkit.algorithms.inv_cap import *
@@ -10,6 +11,7 @@ from AutoNetkit.algorithms.optimise_igp import *
 
 import AutoNetkit.algorithms.autonomous_system 
 import AutoNetkit.algorithms.bgp 
+import AutoNetkit.algorithms.bgp_policy
 import AutoNetkit.algorithms.dns 
 import AutoNetkit.algorithms.housekeeping
 import AutoNetkit.algorithms.inv_cap

@@ -55,6 +55,7 @@ class Internet:
     def __init__(self, filename=None, tapsn=IPNetwork("172.16.0.0/16"),
             netkit=True, cbgp=False, dynagen=False,
             junosphere=False, junosphere_olive=False, olive=False,
+            policy_file=None,
                 olive_qemu_patched=False,
             igp='ospf'): 
         self.network = network.Network()
@@ -63,6 +64,7 @@ class Internet:
             #TODO: exception handle this failing eg incorrect subnet
             tapsn = IPNetwork(tapsn)
         self.tapsn = tapsn
+        self.policy_file = policy_file,
         self.compile_targets = {
                 'netkit': netkit,
                 'cbgp': cbgp,
@@ -242,6 +244,14 @@ class Internet:
     
         # Summary
         ank.summarydoc(self.network)
+
+        if self.policy_file:
+            print "pol file is ", self.policy_file
+# apply bgp policy_file
+            LOG.info("Applying BGP policy from%s" % self.policy_file)
+            pol_parser = ank.BgpPolicyParser(self.network)
+            pol_parser.apply_policy_file(self.policy_file)
+            
         
         # now configure
         if self.compile_targets['netkit']:

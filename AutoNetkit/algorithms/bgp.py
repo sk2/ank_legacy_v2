@@ -127,6 +127,11 @@ def initialise_bgp_sessions(network):
 
     return
 
+def initialise_bgp_attributes(network):
+    for node in network.g_session:
+        network.g_session.node[node]['tags'] = {}
+        network.g_session.node[node]['prefixes'] = {}
+
 
 def initialise_bgp(network):
     if len(network.g_session):
@@ -137,6 +142,7 @@ def initialise_bgp(network):
     initialise_ebgp(network)
     initialise_ibgp(network)
     initialise_bgp_sessions(network)
+    initialise_bgp_attributes(network)
 
 def ebgp_routers(network):
     """List of all routers with an eBGP link

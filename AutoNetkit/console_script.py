@@ -29,6 +29,8 @@ def main():
                     default=False, help="Deploy lab to Netkit host")
     opt.add_option('--file', '-f', default= None, 
                     help="Load configuration from FILE")        
+    opt.add_option('--policy_file', default= None, 
+                    help="Load BGP policy statements from FILE")     
     opt.add_option('--netkit_host', default=None,
                     help="Netkit host machine (if located on another machine)") 
     opt.add_option('--netkit_username', default=None, 
@@ -103,6 +105,7 @@ def main():
         inet = Internet(tapsn = options.tapsn, netkit=options.netkit,
                 cbgp=options.cbgp, dynagen=options.dynagen, junosphere=options.junosphere,
                 junosphere_olive=options.junosphere_olive, olive=options.olive, 
+                policy_file = options.policy_file,
                 olive_qemu_patched=options.olive_qemu_patched, igp=igp)
         inet.load(f_name)
     else:    
