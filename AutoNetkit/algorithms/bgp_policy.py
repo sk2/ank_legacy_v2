@@ -222,7 +222,7 @@ class BgpPolicyParser:
         selected_edges = ( e for e in edges if select_function(e, set_a, set_b))
         for u,v in selected_edges:
             LOG.debug("Applying policy %s to %s of %s->%s" % ( per_session_policy, ingress_or_egress, 
-                self.network.label(u), self.network.label(v)))
+                self.network.fqdn(u), self.network.fqdn(v)))
             self.network.g_session[u][v][ingress_or_egress].append(per_session_policy)
 
     def evaluate_node_stack(self, stack):
@@ -413,11 +413,11 @@ class BgpPolicyParser:
                                 tags.update([action_clause.value])
                         match_tuples_with_seqno.append(self.match_tuple_with_seq_no(seq_no.next(), 
                             match_tuple.match_clauses, match_tuple.action_clauses, match_tuple.reject))
-                    route_map_name = "rm_ingress_%s_%s" % (self.network.label(dst).replace(".", "_"), counter.next())
+                    route_map_name = "rm_ingress_%s_%s" % (self.network.fqdn(dst).replace(".", "_"), counter.next())
 # allocate sequence number
                     session_policy_tuples.append(self.route_map_tuple(route_map_name, match_tuples_with_seqno))
                 # Update with the named policy tuples
-                LOG.debug("Storing session tuples %s to %s %s ingress" % (session_policy_tuples, self.network.label(src), self.network.label(dst)))
+                LOG.debug("Storing session tuples %s to %s %s ingress" % (session_policy_tuples, self.network.fqdn(src), self.network.fqdn(dst)))
                 self.network.g_session[dst][src]['ingress'] = session_policy_tuples
 
             for (src, dst, session_data) in self.network.g_session.out_edges(node, data=True):
@@ -437,13 +437,13 @@ class BgpPolicyParser:
                                 tags.update([action_clause.value])
                         match_tuples_with_seqno.append(self.match_tuple_with_seq_no(seq_no.next(), 
                             match_tuple.match_clauses, match_tuple.action_clauses, match_tuple.reject))
-                    route_map_name = "rm_egress_%s_%s" % (self.network.label(dst).replace(".", "_"), 
+                    route_map_name = "rm_egress_%s_%s" % (self.network.fqdn(dst).replace(".", "_"), 
                             counter.next())
 # allocate sequence number
                     session_policy_tuples.append(self.route_map_tuple(route_map_name, match_tuples_with_seqno))
                 # Update with the named policy tuples
                 self.network.g_session[src][dst]['egress'] = session_policy_tuples
-                LOG.debug("Storing session tuples %s to %s %s egress" % (session_policy_tuples, self.network.label(src), self.network.label(dst)))
+                LOG.debug("Storing session tuples %s to %s %s egress" % (session_policy_tuples, self.network.fqdn(src), self.network.fqdn(dst)))
 
             self.network.g_session.node[node]['tags'] = tags
             self.network.g_session.node[node]['prefixes'] = prefixes

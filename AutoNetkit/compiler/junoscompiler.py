@@ -262,7 +262,7 @@ class JunosCompiler:
         return igp_interfaces
 
     def configure_bgp(self, node, physical_graph, ibgp_graph, ebgp_graph):
-        LOG.debug("Configuring  for %s" % self.network.fqdn(node))
+        LOG.debug("Configuring BGP for %s" % self.network.fqdn(node))
         """ BGP configuration"""
         if len(ebgp_graph.edges()) == 0:
 # Don't configure iBGP or eBGP if no eBGP edges

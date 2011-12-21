@@ -242,7 +242,7 @@ class Network(object):
 
     def fqdn(self, node):
         """Shortcut to fqdn"""
-        return ank.fqdn(self.network, node)
+        return ank.fqdn(self, node)
 
 
     # For dealing with BGP Sessions graphs
