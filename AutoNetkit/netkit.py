@@ -24,6 +24,7 @@ except:
     raise
 
 import os  
+import sys
 
 
 from netaddr import IPNetwork
@@ -202,11 +203,16 @@ class Netkit:
             #todo: ping tap host machine ie tap_host ip to check is active   
             return True                                                       
         else:
-            #TODO: use interactive mode for sudo like in the junos deployment module
-            LOG.warn("Please setup tap network link manually")
-            LOG.warn(("eg vstart {0} --con0=none --eth0=tap,{1},{2}").format( 
-                self.tap_hostname, self.tap_host, self.tap_ip))
-            return False
+            LOG.info("Starting tap tunnel: please enter sudo password and type '^]' (Control and right square bracket)"
+                    "to return to AutoNetkit")
+            shell.sendline("vstart %s --con0=none --eth0=tap,%s,%s" % ( self.tap_hostname, self.tap_host, self.tap_ip))
+            sys.stdout.write (shell.after)
+            sys.stdout.flush()
+            shell.interact()
+# Sendline in case user didn't have to sudo, and so didn't do anything
+            shell.sendline()
+
+            return True
         
     def disconnect_vm(self): 
         """ Disconnects from a Netkit virtual machine"""
