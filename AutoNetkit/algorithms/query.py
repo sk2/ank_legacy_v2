@@ -23,6 +23,37 @@ from pkg_resources import resource_filename
 from mako.lookup import TemplateLookup
 
 
+# logging hacks
+import logging
+import logging.handlers
+
+LEVELS = {'debug': logging.DEBUG,
+        'info': logging.INFO,
+        'warning': logging.WARNING,
+        'error': logging.ERROR,
+        'critical': logging.CRITICAL}
+
+
+#TODO: load logger settings from config file
+logger = logging.getLogger("ANK")
+logger.setLevel(logging.DEBUG)
+
+#TODO: check settings are being loaded from file correctly
+# and that handlers are being correctly set - as default level appearing
+
+ch = logging.StreamHandler()
+# Use debug from settings
+
+formatter = logging.Formatter('%(levelname)-6s %(message)s')
+
+ch.setLevel(logging.DEBUG)
+#ch.setLevel(logging.INFO)
+
+ch.setFormatter(formatter)
+
+logging.getLogger('').addHandler(ch)
+
+
 
 class queryParser:
     def __init__(self):
@@ -65,6 +96,8 @@ class queryParser:
                 }
 
         self.match_tuple = namedtuple('match_tuple', "match_clauses, action_clauses, reject")
+        self.match_tuple_with_seq_no = namedtuple('match_tuple', "seq_no, match_clauses, action_clauses, reject")
+        self.route_map_tuple = namedtuple('route_map', "name, match_tuples")
         self.match_clause = namedtuple('match_clause', 'type, comparison, value')
         self.action_clause = namedtuple('action_clause', 'action, value')
 
@@ -404,12 +437,16 @@ class queryParser:
 
 #TODO: apply stringEnd to the matching parse queries to ensure have parsed all
 
-inet = ank.internet.Internet()
+inet = ank.internet.Internet(netkit=True, olive=True)
 #inet.load("condensed_west_europe.pickle")
 inet.load("gao_rex_example.graphml")
 ank.initialise_bgp(inet.network)
+inet.add_dns()
 ank.allocate_subnets(inet.network)
 ank.jsplot(inet.network)        
+ank.alloc_interfaces(inet.network)
+ank.alloc_tap_hosts(inet.network, inet.tapsn)
+ank.allocate_dns_servers(inet.network)
 
 qparser = queryParser()
 
@@ -564,31 +601,14 @@ lookup = TemplateLookup(directories=[ template_dir ],
 quagga_bgp_policy_template = lookup.get_template("quagga/bgp_policy.mako")
 junos_bgp_policy_template = lookup.get_template("junos/bgp_policy.mako")
 
-route_map_tuple = namedtuple('route_map', "name, match_tuples")
-
 def session_to_quagga(session_list):
-    route_maps = []
-    route_map_id = ("rm" + str(x) for x in itertools.count(1)) 
-    for session in session_list: 
-        sequence_number = itertools.count(10, 10)
-        route_maps.append(route_map_tuple(route_map_id.next(), 
-            [(sequence_number.next(), match_tuples) for match_tuples in session]))
-#TODO: need to allocate community values (do this globally for network)
     return quagga_bgp_policy_template.render(
-            route_maps = route_maps
+            route_maps = session_list
             )
 
 def session_to_junos(session_list):
-    route_maps = []
-    route_map_id = ("rm" + str(x) for x in itertools.count(1)) 
-    for session in session_list: 
-#TODO: need to reformat prefix list/matches
-        term_number = itertools.count(1)
-        route_maps.append(route_map_tuple(route_map_id.next(), 
-            [(term_number.next(), match_tuples) for match_tuples in session]))
-#TODO: need to allocate community values (do this globally for network)
     return junos_bgp_policy_template.render(
-            route_maps = route_maps
+            route_maps = session_list
             )
 
 
@@ -597,8 +617,14 @@ def cl_and_pl_per_node(qparser, network):
     for node in network.g_session:
         prefixes = set()
         tags = set()
+# also sets routemap names
         for (src, dst, session_data) in inet.network.g_session.in_edges(node, data=True):
+            counter = itertools.count(1)
+            session_policy_tuples = []
+            continue
             for match_tuples in session_data['ingress']:
+                seq_no = itertools.count(1)
+                match_tuples_with_seqno = []
                 for match_tuple in match_tuples:
                     for match_clause in match_tuple.match_clauses:
                         if 'prefix_list' in match_clause.type:
@@ -609,8 +635,22 @@ def cl_and_pl_per_node(qparser, network):
                         if action_clause.action in set(['addTag']):
                             tags.update([action_clause.value])
 
+                    match_tuples_with_seqno.append(qparser.match_tuple_with_seq_no(seq_no.next(), 
+                        match_tuple.match_clauses, match_tuple.action_clauses, match_tuple.reject))
+                route_map_name = "rm_%s_egress_%s" % (network.label(dst), counter.next())
+                route_map_name = route_map_name.replace(".", "_").lower()
+# allocate sequence number
+                session_policy_tuples.append(qparser.route_map_tuple(route_map_name, match_tuples_with_seqno))
+# Update with the named policy tuples
+        inet.network.g_session[dst][src]['ingress'] = session_policy_tuples
+
+
         for (src, dst, session_data) in inet.network.g_session.out_edges(node, data=True):
+            counter = itertools.count(1)
+            session_policy_tuples = []
             for match_tuples in session_data['egress']:
+                seq_no = itertools.count(1)
+                match_tuples_with_seqno = []
                 for match_tuple in match_tuples:
                     for match_clause in match_tuple.match_clauses:
                         if 'prefix_list' in match_clause.type:
@@ -620,6 +660,14 @@ def cl_and_pl_per_node(qparser, network):
                     for action_clause in match_tuple.action_clauses:
                         if action_clause.action in set(['addTag']):
                             tags.update([action_clause.value])
+                    match_tuples_with_seqno.append(qparser.match_tuple_with_seq_no(seq_no.next(), 
+                        match_tuple.match_clauses, match_tuple.action_clauses, match_tuple.reject))
+                route_map_name = "rm_%s_egress_%s" % (network.label(dst), counter.next())
+                route_map_name = route_map_name.replace(".", "_").lower()
+# allocate sequence number
+                session_policy_tuples.append(qparser.route_map_tuple(route_map_name, match_tuples_with_seqno))
+            # Update with the named policy tuples
+            inet.network.g_session[src][dst]['egress'] = session_policy_tuples
 
         network.g_session.node[node]['tags'] = tags
         network.g_session.node[node]['prefixes'] = prefixes
@@ -676,3 +724,6 @@ with open( policy_out_file, 'w+') as f_pol:
                 f_pol.write(session_to_junos(policy) +  "\n")
             
         
+
+inet.compile()
+

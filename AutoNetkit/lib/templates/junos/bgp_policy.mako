@@ -1,7 +1,7 @@
 %for route_map in route_maps:    
 policy-statement ${route_map.name} { 
-	%for (term_number, match_tuple) in route_map.match_tuples:        
-	term ${term_number} {
+	%for match_tuple in route_map.match_tuples:        
+	term ${match_tuple.seq_no * 10} {
 	    %if len(match_tuple.match_clauses):
 	    from  {
 	    %for match_clause in match_tuple.match_clauses:
