@@ -464,15 +464,10 @@ class BgpPolicyParser:
         """Stores the list of tags/community value mappings in the router in session graph"""
         LOG.debug("Storing allocated tags to routers")
         for node, data in self.network.g_session.nodes(data=True):
-            tags = dict.fromkeys(data['tags'])
-            for tag in tags:
-                tags[tag] = self.allocated_tags[tag]
-            # store updated tags
+            tags = dict( (tag, self.allocated_tags[tag]) for tag in data['tags'])
             self.network.g_session.node[node]['tags'] = tags
 
-            prefixes = dict.fromkeys(data['prefixes'])
-            for prefix in prefixes:
-                prefixes[prefix] = self.prefix_lists[prefix]
+            prefixes = dict( (tag, self.prefix_lists[prefix]) for prefix in data['prefixes'])
             # store updated tags
             self.network.g_session.node[node]['prefixes'] = prefixes
 
