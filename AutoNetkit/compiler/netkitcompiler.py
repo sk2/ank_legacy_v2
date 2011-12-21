@@ -4,6 +4,7 @@ Generate Netkit configuration files for a network
 from mako.lookup import TemplateLookup
 
 from pkg_resources import resource_filename
+import pkg_resources
 
 import os
 
@@ -94,9 +95,10 @@ def tap_interface_id(network, node):
 class NetkitCompiler:
     """Compiler main"""
 
-    def __init__(self, network, services):
+    def __init__(self, network, services, zebra_password="1234"):
         self.network = network
         self.services = services
+        self.zebra_password = zebra_password
         # Speed improvement: grab eBGP and iBGP  graphs
         #TODO: fetch eBGP and iBGP graphs and cache them
 
@@ -158,6 +160,7 @@ class NetkitCompiler:
         zebra_daemons_template = lookup.get_template(
             "quagga/zebra_daemons.mako")
         zebra_template = lookup.get_template("quagga/zebra.mako")
+        motd_template = lookup.get_template("quagga/motd.mako")
 
         # Shared (common) configuration
         startup_daemon_list = []
@@ -250,14 +253,24 @@ class NetkitCompiler:
                 entryList = zebra_daemon_list,
             ))
             f_zdaemons.close()
+# MOTD
+            f_zmotd = open( os.path.join(zebra_dir(self.network, node),
+                                            "motd.txt"), 'w')
+            ank_version = pkg_resources.get_distribution("AutoNetkit").version
+            date = time.strftime("%Y%m%d_%H%M", time.localtime())
+            f_zmotd.write(motd_template.render(
+                date = date,
+                version = ank_version,
+                password = self.zebra_password,
+            ))
 
             # Main Zebra config
             f_z = open( os.path.join(zebra_dir(self.network, node),
                                      "zebra.conf"), 'w')
             f_z.write( zebra_template.render(
                 hostname = ank.fqdn(self.network, node),
-                password = "z",
-                enable_password = "z",
+                password = self.zebra_password,
+                enable_password = self.zebra_password,
                 use_snmp = True,
                 use_debug = True,
                 ))
@@ -371,7 +384,8 @@ class NetkitCompiler:
                 f_handle.write(template.render
                                (
                                    hostname = ank.fqdn(self.network, node),
-                                   password = "z",
+                                   password = self.zebra_password,
+                                   enable_password = self.zebra_password,
                                    interface_list = interface_list,
                                    network_list = network_list,
                                    routerID = node,
@@ -464,12 +478,11 @@ class NetkitCompiler:
                 f_handle = open(os.path.join(zebra_dir(self.network, node),
                                              "bgpd.conf"),'w')
 
-
                 f_handle.write(template.render(
                         hostname = ank.fqdn(self.network, node),
                         asn = self.network.asn(node),
-                        password = "z",
-                        enable_password = "z",
+                        password = self.zebra_password,
+                        enable_password = self.zebra_password,
                         router_id = self.network.lo_ip(node).ip,
                         network_list = network_list,
                         communities_dict = communities_dict,

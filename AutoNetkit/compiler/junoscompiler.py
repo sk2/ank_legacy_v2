@@ -369,6 +369,7 @@ class JunosCompiler:
         LOG.info("Configuring Junos")
         junos_template = lookup.get_template("junos/junos.mako")
         ank_version = pkg_resources.get_distribution("AutoNetkit").version
+        date = time.strftime("%Y%m%d_%H%M", time.localtime())
 
         physical_graph = self.network.graph
         igp_graph = ank.igp_graph(self.network)
@@ -410,6 +411,7 @@ class JunosCompiler:
                     bgp_groups = bgp_groups,
                     policy_options = policy_options,
                     ank_version = ank_version,
+                    date = date,
                     ))
 
     def configure(self):
