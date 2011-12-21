@@ -194,9 +194,9 @@ protocols {
 
 policy-options {     
 	% for name, values in sorted(policy_options['community_lists'].items()):     
-	 % if len(values) == 1:      
-	community ${name} members ${values.pop()};
-	 % elif len(values) > 1:
+ 	% if isinstance(values, str):   
+	community ${name} members ${values};
+	 % else:
 	community ${name} members [${" ".join(val for val in values)}];
 	%endif
 	% endfor         
@@ -217,8 +217,12 @@ policy-options {
 		    %for match_clause in match_tuple.match_clauses:
 		        % if match_clause.type == "prefix_list":
 		        prefix-list ${match_clause.value};
-		        % elif match_clause.type == "tag":
-		        community [${match_clause.value}];
+		        % elif match_clause.type == "tag":   
+				 	% if isinstance(match_clause.type, str):   
+				community ${match_clause.value};
+				 	% else:    
+				community [${" ".join(val for val in match_clause.value)}];
+					%endif
 		        % endif      
 		    %endfor
 		    }

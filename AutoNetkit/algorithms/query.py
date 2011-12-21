@@ -679,8 +679,7 @@ def store_tags_per_router(qparser, inet):
     for node, data in inet.network.g_session.nodes(data=True):
         tags = dict.fromkeys(data['tags'])
         for tag in tags:
-# put in list for consistency in cases have multiple tags (may occur elsewhere and need to iterate)
-            tags[tag] = [qparser.allocated_tags[tag]]
+            tags[tag] = qparser.allocated_tags[tag]
         # store updated tags
         inet.network.g_session.node[node]['tags'] = tags
 
