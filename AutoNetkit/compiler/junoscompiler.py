@@ -134,6 +134,7 @@ class JunosCompiler:
 
     def configure_junosphere(self):
         """Configure Junosphere topology structure"""
+        LOG.debug("Configuring Junosphere") 
         vmm_template = lookup.get_template("junos/topology_vmm.mako")
         topology_data = {}
         # Generator for private0, private1, etc
@@ -180,6 +181,7 @@ class JunosCompiler:
                 ))
 
     def configure_interfaces(self, node):
+        LOG.debug("Configuring interfaces for %s" % self.network.fqdn(node))
         """Interface configuration"""
         lo_ip = self.network.lo_ip(node)
         interfaces = []
@@ -225,6 +227,7 @@ class JunosCompiler:
 
     def configure_igp(self, node, igp_graph, ebgp_graph):
         """igp configuration"""
+        LOG.debug("Configuring IGP for %s" % self.network.label(node))
         default_weight = 1
         igp_interfaces = []
         if igp_graph.degree(node) > 0:
@@ -259,6 +262,7 @@ class JunosCompiler:
         return igp_interfaces
 
     def configure_bgp(self, node, physical_graph, ibgp_graph, ebgp_graph):
+        LOG.debug("Configuring  for %s" % self.network.fqdn(node))
         """ BGP configuration"""
         if len(ebgp_graph.edges()) == 0:
 # Don't configure iBGP or eBGP if no eBGP edges
