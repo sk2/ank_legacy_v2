@@ -393,7 +393,8 @@ class OliveDeploy():
         LOG.info( "start command %s " % start_vde_switch_cmd)
         shell.sendline('%s' % start_vde_switch_cmd)
         shell.prompt()
-        print "shell before is ", shell.before
+        #print "shell before is ", shell.before
+#TODO: catch address in use/device busy errors
         """
         i = shell.expect ([ "Address already in use" , "TUNSETIFF: Device or resource busy", pexpect.EOF])
         if i == 0:
