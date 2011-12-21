@@ -179,6 +179,7 @@ class BgpPolicyParser:
         self.bgpApplicationQuery = self.edgeQuery + Suppress(":") + self.bgpSessionQuery
 
     def apply_bgp_policy(self, qstring):
+        LOG.debug("Applying policy %s" % qstring)
         result = self.bgpApplicationQuery.parseString(qstring)
         set_a = self.node_select_query(self.network, result.query_a)
         set_b = self.node_select_query(self.network, result.query_b)
@@ -220,6 +221,8 @@ class BgpPolicyParser:
         # apply policy to edges
         selected_edges = ( e for e in edges if select_function(e, set_a, set_b))
         for u,v in selected_edges:
+            LOG.debug("Applying policy %s to %s of %s->%s" % ( per_session_policy, ingress_or_egress, 
+                self.network.label(u), self.network.label(v)))
             self.network.g_session[u][v][ingress_or_egress].append(per_session_policy)
 
     def evaluate_node_stack(self, stack):
