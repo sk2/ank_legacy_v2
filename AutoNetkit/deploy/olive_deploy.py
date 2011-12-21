@@ -373,12 +373,15 @@ class OliveDeploy():
     def start_switch(self):
         shell = self.shell
 
-        LOG.info("Please enter sudo password and type '^]' to return to AutoNetkit")
+        LOG.info("Please enter sudo password and type '^]' (Control and right square bracket)"
+                "to return to AutoNetkit")
         shell.sendline('sudo tunctl -t %s' % self.tap_name)
 	sys.stdout.write (shell.after)
 	sys.stdout.flush()
         shell.interact()
         LOG.info( "Starting vde_switch")
+# Sendline in case user didn't have to sudo, and so didn't do anything
+        shell.sendline()
 
 # start vde switch
         start_vde_switch_cmd = "vde_switch -d -t %s -n 2000 -s %s -M %s" % (self.tap_name, 
