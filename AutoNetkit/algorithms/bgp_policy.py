@@ -467,7 +467,7 @@ class BgpPolicyParser:
             tags = dict( (tag, self.allocated_tags[tag]) for tag in data['tags'])
             self.network.g_session.node[node]['tags'] = tags
 
-            prefixes = dict( (tag, self.prefix_lists[prefix]) for prefix in data['prefixes'])
+            prefixes = dict( (prefix, self.prefix_lists[prefix]) for prefix in data['prefixes'])
             # store updated tags
             self.network.g_session.node[node]['prefixes'] = prefixes
 
