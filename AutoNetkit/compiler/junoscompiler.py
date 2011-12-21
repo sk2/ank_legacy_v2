@@ -341,8 +341,6 @@ class JunosCompiler:
                     'type': 'external', 
                     'neighbors': external_peers}
 
-        pprint.pprint(bgp_groups)
-
         return bgp_groups
 
     def configure_junos(self):

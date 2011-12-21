@@ -171,13 +171,15 @@ protocols {
 				 % if 'peer_as' in neighbor:
 					peer-as ${neighbor['peer_as']};
 				%endif             
-				 % if len(neighbor['route_maps_in'] == 1):   
-					import [${",".join(neigh for neigh in neighbor['route_maps_in'])}];
-				 % elif len(neighbor['route_maps_in'] == 1):
-					import [${",".join(neigh for neigh in neighbor['route_maps_in'])}];
+				 % if len(neighbor['route_maps_in']) == 1:   
+					import ${neighbor['route_maps_in'].pop()};
+				 % elif len(neighbor['route_maps_in']) > 1:
+					import [${", ".join(neigh for neigh in neighbor['route_maps_in'])}];
 				%endif  
-				 % if len(neighbor['route_maps_out'] > 1):      
-  					export [${",".join(neigh for neigh in neighbor['route_maps_out'])}];
+				 % if len(neighbor['route_maps_out']) == 1:      
+  					export ${neighbor['route_maps_out'].pop()};
+				 % elif len(neighbor['route_maps_in']) > 1:
+					export [${", ".join(neigh for neigh in neighbor['route_maps_out'])}];
 				%endif
 				}                          
 				   % else:          
