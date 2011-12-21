@@ -64,7 +64,7 @@ class Internet:
             #TODO: exception handle this failing eg incorrect subnet
             tapsn = IPNetwork(tapsn)
         self.tapsn = tapsn
-        self.policy_file = policy_file,
+        self.policy_file = policy_file
         self.compile_targets = {
                 'netkit': netkit,
                 'cbgp': cbgp,
@@ -246,9 +246,8 @@ class Internet:
         ank.summarydoc(self.network)
 
         if self.policy_file:
-            print "pol file is ", self.policy_file
 # apply bgp policy_file
-            LOG.info("Applying BGP policy from%s" % self.policy_file)
+            LOG.info("Applying BGP policy from %s" % self.policy_file)
             pol_parser = ank.BgpPolicyParser(self.network)
             pol_parser.apply_policy_file(self.policy_file)
             

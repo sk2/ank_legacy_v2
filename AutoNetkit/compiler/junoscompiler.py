@@ -265,8 +265,6 @@ class JunosCompiler:
             LOG.debug("Skipping BGP configuration for %s as no eBGP edges" % node)
             return
 
-        print "looking at bgp for node", self.network.label(node)
-
 #TODO: put comments in for junos bgp peerings
         # route maps
         bgp_groups = {}

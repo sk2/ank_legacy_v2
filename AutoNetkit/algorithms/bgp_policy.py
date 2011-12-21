@@ -19,35 +19,9 @@ import itertools
 from collections import namedtuple
 
 
-# logging hacks
+
 import logging
-import logging.handlers
-
-LEVELS = {'debug': logging.DEBUG,
-        'info': logging.INFO,
-        'warning': logging.WARNING,
-        'error': logging.ERROR,
-        'critical': logging.CRITICAL}
-
-
-#TODO: load logger settings from config file
-logger = logging.getLogger("ANK")
-logger.setLevel(logging.DEBUG)
-
-#TODO: check settings are being loaded from file correctly
-# and that handlers are being correctly set - as default level appearing
-
-ch = logging.StreamHandler()
-# Use debug from settings
-
-formatter = logging.Formatter('%(levelname)-6s %(message)s')
-
-ch.setLevel(logging.DEBUG)
-#ch.setLevel(logging.INFO)
-
-ch.setFormatter(formatter)
-
-logging.getLogger('').addHandler(ch)
+LOG = logging.getLogger("ANK")
 
 
 
@@ -358,7 +332,7 @@ class BgpPolicyParser:
 # efficiency: check if query has already been executed (ie if already prefixes for this tag)
 #TODO: see if need to have unique name for prefix list and comm val: eg pl_tag and 
         if tag_pl in self.prefix_lists:
-            print "already executed prefix lookup for", tag_pl
+            LOG.debug( "already executed prefix lookup for", tag_pl)
         else:
             prefixes = self.get_prefixes(network, nodes)
             self.prefix_lists[tag_pl] = prefixes
@@ -366,8 +340,8 @@ class BgpPolicyParser:
             for node in nodes:
                 apply_prefix_query = ("(node = %s) egress-> (*): "
                         "(if prefix_list = %s then addTag %s)") % (node, tag_pl, tag_cl)
-                print apply_prefix_query
-                self.apply_bgp_policy(network, apply_prefix_query)
+                LOG.debug( apply_prefix_query)
+                self.apply_bgp_policy(apply_prefix_query)
 
 # store tag
             self.tags_to_allocate.update([tag])
@@ -375,7 +349,6 @@ class BgpPolicyParser:
 
 
         #matching_nodes = self.node_select_query(network, ot_match.value)
-        #print "matching nodes", matching_nodes
 
 
 #TODO: make network a variable in the qparser class???
@@ -486,7 +459,7 @@ class BgpPolicyParser:
                 if line.strip() == "":
 # blank line
                     continue
-                self.apply_bgp_policy(self.network, line)
+                self.apply_bgp_policy(line)
         self.cl_and_pl_per_node()
         self.allocate_tags()
         self.store_tags_per_router()
