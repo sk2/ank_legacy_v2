@@ -393,10 +393,6 @@ class JunosCompiler:
             if not adv_subnet in network_list:
                 network_list.append(adv_subnet)
 
-            print "groups", bgp_groups
-            print "policy_options", policy_options
-
-
             juniper_filename = router_conf_path(self.network, node)
             with open( juniper_filename, 'w') as f_jun:
                 f_jun.write( junos_template.render(
