@@ -53,7 +53,7 @@ class OliveDeploy():
 # For use on local machine
         self.shell_type ="bash"
         self.logfile = open( os.path.join(config.log_dir, "pxssh.log"), 'w')
-        self.tap_name = "ank_tap_olive"
+        self.tap_name_base = "ank_tap_olive"
         self.vde_socket_name = None
         self.vde_mgmt_socket_name = None
         self.base_image = base_image
@@ -67,6 +67,9 @@ class OliveDeploy():
 
     def get_cwd(self):
         return self.get_command_output("pwd")
+
+    def get_whoami(self):
+        return self.get_command_output("whoami")
 
     def get_command_output(self, cmd):
         """ get current working directory"""
@@ -123,6 +126,7 @@ class OliveDeploy():
 
         self.shell = shell   
         self.working_directory = self.get_cwd()
+        self.linux_username = self.get_whoami()
         return True
 
     def transfer_file(self, local_file, remote_folder):
@@ -373,7 +377,8 @@ class OliveDeploy():
 
         LOG.info("Please enter sudo password and type '^]' (Control and right square bracket)"
                 "to return to AutoNetkit")
-        shell.sendline('sudo tunctl -t %s' % self.tap_name)
+        self.tap_name = "%s_%s" % (self.tap_name_base, self.linux_username)
+        shell.sendline('sudo tunctl -u %s -t %s' % (self.linux_username, self.tap_name))
 	sys.stdout.write (shell.after)
 	sys.stdout.flush()
         shell.interact()
