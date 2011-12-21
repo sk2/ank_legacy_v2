@@ -16,7 +16,6 @@ AutoNetkit/algorithms/ank_lab/*
 AutoNetkit/algorithms/policy*.txt
 AutoNetkit/deploy/ank_lab/*
 tags
-*.gz
 AutoNetkit-*/
 doc/build/
 .tox/*
