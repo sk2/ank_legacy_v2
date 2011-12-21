@@ -264,10 +264,8 @@ class JunosCompiler:
     def configure_bgp(self, node, physical_graph, ibgp_graph, ebgp_graph):
         LOG.debug("Configuring BGP for %s" % self.network.fqdn(node))
         """ BGP configuration"""
-        if len(ebgp_graph.edges()) == 0:
-# Don't configure iBGP or eBGP if no eBGP edges
-            LOG.debug("Skipping BGP configuration for %s as no eBGP edges" % node)
-            return
+#TODO: Don't configure iBGP or eBGP if no eBGP edges
+# need to pass correctt blank dicts to templates then...
 
 #TODO: put comments in for junos bgp peerings
         # route maps
@@ -394,6 +392,9 @@ class JunosCompiler:
             adv_subnet = self.network.ip_as_allocs[asn]
             if not adv_subnet in network_list:
                 network_list.append(adv_subnet)
+
+            print "groups", bgp_groups
+            print "policy_options", policy_options
 
 
             juniper_filename = router_conf_path(self.network, node)
