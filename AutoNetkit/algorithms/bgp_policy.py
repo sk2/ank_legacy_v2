@@ -417,6 +417,7 @@ class BgpPolicyParser:
 # allocate sequence number
                     session_policy_tuples.append(self.route_map_tuple(route_map_name, match_tuples_with_seqno))
                 # Update with the named policy tuples
+                LOG.debug("Storing session tuples %s to %s %s ingress" % (session_policy_tuples, self.network.label(src), self.network.label(dst)))
                 self.network.g_session[dst][src]['ingress'] = session_policy_tuples
 
             for (src, dst, session_data) in self.network.g_session.out_edges(node, data=True):
@@ -442,6 +443,7 @@ class BgpPolicyParser:
                     session_policy_tuples.append(self.route_map_tuple(route_map_name, match_tuples_with_seqno))
                 # Update with the named policy tuples
                 self.network.g_session[src][dst]['egress'] = session_policy_tuples
+                LOG.debug("Storing session tuples %s to %s %s egress" % (session_policy_tuples, self.network.label(src), self.network.label(dst)))
 
             self.network.g_session.node[node]['tags'] = tags
             self.network.g_session.node[node]['prefixes'] = prefixes
