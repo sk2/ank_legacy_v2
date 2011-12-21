@@ -338,8 +338,6 @@ class OliveDeploy():
         
         for router_id, router in enumerate(self.network.graph):
             mac_list = self.mac_address_list(router_id, 6)
-            print mac_list
-
             router_info = router_info_tuple(
                     config_files[router].get('name'),
                     config_files[router].get('config_file_snapshot'),
