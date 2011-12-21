@@ -257,7 +257,7 @@ class NetkitCompiler:
             f_zmotd = open( os.path.join(zebra_dir(self.network, node),
                                             "motd.txt"), 'w')
             ank_version = pkg_resources.get_distribution("AutoNetkit").version
-            date = time.strftime("%Y%m%d_%H%M", time.localtime())
+            date = time.strftime("%Y%-m-%d %H:%M", time.localtime())
             f_zmotd.write(motd_template.render(
                 date = date,
                 version = ank_version,
