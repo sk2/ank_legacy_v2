@@ -193,7 +193,7 @@ protocols {
 }                  
 
 policy-options {     
-	% for name, values in policy_options['community_lists'].items():     
+	% for name, values in sorted(policy_options['community_lists'].items()):     
 	 % if len(values) == 1:      
 	community ${name} members ${values.pop()};
 	 % elif len(values) > 1:
@@ -201,7 +201,7 @@ policy-options {
 	%endif
 	% endfor         
 	
-	% for name, values in policy_options['prefix_lists'].items(): 
+	% for name, values in sorted(policy_options['prefix_lists'].items()): 
 	prefix-list ${name} {
 	    % for prefix in values: 
 			${prefix};
@@ -227,7 +227,7 @@ policy-options {
 		    then {                    
 		    %for action_clause in match_tuple.action_clauses:
 		        % if action_clause.action == "addTag":
-		        community set ${action_clause.value};
+		        community add ${action_clause.value};
 		        % elif action_clause.action == "setLP":
 		        set local-preference ${action_clause.value};      
 		        % elif action_clause.action == "setNextHop":

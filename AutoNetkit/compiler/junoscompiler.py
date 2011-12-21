@@ -360,8 +360,6 @@ class JunosCompiler:
                 'route_maps': route_maps,
                 }
 
-        pprint.pprint(policy_options)
-
         return (bgp_groups, policy_options)
 
     def configure_junos(self):
