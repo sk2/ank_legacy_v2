@@ -618,10 +618,9 @@ def cl_and_pl_per_node(qparser, network):
         prefixes = set()
         tags = set()
 # also sets routemap names
-        for (src, dst, session_data) in inet.network.g_session.in_edges(node, data=True):
+        for (dst, src, session_data) in inet.network.g_session.in_edges(node, data=True):
             counter = itertools.count(1)
             session_policy_tuples = []
-            continue
             for match_tuples in session_data['ingress']:
                 seq_no = itertools.count(1)
                 match_tuples_with_seqno = []
@@ -634,16 +633,14 @@ def cl_and_pl_per_node(qparser, network):
                     for action_clause in match_tuple.action_clauses:
                         if action_clause.action in set(['addTag']):
                             tags.update([action_clause.value])
-
                     match_tuples_with_seqno.append(qparser.match_tuple_with_seq_no(seq_no.next(), 
                         match_tuple.match_clauses, match_tuple.action_clauses, match_tuple.reject))
-                route_map_name = "rm_%s_egress_%s" % (network.label(dst), counter.next())
+                route_map_name = "rm_%s_ingress_%s" % (network.label(dst), counter.next())
                 route_map_name = route_map_name.replace(".", "_").lower()
 # allocate sequence number
                 session_policy_tuples.append(qparser.route_map_tuple(route_map_name, match_tuples_with_seqno))
-# Update with the named policy tuples
-        inet.network.g_session[dst][src]['ingress'] = session_policy_tuples
-
+            # Update with the named policy tuples
+            inet.network.g_session[dst][src]['ingress'] = session_policy_tuples
 
         for (src, dst, session_data) in inet.network.g_session.out_edges(node, data=True):
             counter = itertools.count(1)

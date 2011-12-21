@@ -273,7 +273,14 @@ class JunosCompiler:
         if node in ibgp_graph:
             internal_peers = []
             for peer in ibgp_graph.neighbors(node):
-                internal_peers.append({'id': self.network.lo_ip(peer).ip})
+                route_maps_in = [route_map.name for route_map in 
+                        self.network.g_session[peer][node]['ingress']]
+                route_maps_out = [route_map.name for route_map in 
+                        self.network.g_session[node][peer]['egress']]
+                internal_peers.append({'id': self.network.lo_ip(peer).ip,
+                    'route_maps_in': route_maps_in,
+                    'route_maps_out': route_maps_out,
+                    })
             bgp_groups['internal_peers'] = {
                     'type': 'internal',
                     'neighbors': internal_peers
@@ -283,13 +290,18 @@ class JunosCompiler:
         ibgp_rr_client_list = []
         if node in ibgp_graph:
             for src, neigh, data in ibgp_graph.edges(node, data=True):
-                print data
+                route_maps_in = [route_map.name for route_map in 
+                        self.network.g_session[neigh][node]['ingress']]
+                route_maps_out = [route_map.name for route_map in 
+                        self.network.g_session[node][neigh]['egress']]
                 description = data.get("rr_dir") + " to " + ank.fqdn(self.network, neigh)
                 if data.get('rr_dir') == 'down':
                     ibgp_rr_client_list.append(
                             {
                                 'id':  self.network.lo_ip(neigh).ip,
                                 'description':      description,
+                                'route_maps_in': route_maps_in,
+                                'route_maps_out': route_maps_out,
                                 })
                 elif (data.get('rr_dir') in set(['up', 'over', 'peer'])
                         or data.get('rr_dir') is None):
@@ -297,6 +309,8 @@ class JunosCompiler:
                             {
                                 'id':  self.network.lo_ip(neigh).ip,
                                 'description':      description,
+                                'route_maps_in': route_maps_in,
+                                'route_maps_out': route_maps_out,
                                 })
 
         bgp_groups['internal_peers'] = {
@@ -313,17 +327,21 @@ class JunosCompiler:
         if node in ebgp_graph:
             external_peers = []
             for peer in ebgp_graph.neighbors(node):
-                data = self.network.g_session[node][peer]
-                print "egress", data
-                data = self.network.g_session[peer][node]
-                print "ingress", data
+                route_maps_in = [route_map.name for route_map in 
+                        self.network.g_session[peer][node]['ingress']]
+                route_maps_out = [route_map.name for route_map in 
+                        self.network.g_session[node][peer]['egress']]
                 peer_ip = physical_graph[peer][node]['ip']
                 external_peers.append({
                     'id': peer_ip, 
+                    'route_maps_in': route_maps_in,
+                    'route_maps_out': route_maps_out,
                     'peer_as': self.network.asn(peer)})
             bgp_groups['external_peers'] = {
                     'type': 'external', 
                     'neighbors': external_peers}
+
+        pprint.pprint(bgp_groups)
 
         return bgp_groups
 

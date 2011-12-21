@@ -166,10 +166,20 @@ protocols {
 			    cluster ${group_data['cluster']}
 			    % endif
 			    % for neighbor in group_data['neighbors']: 
-				   % if 'peer_as' in neighbor:      
-			    neighbor  ${neighbor['id']} {
+				   % if 'peer_as' in neighbor or len(neighbor['route_maps_in']) or len(neighbor['route_maps_out']):      
+			    neighbor  ${neighbor['id']} {  
+				 % if 'peer_as' in neighbor:
 					peer-as ${neighbor['peer_as']};
-				}
+				%endif             
+				 % if len(neighbor['route_maps_in'] == 1):   
+					import [${",".join(neigh for neigh in neighbor['route_maps_in'])}];
+				 % elif len(neighbor['route_maps_in'] == 1):
+					import [${",".join(neigh for neigh in neighbor['route_maps_in'])}];
+				%endif  
+				 % if len(neighbor['route_maps_out'] > 1):      
+  					export [${",".join(neigh for neigh in neighbor['route_maps_out'])}];
+				%endif
+				}                          
 				   % else:          
 			    neighbor  ${neighbor['id']};
 				   % endif
