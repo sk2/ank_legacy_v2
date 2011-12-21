@@ -1,7 +1,8 @@
 
 hostname ${hostname}
 password ${password}
-enable password ${enable_password}
+enable password ${enable_password}      
+banner motd file /etc/quagga/motd.txt
                                            
 
                                 

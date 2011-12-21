@@ -1,6 +1,7 @@
 !
 hostname ${hostname}
-password ${password}
+password ${password}   
+banner motd file /etc/quagga/motd.txt
 !
 #Setup interfaces         
 % for i in interface_list:
