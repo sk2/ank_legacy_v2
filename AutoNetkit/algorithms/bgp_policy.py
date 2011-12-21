@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Query
+Parse BGP policy from a file. Work in progress.
 """
 __author__ = "\n".join(['Simon Knight'])
 #    Copyright (C) 2009-2011 by Simon Knight, Hung Nguyen
@@ -26,6 +26,7 @@ LOG = logging.getLogger("ANK")
 
 
 class BgpPolicyParser:
+    """Parser class"""
     def __init__(self, network):
         self.network = network
 
@@ -179,6 +180,7 @@ class BgpPolicyParser:
         self.bgpApplicationQuery = self.edgeQuery + Suppress(":") + self.bgpSessionQuery
 
     def apply_bgp_policy(self, qstring):
+        """Applies policy to network"""
         LOG.debug("Applying policy %s" % qstring)
         result = self.bgpApplicationQuery.parseString(qstring)
         set_a = self.node_select_query(result.query_a)
@@ -226,6 +228,7 @@ class BgpPolicyParser:
             self.network.g_session[u][v][ingress_or_egress].append(per_session_policy)
 
     def evaluate_node_stack(self, stack):
+        """Evaluates a stack of nodes with join queries"""
         LOG.debug("Evaluating node stack %s" % stack)
         if len(stack) == 1:
             return set(stack.pop())
@@ -288,6 +291,7 @@ class BgpPolicyParser:
         return final_set
 
     def allocate_tags(self):
+        """Allocates community values to tags"""
         LOG.debug("Allocating community values to tags")
         tag_id = itertools.count(10,10)
         for tag in self.tags_to_allocate:
@@ -295,6 +299,7 @@ class BgpPolicyParser:
 
 
     def get_prefixes(self, nodes):
+        """Returns prefixes for given node set"""
         LOG.debug("Returning prefixes for nodes %s" % nodes)
         prefixes = set()
         for node in nodes:
@@ -323,12 +328,15 @@ class BgpPolicyParser:
         return "_".join(retval)
 
     def tag_to_pl(self, tag):
+        """Adds prefix list prefix to tag"""
         return "pl_%s" % tag
 
     def tag_to_cl(self, tag):
+        """Adds community list prefix to tag"""
         return "cl_%s" % tag
 
     def proc_ot_match(self, match_type, match_query):
+        """Processes origin or transit match query"""
         LOG.debug("Processing Origin/Transit query %s %s" % (match_type, match_query))
 # extract the node queryParser
 #TODO: handle case of multiple matches......
@@ -362,6 +370,7 @@ class BgpPolicyParser:
 #TODO: make network a variable in the qparser class???
 
     def process_if_then_else(self, parsed_query):
+        """Processes if-then-else query"""
         LOG.debug("Processing if-then-else query %s" % parsed_query)
         retval = []
         for token in parsed_query:
@@ -390,7 +399,8 @@ class BgpPolicyParser:
         return retval
 
     def cl_and_pl_per_node(self):
-        # extract tags and prefixes used from sessions
+        """extract tags and prefixes used from sessions
+        Also applies sequence numbers to match clauses"""
         LOG.debug("Extracting community lists and prefix lists per node, adding sequence numbers")
         for node in self.network.g_session:
             prefixes = set()
@@ -451,6 +461,7 @@ class BgpPolicyParser:
             self.tags_to_allocate.update(tags)
 
     def store_tags_per_router(self):
+        """Stores the list of tags/community value mappings in the router in session graph"""
         LOG.debug("Storing allocated tags to routers")
         for node, data in self.network.g_session.nodes(data=True):
             tags = dict.fromkeys(data['tags'])
@@ -467,6 +478,7 @@ class BgpPolicyParser:
 
 
     def apply_policy_file(self, policy_in_file):
+        """Applies a BGP policy file to the network"""
         LOG.debug("Applying policy file %s" % policy_in_file)
         with open( policy_in_file, 'r') as f_pol:
             for line in f_pol.readlines():

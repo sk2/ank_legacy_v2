@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Deploy a given Netkit lab to a Netkit server
+Deploy a given Olive lab to an Olive server
 """
 __author__ = "\n".join(['Simon Knight'])
 #    Copyright (C) 2009-2011 by Simon Knight, Hung Nguyen, Askar Jaboldinov 
@@ -10,7 +10,6 @@ LOG = logging.getLogger("ANK")
                                  
 from collections import namedtuple
                                  
-import time
 import os
 import time
 import AutoNetkit.config as config
@@ -20,7 +19,6 @@ import AutoNetkit as ank
 import itertools
 import pprint
 import netaddr
-import random
 
 
 # Used for EOF and TIMEOUT variables
