@@ -17,6 +17,7 @@ LOG = logging.getLogger("ANK")
 def allocate_dns_servers(network):
     # Remove any previously set DNS servers
     #TODO: use ANK API rather than direct graph access
+    LOG.debug("Allocating DNS servers")
     for node, data in network.graph.nodes_iter(data=True):
         if 'local_dns' in data:
             del network.graph.node[node]['local_dns']
@@ -54,6 +55,7 @@ def dns_list(network):
     return retval
 
 def root_dns(network):
+    LOG.debug("Allocating root DNS server")
     root_dns_server = [node for node,data in network.graph.nodes_iter(data=True)
                        if 'global_dns' in data]
     if len(root_dns_server) < 1:

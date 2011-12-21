@@ -52,6 +52,7 @@ def configure_ibgp_rr(network):
 
     Note: this currently needs ibgp_level to be set globally for route-reflection to work.
     Future work will implement on a per-AS basis."""
+    LOG.debug("Configuring iBGP route reflectors")
     edges_to_add = []
     for (s,t) in ((s,t) for s in network.graph.nodes() for t in network.graph.nodes() 
             if (s!= t # not same node
@@ -101,12 +102,14 @@ def initialise_ebgp(network):
     >>> network.g_session.edges()
     [('2d', '3a'), ('3a', '1b'), ('1c', '2a')]
     """
+    LOG.debug("Initialising eBGP")
     edges_to_add = ( (src, dst) for src, dst in network.graph.edges()
             if network.asn(src) != network.asn(dst))
     edges_to_add = list(edges_to_add)
     network.g_session.add_edges_from(edges_to_add)
 
 def initialise_ibgp(network):
+    LOG.debug("Initialising iBGP")
     if ibgp_level_set_for_all_nodes(network):
         configure_ibgp_rr(network)
     else:
@@ -121,6 +124,7 @@ def initialise_bgp_sessions(network):
     Note: can't do in add_edges_from due to:
     http://www.ferg.org/projects/python_gotchas.html#contents_item_6
     """
+    LOG.debug("Initialising iBGP sessions")
     for (u,v) in network.g_session.edges():
         network.g_session[u][v]['ingress'] = []
         network.g_session[u][v]['egress'] = []
@@ -128,12 +132,14 @@ def initialise_bgp_sessions(network):
     return
 
 def initialise_bgp_attributes(network):
+    LOG.debug("Initialising BGP attributes")
     for node in network.g_session:
         network.g_session.node[node]['tags'] = {}
         network.g_session.node[node]['prefixes'] = {}
 
 
 def initialise_bgp(network):
+    LOG.debug("Initialising BGP")
     if len(network.g_session):
         LOG.warn("Initialising BGP for non-empty session graph. Have you already"
                 " specified a session graph?")

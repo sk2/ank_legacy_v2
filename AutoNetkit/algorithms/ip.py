@@ -14,6 +14,8 @@ from netaddr import IPNetwork
 import AutoNetkit as ank
 import math
 import networkx as nx
+import logging
+LOG = logging.getLogger("ANK")
 
 def get_ip_as_allocs(network):
     """ Returns list of Subnets allocated, by network"""
@@ -32,6 +34,7 @@ def allocate_subnets(network, address_block=IPNetwork("10.0.0.0/8")):
     Example usage:
 
     """
+    LOG.debug("Allocating subnets")
     # Initialise IP list to be graph edge format
     #ip_list =  nx.to_dict_of_dicts(graph,
     #     edge_data={'sn': None, 'ip': None})
@@ -121,6 +124,7 @@ def allocate_subnets(network, address_block=IPNetwork("10.0.0.0/8")):
 
 def alloc_interfaces(network):
     """Allocated interface IDs for each link in network"""
+    LOG.debug("Allocating interfaces")
     for rtr in network.graph:
         for index, (src, dst) in enumerate(network.graph.edges(rtr)):
             network.graph[src][dst]['id'] = index
@@ -131,6 +135,7 @@ def get_tap_host(network):
 
 def alloc_tap_hosts(network, address_block=IPNetwork("172.16.0.0/16")):
     """Allocates TAP IPs for connecting using Netkit"""
+    LOG.debug("Allocating TAP hosts")
     network.tap_sn = address_block
 
     as_graph = ank.get_as_graphs(network)
@@ -214,6 +219,7 @@ def ip_to_net_ent_title(ip):
     >>> ip_to_net_ent_title(IPAddress("192.168.19.1"))
     '49.0001.1921.6801.9001.00'
     """
+    LOG.debug("Converting IP to OSI ENT format")
     area_id = "49.0001"
     ip_octets = str(ip.ip).split(".")
 # Pad with leading zeros, eg 1->001, 12->012, 123->123
