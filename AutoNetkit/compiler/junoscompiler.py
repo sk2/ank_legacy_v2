@@ -341,7 +341,15 @@ class JunosCompiler:
                     'type': 'external', 
                     'neighbors': external_peers}
 
-        return bgp_groups
+        node_bgp_data = self.network.g_session.node[node]
+        policy_options = {
+                'community_lists': node_bgp_data['tags'],
+                'prefix_lists': node_bgp_data['prefixes'],
+                }
+
+        pprint.pprint(policy_options)
+
+        return (bgp_groups, policy_options)
 
     def configure_junos(self):
         """ Configures Junos"""
@@ -366,7 +374,7 @@ class JunosCompiler:
 
             interfaces = self.configure_interfaces(node)
             igp_interfaces = self.configure_igp(node, igp_graph,ebgp_graph)
-            bgp_groups = self.configure_bgp(node, physical_graph, ibgp_graph, ebgp_graph)
+            (bgp_groups, policy_options) = self.configure_bgp(node, physical_graph, ibgp_graph, ebgp_graph)
 
             # advertise AS subnet
             adv_subnet = self.network.ip_as_allocs[asn]
@@ -387,6 +395,7 @@ class JunosCompiler:
                     router_id = lo_ip.ip,
                     network_list = network_list,
                     bgp_groups = bgp_groups,
+                    policy_options = policy_options,
                     ank_version = ank_version,
                     ))
 

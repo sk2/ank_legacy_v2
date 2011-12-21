@@ -338,7 +338,7 @@ class queryParser:
     def allocate_tags(self):
         tag_id = itertools.count(10,10)
         for tag in self.tags_to_allocate:
-            self.allocated_tags[tag] = tag_id.next()
+            self.allocated_tags[tag] = "1234:%s" % tag_id.next()
 
 
     def get_prefixes(inet, network, nodes):
@@ -675,6 +675,24 @@ def cl_and_pl_per_node(qparser, network):
 
 cl_and_pl_per_node(qparser, inet.network)
 qparser.allocate_tags()
+
+# now store tags in routers for config
+def store_tags_per_router(qparser, inet):
+    for node, data in inet.network.g_session.nodes(data=True):
+        tags = dict.fromkeys(data['tags'])
+        for tag in tags:
+# put in list for consistency in cases have multiple tags (may occur elsewhere and need to iterate)
+            tags[tag] = [qparser.allocated_tags[tag]]
+        # store updated tags
+        inet.network.g_session.node[node]['tags'] = tags
+
+        prefixes = dict.fromkeys(data['prefixes'])
+        for prefix in prefixes:
+            prefixes[prefix] = qparser.prefix_lists[prefix]
+        # store updated tags
+        inet.network.g_session.node[node]['prefixes'] = prefixes
+
+store_tags_per_router(qparser, inet)
 
 policy_out_file = "policy_output.txt"
 with open( policy_out_file, 'w+') as f_pol:

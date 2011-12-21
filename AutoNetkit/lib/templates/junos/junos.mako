@@ -174,12 +174,12 @@ protocols {
 				 % if len(neighbor['route_maps_in']) == 1:   
 					import ${neighbor['route_maps_in'].pop()};
 				 % elif len(neighbor['route_maps_in']) > 1:
-					import [${", ".join(neigh for neigh in neighbor['route_maps_in'])}];
+					import [${" ".join(neigh for neigh in neighbor['route_maps_in'])}];
 				%endif  
 				 % if len(neighbor['route_maps_out']) == 1:      
   					export ${neighbor['route_maps_out'].pop()};
 				 % elif len(neighbor['route_maps_in']) > 1:
-					export [${", ".join(neigh for neigh in neighbor['route_maps_out'])}];
+					export [${" ".join(neigh for neigh in neighbor['route_maps_out'])}];
 				%endif
 				}                          
 				   % else:          
@@ -192,7 +192,23 @@ protocols {
 	% endif           
 }                  
 
-policy-options {
+policy-options {     
+	% for name, values in policy_options['community_lists'].items():     
+	 % if len(values) == 1:      
+	community ${name} members ${values.pop()};
+	 % elif len(values) > 1:
+	community ${name} members [${" ".join(val for val in values)}];
+	%endif
+	% endfor         
+	
+	% for name, values in policy_options['prefix_lists'].items():     
+	 % if len(values) == 1:      
+	prefix-list ${name} ${values.pop()};
+	 % elif len(values) > 1:
+	community ${name} [${" ".join(val for val in values)}];
+	%endif
+	% endfor
+	
     policy-statement adverts {
         term 1 {
             from protocol [ aggregate direct ];
