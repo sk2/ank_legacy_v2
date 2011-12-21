@@ -181,10 +181,10 @@ class BgpPolicyParser:
     def apply_bgp_policy(self, qstring):
         LOG.debug("Applying policy %s" % qstring)
         result = self.bgpApplicationQuery.parseString(qstring)
-        set_a = self.node_select_query(self.network, result.query_a)
-        set_b = self.node_select_query(self.network, result.query_b)
+        set_a = self.node_select_query(result.query_a)
+        set_b = self.node_select_query(result.query_b)
         select_type = result.edgeType
-        per_session_policy = self.process_if_then_else(self.network, result.bgpSessionQuery)
+        per_session_policy = self.process_if_then_else(result.bgpSessionQuery)
 
 # use nbunch feature of networkx to limit edges to look at
         node_set = set_a | set_b
@@ -226,6 +226,7 @@ class BgpPolicyParser:
             self.network.g_session[u][v][ingress_or_egress].append(per_session_policy)
 
     def evaluate_node_stack(self, stack):
+        LOG.debug("Evaluating node stack %s" % stack)
         if len(stack) == 1:
             return set(stack.pop())
         else:
@@ -233,7 +234,8 @@ class BgpPolicyParser:
             op = stack.pop()
             return self._opn[op](a, self.evaluate_node_stack(stack))
 
-    def node_select_query(self, network, qstring):
+    def node_select_query(self, qstring):
+        LOG.debug("Processing node select query %s" % qstring)
         if isinstance(qstring, str):
             result = self.nodeQuery.parseString(qstring)
         else:
@@ -248,10 +250,10 @@ class BgpPolicyParser:
 
         def comp_fn_string(token, n):
             #TODO: allow partial string matches - beginswith, endswith, etc - map to python functions
-            return self._opn[token.comparison](network.graph.node[n].get(token.attribute), token.value)
+            return self._opn[token.comparison](self.network.graph.node[n].get(token.attribute), token.value)
 
         def comp_fn_numeric(token, n):
-            return self._opn[token.comparison](float(network.graph.node[n].get(token.attribute)), token.value)
+            return self._opn[token.comparison](float(self.network.graph.node[n].get(token.attribute)), token.value)
 
         stack = []
 
@@ -264,7 +266,7 @@ class BgpPolicyParser:
 
             
             if token == self.wildcard:
-                result_set = set(n for n in network.graph )
+                result_set = set(n for n in self.network.graph )
                 stack.append(result_set)
                 continue
             elif token.attribute == "node":
@@ -278,25 +280,27 @@ class BgpPolicyParser:
         
             if comp_fn:
                 #TODO: change to generator expressions and evaluate as sets in the evaluate function
-                result_set = set(n for n in network.graph 
-                        if token.attribute in network.graph.node[n] and comp_fn(token, n) )
+                result_set = set(n for n in self.network.graph 
+                        if token.attribute in self.network.graph.node[n] and comp_fn(token, n) )
                 stack.append(result_set)
 
         final_set = self.evaluate_node_stack(stack)
         return final_set
 
     def allocate_tags(self):
+        LOG.debug("Allocating community values to tags")
         tag_id = itertools.count(10,10)
         for tag in self.tags_to_allocate:
             self.allocated_tags[tag] = "1234:%s" % tag_id.next()
 
 
-    def get_prefixes(inet, network, nodes):
+    def get_prefixes(self, nodes):
+        LOG.debug("Returning prefixes for nodes %s" % nodes)
         prefixes = set()
         for node in nodes:
             # Arbitrary choice of out edges, as bi-directional edge for each subnet
             prefixes.update([data.get("sn")
-                for u, v, data in network.graph.out_edges(node, data=True) 
+                for u, v, data in self.network.graph.out_edges(node, data=True) 
                 if data.get("sn")])
 
         return prefixes
@@ -324,11 +328,12 @@ class BgpPolicyParser:
     def tag_to_cl(self, tag):
         return "cl_%s" % tag
 
-    def proc_ot_match(self, network, match_type, match_query):
+    def proc_ot_match(self, match_type, match_query):
+        LOG.debug("Processing Origin/Transit query %s %s" % (match_type, match_query))
 # extract the node queryParser
 #TODO: handle case of multiple matches......
 # rather than getting first element, iterate over
-        nodes = self.node_select_query(network, match_query)
+        nodes = self.node_select_query(match_query)
         tag = self.query_to_tag(match_query)
         tag_pl = self.tag_to_pl(tag)
         tag_cl = self.tag_to_cl(tag)
@@ -337,7 +342,7 @@ class BgpPolicyParser:
         if tag_pl in self.prefix_lists:
             LOG.debug( "already executed prefix lookup for", tag_pl)
         else:
-            prefixes = self.get_prefixes(network, nodes)
+            prefixes = self.get_prefixes(nodes)
             self.prefix_lists[tag_pl] = prefixes
 # and mark prefixes
             for node in nodes:
@@ -356,7 +361,8 @@ class BgpPolicyParser:
 
 #TODO: make network a variable in the qparser class???
 
-    def process_if_then_else(self, network, parsed_query):
+    def process_if_then_else(self, parsed_query):
+        LOG.debug("Processing if-then-else query %s" % parsed_query)
         retval = []
         for token in parsed_query:
             if token == parsed_query.else_clause:
@@ -373,7 +379,7 @@ class BgpPolicyParser:
                 origin_transit_keywords = set(["Origin", "Transit"])
 # Check for reject
                 if_tuples = [
-                        self.proc_ot_match(network, attribute, value) if attribute in origin_transit_keywords
+                        self.proc_ot_match(attribute, value) if attribute in origin_transit_keywords
                         else self.match_clause(attribute, comparison, value)
                         for (attribute, comparison, value) in if_clause]
                 reject = any(True for (action, value) in then_clause if action == self.reject)
@@ -385,6 +391,7 @@ class BgpPolicyParser:
 
     def cl_and_pl_per_node(self):
         # extract tags and prefixes used from sessions
+        LOG.debug("Extracting community lists and prefix lists per node, adding sequence numbers")
         for node in self.network.g_session:
             prefixes = set()
             tags = set()
@@ -442,6 +449,7 @@ class BgpPolicyParser:
             self.tags_to_allocate.update(tags)
 
     def store_tags_per_router(self):
+        LOG.debug("Storing allocated tags to routers")
         for node, data in self.network.g_session.nodes(data=True):
             tags = dict.fromkeys(data['tags'])
             for tag in tags:
@@ -457,6 +465,7 @@ class BgpPolicyParser:
 
 
     def apply_policy_file(self, policy_in_file):
+        LOG.debug("Applying policy file %s" % policy_in_file)
         with open( policy_in_file, 'r') as f_pol:
             for line in f_pol.readlines():
                 if line.strip() == "":
