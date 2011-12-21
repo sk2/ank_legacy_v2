@@ -390,7 +390,7 @@ class OliveDeploy():
         start_vde_switch_cmd = "vde_switch -d -t %s -n 2000 -s %s -M %s" % (self.tap_name, 
                 self.vde_socket_name, self.vde_mgmt_socket_name)
         LOG.info( "start command %s " % start_vde_switch_cmd)
-        shell.sendline('sudo %s' % start_vde_switch_cmd)
+        shell.sendline('%s' % start_vde_switch_cmd)
         i = shell.expect ([ "Address already in use" , "TUNSETIFF: Device or resource busy", pexpect.EOF])
         if i == 0:
             LOG.info( "vde_switch already running")
