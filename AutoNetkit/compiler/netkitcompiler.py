@@ -129,7 +129,7 @@ class NetkitCompiler:
             dns_list = ank.dns_list(self.network)
             dns_root = ank.root_dns(self.network)
 
-        for node in self.network.get_nodes_by_property('platform', 'NETKIT'):
+        for node in self.network.graph:
                 # Make folders - note order counts:
                 # need to make router dir before zebra, etc dirs
                 for test_dir in [router_dir(self.network, node),

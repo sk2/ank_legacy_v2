@@ -265,8 +265,10 @@ class JunosCompiler:
             LOG.debug("Skipping BGP configuration for %s as no eBGP edges" % node)
             return
 
-#TODO: put comments in for junos bgp peerings
+        print "looking at bgp for node", self.network.label(node)
 
+#TODO: put comments in for junos bgp peerings
+        # route maps
         bgp_groups = {}
         if node in ibgp_graph:
             internal_peers = []
@@ -281,6 +283,7 @@ class JunosCompiler:
         ibgp_rr_client_list = []
         if node in ibgp_graph:
             for src, neigh, data in ibgp_graph.edges(node, data=True):
+                print data
                 description = data.get("rr_dir") + " to " + ank.fqdn(self.network, neigh)
                 if data.get('rr_dir') == 'down':
                     ibgp_rr_client_list.append(
@@ -310,6 +313,10 @@ class JunosCompiler:
         if node in ebgp_graph:
             external_peers = []
             for peer in ebgp_graph.neighbors(node):
+                data = self.network.g_session[node][peer]
+                print "egress", data
+                data = self.network.g_session[peer][node]
+                print "ingress", data
                 peer_ip = physical_graph[peer][node]['ip']
                 external_peers.append({
                     'id': peer_ip, 
