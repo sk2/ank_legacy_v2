@@ -385,21 +385,27 @@ class OliveDeploy():
         LOG.info( "Starting vde_switch")
 # Sendline in case user didn't have to sudo, and so didn't do anything
         shell.sendline()
+        shell.prompt()
 
 # start vde switch
         start_vde_switch_cmd = "vde_switch -d -t %s -n 2000 -s %s -M %s" % (self.tap_name, 
                 self.vde_socket_name, self.vde_mgmt_socket_name)
         LOG.info( "start command %s " % start_vde_switch_cmd)
         shell.sendline('%s' % start_vde_switch_cmd)
+        shell.prompt()
+        print "shell before is ", shell.before
+        """
         i = shell.expect ([ "Address already in use" , "TUNSETIFF: Device or resource busy", pexpect.EOF])
         if i == 0:
             LOG.info( "vde_switch already running")
+            shell.prompt()
         elif i == 1:
             LOG.info( "Device busy, unable to create switch")
         else:
 # started ok
+            print "switch created ok"
             pass
-        shell.prompt()
+            """
 
         return
 
