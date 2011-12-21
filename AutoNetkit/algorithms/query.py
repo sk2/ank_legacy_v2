@@ -635,8 +635,7 @@ def cl_and_pl_per_node(qparser, network):
                             tags.update([action_clause.value])
                     match_tuples_with_seqno.append(qparser.match_tuple_with_seq_no(seq_no.next(), 
                         match_tuple.match_clauses, match_tuple.action_clauses, match_tuple.reject))
-                route_map_name = "rm_%s_ingress_%s" % (network.label(dst), counter.next())
-                route_map_name = route_map_name.replace(".", "_").lower()
+                route_map_name = "rm_ingress_%s_%s" % (network.label(dst).replace(".", "_"), counter.next())
 # allocate sequence number
                 session_policy_tuples.append(qparser.route_map_tuple(route_map_name, match_tuples_with_seqno))
             # Update with the named policy tuples
@@ -659,8 +658,7 @@ def cl_and_pl_per_node(qparser, network):
                             tags.update([action_clause.value])
                     match_tuples_with_seqno.append(qparser.match_tuple_with_seq_no(seq_no.next(), 
                         match_tuple.match_clauses, match_tuple.action_clauses, match_tuple.reject))
-                route_map_name = "rm_%s_egress_%s" % (network.label(dst), counter.next())
-                route_map_name = route_map_name.replace(".", "_").lower()
+                route_map_name = "rm_egress_%s_%s" % (network.label(dst).replace(".", "_"), counter.next())
 # allocate sequence number
                 session_policy_tuples.append(qparser.route_map_tuple(route_map_name, match_tuples_with_seqno))
             # Update with the named policy tuples

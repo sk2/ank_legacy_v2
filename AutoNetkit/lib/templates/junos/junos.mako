@@ -201,13 +201,53 @@ policy-options {
 	%endif
 	% endfor         
 	
-	% for name, values in policy_options['prefix_lists'].items():     
-	 % if len(values) == 1:      
-	prefix-list ${name} ${values.pop()};
-	 % elif len(values) > 1:
-	community ${name} [${" ".join(val for val in values)}];
-	%endif
-	% endfor
+	% for name, values in policy_options['prefix_lists'].items(): 
+	prefix-list ${name} {
+	    % for prefix in values: 
+			${prefix};
+		% endfor
+	 }
+	% endfor    
+	%for route_map in policy_options['route_maps']:    
+	policy-statement ${route_map.name} { 
+		%for match_tuple in route_map.match_tuples:        
+		term ${match_tuple.seq_no * 10} {
+		    %if len(match_tuple.match_clauses):
+		    from  {
+		    %for match_clause in match_tuple.match_clauses:
+		        % if match_clause.type == "prefix_list":
+		        prefix-list ${match_clause.value};
+		        % elif match_clause.type == "tag":
+		        community [${match_clause.value}];
+		        % endif      
+		    %endfor
+		    }
+		    % endif             
+		    %if len(match_tuple.action_clauses) or match_tuple.reject: 
+		    then {                    
+		    %for action_clause in match_tuple.action_clauses:
+		        % if action_clause.action == "addTag":
+		        community set ${action_clause.value};
+		        % elif action_clause.action == "setLP":
+		        set local-preference ${action_clause.value};      
+		        % elif action_clause.action == "setNextHop":
+		        next-hop ${action_clause.value};  
+		        % elif action_clause.action == "removeTag":
+		        community delete ${action_clause.value};
+		        % endif     
+		    %endfor   
+		    % if match_tuple.reject:
+		        reject;
+		    % else: 
+		        accept;
+		   % endif
+		    } 
+		    % endif 
+		} 
+	%endfor            
+	}
+	%endfor
+	
 	
     policy-statement adverts {
         term 1 {
