@@ -499,6 +499,7 @@ class BgpPolicyParser:
                 self.g_business_relationship.add_node(alias, asn=asn)
 
         # Now apply business relationship policies
+        #TODO: check that each node has an ASN
 
 
     def apply_gao_rexford(self):
@@ -506,13 +507,17 @@ class BgpPolicyParser:
         print self.g_business_relationship.nodes(data=True)
         g_bus_rel = self.g_business_relationship
         print g_bus_rel.edges(data=True)
+
+        def asn(node):
+            return 
         for node in sorted(g_bus_rel):
             print "Node %s " % node
+            node_asn = g_bus_rel.node[node].get('asn')
             neighbors = {
-                    "partial transit customers": [],
-                    "customers": [],
-                    "peers": [],
-                    "providers": [],
+                    "partial transit customer": [],
+                    "customer": [],
+                    "peer": [],
+                    "provider": [],
             }
 
             predecessors = (n for n in g_bus_rel.predecessors(node))
@@ -522,27 +527,86 @@ class BgpPolicyParser:
             successors = [ (n, g_bus_rel[node][n].get('relationship')) for n in successors]
             for neigh, rel in predecessors:
                 if rel == 'partial transit customer':
-                    neighbors['partial transit customers'].append(neigh)
+                    neighbors['partial transit customer'].append(neigh)
                 elif rel == 'customer':
-                    neighbors['customers'].append(neigh)
+                    neighbors['customer'].append(neigh)
                 elif rel == 'peer':
-                    neighbors['peers'].append(neigh)
+                    neighbors['peer'].append(neigh)
                 elif rel == 'provider':
-                    neighbors['providers'].append(neigh)
+                    neighbors['provider'].append(neigh)
             for neigh, rel in successors:
 # oppposite direction
                 if rel == 'partial transit customer':
-                    neighbors['providers'].append(neigh)
+                    neighbors['provider'].append(neigh)
                 elif rel == 'customer':
-                    neighbors['providers'].append(neigh)
+                    neighbors['provider'].append(neigh)
                 elif rel == 'peer':
-                    neighbors['peers'].append(neigh)
+                    neighbors['peer'].append(neigh)
                 elif rel == 'provider':
-                    neighbors['customers'].append(neigh)
+                    neighbors['customer'].append(neigh)
 
 
+            for neigh in neighbors['partial transit customer']:
+                print "ptcust", neigh
+                neigh_asn = g_bus_rel.node[neigh].get('asn')
+		pol = "(asn = %s) ->ingress (asn = %s): addTag parttrans_tag" % (neigh_asn, node_asn)
+                print pol
+                self.apply_bgp_policy(pol)
+		pol = "(asn = %s) egress-> (asn = %s): if tag = provider_tag then reject" % (node_asn, neigh_asn)
+                print pol
+                self.apply_bgp_policy(pol)
+                
+            for neigh in neighbors['customer']:
+                neigh_asn = g_bus_rel.node[neigh].get('asn')
+                print "cust", neigh
+                pol = "(asn = %s) ->ingress (asn = %s): addTag provider_tag" % (neigh_asn, node_asn)
+                print pol
+                self.apply_bgp_policy(pol)
+                pol = "(asn = %s) egress-> (asn = %s): if tag = peer_tag then reject elif tag = parttrans_tag then reject" % (node_asn, neigh_asn)
+                print pol
+                self.apply_bgp_policy(pol)
+                
+            for neigh in neighbors['peer']:
+                neigh_asn = g_bus_rel.node[neigh].get('asn')
+                print "peer", neigh
+                pol = "(asn = %s) ->ingress (asn = %s): addTag peer_tag" % (neigh_asn, node_asn)
+                print pol
+                self.apply_bgp_policy(pol)
+		pol = "(asn = %s) egress-> (asn = %s): if tag = provider_tag then reject" % (node_asn, neigh_asn)
+                print pol
+                self.apply_bgp_policy(pol)
 
-            pprint.pprint(neighbors) 
+            for neigh in neighbors['provider']:
+                neigh_asn = g_bus_rel.node[neigh].get('asn')
+                print "provider", neigh
+		pol = "(asn = %s) ->ingress (asn = %s): addTag provider_tag" % (neigh_asn, node_asn)
+                print pol
+                self.apply_bgp_policy(pol)
+                pol = "(asn = %s) egress-> (asn = %s): if tag = peer_tag then reject elif tag = PartTrans_tag then reject" % (node_asn, neigh_asn)
+                print pol
+                self.apply_bgp_policy(pol)
+
+                
+
+            # Now apply appropriate policies
+            """
+            for all neighbors:
+  if neighbor=provider then:
+		(provider)-->ingress(localAS):addTag Provider_tag
+                (localAS)-->egress(provider):if tag=Peer_tag then reject
+					     elif tag=PartTrans_tag then reject
+  elif neighbor=peer then:
+		(peer)-->ingress(localAS):addTag Peer_tag
+		(localAS)-->egress(peer):if tag=Provider_tag then reject
+  elif neighbor=partial_transit_customer then:
+		(partial_transit_customer)-->ingress(localAS):addTag PartTrans_tag
+		(localAS)-->egress(partial_transit_customer):if tag=Provider_tag then reject
+  elif neighbor=prefer_customer then:
+		(prefer_customer)-->ingress(localAS):set localPref=120
+  elif neighbor=depref_me then:
+		(depref_me)-->ingress(localAS):if tag=depref_me then set localPref=90
+                """
+
 
 
 
