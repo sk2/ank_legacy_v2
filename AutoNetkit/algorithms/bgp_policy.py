@@ -361,7 +361,7 @@ class BgpPolicyParser:
 
 # store tag
             self.tags_to_allocate.update([tag])
-        return self.match_clause("tag", "=", tag)
+        return self.match_clause("tag", "=", tag_cl)
 
 
         #matching_nodes = self.node_select_query(network, ot_match.value)
@@ -461,6 +461,7 @@ class BgpPolicyParser:
             self.tags_to_allocate.update(tags)
 
     def store_tags_per_router(self):
+        print self.allocated_tags
         """Stores the list of tags/community value mappings in the router in session graph"""
         LOG.debug("Storing allocated tags to routers")
         for node, data in self.network.g_session.nodes(data=True):
