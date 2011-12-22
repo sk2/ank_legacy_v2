@@ -409,7 +409,6 @@ class NetkitCompiler:
         ibgp_graph = ank.get_ibgp_graph(self.network)
         ebgp_graph = ank.get_ebgp_graph(self.network)
         physical_graph = self.network.graph
-        
 
         for my_as in ank.get_as_graphs(self.network):
             LOG.debug("Configuring BGP for AS {0}".format(my_as.name))
@@ -420,6 +419,8 @@ class NetkitCompiler:
             for node in my_as.nodes():
                 #TODO: look at making this a set for greater comparison efficiency
                 network_list = []
+                route_map_call_groups = {}
+                route_maps = []
 
                 # iBGP
                 ibgp_neighbor_list = []
@@ -431,6 +432,23 @@ class NetkitCompiler:
                     if self.network.route_reflector(node):
                         route_reflector = True
                     for src, neigh, data in ibgp_graph.edges(node, data=True):
+                        print "%s %s" % (self.network.fqdn(node), data)
+                        route_maps_in = [route_map for route_map in 
+                                self.network.g_session[neigh][node]['ingress']]
+                        rm_call_group_name_in = None
+                        if len(route_maps_in):
+                            rm_call_group_name_in = "rm_call_%s_in" % self.network.fqdn(neigh).replace(".", "_")
+                            route_map_call_groups[rm_call_group_name_in] = [r.name for r in route_maps_in]
+
+                        rm_call_group_name_out = "rm_call_%s_out" % self.network.fqdn(neigh).replace(".", "_")
+                        route_maps_out = [route_map for route_map in 
+                                self.network.g_session[node][neigh]['egress']]
+                        rm_call_group_name_out = None
+                        if len(route_maps_out):
+                            rm_call_group_name_out = "rm_call_%s_out" % (
+                                    self.network.fqdn(neigh).replace(".", "_"))
+                            route_map_call_groups[rm_call_group_name_out] = [r.name for r in route_maps_out]
+
                         description = data.get("rr_dir") + " to " + ank.fqdn(self.network, neigh)
                         if data.get('rr_dir') == 'down':
                             ibgp_rr_client_list.append(
@@ -438,6 +456,8 @@ class NetkitCompiler:
                                         'remote_ip':  self.network.lo_ip(neigh).ip,
                                         'remote_router':    neigh,
                                         'description':      description,
+                                        'route_map_in': rm_call_group_name_in,
+                                        'route_map_out': rm_call_group_name_out,
                             })
                         elif (data.get('rr_dir') in set(['up', 'over', 'peer'])
                                 or data.get('rr_dir') is None):
@@ -446,12 +466,30 @@ class NetkitCompiler:
                                         'remote_ip':  self.network.lo_ip(neigh).ip,
                                         'remote_router':    neigh,
                                         'description':      description,
+                                        'route_map_in': rm_call_group_name_in,
+                                        'route_map_out': rm_call_group_name_out,
                                         })
 
                 # iBGP
                 ebgp_neighbor_list = []
                 if node in ebgp_graph:
                     for neigh in ebgp_graph.neighbors(node):
+                        route_maps_in = [route_map for route_map in 
+                                self.network.g_session[neigh][node]['ingress']]
+                        rm_call_group_name_in = None
+                        if len(route_maps_in):
+                            rm_call_group_name_in = "rm_call_%s_in" % self.network.fqdn(neigh).replace(".", "_")
+                            route_map_call_groups[rm_call_group_name_in] = [r.name for r in route_maps_in]
+
+                        rm_call_group_name_out = "rm_call_%s_out" % self.network.fqdn(neigh).replace(".", "_")
+                        route_maps_out = [route_map for route_map in 
+                                self.network.g_session[node][neigh]['egress']]
+                        rm_call_group_name_out = None
+                        if len(route_maps_out):
+                            rm_call_group_name_out = "rm_call_%s_out" % (
+                                    self.network.fqdn(neigh).replace(".", "_"))
+                            route_map_call_groups[rm_call_group_name_out] = [r.name for r in route_maps_out]
+
                         description = ank.fqdn(self.network, neigh)
                         peer_ip = physical_graph[neigh][node]['ip']
                         ebgp_neighbor_list.append(
@@ -465,12 +503,17 @@ class NetkitCompiler:
                                 #TODO: write function to return neighbor type
                                 'neighbor_type':    "NA",
                                 #TODO: write function to implement route maps
-                                #'route_map_in':     route_map_in_id,
-                                #'route_map_out':    route_map_out_id,
+                                'route_map_in': rm_call_group_name_in,
+                                'route_map_out': rm_call_group_name_out,
                             })
 
 
                 adv_subnet = ip_as_allocs[self.network.asn(node)]
+
+                # Ensure only one copy of each route map, can't use set due to list inside tuples (which won't hash)
+# Use dict indexed by name, and then extract the dict items, dict hashing ensures only one route map per name
+                route_maps = dict( (route_map.name, route_map) for route_map in route_maps).values()
+
                 # advertise this subnet
                 if not adv_subnet in network_list:
 # Not already listed to be advertised, advertise
@@ -493,13 +536,15 @@ class NetkitCompiler:
                         ebgp_neighbor_list = ebgp_neighbor_list,
                         route_reflector = route_reflector,
                         ibgp_rr_client_list = ibgp_rr_client_list,
-                        route_maps = route_maps,
+                        route_maps = {},
+                        route_map_call_groups = route_map_call_groups,
                         logfile = "/var/log/zebra/bgpd.log",
                         debug=True,
                         use_debug=True,
                         dump=False,
                         snmp=False,
                 ))
+            pprint.pprint(route_maps)
 
     def configure_dns(self):
         """Generates BIND configuration files for DNS"""

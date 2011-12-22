@@ -36,58 +36,40 @@ router bgp ${asn}
 	% for n in ibgp_neighbor_list:
 	neighbor ${n['remote_ip']} remote-as ${asn}
 	neighbor ${n['remote_ip']} update-source ${router_id}  
-	neighbor ${n['remote_ip']} description ${n['description']} (iBGP) 
+	neighbor ${n['remote_ip']} description ${n['description']} (iBGP)   
+	% if n.get('route_map_in'):
+	neighbor ${n['remote_ip']} route-map ${n['route_map_in']} in     
+	% endif   
+	% if n.get('route_map_out'):
+	neighbor ${n['remote_ip']} route-map ${n['route_map_out']} out  
+	% endif
 	% endfor
 	!
 	% if len(ebgp_neighbor_list) > 0:
 	#eBGP neighbors   
-	% endif
+	% endif            
 	% for n in ebgp_neighbor_list:
 	neighbor ${n['remote_ip']} remote-as ${n['remote_as']} 
 	neighbor ${n['remote_ip']} description ${n['description']} (eBGP)   
-	% if "route_map_in" in n and n['route_map_in'] != None:
-	neighbor ${n['remote_ip']} route-map rm-${n['route_map_in']} in     
+	% if n.get('route_map_in'):
+	neighbor ${n['remote_ip']} route-map ${n['route_map_in']} in     
 	% endif   
-	% if "route_map_out" in n and n['route_map_out'] != None:
-	neighbor ${n['remote_ip']} route-map rm-${n['route_map_out']} out  
+	% if n.get('route_map_out'):
+	neighbor ${n['remote_ip']} route-map ${n['route_map_out']} out  
 	% endif        
 	!
 	% endfor
 	!       
 	
-	! Route-maps 
-	% for category, maps in route_maps.items():
-	! ${category}
-	% for map in maps:   
-	route-map rm-${map['id']} permit ${map['order']}
-	    %if "description" in map:
-	    description ${map['description']}
-	    %endif  
-	    %if "match-access-list" in map:
-	    match ip address al-${map['match-access-list']}
-	    %endif
-	    %if "match-community" in map:
-	    match community cm-${map['match-community']}
-	    %endif
-	    %if "set-community" in map:
-	    set community ${map['set-community']}
-	    %endif  
-	    %if "local-preference" in map:
-	    set local-preference ${map['local-preference']}
-	    %endif
-	    %if "ip next-hop" in map:
-	    set ip next-hop ${map['ip next-hop']}
-	    %endif   
-	    %if "call-list" in map:  
-		% for c in map['call-list']:
-		call rm-${c}
-		%endfor
-	    %endif
-
-    %endfor          
-
+	! Route-map call-groups 
+	% for name, members in route_map_call_groups.items():    
+	route-map ${name} permit 10
+		% for member in members:
+		call ${member}
+		on-match next
+		%endfor 
+	!	
 	%endfor 
-    
 	! Community lists  
 	% for community, label in sorted(communities_dict.items()):
 	ip community-list standard cm-${label} permit ${community}   
