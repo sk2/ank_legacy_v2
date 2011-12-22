@@ -79,9 +79,9 @@ router bgp ${asn}
 % endif
     %for match_clause in match_tuple.match_clauses:
         % if match_clause.type == "prefix_list":
-        match ip address prefix_list ${match_clause.value}
+        match ip address ${match_clause.value}
         % elif match_clause.type == "tag":
-        match community_list ${match_clause.value}
+        match community ${match_clause.value}
         % endif      
     %endfor  
     %for action_clause in match_tuple.action_clauses:

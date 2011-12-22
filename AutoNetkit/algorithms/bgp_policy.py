@@ -363,12 +363,6 @@ class BgpPolicyParser:
             self.tags_to_allocate.update([tag])
         return self.match_clause("tag", "=", tag_cl)
 
-
-        #matching_nodes = self.node_select_query(network, ot_match.value)
-
-
-#TODO: make network a variable in the qparser class???
-
     def process_if_then_else(self, parsed_query):
         """Processes if-then-else query"""
         LOG.debug("Processing if-then-else query %s" % parsed_query)
@@ -461,7 +455,6 @@ class BgpPolicyParser:
             self.tags_to_allocate.update(tags)
 
     def store_tags_per_router(self):
-        print self.allocated_tags
         """Stores the list of tags/community value mappings in the router in session graph"""
         LOG.debug("Storing allocated tags to routers")
         for node, data in self.network.g_session.nodes(data=True):
