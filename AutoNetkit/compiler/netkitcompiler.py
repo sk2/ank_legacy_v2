@@ -516,6 +516,10 @@ class NetkitCompiler:
                 # Ensure only one copy of each route map, can't use set due to list inside tuples (which won't hash)
 # Use dict indexed by name, and then extract the dict items, dict hashing ensures only one route map per name
                 route_maps = dict( (route_map.name, route_map) for route_map in route_maps).values()
+                node_bgp_data = self.network.g_session.node[node]
+                community_lists = node_bgp_data.get('tags')
+                prefix_lists = node_bgp_data.get('prefixes')
+                print community_lists
 
                 # advertise this subnet
                 if not adv_subnet in network_list:
@@ -531,8 +535,8 @@ class NetkitCompiler:
                         enable_password = self.zebra_password,
                         router_id = self.network.lo_ip(node).ip,
                         network_list = network_list,
-                        communities_dict = communities_dict,
-                        access_list = access_list,
+                        community_lists = community_lists,
+                        prefix_lists = prefix_lists,
                         #TODO: see how this differs to router_id
                         identifying_loopback = self.network.lo_ip(node),
                         ibgp_neighbor_list = ibgp_neighbor_list,

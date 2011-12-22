@@ -59,8 +59,6 @@ router bgp ${asn}
 	% endif        
 	!
 	% endfor
-	!       
-	
 	! Route-map call-groups 
 	% for name, members in route_map_call_groups.items():    
 	route-map ${name} permit 10
@@ -102,17 +100,21 @@ router bgp ${asn}
 %endfor            
 %endfor  
 	! Community lists  
-	% for community, label in sorted(communities_dict.items()):
-	ip community-list standard cm-${label} permit ${community}   
-	%endfor    
-	
-	! Access lists  
-	% for label, prefix in sorted(access_list):
-	access-list al-${label} permit ${prefix['cidr']}   
+	% for name, communities in sorted(community_lists.items()):  
+	% if isinstance(communities, str):      
+	ip community-list standard ${name} permit ${communities}   
+	 % else:
+		% for community in communities:
+	ip community-list standard ${name} permit ${community}   
+		% endfor	
+		%endif      
+	%endfor                     
+	! Prefix lists  
+	% for name, prefixes in sorted(prefix_lists.items()):     
+		% for prefix in prefixes:
+	ip prefix-list standard ${name} permit ${prefix}   
+		% endfor
 	%endfor
-	
-    
-
 %if use_debug:
 !
 debug bgp events
@@ -121,20 +123,15 @@ debug bgp updates
 debug bgp zebra
 !
 %endif   
-
 %if dump:
 !
 ! dump bgp all /var/log/zebra/bgpdump.txt
 dump bgp routes-mrt /var/log/zebra/bgproutes.dump  
 !
 %endif    
-
 %if use_snmp:
 !
 smux peer .1.3.6.1.4.1.3317.1.2.2 quagga_bgpd
 !
 %endif
-
-
 log file /var/log/zebra/bgpd.log
-
