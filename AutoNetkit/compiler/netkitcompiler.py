@@ -519,7 +519,6 @@ class NetkitCompiler:
                 node_bgp_data = self.network.g_session.node[node]
                 community_lists = node_bgp_data.get('tags')
                 prefix_lists = node_bgp_data.get('prefixes')
-                print community_lists
 
                 # advertise this subnet
                 if not adv_subnet in network_list:
