@@ -41,19 +41,22 @@ If the ASN numbers are different between connected nodes, you will get an eBGP p
 
 Generating Junosphere Configuration Files
 --------------------------------------------
+
+**Please note: the Junosphere command has changed from --junos to --junosphere**
+
 To generate Junosphere configuration, 
 
 Windows:
 
 open a cmd session (run ``cmd.exe``) cd into the scripts directory where autonetkit has been installed (``C:\Python27\scripts``), then::
 
-  autonetkit -f <path to .graphml file> --junos [--ospf|--isis]
+  autonetkit -f <path to .graphml file> --junosphere [--ospf|--isis]
 
 Mac:
 
 cd into the directory where you have the graphml file and then::
 
-  autonetkit -f ./test.graphml --junos [--ospf|--isis]
+  autonetkit -f ./test.graphml --junosphere [--ospf|--isis]
 
 -----
 
