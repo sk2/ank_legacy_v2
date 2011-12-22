@@ -11,4 +11,5 @@
 -m 512 m  
 -nographic 
 -localtime 
+-L /usr/share/seabios
 -name ${router_info.router_name} &

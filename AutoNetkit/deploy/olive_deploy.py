@@ -20,7 +20,6 @@ import itertools
 import pprint
 import netaddr
 
-
 # Used for EOF and TIMEOUT variables
 import pexpect
 
@@ -353,7 +352,6 @@ class OliveDeploy():
             qemu_routers.append(router_info)
 
         startup_template = lookup.get_template("autonetkit/olive_startup.mako")
-
     
 #TODO: Sort routers by name so start in a more sensible order
         qemu_routers = sorted(qemu_routers, key=lambda router: router.router_name)
@@ -379,12 +377,12 @@ class OliveDeploy():
                 "to return to AutoNetkit")
         self.tap_name = "%s_%s" % (self.tap_name_base, self.linux_username)
         shell.sendline('sudo tunctl -u %s -t %s' % (self.linux_username, self.tap_name))
-	sys.stdout.write (shell.after)
-	sys.stdout.flush()
-        shell.interact()
+	#sys.stdout.write (shell.after)
+	#sys.stdout.flush()
+        #shell.interact()
         LOG.info( "Starting vde_switch")
 # Sendline in case user didn't have to sudo, and so didn't do anything
-        shell.sendline()
+        #shell.sendline()
         shell.prompt()
 
 # start vde switch
