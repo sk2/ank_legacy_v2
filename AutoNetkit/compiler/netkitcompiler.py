@@ -432,13 +432,13 @@ class NetkitCompiler:
                     if self.network.route_reflector(node):
                         route_reflector = True
                     for src, neigh, data in ibgp_graph.edges(node, data=True):
-                        print "%s %s" % (self.network.fqdn(node), data)
                         route_maps_in = [route_map for route_map in 
                                 self.network.g_session[neigh][node]['ingress']]
                         rm_call_group_name_in = None
                         if len(route_maps_in):
                             rm_call_group_name_in = "rm_call_%s_in" % self.network.fqdn(neigh).replace(".", "_")
                             route_map_call_groups[rm_call_group_name_in] = [r.name for r in route_maps_in]
+                            route_maps += route_maps_in
 
                         rm_call_group_name_out = "rm_call_%s_out" % self.network.fqdn(neigh).replace(".", "_")
                         route_maps_out = [route_map for route_map in 
@@ -448,6 +448,7 @@ class NetkitCompiler:
                             rm_call_group_name_out = "rm_call_%s_out" % (
                                     self.network.fqdn(neigh).replace(".", "_"))
                             route_map_call_groups[rm_call_group_name_out] = [r.name for r in route_maps_out]
+                            route_maps += route_maps_out
 
                         description = data.get("rr_dir") + " to " + ank.fqdn(self.network, neigh)
                         if data.get('rr_dir') == 'down':
@@ -480,6 +481,7 @@ class NetkitCompiler:
                         if len(route_maps_in):
                             rm_call_group_name_in = "rm_call_%s_in" % self.network.fqdn(neigh).replace(".", "_")
                             route_map_call_groups[rm_call_group_name_in] = [r.name for r in route_maps_in]
+                        route_maps += route_maps_in
 
                         rm_call_group_name_out = "rm_call_%s_out" % self.network.fqdn(neigh).replace(".", "_")
                         route_maps_out = [route_map for route_map in 
@@ -489,6 +491,7 @@ class NetkitCompiler:
                             rm_call_group_name_out = "rm_call_%s_out" % (
                                     self.network.fqdn(neigh).replace(".", "_"))
                             route_map_call_groups[rm_call_group_name_out] = [r.name for r in route_maps_out]
+                            route_maps += route_maps_out
 
                         description = ank.fqdn(self.network, neigh)
                         peer_ip = physical_graph[neigh][node]['ip']
@@ -536,7 +539,7 @@ class NetkitCompiler:
                         ebgp_neighbor_list = ebgp_neighbor_list,
                         route_reflector = route_reflector,
                         ibgp_rr_client_list = ibgp_rr_client_list,
-                        route_maps = {},
+                        route_maps = route_maps,
                         route_map_call_groups = route_map_call_groups,
                         logfile = "/var/log/zebra/bgpd.log",
                         debug=True,
@@ -544,7 +547,6 @@ class NetkitCompiler:
                         dump=False,
                         snmp=False,
                 ))
-            pprint.pprint(route_maps)
 
     def configure_dns(self):
         """Generates BIND configuration files for DNS"""
