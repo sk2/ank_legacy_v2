@@ -60,6 +60,7 @@ def main():
     opt.add_option('--netkit',  action="store_true", default=False, help="Compile Netkit")
     opt.add_option('--cbgp',  action="store_true", default=False, help="Compile cBGP")
     opt.add_option('--dynagen',  action="store_true", default=False, help="Compile dynagen")
+    opt.add_option('--junos',  action="store_true", default=False, help="Compile Junosphere  (legacy command)")
 # Juniper options
     opt.add_option('--junosphere',  action="store_true", default=False, help="Compile to Junosphere")
     opt.add_option('--junosphere_olive',  action="store_true", default=False, 
@@ -102,8 +103,10 @@ def main():
         igp = "ospf"
         if options.isis:
             igp = "isis"
+
+        use_junosphere = (options.junos or options.junosphere)
         inet = Internet(tapsn = options.tapsn, netkit=options.netkit,
-                cbgp=options.cbgp, dynagen=options.dynagen, junosphere=options.junosphere,
+                cbgp=options.cbgp, dynagen=options.dynagen, junosphere=use_junosphere,
                 junosphere_olive=options.junosphere_olive, olive=options.olive, 
                 policy_file = options.bgp_policy,
                 olive_qemu_patched=options.olive_qemu_patched, igp=igp)

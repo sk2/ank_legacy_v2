@@ -13,6 +13,8 @@ try:
 except:
     pass 
 
-import AutoNetkit.deploy.netkit_allocate
-import AutoNetkit.deploy.dynagen_deploy
-import AutoNetkit.deploy.olive_deploy
+try:
+    import AutoNetkit.deploy.netkit_allocate
+except:
+    pass 
+

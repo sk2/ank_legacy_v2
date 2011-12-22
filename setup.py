@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup (
      name = "AutoNetkit",
-     version = "0.5.62",
+     version = "0.5.65",
      description = 'Automated configuration generator for cBGP, Netkit and Junosphere',
      long_description = 'Automated configuration generator for cBGP, Netkit and Junosphere',
 
@@ -36,7 +36,7 @@ setup (
      download_url = ("http://pypi.python.org/pypi/AutoNetkit"),
 
      install_requires = ['netaddr', 'mako', 'networkx>=1.6', 
-         'nose',
+         'nose', 'pyparsing',
          'pexpect', 'beaker',],
 
      classifiers = [
