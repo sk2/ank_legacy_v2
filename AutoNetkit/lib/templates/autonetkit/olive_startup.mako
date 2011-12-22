@@ -11,5 +11,5 @@
 -m 512 m  
 -nographic 
 -localtime 
--L /usr/share/seabios
+-L /opt/lu/share/seabios-kvm
 -name ${router_info.router_name} &
