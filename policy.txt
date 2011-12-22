@@ -6,5 +6,5 @@ A is ASN 1
 B is ASN 2
 C is ASN 3
 B is a customer of A
-C is a customer of A
-B is a peer of C
+C is a "partial transit customer" of B
+D is a peer of B

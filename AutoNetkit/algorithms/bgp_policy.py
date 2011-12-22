@@ -504,11 +504,45 @@ class BgpPolicyParser:
     def apply_gao_rexford(self):
         """ looks at business relationship graph"""
         print self.g_business_relationship.nodes(data=True)
-        for node in self.g_business_relationship:
-            asn = self.g_business_relationship.node[node].get('asn')
-            for src, dst, data in self.g_business_relationship.out_edges(node, data=True):
-                for attr, value in data.items():
-                    print "%s has %s of %s to %s" % (src, attr, value, dst)
+        g_bus_rel = self.g_business_relationship
+        print g_bus_rel.edges(data=True)
+        for node in sorted(g_bus_rel):
+            print "Node %s " % node
+            neighbors = {
+                    "partial transit customers": [],
+                    "customers": [],
+                    "peers": [],
+                    "providers": [],
+            }
+
+            predecessors = (n for n in g_bus_rel.predecessors(node))
+            successors = (n for n in g_bus_rel.successors(node))
+# Map with relationship
+            predecessors = [ (n, g_bus_rel[n][node].get('relationship')) for n in predecessors]
+            successors = [ (n, g_bus_rel[node][n].get('relationship')) for n in successors]
+            for neigh, rel in predecessors:
+                if rel == 'partial transit customer':
+                    neighbors['partial transit customers'].append(neigh)
+                elif rel == 'customer':
+                    neighbors['customers'].append(neigh)
+                elif rel == 'peer':
+                    neighbors['peers'].append(neigh)
+                elif rel == 'provider':
+                    neighbors['providers'].append(neigh)
+            for neigh, rel in successors:
+# oppposite direction
+                if rel == 'partial transit customer':
+                    neighbors['providers'].append(neigh)
+                elif rel == 'customer':
+                    neighbors['providers'].append(neigh)
+                elif rel == 'peer':
+                    neighbors['peers'].append(neigh)
+                elif rel == 'provider':
+                    neighbors['customers'].append(neigh)
+
+
+
+            pprint.pprint(neighbors) 
 
 
 
