@@ -18,12 +18,8 @@ import pprint
 import itertools
 from collections import namedtuple
 
-
-
 import logging
 LOG = logging.getLogger("ANK")
-
-
 
 class BgpPolicyParser:
     """Parser class"""
@@ -283,8 +279,6 @@ class BgpPolicyParser:
                 continue
 
 # different function depending on value type: numeric or string
-
-            
             if token == self.wildcard:
                 result_set = set(n for n in self.network.graph )
                 stack.append(result_set)
@@ -545,7 +539,6 @@ class BgpPolicyParser:
                 elif rel == 'provider':
                     neighbors['customer'].append(neigh)
 
-
             for neigh in neighbors['partial transit customer']:
                 print "ptcust", neigh
                 neigh_asn = g_bus_rel.node[neigh].get('asn')
@@ -629,5 +622,5 @@ class BgpPolicyParser:
         self.cl_and_pl_per_node()
         self.allocate_tags()
         self.store_tags_per_router()
-        self.apply_gao_rexford()
+        #self.apply_gao_rexford()
 
