@@ -1,3 +1,10 @@
 (asn = 1) egress-> (asn = 1): (if Origin(asn=2) then addTag a100 )
 (asn = 1) egress-> (asn = 2): (if tag = abc then addTag a200 )
 (asn = 1) egress-> (asn = 2): (if tag = cde then addTag a300 )
+
+A is ASN 1
+B is ASN 2
+C is ASN 3
+B is a customer of A
+C is a customer of A
+B is a peer of C

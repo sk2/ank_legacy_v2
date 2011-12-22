@@ -29,7 +29,7 @@ class BgpPolicyParser:
     """Parser class"""
     def __init__(self, network):
         self.network = network
-
+        self.g_business_relationship = nx.DiGraph()
 
         # Grammars
         attribute = Word(alphas, alphanums+'_').setResultsName("attribute")
@@ -178,6 +178,23 @@ class BgpPolicyParser:
         self.bgpSessionQuery = bgpSessionQuery
 
         self.bgpApplicationQuery = self.edgeQuery + Suppress(":") + self.bgpSessionQuery
+
+# business relationship building
+        asn = "ASN"
+        asnAlias = (stringValues.setResultsName("network") + 
+                "is" + asn + integer_string.setResultsName("asn")).setResultsName("asnAlias")
+# eg AARNET is 213, sets asn of node AARNET
+#'GEANT is ASN 123',
+
+        serviceString = (stringValues.setResultsName("provider")
+                + "provides" + stringValues.setResultsName("service") 
+                + "to" + stringValues.setResultsName("client")).setResultsName("serviceString")
+
+        relationshipString = (stringValues.setResultsName("provider")
+                + "is a" + stringValues.setResultsName("relationship") 
+                + "of" + stringValues.setResultsName("client")).setResultsName("relationshipString")
+
+        self.br_query = asnAlias | serviceString | relationshipString
 
     def apply_bgp_policy(self, qstring):
         """Applies policy to network"""
@@ -466,6 +483,35 @@ class BgpPolicyParser:
             self.network.g_session.node[node]['prefixes'] = prefixes
 
 
+    def apply_bus_rel(self, query):
+        result = self.br_query.parseString(query)
+        if "relationshipString" in result:
+            self.g_business_relationship.add_edge(result.provider, result.client, 
+                    relationship = result.relationship)
+        elif "serviceString" in result:
+            self.g_business_relationship.add_edge(result.provider, result.client, service=result.service)
+        elif "asnAlias" in result:
+            asn = result.asn
+            alias = result.network
+            if alias in self.g_business_relationship:
+                self.g_business_relationship.node[alias]['asn'] = asn
+            else:
+                self.g_business_relationship.add_node(alias, asn=asn)
+
+        # Now apply business relationship policies
+
+
+    def apply_gao_rexford(self):
+        """ looks at business relationship graph"""
+        print self.g_business_relationship.nodes(data=True)
+        for node in self.g_business_relationship:
+            asn = self.g_business_relationship.node[node].get('asn')
+            for src, dst, data in self.g_business_relationship.out_edges(node, data=True):
+                for attr, value in data.items():
+                    print "%s has %s of %s to %s" % (src, attr, value, dst)
+
+
+
     def apply_policy_file(self, policy_in_file):
         """Applies a BGP policy file to the network"""
         LOG.debug("Applying policy file %s" % policy_in_file)
@@ -474,8 +520,16 @@ class BgpPolicyParser:
                 if line.strip() == "":
 # blank line
                     continue
-                self.apply_bgp_policy(line)
+                try:
+                    self.apply_bgp_policy(line)
+                except:
+                    #try as business relationship query
+                    try:
+                        self.apply_bus_rel(line)
+                    except:
+                        LOG.warn("Unable to parse query line %s" % line)
         self.cl_and_pl_per_node()
         self.allocate_tags()
         self.store_tags_per_router()
+        self.apply_gao_rexford()
 
