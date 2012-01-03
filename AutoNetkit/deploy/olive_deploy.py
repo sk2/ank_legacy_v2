@@ -117,8 +117,8 @@ class OliveDeploy():
                 shell.sendline("ls") 
                 shell.prompt()
             elif i == 1:
-                LOG.warn("Specified Netkit host is running Mac OS X, "
-                    "please specify a Linux Netkit host.")
+                LOG.warn("Specified Olive host is running Mac OS X, "
+                    "please specify a Linux Olive host.")
                 return None 
             else:
                 LOG.warn("Provided Netkit host is not running Linux")
@@ -211,11 +211,6 @@ class OliveDeploy():
         shell = self.shell
         shell.sendline("telnet localhost %s" % telnet_port)
 
-        """TODO: capture these:
-        Booting [/kernel]...               
-        ***** FILE SYSTEM MARKED CLEAN *****
-        Creating initial configuration...
-        """
         if wait_for_bootup:
             ready_prompt = "starting local daemons"
         else:
@@ -373,7 +368,7 @@ class OliveDeploy():
     def start_switch(self):
         shell = self.shell
 
-        LOG.info("Please enter sudo password and type '^]' (Control and right square bracket)"
+        LOG.info("Please enter sudo password and type '^]' (Control and right square bracket) "
                 "to return to AutoNetkit")
         self.tap_name = "%s_%s" % (self.tap_name_base, self.linux_username)
         shell.sendline('sudo tunctl -u %s -t %s' % (self.linux_username, self.tap_name))
