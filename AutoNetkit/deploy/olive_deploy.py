@@ -380,7 +380,7 @@ class OliveDeploy():
             total_boot_time += machine_boot_time
             average_boot_time = total_boot_time/(index+1)
             remaining_boot_time = average_boot_time * (len(qemu_routers) - (index+1))
-            LOG.info("Started %S in %s, average %s, estmated remaining time %s" % (
+            LOG.info("Started %s in %s, average %s, estmated remaining time %s" % (
                 router.router_name,
                 datetime.timedelta(seconds=machine_boot_time),
                 datetime.timedelta(seconds=average_boot_time),
