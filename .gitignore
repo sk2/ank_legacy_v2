@@ -11,6 +11,7 @@ examples/*
 */.ropeproject/*
 ank_lab/*
 */ank_lab/*
+build/*
 AutoNetkit/ank_lab/*
 AutoNetkit.egg-info/*
 AutoNetkit/algorithms/ank_lab/*
