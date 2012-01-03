@@ -307,7 +307,7 @@ class OliveDeploy():
         config_files = {}
 
 #TODO: tidy the multiple loops into one simple loop
-        for node in self.network.graph.nodes():
+        for node in self.network.graph:
             node_filename = ank.rtr_folder_name(self.network, node)
             config_files[node] = {}
             config_files[node]['name'] = node_filename
@@ -341,13 +341,13 @@ class OliveDeploy():
 
         router_info_tuple = namedtuple('router_info', 'router_name, iso_image, img_image, mac_addresses, telnet_port, switch_socket, monitor_socket')
 
+    #TODO: sort by name when getting telnet port so is done in sequence
         for router_id, router in enumerate(self.network.graph):
             mac_list = self.mac_address_list(router_id, 6)
             router_info = router_info_tuple(
                     config_files[router].get('name'),
                     config_files[router].get('config_file_snapshot'),
                     config_files[router].get('base_image_snapshot'),
-# create 6 mac addresses, the maximum per Olive
                     mac_list,
                     unallocated_ports.next(),
                     self.vde_socket_name,
@@ -361,24 +361,24 @@ class OliveDeploy():
         qemu_routers = sorted(qemu_routers, key=lambda router: router.router_name)
         total_boot_time = 0
         for index, router in enumerate(qemu_routers):
-            LOG.info( "Starting %s on port %s" % (router.router_name, router.telnet_port))
+            LOG.info( "Starting %s on port %s (%s/%s)" % (router.router_name, router.telnet_port, index+1, len(qemu_routers)))
             startup_command = startup_template.render(
                     router_info = router
                     )
 
 # flatten into single line
-            t = time.time()
+            start_time = time.time()
             startup_command = " ".join(item for item in startup_command.split("\n"))
             shell.sendline(startup_command)
             shell.sendline("disown")
 # Telnet in
             shell.prompt()
             self.telnet_and_override(router.telnet_port, wait_for_bootup=True)
-            machine_boot_time = time.time() - t
+            machine_boot_time = time.time() - start_time
             total_boot_time += machine_boot_time
             average_boot_time = total_boot_time/(index+1)
             remaining_boot_time = average_boot_time * (len(qemu_routers) - (index+1))
-            LOG.info("Started in %.3f seconds, average %.3f, est remaining time %.3f" % (machine_boot_time,
+            LOG.info("Started in %i seconds, average %i, estmated remaining time %i" % (machine_boot_time,
                 average_boot_time, remaining_boot_time))
 
         LOG.info( "Successfully started all Olives")
