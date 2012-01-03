@@ -25,6 +25,9 @@ import pexpect
 
 LINUX_PROMPT = "~#"   
 
+
+#TODO: tidy up folder handling esp wrt config.lab_dir config.junos_dir etc
+
 from mako.lookup import TemplateLookup
 from pkg_resources import resource_filename
 
@@ -56,7 +59,7 @@ class OliveDeploy():
         self.vde_socket_name = None
         self.vde_mgmt_socket_name = None
         self.base_image = base_image
-        self.olive_foldername = "ank_olive"
+        self.olive_dir = config.ank_main_dir
 
         self.local_server = True
         if self.host and self.username:
@@ -128,7 +131,7 @@ class OliveDeploy():
         self.linux_username = self.get_whoami()
         return True
 
-    def transfer_file(self, local_file, remote_folder):
+    def transfer_file(self, local_file, remote_folder=""):
         """Transfers file to remote host using SCP"""
         # Sanity check
         if self.local_server:
@@ -194,7 +197,7 @@ class OliveDeploy():
     def create_folders(self):
         shell = self.shell
         working_directory = self.working_directory
-        self.olive_dir = os.path.join(working_directory, "ank_olive")
+        self.olive_dir = os.path.join(working_directory, config.ank_main_dir)
 # Update these based on working directory
         self.vde_socket_name  = os.path.join(self.olive_dir, "ank_vde_olive")
         self.vde_mgmt_socket_name  = os.path.join(self.olive_dir, "ank_vde_olive_mgmt")
@@ -277,27 +280,28 @@ class OliveDeploy():
 # transfer over junos lab
 
         tar_file = os.path.join(config.ank_main_dir, self.network.compiled_labs['junos'])
-        self.transfer_file(tar_file, self.olive_dir)
-        junos_extract_directory = os.path.join(self.olive_dir, "configset")
+        self.transfer_file(tar_file)
+#TODO: make just the "junos_dir" accessible from the config directly (without the ank_lab part)
+        configset_directory = os.path.join(self.olive_dir, "junos_lab", "configset")
         
 # Tar file copied across (if remote host) to local directory
-        shell.sendline("cd %s" % self.olive_dir) 
+        #shell.sendline("cd %s" % self.olive_dir) 
+        shell.sendline("cd")
 # Remove any previous lab
-        shell.sendline("rm -rf  " + junos_extract_directory)
-        shell.prompt() 
-        shell.sendline("mkdir  " + junos_extract_directory )
+        shell.sendline("rm -rf  " + configset_directory)
         shell.prompt() 
 
         tar_basename = os.path.basename(tar_file)
         
         # Need to force directory to extract to (junosphere format for tar extracts to cwd)
         LOG.debug( "Extracting Olive configurations")
-        shell.sendline("tar -xzf %s -C %s" % (tar_basename, junos_extract_directory))
+        shell.sendline("tar -xzf %s" % (tar_basename))
 #Need this tar check or all else breaks!
-        shell.expect("tar: Removing leading")
         shell.prompt() 
 
-        configset_directory = os.path.join(junos_extract_directory, "configset")
+        # Now move into lab directory to create images
+        shell.sendline("cd %s" % self.olive_dir) 
+
         working_directory = self.get_cwd()
         configset_directory_full_path = os.path.join(working_directory, configset_directory)
 # TODO: store these from junos compiler in network.compiled_labs dict
@@ -306,8 +310,7 @@ class OliveDeploy():
             node_filename = ank.rtr_folder_name(self.network, node)
             config_files[node] = {}
             config_files[node]['name'] = node_filename
-            config_files[node]['config_file_full_path'] = (os.path.join(working_directory, configset_directory,
-                "%s.conf" % node_filename))
+            config_files[node]['config_file_full_path'] = (os.path.join(working_directory, configset_directory, "%s.conf" % node_filename))
             config_files[node]['config_file_snapshot'] = os.path.join(self.snapshot_folder, "%s.iso" % node_filename)
             config_files[node]['base_image_snapshot'] = os.path.join(self.snapshot_folder, "%s.img" % node_filename)
             config_files[node]['monitor_socket'] = os.path.join(configset_directory_full_path, "%s-monitor.sock" % node_filename)
@@ -339,7 +342,6 @@ class OliveDeploy():
         
         for router_id, router in enumerate(self.network.graph):
             mac_list = self.mac_address_list(router_id, 6)
-            print "mac list is ", mac_list
             router_info = router_info_tuple(
                     config_files[router].get('name'),
                     config_files[router].get('config_file_snapshot'),
@@ -357,7 +359,7 @@ class OliveDeploy():
 #TODO: Sort routers by name so start in a more sensible order
         qemu_routers = sorted(qemu_routers, key=lambda router: router.router_name)
         for router in qemu_routers:
-            LOG.info( "Starting %s" % router.router_name)
+            LOG.info( "Starting %s on port %s" % (router.router_name, router.telnet_port))
             startup_command = startup_template.render(
                     router_info = router
                     )
