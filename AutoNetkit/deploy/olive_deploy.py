@@ -13,6 +13,7 @@ from collections import namedtuple
 import os
 import time
 import AutoNetkit.config as config
+import datetime
 import pxssh
 import sys
 import AutoNetkit as ank
@@ -378,8 +379,8 @@ class OliveDeploy():
             total_boot_time += machine_boot_time
             average_boot_time = total_boot_time/(index+1)
             remaining_boot_time = average_boot_time * (len(qemu_routers) - (index+1))
-            LOG.info("Started in %i seconds, average %i, estmated remaining time %i" % (machine_boot_time,
-                average_boot_time, remaining_boot_time))
+            LOG.info("Started in %i s, average %i s, estmated remaining time %d" % (machine_boot_time,
+                average_boot_time, datetime.timedelta(seconds=remaining_boot_time)))
 
         LOG.info( "Successfully started all Olives")
         
