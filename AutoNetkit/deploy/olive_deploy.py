@@ -254,7 +254,7 @@ class OliveDeploy():
 # Now load our ank config
         LOG.info( "Commiting configuration")
         shell.sendline("/usr/sbin/cli -c 'configure; load override ANK.conf; commit'")
-        shell.expect("commit complete")
+        shell.expect("commit complete",timeout=120)
 # logout, expect a new login prompt
         shell.sendline("exit")
         shell.expect("login:")
