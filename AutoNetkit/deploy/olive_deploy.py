@@ -367,6 +367,8 @@ class OliveDeploy():
 # flatten into single line
             startup_command = " ".join(item for item in startup_command.split("\n"))
             shell.sendline(startup_command)
+            shell.sendline("disown")
+            LOG.info(startup_command)
 # Telnet in
             shell.prompt()
             self.telnet_and_override(router.telnet_port, wait_for_bootup=True)
