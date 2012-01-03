@@ -306,6 +306,8 @@ class OliveDeploy():
         configset_directory_full_path = os.path.join(working_directory, configset_directory)
 # TODO: store these from junos compiler in network.compiled_labs dict
         config_files = {}
+
+#TODO: tidy the multiple loops into one simple loop
         for node in self.network.graph.nodes():
             node_filename = ank.rtr_folder_name(self.network, node)
             config_files[node] = {}
@@ -339,7 +341,12 @@ class OliveDeploy():
         LOG.debug("Starting qemu machines")
 
         router_info_tuple = namedtuple('router_info', 'router_name, iso_image, img_image, mac_addresses, telnet_port, switch_socket, monitor_socket')
-        
+        """
+       t = time.time()
+        for i in list:
+        doit1(i)
+        print "%.3f" % (time.time()-t) 
+        """
         for router_id, router in enumerate(self.network.graph):
             mac_list = self.mac_address_list(router_id, 6)
             router_info = router_info_tuple(
