@@ -304,9 +304,10 @@ class BgpPolicyParser:
     def allocate_tags(self):
         """Allocates community values to tags"""
         LOG.debug("Allocating community values to tags")
-        tag_id = itertools.count(10,10)
+        tag_id = itertools.count(10)
+        generic_asn = "1234"
         for tag in self.tags_to_allocate:
-            self.allocated_tags[tag] = "1234:%s" % tag_id.next()
+            self.allocated_tags[tag] = "%s:%s" % (generic_asn, tag_id.next() + 10)
 
 
     def get_prefixes(self, nodes):
