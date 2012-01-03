@@ -1,4 +1,4 @@
-/usr/bin/qemu
+/opt/lu/bin/qemu-system-x86_64
 -hda ${router_info.img_image} 
 -hdb ${router_info.iso_image}         
 	% for mac in router_info.mac_addresses: 
@@ -11,5 +11,5 @@
 -m 512 m  
 -nographic 
 -localtime 
--L /usr/share/seabios
+-L /opt/lu/share/seabios-kvm
 -name ${router_info.router_name} &
