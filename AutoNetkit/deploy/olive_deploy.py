@@ -375,14 +375,21 @@ class OliveDeploy():
 # Telnet in
             shell.prompt()
             self.telnet_and_override(router.telnet_port, wait_for_bootup=True)
-            machine_boot_time = time.time() - start_time
+# Calculate how long took to boot machine, round to nearest integer so don't have verbose output
+            machine_boot_time = int(time.time() - start_time)
             total_boot_time += machine_boot_time
             average_boot_time = total_boot_time/(index+1)
             remaining_boot_time = average_boot_time * (len(qemu_routers) - (index+1))
-            LOG.info("Started in %i s, average %i s, estmated remaining time %d" % (machine_boot_time,
-                average_boot_time, datetime.timedelta(seconds=remaining_boot_time)))
+            LOG.info("Started %S in %s, average %s, estmated remaining time %s" % (
+                router.router_name,
+                datetime.timedelta(seconds=machine_boot_time),
+                datetime.timedelta(seconds=average_boot_time),
+                datetime.timedelta(seconds=remaining_boot_time)))
 
         LOG.info( "Successfully started all Olives")
+        LOG.info("Telnet ports: " + 
+                ",".join("%s: %s" % (router.router_name, router.telnet_port) for router in qemu_routers))
+#TODO: print summary of machines/ports
         
     def start_switch(self):
         shell = self.shell
