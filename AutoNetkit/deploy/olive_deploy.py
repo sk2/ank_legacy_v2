@@ -254,7 +254,7 @@ class OliveDeploy():
 # Now load our ank config
         LOG.info( "Commiting configuration")
         shell.sendline("/usr/sbin/cli -c 'configure; load override ANK.conf; commit'")
-        shell.expect("commit complete")
+        shell.expect("commit complete",timeout=120)
 # logout, expect a new login prompt
         shell.sendline("exit")
         shell.expect("login:")
@@ -367,6 +367,8 @@ class OliveDeploy():
 # flatten into single line
             startup_command = " ".join(item for item in startup_command.split("\n"))
             shell.sendline(startup_command)
+            shell.sendline("disown")
+            LOG.info(startup_command)
 # Telnet in
             shell.prompt()
             self.telnet_and_override(router.telnet_port, wait_for_bootup=True)
