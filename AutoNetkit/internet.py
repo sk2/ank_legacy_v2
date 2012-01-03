@@ -9,27 +9,16 @@ __author__ = """\n""".join(['Simon Knight (simon.knight@adelaide.edu.au)',
 #    All rights reserved.
 #    BSD license.
 #
-                              
-#TODO: use re.compile when using regexes to make faster
- 
-#TODO: move netkit deploy etc into plugins - provide basic access to a
-#netkit machine (local/remote) and rest is scripted from there as a plugin - 
-#also move analysis into seperate plugins then
-#TODO: configure svn so can store encrypted passwords
-#TODO: see if netaddr 0.7.5 fixes pickle issue
-#TODO: Setup network to use rsync as default deploy instead of scp
-
-#TODO: Make default plugin expose config and logger
-#TODO: add plugins to documentation
-#TODO: Can check syntax of plugin by running python compiler across it alone 
-#TODO: Write simple plugin manager for network that auto fetches from Internet
 
 import os
 
 import AutoNetkit as ank
 from AutoNetkit import network
 
+from pkg_resources import resource_filename
+
 from netaddr import IPNetwork
+import glob
 
 import config
 
@@ -140,7 +129,25 @@ class Internet:
 
         # Look at file extension
         ext = os.path.splitext(filename)[1]
-        if ext == ".gml":
+        if ext == "":
+# No extension, see if filename is an included example Topology
+            topology_dir =  resource_filename("AutoNetkit",
+                    os.path.join("lib", "examples", "topologies"))
+            test_filename = os.path.join(topology_dir, "%s.graphml" % filename)
+            if os.path.isfile(test_filename):
+                LOG.info("Loading example topology %s " % filename)
+                ank.load_graphml(self.network, test_filename)
+            else:
+                example_files = glob.glob(topology_dir + os.sep + "*.graphml")
+# Remove path
+                example_files = (os.path.split(filename)[1] for filename in example_files)
+# Remove extension
+                example_files = (os.path.splitext(filename)[0] for filename in example_files)
+                LOG.warn("Unable to find example topology %s" % filename)
+                LOG.info("Valid example topologies are: " + ", ".join(example_files))
+            
+            
+        elif ext == ".gml":
             # GML file from Topology Zoo
             ank.load_zoo(self.network, filename)
         elif ext == ".graphml":
@@ -152,6 +159,8 @@ class Internet:
             LOG.warn("AutoNetkit no longer supports yaml file format")
         else:
             LOG.warn("AutoNetkit does not support file format %s" % ext)
+
+        #TODO: check that loaded network has at least one node, if not throw exception
     
     def plot(self, show=False, save=True): 
         """Plot the network topology

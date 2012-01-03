@@ -99,21 +99,19 @@ def main():
 #TODO: if topology file doesn't exist, then try inside lib/examples/topologies/
     f_name = options.file  
 # check exists
-    if os.path.isfile(f_name):
-        igp = "ospf"
-        if options.isis:
-            igp = "isis"
+#TODO: handle this properly using default arguments
+    igp = "ospf"
+    if options.isis:
+        igp = "isis"
 
-        use_junosphere = (options.junos or options.junosphere)
-        inet = Internet(tapsn = options.tapsn, netkit=options.netkit,
-                cbgp=options.cbgp, dynagen=options.dynagen, junosphere=use_junosphere,
-                junosphere_olive=options.junosphere_olive, olive=options.olive, 
-                policy_file = options.bgp_policy,
-                olive_qemu_patched=options.olive_qemu_patched, igp=igp)
-        inet.load(f_name)
-    else:    
-        LOG.warn("Topology file %s not found" % f_name)
-        sys.exit(0)
+    use_junosphere = (options.junos or options.junosphere)
+    inet = Internet(tapsn = options.tapsn, netkit=options.netkit,
+            cbgp=options.cbgp, dynagen=options.dynagen, junosphere=use_junosphere,
+            junosphere_olive=options.junosphere_olive, olive=options.olive, 
+            policy_file = options.bgp_policy,
+            olive_qemu_patched=options.olive_qemu_patched, igp=igp)
+    inet.load(f_name)
+
 
     # set properties
     inet.dynagen_hypervisor = options.dynagen_hypervisor
