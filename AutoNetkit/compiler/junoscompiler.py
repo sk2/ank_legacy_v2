@@ -420,7 +420,11 @@ class JunosCompiler:
                 time.localtime())
         tar = tarfile.open(os.path.join(config.ank_main_dir,
             tar_filename), "w:gz")
-# arcname to flatten file structure
-        tar.add(lab_dir(), arcname="")
+        if self.junosphere:
+# Junosphere needs to have no arcname to flatten file structure
+# (need to extract into same directory as the tar.gz)
+            tar.add(lab_dir(), arcname="")
+        else:
+            tar.add(lab_dir())
         self.network.compiled_labs['junos'] = tar_filename
         tar.close()
