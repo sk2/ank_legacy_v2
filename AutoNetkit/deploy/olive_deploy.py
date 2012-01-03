@@ -25,7 +25,6 @@ import pexpect
 
 LINUX_PROMPT = "~#"   
 
-
 #TODO: tidy up folder handling esp wrt config.lab_dir config.junos_dir etc
 
 from mako.lookup import TemplateLookup
@@ -341,12 +340,7 @@ class OliveDeploy():
         LOG.debug("Starting qemu machines")
 
         router_info_tuple = namedtuple('router_info', 'router_name, iso_image, img_image, mac_addresses, telnet_port, switch_socket, monitor_socket')
-        """
-       t = time.time()
-        for i in list:
-        doit1(i)
-        print "%.3f" % (time.time()-t) 
-        """
+
         for router_id, router in enumerate(self.network.graph):
             mac_list = self.mac_address_list(router_id, 6)
             router_info = router_info_tuple(
@@ -365,20 +359,27 @@ class OliveDeploy():
     
 #TODO: Sort routers by name so start in a more sensible order
         qemu_routers = sorted(qemu_routers, key=lambda router: router.router_name)
-        for router in qemu_routers:
+        total_boot_time = 0
+        for index, router in enumerate(qemu_routers):
             LOG.info( "Starting %s on port %s" % (router.router_name, router.telnet_port))
             startup_command = startup_template.render(
                     router_info = router
                     )
 
 # flatten into single line
+            t = time.time()
             startup_command = " ".join(item for item in startup_command.split("\n"))
             shell.sendline(startup_command)
             shell.sendline("disown")
-            LOG.info(startup_command)
 # Telnet in
             shell.prompt()
             self.telnet_and_override(router.telnet_port, wait_for_bootup=True)
+            machine_boot_time = time.time() - t
+            total_boot_time += machine_boot_time
+            average_boot_time = total_boot_time/(index+1)
+            remaining_boot_time = average_boot_time * (len(qemu_routers) - (index+1))
+            LOG.info("Started in %.3f seconds, average %.3f, est remaining time %.3f" % (machine_boot_time,
+                average_boot_time, remaining_boot_time))
 
         LOG.info( "Successfully started all Olives")
         
