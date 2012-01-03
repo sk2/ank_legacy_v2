@@ -167,11 +167,16 @@ class OliveDeploy():
 
     def mac_address_list(self, router_id, count):
         """Returns a generator of random 48-bit MAC addresses"""
-# integer representation of '00:11:22:fe:00:00
-        oui = 73601515000 + router_id*(2**8)
+# 00:11:22:xx:xx:xx
+        virtual_lan_card_oui = "001122"
+        oui = int(virtual_lan_card_oui, 16) << 24
+# 00:11:22:xx:xx:xx
+        oui += (router_id +1) << 16
+# 00:11:22:yy:xx:xx where yy is router_id
+        
         return [netaddr.EUI(oui+ei, version=48, dialect=netaddr.mac_unix)
                 #TODO: see if better way to repeat the function
-                for ei in range(0,count)]
+                for ei in range(1,count)]
 
     def check_required_programs(self):
         shell = self.shell
@@ -334,6 +339,7 @@ class OliveDeploy():
         
         for router_id, router in enumerate(self.network.graph):
             mac_list = self.mac_address_list(router_id, 6)
+            print "mac list is ", mac_list
             router_info = router_info_tuple(
                     config_files[router].get('name'),
                     config_files[router].get('config_file_snapshot'),
