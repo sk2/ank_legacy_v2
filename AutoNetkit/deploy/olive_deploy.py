@@ -388,7 +388,7 @@ class OliveDeploy():
 
         LOG.info( "Successfully started all Olives")
         LOG.info("Telnet ports: " + 
-                ",".join("%s: %s" % (router.router_name, router.telnet_port) for router in qemu_routers))
+                ", ".join("%s: %s" % (router.router_name, router.telnet_port) for router in qemu_routers))
 #TODO: print summary of machines/ports
         
     def start_switch(self):
