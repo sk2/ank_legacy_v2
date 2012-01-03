@@ -146,7 +146,6 @@ class Internet:
                 LOG.warn("Unable to find example topology %s" % filename)
                 LOG.info("Valid example topologies are: " + ", ".join(example_files))
             
-            
         elif ext == ".gml":
             # GML file from Topology Zoo
             ank.load_zoo(self.network, filename)
