@@ -163,7 +163,7 @@ class OliveDeploy():
                 #netstat command echoed
             elif i==3:
                 break
-        return (port for port in itertools.count(start, 1) if port not in allocated_ports)
+        return (port for port in itertools.count(start) if port not in allocated_ports)
 
     def mac_address_list(self, router_id, count):
         """Returns a generator of random 48-bit MAC addresses"""
