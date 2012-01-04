@@ -45,7 +45,7 @@ to pass through to the netx graph methods for quick access
 class Network(object): 
     """ Main network containing router graph"""
 
-    def __init__(self):
+    def __init__(self, physical_graph=None):
         # IP config information
         #TODO: make this a general attributes dictionary
         self.tap_host = None
@@ -55,6 +55,8 @@ class Network(object):
         self.as_names = {}
         self._graphs = {}
         self._graphs['physical'] = nx.DiGraph()
+        if physical_graph:
+            self._graphs['physical'] = physical_graph
         self._graphs['bgp_session'] = nx.DiGraph()
         self.compiled_labs = {} # Record compiled lab filenames, and configs
 
