@@ -167,7 +167,6 @@ class BgpPolicyParser:
         setOriginAttribute = (Literal("setOriginAttribute").setResultsName("attribute") 
                 + (oneOf("IGP BGP None").setResultsName("value"))).setResultsName("setOriginAttribute")
 
-        bgpAction = Group(addTag | setLP | setMED | addTag | removeTag |
                 setNextHop | setOriginAttribute | rejectAction).setResultsName("bgpAction")
 
         # The Clauses
