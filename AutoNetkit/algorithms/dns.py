@@ -10,6 +10,8 @@ __all__ = ['allocate_dns_servers',
 
 import AutoNetkit as ank
 import networkx as nx
+from netaddr import IPAddress, IPNetwork
+import math
 
 import logging
 LOG = logging.getLogger("ANK")
@@ -92,23 +94,27 @@ def reverse_subnet(ip_addr, subnet):
 def rev_dns_identifier(subnet):
     """ Returns Identifier part of subnet for use in reverse dns itentification.
 
-    Eg 10.1.2.3/8 -> 10
+    >>> rev_dns_identifier(IPNetwork("10.1.2.3/8"))
+    '10'
 
-    172.16.1.2/8 -> 16.172
+    >>> rev_dns_identifier(IPNetwork("172.16.1.2/16"))
+    '16.172'
 
-    192.168.0.1/24 -> 0.168.192
+    >>> rev_dns_identifier(IPNetwork("192.168.0.1/24"))
+    '0.168.192'
+
+    >>> rev_dns_identifier(IPNetwork("192.168.0.1/22"))
+
+
     """
-#TODO: look at netaddr functions for this
+    if subnet.prefixlen % 8 != 0:
+# Can only do classful subnets (config is too complicated otherwise)
+        LOG.warn("Reverse DNS can only handle /8, /16, /24, unable to process %s"
+                % subnet)
+        return
 
-    split_sn = str(subnet).split(".")
-    prefixlen = subnet.prefixlen
+# /8 -> return first octet, /16 -> first two, /24 -> first 3
+    last_octet = subnet.prefixlen/8-1  # index of last octet to include
+    octets = IPAddress(subnet.network).words
+    return ".".join(str(octets[x]) for x in range(last_octet, -1, -1))
 
-    if(prefixlen == 8):
-        identifier = split_sn[0]
-    elif(prefixlen == 16):
-        identifier = split_sn[1] + "." + split_sn[0]
-    elif(prefixlen == 24):
-        identifier = (split_sn[2] + "." + split_sn[1] + "." +
-                        split_sn[0])
-
-    return identifier
