@@ -617,6 +617,7 @@ class NetkitCompiler:
             for rtr in my_as.nodes():
                 hostname = ank.hostname(self.network, rtr)
 
+                #TODO: make this a function rather than hardcoded lo0
                 host_cname_list.append((hostname, "lo0.{0}".format(hostname)))
                 asn = self.network.asn(rtr)
 
@@ -639,6 +640,7 @@ class NetkitCompiler:
                     #TODO: map int_id into eth, en, etc based on a dict
                     # skip links not belonging to this AS's subnet, eBGP links
                     if ip_addr in subnet:
+                        #TODO: use a function for this
                         int_id = "eth{0}".format(int_id)
                         reverse = ank.reverse_subnet(ip_addr, subnet.prefixlen)
                         for_entry_list.append( {'int_id': int_id,

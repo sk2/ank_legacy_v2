@@ -112,7 +112,7 @@ def rev_dns_identifier(subnet):
     >>> rev_dns_identifier(IPNetwork("192.168.0.1/24"))
     '0.168.192'
 
-    Can only handle Classful addreses, nothing if prefixlen is not divisible by 8
+    Can only handle classful addreses, expect nothing if prefixlen is not divisible by 8
     >>> rev_dns_identifier(IPNetwork("192.168.0.1/22"))
 
 
