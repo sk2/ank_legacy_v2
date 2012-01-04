@@ -19,7 +19,7 @@ LOG = logging.getLogger("ANK")
 config = ank.config
 settings = config.settings
 
-def load_graphml(network, net_file, default_asn = 1):
+def load_graphml(net_file, default_asn = 1):
     """
     Loads a network from Graphml into AutoNetkit.
     """
@@ -59,8 +59,7 @@ def load_graphml(network, net_file, default_asn = 1):
     # directions
     #TODO: Document this that assume bi-directional
     input_graph = nx.Graph(input_graph)
-    network.graph = input_graph.to_directed()
+    input_graph.graph = input_graph.to_directed()
     
-    network.set_default_node_property('platform', "NETKIT")
-    return
-
+    input_graph.set_default_node_property('platform', "NETKIT")
+    return input_graph

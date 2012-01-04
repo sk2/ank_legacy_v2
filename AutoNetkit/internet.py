@@ -120,13 +120,13 @@ class Internet:
         ext = os.path.splitext(filename)[1]
         if ext == "":
             #TODO: use try/except block here
-            ank.load_example(self.network, filename)
+            ank.load_example(filename)
 
         elif ext == ".gml":
             # GML file from Topology Zoo
             ank.load_zoo(self.network, filename)
         elif ext == ".graphml":
-            ank.load_graphml(self.network, filename)
+            self.network = ank.load_graphml(filename)
         elif ext == ".pickle":
             ank.load_pickle(self.network, filename)
         elif ext == ".yaml":

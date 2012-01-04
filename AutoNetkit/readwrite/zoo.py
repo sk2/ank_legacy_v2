@@ -68,6 +68,8 @@ def load_graph(net_file):
             
 
 def load_zoo(network, net_file):
+    #TODO: remove the network part - make return just a graphs
+#TODO: make a seperate function that merges a new network, allocating ASNs as appropriate 
     """
     Loads a network from the zoo into AutoNetkit.
     If the file is interconnect.gml, it will treat the "type" of each node as
