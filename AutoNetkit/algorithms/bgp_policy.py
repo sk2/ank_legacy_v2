@@ -175,15 +175,15 @@ class BgpPolicyParser:
                 + ZeroOrMore(Suppress(boolean_and) + bgpMatchQuery)).setResultsName("if_clause")
         actionClause = bgpAction + ZeroOrMore(Suppress(boolean_and) + bgpAction)
         thenClause = Group(Suppress("then") + actionClause).setResultsName("then_clause")
-        ifThenClause = Group(Suppress("(") + ifClause + 
-                thenClause + Suppress(")")).setResultsName("ifThenClause")
+        ifThenClause = Group(Suppress("(") + 
+                ifClause + thenClause + Suppress(")")).setResultsName("ifThenClause")
         elseActionClause = Group(Suppress("(") + actionClause 
                 + Suppress(")")).setResultsName("else_clause")
 
 # Query may contain itself (nested)
         bgpSessionQuery = Forward()
-        bgpSessionQuery << ( ifThenClause +
-                Optional( Suppress("else") + (elseActionClause | bgpSessionQuery))
+        bgpSessionQuery << ( 
+                ifThenClause + Optional( Suppress("else") + (elseActionClause | bgpSessionQuery))
 #+ ZeroOrMore(boolean_and + bgpAction) | bgpSessionQuery )).setResultsName("else_clause"))
                 ).setResultsName("bgpSessionQuery")
         self.bgpSessionQuery = bgpSessionQuery
@@ -210,10 +210,8 @@ class BgpPolicyParser:
     def apply_bgp_policy(self, qstring):
         """Applies policy to network 
         >>> pol_parser = ank.BgpPolicyParser(ank.network.Network(ank.load_example("multias")))
-       
-       
-       
-       pol_parser.apply_bgp_policy("(Network = AS1 ) ->ingress (Network = AS2): (if tag = deprefme then setLP 90) ")
+        >>> pol_parser.apply_bgp_policy("(Network = AS1 ) ->ingress (Network = AS2): (if tag = deprefme then setLP 90) ")
+        >>> pol_parser.apply_bgp_policy("(Network = AS1 ) ->ingress (Network = AS2): (setLP 90) ")
         
         
         """
