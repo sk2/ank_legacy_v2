@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-BGP
+DNS
 """
 __author__ = "\n".join(['Simon Knight'])
 #    Copyright (C) 2009-2011 by Simon Knight, Hung Nguyen
@@ -11,7 +11,6 @@ __all__ = ['allocate_dns_servers',
 import AutoNetkit as ank
 import networkx as nx
 from netaddr import IPAddress, IPNetwork
-import math
 
 import logging
 LOG = logging.getLogger("ANK")
@@ -73,26 +72,36 @@ def root_dns(network):
         return root_dns_server.pop()
 
 
-def reverse_subnet(ip_addr, subnet):
-    """Returns reverse address for given IP Address"""
-    #ToDO: add examples here - this isn't full IP reverse but the subnet
-    # part reversed
-    #reverse entry depends on prefix length, split and keep entries
-    prefixlen = subnet.prefixlen
-    split_ip = str(ip_addr).split(".")
-    if(prefixlen >= 24):
-        #Supernet is class C
-        reverse = split_ip[3]
-    elif(prefixlen >= 16):
-        #Supernet is class B
-        reverse = split_ip[3] + "." + split_ip[2]
-    elif(prefixlen >= 8):
-        #Supernet is class A
-        reverse =  split_ip[3] + "." + split_ip[2] + "." + split_ip[1]
-    return reverse
+def reverse_subnet(ip_addr, prefixlen):
+    """Returns reverse address for given IP Address
 
+    * w.x.y.z/prefixlen
+    * prefixlen >= 24 -> return z
+    * 24 >= prefixlen >= 16 -> return z.y
+    * 16 >= prefixlen >= 8 -> return z.y.w
+    * 8 >= prefixlen  -> return z.y.x.w
+    
+    >>> reverse_subnet(IPAddress("10.0.0.22"), 16)
+    '22.0'
+    >>> reverse_subnet(IPAddress("10.0.0.21"), 16)
+    '21.0'
+    >>> reverse_subnet(IPAddress("10.0.0.129"), 16)
+    '129.0'
+    >>> reverse_subnet(IPAddress("1.2.3.4"), 5)
+    '4.3.2.1'
+    >>> reverse_subnet(IPAddress("1.2.3.4"), 15)
+    '4.3.2'
+    >>> reverse_subnet(IPAddress("1.2.3.4"), 20)
+    '4.3'
+    >>> reverse_subnet(IPAddress("1.2.3.4"), 26)
+    '4'
+    
+    """
+    octets = ip_addr.words
+    return ".".join(str(octets[x]) for x in range(3, prefixlen/8-1, -1))
+   
 def rev_dns_identifier(subnet):
-    """ Returns Identifier part of subnet for use in reverse dns itentification.
+    """ Returns Identifier part of subnet for use in reverse dns identification.
 
     >>> rev_dns_identifier(IPNetwork("10.1.2.3/8"))
     '10'
@@ -103,6 +112,7 @@ def rev_dns_identifier(subnet):
     >>> rev_dns_identifier(IPNetwork("192.168.0.1/24"))
     '0.168.192'
 
+    Can only handle Classful addreses, nothing if prefixlen is not divisible by 8
     >>> rev_dns_identifier(IPNetwork("192.168.0.1/22"))
 
 

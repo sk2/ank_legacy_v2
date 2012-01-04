@@ -602,7 +602,7 @@ class NetkitCompiler:
                         int_id = ank.int_id(self.network, dst, src)
                         int_id = "eth{0}".format(int_id)
                         ip_addr = ank.ip_addr(self.network, dst, src)
-                        reverse = ank.reverse_subnet(ip_addr, subnet)
+                        reverse = ank.reverse_subnet(ip_addr, subnet.prefixlen)
                         # Add remote host to reverse DNS for subnet of this AS
                         rev_entry_list.append( {'int_id': int_id,
                                                 'reverse': reverse,
@@ -640,7 +640,7 @@ class NetkitCompiler:
                     # skip links not belonging to this AS's subnet, eBGP links
                     if ip_addr in subnet:
                         int_id = "eth{0}".format(int_id)
-                        reverse = ank.reverse_subnet(ip_addr, subnet)
+                        reverse = ank.reverse_subnet(ip_addr, subnet.prefixlen)
                         for_entry_list.append( {'int_id': int_id,
                                                 'int_ip': str(ip_addr),
                                                 'host': hostname})
@@ -658,7 +658,7 @@ class NetkitCompiler:
                 lo_subnet = self.network.lo_ip(rtr)
                 #TODO: make this a universal constant
                 int_id = "lo0"
-                reverse = ank.reverse_subnet(lo_subnet.ip, subnet)
+                reverse = ank.reverse_subnet(lo_subnet.ip, subnet.prefixlen)
 
                 for_entry_list.append( {'int_id': int_id,
                                         'int_ip': str(lo_subnet.ip),
