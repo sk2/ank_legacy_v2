@@ -58,6 +58,7 @@ class Network(object):
         if physical_graph:
             self._graphs['physical'] = physical_graph
         self._graphs['bgp_session'] = nx.DiGraph()
+        self._graphs['dns'] = nx.DiGraph()
         self.compiled_labs = {} # Record compiled lab filenames, and configs
 
     @deprecated
@@ -89,6 +90,14 @@ class Network(object):
     @g_session.setter
     def g_session(self, value):
         self._graphs['bgp_session'] = value
+
+    @property
+    def g_dns(self):
+        return self._graphs['dns']
+
+    @g_dns.setter
+    def g_dns(self, value):
+        self._graphs['dns'] = value
 
     @deprecated
     def get_edges(self, node=None):

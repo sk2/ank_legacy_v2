@@ -5,7 +5,7 @@ DNS
 __author__ = "\n".join(['Simon Knight'])
 #    Copyright (C) 2009-2011 by Simon Knight, Hung Nguyen
 
-__all__ = ['allocate_dns_servers',
+__all__ = ['allocate_dns_servers', 'get_dns_graph',
            'dns_list', 'root_dns', 'reverse_subnet', 'rev_dns_identifier']
 
 import AutoNetkit as ank
@@ -46,6 +46,8 @@ def allocate_dns_servers(network):
         global_dns = nx.center(largest_subgraph)[0]
     network.graph.node[global_dns]['global_dns'] = True
 
+def get_dns_graph(network):
+    return network.g_dns
 
 #TODO: make more efficient for large networks - eg size of KDL from Zoo
 def dns_list(network):
