@@ -178,7 +178,7 @@ protocols {
 				%endif  
 				 % if len(neighbor['route_maps_out']) == 1:      
   					export ${neighbor['route_maps_out'].pop()};
-				 % elif len(neighbor['route_maps_in']) > 1:
+				 % elif len(neighbor['route_maps_out']) > 1:
 					export [${" ".join(neigh for neigh in neighbor['route_maps_out'])}];
 				%endif
 				}                          
