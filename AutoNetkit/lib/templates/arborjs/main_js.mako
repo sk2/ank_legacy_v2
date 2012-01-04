@@ -145,7 +145,7 @@
         % for node, data in node_list:
         sys.addNode('${node}', {name: "${data['label']}"})        
         % endfor 
-    % elif bgp_graph:
+    % elif overlay_graph:
         % for src, dst, data in edge_list:
         sys.addEdge('${src}', '${dst}', {name: ""})        
         % endfor

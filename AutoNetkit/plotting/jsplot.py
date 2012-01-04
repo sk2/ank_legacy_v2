@@ -95,7 +95,7 @@ def jsplot(network):
             f_js.write( js_template.render(
                 node_list = ebgp_graph.nodes(data=True),
                 edge_list = ebgp_graph.edges(data=True),
-                bgp_graph = True,
+                overlay_graph = True,
                 ))
 
     ibgp_graph = ank.get_ibgp_graph(network)
@@ -107,18 +107,21 @@ def jsplot(network):
             f_js.write( js_template.render(
                 node_list = ibgp_graph.nodes(data=True),
                 edge_list = ibgp_graph.edges(data=True),
-                bgp_graph = True,
+                overlay_graph = True,
                 ))
 
     dns_graph = ank.get_dns_graph(network)
     labels = dict( (n, network.label(n)) for n in dns_graph)
     dns_graph = nx.relabel_nodes(dns_graph, labels)
+    pprint.pprint(dns_graph.nodes())
+    pprint.pprint(dns_graph.edges())
     dns_filename = os.path.join(jsplot_dir, "dns.js")
     js_files.append("dns.js")
     with open( dns_filename, 'w') as f_js:
             f_js.write( js_template.render(
                 node_list = dns_graph.nodes(data=True),
                 edge_list = dns_graph.edges(data=True),
+                overlay_graph = True,
                 ))
 
     # put html file in main plot directory
