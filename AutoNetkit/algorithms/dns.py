@@ -11,6 +11,7 @@ __all__ = ['allocate_dns_servers', 'get_dns_graph',
 import AutoNetkit as ank
 import networkx as nx
 from netaddr import IPAddress, IPNetwork
+import pprint
 
 import logging
 LOG = logging.getLogger("ANK")
@@ -45,6 +46,16 @@ def allocate_dns_servers(network):
         # Choose central node in this subgraph
         global_dns = nx.center(largest_subgraph)[0]
     network.graph.node[global_dns]['global_dns'] = True
+
+    dns_graph = nx.DiGraph()
+    dns_graph.add_nodes_from(network.graph)
+    dns_graph.add_edges_from(network.graph.edges())
+
+    pprint.pprint(dns_graph.nodes(data=True))
+    pprint.pprint(dns_graph.edges(data=True))
+    network.g_dns = dns_graph
+
+# also allocate to graph
 
 def get_dns_graph(network):
     return network.g_dns
