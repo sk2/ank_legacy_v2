@@ -179,6 +179,10 @@ class BgpPolicyParser:
                 ifClause + thenClause + Suppress(")")).setResultsName("ifThenClause")
         elseActionClause = Group(Suppress("(") + actionClause 
                 + Suppress(")")).setResultsName("else_clause")
+# Support actions without a condition (ie no "if")
+        unconditionalAction =  Group(Suppress("(")
+            + Group(actionClause).setResultsName("unconditionalActionClause")
+            + Suppress(")")).setResultsName("bgpSessionQuery")
 
 # Query may contain itself (nested)
         bgpSessionQuery = Forward()
@@ -186,7 +190,7 @@ class BgpPolicyParser:
                 Optional( Suppress("else") + (elseActionClause | bgpSessionQuery))
 #+ ZeroOrMore(boolean_and + bgpAction) | bgpSessionQuery )).setResultsName("else_clause"))
                 ).setResultsName("bgpSessionQuery")
-        bgpSessionQuery =  bgpSessionQuery | (Suppress("(") + actionClause + Suppress(")") )
+        bgpSessionQuery =  bgpSessionQuery | unconditionalAction
         self.bgpSessionQuery = bgpSessionQuery
 
         self.bgpApplicationQuery = self.edgeQuery + Suppress(":") + self.bgpSessionQuery
@@ -212,7 +216,7 @@ class BgpPolicyParser:
         """Applies policy to network 
         >>> pol_parser = ank.BgpPolicyParser(ank.network.Network(ank.load_example("multias")))
         >>> pol_parser.apply_bgp_policy("(Network = AS1 ) ->ingress (Network = AS2): (if tag = deprefme then setLP 90) ")
-        >>> pol_parser.apply_bgp_policy("(Network = AS1 ) ->ingress (Network = AS2): (setLP 90) ")
+        >>> pol_parser.apply_bgp_policy("(Network = AS1 ) ->ingress (Network = AS2): (addTag ABC & setLP 90) ")
         
         
         """
@@ -393,8 +397,17 @@ class BgpPolicyParser:
         """Processes if-then-else query"""
         LOG.debug("Processing if-then-else query %s" % parsed_query)
         retval = []
+
         for token in parsed_query:
-            if token == parsed_query.else_clause:
+            if not parsed_query.ifThenClause:
+# Special case of action only clause (no "if" clause)
+                reject = any(True for (action, value) in token if action == self.reject)
+                else_tuples = [self.action_clause(action, value) for
+                        (action, value) in token
+                        if action != self.reject]
+                retval.append(self.match_tuple([], else_tuples, reject))
+
+            elif token == parsed_query.else_clause:
 # Special case of else (at end)
                 reject = any(True for (action, value) in token if action == self.reject)
                 else_tuples = [self.action_clause(action, value) for
@@ -629,6 +642,7 @@ class BgpPolicyParser:
                 try:
                     self.apply_bgp_policy(line)
                 except:
+                    raise
                     #try as business relationship query
                     try:
                         self.apply_bus_rel(line)
@@ -638,5 +652,4 @@ class BgpPolicyParser:
         self.allocate_tags()
         self.store_tags_per_router()
         #self.apply_gao_rexford()
-        pprint.pprint(self.network.g_session.edges(data=True))
 
