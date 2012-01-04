@@ -50,7 +50,6 @@ def allocate_dns_servers(network):
         # Choose central node in this subgraph
         global_dns = nx.center(largest_subgraph)[0]
     network.graph.node[global_dns]['global_dns'] = True
-    print "set root dns as ", global_dns
 
     # Marks the global, as well as local DNS server for each AS
     per_as_server_count = 1
@@ -70,7 +69,7 @@ def allocate_dns_servers(network):
         network.graph.node[local_dns]['local_dns'] = True
 # end legacy
 # Mark all other nodes in AS to point to this central node
-        LOG.info("DNS server(s) for AS %s are %s" % (my_as.name, 
+        LOG.debug("DNS server(s) for AS %s are %s" % (my_as.name, 
             ", ".join(network.label(s) for s in local_dns_servers)))
         all_dns_servers.update(local_dns_servers)
 
@@ -91,7 +90,7 @@ def allocate_dns_servers(network):
             reverse=True, key=lambda x: eccentricities[x])
     root_server_count = 2
     root_dns_servers.update(eccentricities[:root_server_count])
-    LOG.info("DNS Root servers are %s" % ", ".join(network.fqdn(s) 
+    LOG.debug("DNS Root servers are %s" % ", ".join(network.fqdn(s) 
         for s in root_dns_servers))
 
     #TODO: do we connect root DNS servers together?
@@ -142,7 +141,6 @@ def root_dns(network):
     else:
         # Exactly one allocated, remove from list
         retval =  root_dns_server.pop()
-        print "old method", network.label(retval)
         return retval
 
 

@@ -113,8 +113,6 @@ def jsplot(network):
     dns_graph = ank.get_dns_graph(network)
     labels = dict( (n, network.label(n)) for n in dns_graph)
     dns_graph = nx.relabel_nodes(dns_graph, labels)
-    pprint.pprint(dns_graph.nodes())
-    pprint.pprint(dns_graph.edges())
     dns_filename = os.path.join(jsplot_dir, "dns.js")
     js_files.append("dns.js")
     with open( dns_filename, 'w') as f_js:
