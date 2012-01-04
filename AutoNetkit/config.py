@@ -10,38 +10,65 @@ if sys.version_info[:2] == (2, 6):
 
 import pkg_resources
 import os
+import pprint
+import logging
+import validate
+
+
+"""TODO:
+    Document that configs files in (order of overwriting)
+    (internal)
+    ~/.autonetkit/autonetkit.cfg (check for Windows)
+    ./autonetkit.cfg
+    """
 
 #**************************************************************
 # Settings
 import ConfigParser
 settings = ConfigParser.RawConfigParser()
-#TRY with defaults
-# TODO: better way to handle defaults
-if os.path.isfile("autonetkit.cfg"):
-    settings.read('autonetkit.cfg')
-else:
-    # load defaults
-    default_cfg = pkg_resources.resource_filename(__name__,"/lib/autonetkit.cfg")
-    settings.read(default_cfg)
 
-ank_main_dir = settings.get('Lab', 'autonetkit_dir')
+ank_user_dir = os.path.expanduser("~") + os.sep + ".autonetkit"
+from configobj import ConfigObj
+
+# load defaults
+spec_file = pkg_resources.resource_filename(__name__,"/lib/configspec.cfg")
+settings = ConfigObj(configspec=spec_file)
+
+# Try in ~/.autonetkit/autonetkit.cfg
+user_config_file = os.path.join(ank_user_dir, "autonetkit.cfg")
+settings.merge(ConfigObj(user_config_file))
+validator = validate.Validator()
+settings.validate(validator, copy=True)
+
+#TODO: look at using configspec validation
+
+# also try from current directory
+settings.merge(ConfigObj("autonetkit.cfg"))
+
+
+pprint.pprint(settings)
+
+ank_main_dir = settings['Lab']['autonetkit_dir']
 
 if not os.path.isdir(ank_main_dir):
     os.mkdir(ank_main_dir)
 
-lab_dir = settings.get('Lab', 'netkit_dir')
+"""TODO: tidy these up, make relative and absolute - just the extension and then the bit with ank_main_dir in it also
+ so ensure consistent across compilers, deployment, etc
+"""
+lab_dir = settings['Lab']['netkit_dir']
 lab_dir = os.path.join(ank_main_dir, lab_dir)
 
-cbgp_dir = settings.get('Lab', 'cbgp_dir')
+cbgp_dir = settings['Lab']['cbgp_dir']
 cbgp_dir = os.path.join(ank_main_dir, cbgp_dir)
 
-dynagen_dir = settings.get('Lab', 'dynagen_dir')
+dynagen_dir = settings['Lab']['dynagen_dir']
 dynagen_dir = os.path.join(ank_main_dir, dynagen_dir)
 
-junos_dir = settings.get('Lab', 'junos_dir')
+junos_dir = settings['Lab']['junos_dir']
 junos_dir = os.path.join(ank_main_dir, junos_dir)
 
-plot_dir = settings.get('Lab', 'plot_dir')
+plot_dir = settings['Lab']['plot_dir']
 plot_dir = os.path.join(ank_main_dir, plot_dir)
 
 log_dir = os.path.join(ank_main_dir, "logs")
@@ -53,23 +80,8 @@ if not os.path.isdir(plot_dir):
     os.mkdir(plot_dir)
 
 
-# Cache directory for templates
-ank_dir = os.path.expanduser("~") + os.sep + ".autonetkit"
-if not os.path.exists(ank_dir):
-    os.mkdir(ank_dir)
-template_cache_dir = ank_dir + os.sep + "cache"
-if not os.path.exists(template_cache_dir):
-    os.mkdir(template_cache_dir)
-
-if (os.path.exists(template_cache_dir)
-    and not os.access(template_cache_dir, os.W_OK)):
-    LOG.info("Unable to write to cache dir %s, "
-             "template caching disabled" % template_cache_dir)
-    template_cache_dir = None
-
 
 def add_logging(console_debug=False):
-    import logging
     import logging.handlers
 
     LEVELS = {'debug': logging.DEBUG,
@@ -91,13 +103,23 @@ def add_logging(console_debug=False):
         level = logging.DEBUG # User specified debug level
     else:
 # Use debug from settings
-        level = LEVELS.get(settings.get('Logging', 'console'))
+        level = LEVELS.get(settings['Logging']['Console']['Level'])
 
+    print settings['Logging']['Console']['Timestamp']
+
+    if settings['Logging']['Console']['Timestamp']:
+        print "is true"
+    print settings['Logging']['Console']['Timestamp'] == True
+
+    format_string = '%(levelname)-6s %(message)s'
     if level == logging.DEBUG:
 # Include module name in debugging output
-        formatter = logging.Formatter('%(module)s\t %(levelname)-6s %(message)s')
-    else:
-        formatter = logging.Formatter('%(levelname)-6s %(message)s')
+        format_string = "%(module)s\t" + format_string
+    if bool(settings['Logging']['Console']['Timestamp']):
+        print "bool is true"
+        format_string = "%(asctime)s " + format_string
+
+    formatter = logging.Formatter(format_string)
 
 
     ch.setLevel(level)
@@ -112,7 +134,7 @@ def add_logging(console_debug=False):
     fh = logging.handlers.RotatingFileHandler(
                 LOG_FILENAME, maxBytes=LOG_SIZE, backupCount=5)
 
-    level = LEVELS.get(settings.get('Logging', 'file'))
+    level = LEVELS.get(settings['Logging']['File']['Level'])
 
     fh.setLevel(level)
     formatter = logging.Formatter("%(asctime)s %(levelname)s "
@@ -120,3 +142,18 @@ def add_logging(console_debug=False):
     fh.setFormatter(formatter)
 
     logging.getLogger('').addHandler(fh)
+
+LOG = logging.getLogger("ANK")
+
+# Cache directory for templates
+if not os.path.exists(ank_user_dir):
+    os.mkdir(ank_user_dir)
+template_cache_dir = ank_user_dir + os.sep + "cache"
+if not os.path.exists(template_cache_dir):
+    os.mkdir(template_cache_dir)
+
+if (os.path.exists(template_cache_dir)
+    and not os.access(template_cache_dir, os.W_OK)):
+    LOG.info("Unable to write to cache dir %s, "
+             "template caching disabled" % template_cache_dir)
+    template_cache_dir = None

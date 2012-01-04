@@ -36,7 +36,7 @@ setup (
      download_url = ("http://pypi.python.org/pypi/AutoNetkit"),
 
      install_requires = ['netaddr', 'mako', 'networkx>=1.6', 
-         'nose', 'pyparsing',
+         'nose', 'pyparsing', 'configobj',
          'pexpect', 'beaker',],
 
      classifiers = [

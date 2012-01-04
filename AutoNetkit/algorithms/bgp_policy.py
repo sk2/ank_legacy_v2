@@ -23,6 +23,7 @@ LOG = logging.getLogger("ANK")
 
 def tag_to_pl(tag):
     """Adds prefix list prefix to tag
+
     >>> tag_to_pl("network_eq_as1")
     'pl_network_eq_as1'
     """
@@ -30,6 +31,7 @@ def tag_to_pl(tag):
 
 def tag_to_cl(tag):
     """Adds community list prefix to tag
+
     >>> tag_to_cl("network_eq_as1")
     'cl_network_eq_as1'
     
@@ -214,11 +216,10 @@ class BgpPolicyParser:
 
     def apply_bgp_policy(self, qstring):
         """Applies policy to network 
+
         >>> pol_parser = ank.BgpPolicyParser(ank.network.Network(ank.load_example("multias")))
         >>> pol_parser.apply_bgp_policy("(Network = AS1 ) ->ingress (Network = AS2): (if tag = deprefme then setLP 90) ")
         >>> pol_parser.apply_bgp_policy("(Network = AS1 ) ->ingress (Network = AS2): (addTag ABC & setLP 90) ")
-        
-        
         """
         LOG.debug("Applying policy %s" % qstring)
         result = self.bgpApplicationQuery.parseString(qstring)
@@ -350,9 +351,8 @@ class BgpPolicyParser:
 
     def query_to_tag(self, query):
         """ flattens a node select query into a tag
-        TODO: convert this to proper testable docstring
-        eg (asn=3) becomes asn_eq_3
         """
+        print "got query ", query
 # flatten items into single list in lexicographic order
         retval = (item for sublist in query for item in sublist)
 # replace char if in mapping, else leave, eg = -> eq
