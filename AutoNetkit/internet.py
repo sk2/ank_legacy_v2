@@ -13,6 +13,7 @@ __author__ = """\n""".join(['Simon Knight (simon.knight@adelaide.edu.au)',
 import os
 
 import AutoNetkit as ank
+import pprint
 from AutoNetkit import network
 
 from netaddr import IPNetwork
@@ -120,13 +121,13 @@ class Internet:
         ext = os.path.splitext(filename)[1]
         if ext == "":
             #TODO: use try/except block here
-            ank.load_example(filename)
+            self.network.graph = ank.load_example(filename)
 
         elif ext == ".gml":
             # GML file from Topology Zoo
             ank.load_zoo(self.network, filename)
         elif ext == ".graphml":
-            self.network = ank.load_graphml(filename)
+            self.network.graph = ank.load_graphml(filename)
         elif ext == ".pickle":
             ank.load_pickle(self.network, filename)
         elif ext == ".yaml":
@@ -134,6 +135,9 @@ class Internet:
             LOG.warn("AutoNetkit no longer supports yaml file format")
         else:
             LOG.warn("AutoNetkit does not support file format %s" % ext)
+
+#TODO: remove this legacy requirement
+        self.network.set_default_node_property('platform', "NETKIT")
 
         #TODO: check that loaded network has at least one node, if not throw exception
     
