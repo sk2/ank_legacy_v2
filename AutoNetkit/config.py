@@ -105,18 +105,11 @@ def add_logging(console_debug=False):
 # Use debug from settings
         level = LEVELS.get(settings['Logging']['Console']['Level'])
 
-    print settings['Logging']['Console']['Timestamp']
-
-    if settings['Logging']['Console']['Timestamp']:
-        print "is true"
-    print settings['Logging']['Console']['Timestamp'] == True
-
     format_string = '%(levelname)-6s %(message)s'
     if level == logging.DEBUG:
 # Include module name in debugging output
         format_string = "%(module)s\t" + format_string
     if bool(settings['Logging']['Console']['Timestamp']):
-        print "bool is true"
         format_string = "%(asctime)s " + format_string
 
     formatter = logging.Formatter(format_string)
