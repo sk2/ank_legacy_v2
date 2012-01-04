@@ -26,7 +26,7 @@ setup (
      package_data = {'': ['settings.cfg', 
          'lib/templates/*/*.mako',
          'lib/templates/*/*.js',
-                          'lib/shadow', 'lib/autonetkit.cfg',
+                          'lib/shadow', 'lib/configspec.cfg',
                           'lib/authorized_keys', 'plugins/*', 'plugins/*.py',
                           'algorithms/*.py', 'plotting/*.py', 'deploy/*.py',
                           'compiler/*.py', 'internal/*.py',
