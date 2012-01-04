@@ -167,6 +167,7 @@ class BgpPolicyParser:
         setOriginAttribute = (Literal("setOriginAttribute").setResultsName("attribute") 
                 + (oneOf("IGP BGP None").setResultsName("value"))).setResultsName("setOriginAttribute")
 
+        bgpAction = Group(addTag | setLP | setMED | removeTag |
                 setNextHop | setOriginAttribute | rejectAction).setResultsName("bgpAction")
 
         # The Clauses
@@ -181,11 +182,11 @@ class BgpPolicyParser:
 
 # Query may contain itself (nested)
         bgpSessionQuery = Forward()
-        bgpSessionQuery << ( 
-                ifThenClause + Optional( Suppress("else") + (elseActionClause | bgpSessionQuery))
+        bgpSessionQuery << ( ifThenClause +
                 Optional( Suppress("else") + (elseActionClause | bgpSessionQuery))
 #+ ZeroOrMore(boolean_and + bgpAction) | bgpSessionQuery )).setResultsName("else_clause"))
                 ).setResultsName("bgpSessionQuery")
+        bgpSessionQuery =  bgpSessionQuery | (Suppress("(") + actionClause + Suppress(")") )
         self.bgpSessionQuery = bgpSessionQuery
 
         self.bgpApplicationQuery = self.edgeQuery + Suppress(":") + self.bgpSessionQuery
@@ -623,6 +624,8 @@ class BgpPolicyParser:
         with open( policy_in_file, 'r') as f_pol:
             for line in f_pol.readlines():
                 if line.beginswith("#"):
+                    LOG.debug("Skipping commented line %s", line)
+                    continue
                 if line.strip() == "":
 # blank line
                     continue
@@ -638,4 +641,5 @@ class BgpPolicyParser:
         self.allocate_tags()
         self.store_tags_per_router()
         #self.apply_gao_rexford()
+        pprint.pprint(self.network.g_session.edges(data=True))
 
