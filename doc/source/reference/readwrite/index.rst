@@ -7,5 +7,6 @@ Functions to load and save networks from other formats.
   :maxdepth: 1  
 
   bgp_parser
+  example_topologies
   graphml
   zoo

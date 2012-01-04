@@ -15,10 +15,7 @@ import os
 import AutoNetkit as ank
 from AutoNetkit import network
 
-from pkg_resources import resource_filename
-
 from netaddr import IPNetwork
-import glob
 
 import config
 
@@ -120,32 +117,11 @@ class Internet:
 
         """
         LOG.info("Loading")
-        if filename == "multias":
-            self.network = ank.example_multi_as()
-            return
-        elif filename == "singleas":
-            self.network = ank.example_single_as()
-            return
-
-        # Look at file extension
         ext = os.path.splitext(filename)[1]
         if ext == "":
-# No extension, see if filename is an included example Topology
-            topology_dir =  resource_filename("AutoNetkit",
-                    os.path.join("lib", "examples", "topologies"))
-            test_filename = os.path.join(topology_dir, "%s.graphml" % filename)
-            if os.path.isfile(test_filename):
-                LOG.info("Loading example topology %s " % filename)
-                ank.load_graphml(self.network, test_filename)
-            else:
-                example_files = glob.glob(topology_dir + os.sep + "*.graphml")
-# Remove path
-                example_files = (os.path.split(filename)[1] for filename in example_files)
-# Remove extension
-                example_files = (os.path.splitext(filename)[0] for filename in example_files)
-                LOG.warn("Unable to find example topology %s" % filename)
-                LOG.info("Valid example topologies are: " + ", ".join(example_files))
-            
+            #TODO: use try/except block here
+            ank.load_example(self.network, filename)
+
         elif ext == ".gml":
             # GML file from Topology Zoo
             ank.load_zoo(self.network, filename)
