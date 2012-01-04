@@ -18,8 +18,23 @@ import pprint
 import itertools
 from collections import namedtuple
 
-import logging
 LOG = logging.getLogger("ANK")
+
+
+def tag_to_pl(tag):
+    """Adds prefix list prefix to tag
+    >>> tag_to_pl("network_eq_as1")
+    'pl_network_eq_as1'
+    """
+    return "pl_%s" % tag
+
+def tag_to_cl(tag):
+    """Adds community list prefix to tag
+    >>> tag_to_cl("network_eq_as1")
+    'cl_network_eq_as1'
+    
+    """
+    return "cl_%s" % tag
 
 class BgpPolicyParser:
     """Parser class"""
@@ -193,7 +208,15 @@ class BgpPolicyParser:
         self.br_query = asnAlias | serviceString | relationshipString
 
     def apply_bgp_policy(self, qstring):
-        """Applies policy to network"""
+        """Applies policy to network 
+        >>> pol_parser = ank.BgpPolicyParser(ank.network.Network(ank.load_example("multias")))
+       
+       
+       
+       pol_parser.apply_bgp_policy("(Network = AS1 ) ->ingress (Network = AS2): (if tag = deprefme then setLP 90) ")
+        
+        
+        """
         LOG.debug("Applying policy %s" % qstring)
         result = self.bgpApplicationQuery.parseString(qstring)
         set_a = self.node_select_query(result.query_a)
@@ -339,14 +362,6 @@ class BgpPolicyParser:
         retval = (str(item).lower() for item in retval)
         return "_".join(retval)
 
-    def tag_to_pl(self, tag):
-        """Adds prefix list prefix to tag"""
-        return "pl_%s" % tag
-
-    def tag_to_cl(self, tag):
-        """Adds community list prefix to tag"""
-        return "cl_%s" % tag
-
     def proc_ot_match(self, match_type, match_query):
         """Processes origin or transit match query"""
         LOG.debug("Processing Origin/Transit query %s %s" % (match_type, match_query))
@@ -355,8 +370,8 @@ class BgpPolicyParser:
 # rather than getting first element, iterate over
         nodes = self.node_select_query(match_query)
         tag = self.query_to_tag(match_query)
-        tag_pl = self.tag_to_pl(tag)
-        tag_cl = self.tag_to_cl(tag)
+        tag_pl = tag_to_pl(tag)
+        tag_cl = tag_to_cl(tag)
 # efficiency: check if query has already been executed (ie if already prefixes for this tag)
 #TODO: see if need to have unique name for prefix list and comm val: eg pl_tag and 
         if tag_pl in self.prefix_lists:
