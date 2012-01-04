@@ -17,7 +17,6 @@ import logging
 LOG = logging.getLogger("ANK")
 
 
-
 def load_example(filename):
     """
     Load example network
@@ -29,7 +28,6 @@ def load_example(filename):
     if os.path.isfile(test_filename):
             LOG.info("Loading example topology %s " % filename)
             return ank.load_graphml(test_filename)
-            print "loaded", test_filename
     else:
             example_files = glob.glob(topology_dir + os.sep + "*.graphml")
 # Remove path
