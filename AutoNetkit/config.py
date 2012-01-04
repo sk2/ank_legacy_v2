@@ -37,14 +37,16 @@ settings = ConfigObj(configspec=spec_file)
 # Try in ~/.autonetkit/autonetkit.cfg
 user_config_file = os.path.join(ank_user_dir, "autonetkit.cfg")
 settings.merge(ConfigObj(user_config_file))
-validator = validate.Validator()
-settings.validate(validator, copy=True)
+
 
 #TODO: look at using configspec validation
 
 # also try from current directory
 settings.merge(ConfigObj("autonetkit.cfg"))
 
+
+validator = validate.Validator()
+settings.validate(validator, copy=True)
 
 pprint.pprint(settings)
 
@@ -109,11 +111,10 @@ def add_logging(console_debug=False):
     if level == logging.DEBUG:
 # Include module name in debugging output
         format_string = "%(module)s\t" + format_string
-    if bool(settings['Logging']['Console']['Timestamp']):
+    if settings['Logging']['Console']['Timestamp']:
         format_string = "%(asctime)s " + format_string
 
     formatter = logging.Formatter(format_string)
-
 
     ch.setLevel(level)
     #ch.setLevel(logging.INFO)
