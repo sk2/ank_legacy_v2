@@ -615,15 +615,12 @@ class BgpPolicyParser:
 		(depref_me)-->ingress(localAS):if tag=depref_me then set localPref=90
                 """
 
-
-
-
     def apply_policy_file(self, policy_in_file):
         """Applies a BGP policy file to the network"""
         LOG.debug("Applying policy file %s" % policy_in_file)
         with open( policy_in_file, 'r') as f_pol:
             for line in f_pol.readlines():
-                if line.beginswith("#"):
+                if line.startswith("#"):
                     LOG.debug("Skipping commented line %s", line)
                     continue
                 if line.strip() == "":
