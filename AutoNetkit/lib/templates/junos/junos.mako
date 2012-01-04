@@ -1,94 +1,51 @@
-groups {
-    member0 {
-        system {
-            host-name ${hostname}; 
+system {
+    host-name ${hostname}; 
+    root-authentication {
+        encrypted-password "$1$SGUyJfYE$r5hIy2IU4IamO1ye3u70v0";
+    }
+    name-server {
+        8.8.8.8;
+    }
+    login {
+        message "Welcome to the cloud\npassword is Clouds\nConfiguration generated on ${date} by AutoNetkit ${ank_version} ";
+    }
+    services {
+        finger;
+        ftp;
+        rlogin;
+        rsh;
+        ssh;
+        telnet;
+        xnm-clear-text;
+    }
+    syslog {
+        host log {
+            kernel info;
+            any notice;
+            pfe info;
+            interactive-commands any;
+        }
+        file messages {
+            kernel info;
+            any notice;
+            authorization info;
+            pfe info;
+            archive world-readable;
+        }
+        file security {
+            interactive-commands any;
+            archive world-readable;
         }
     }
-    global {
-        system {
-            time-zone America/Los_Angeles;
-            debugger-on-panic;
-            debugger-on-break;
-            dump-on-panic;
-            root-authentication {
-                encrypted-password "$1$SGUyJfYE$r5hIy2IU4IamO1ye3u70v0";
-            }
-            name-server {
-                8.8.8.8;
-            }
-            login {
-                message "Welcome to the cloud\npassword is Clouds\nConfiguration generated on ${date} by AutoNetkit ${ank_version} ";
-            }
-            services {
-                finger;
-                ftp;
-                rlogin;
-                rsh;
-                ssh;
-                telnet;
-                xnm-clear-text;
-            }
-            syslog {
-                host log {
-                    kernel info;
-                    any notice;
-                    pfe info;
-                    interactive-commands any;
-                }
-                file messages {
-                    kernel info;
-                    any notice;
-                    authorization info;
-                    pfe info;
-                    archive world-readable;
-                }
-                file security {
-                    interactive-commands any;
-                    archive world-readable;
-                }
-            }
-            processes {
-                routing enable;
-                management enable;
-                watchdog enable;
-                snmp enable;
-                inet-process enable;
-                mib-process enable;
-            }
-        }
-        chassis {
-            dump-on-panic;
-        }
-        security {
-            forwarding-options {
-                family {
-                    inet6 {
-                        mode packet-based;
-                    }
-                    mpls {
-                        mode packet-based;
-                    }
-                    iso {
-                        mode packet-based;
-                    }
-                }
-            }
-        }
+    processes {
+        routing enable;
+        management enable;
+        watchdog enable;
+        snmp enable;
+        inet-process enable;
+        mib-process enable;
     }
 }
- apply-groups [ global member0 ];
- system {
-     login {
-         user admin {
-             uid 2000;
-             class super-user;
-             authentication {
-                 encrypted-password "$1$gjXXNjz2$lYyNylLyk0ByxPg8aPZyg1";
-             }
-         }
-     }
- }
-
 interfaces {
     % for i in interfaces:
     ${i['id']} {
