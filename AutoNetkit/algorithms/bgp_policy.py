@@ -183,6 +183,7 @@ class BgpPolicyParser:
         bgpSessionQuery = Forward()
         bgpSessionQuery << ( 
                 ifThenClause + Optional( Suppress("else") + (elseActionClause | bgpSessionQuery))
+                Optional( Suppress("else") + (elseActionClause | bgpSessionQuery))
 #+ ZeroOrMore(boolean_and + bgpAction) | bgpSessionQuery )).setResultsName("else_clause"))
                 ).setResultsName("bgpSessionQuery")
         self.bgpSessionQuery = bgpSessionQuery
