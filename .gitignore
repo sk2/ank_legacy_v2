@@ -22,3 +22,4 @@ AutoNetkit-*/
 doc/build/
 .tox/*
 *.pdf
+autonetkit.cfg
