@@ -12,27 +12,31 @@ import AutoNetkit as ank
 import networkx as nx
 from netaddr import IPAddress, IPNetwork
 import pprint
+import itertools
 
 import logging
 LOG = logging.getLogger("ANK")
 
-def allocate_dns_servers(network):
+def allocate_dns_servers(network, servers_per_as=1):
     # Remove any previously set DNS servers
     #TODO: use ANK API rather than direct graph access
     LOG.debug("Allocating DNS servers")
+    dns_graph = nx.DiGraph()
+    dns_graph.add_nodes_from(network.graph)
+    
+    # remove existing dns servers
     for node, data in network.graph.nodes_iter(data=True):
         if 'local_dns' in data:
             del network.graph.node[node]['local_dns']
         if 'global_dns' in data:
             del network.graph.node[node]['global_dns']
+            
 
-    # Marks the global, as well as local DNS server for each AS
-    for my_as in ank.get_as_graphs(network):
-        central_node = network.central_node(my_as)
-        network.graph.node[central_node]['local_dns'] = True
+    root_dns_servers = set()
 
     if nx.is_strongly_connected(network.graph):
         global_dns =  nx.center(network.graph)[0]
+        root_dns_servers.add(global_dns)
     else:
         # Network not fully connected, so central DNS server is arbitary choice
         # choose a server from the largest connected component
@@ -45,17 +49,65 @@ def allocate_dns_servers(network):
         largest_subgraph = connected_components[0]
         # Choose central node in this subgraph
         global_dns = nx.center(largest_subgraph)[0]
+        root_dns_servers.add(global_dns)
     network.graph.node[global_dns]['global_dns'] = True
+    print "set root dns as ", global_dns
+    
 
-    dns_graph = nx.DiGraph()
-    dns_graph.add_nodes_from(network.graph)
-    dns_graph.add_edges_from(network.graph.edges())
+    # Marks the global, as well as local DNS server for each AS
+    for my_as in ank.get_as_graphs(network):
+        local_dns_servers = set()
+        local_dns_servers.add(network.central_node(my_as))
+        if len(my_as) == 1:
+           local_dns_servers.update(my_as.nodes()) 
+        else:
+            eccentricities = nx.eccentricity(my_as)
+# Eccentricities are dictionary, key=node, value=eccentricity
+# Convert this into a list of nodes sorted by most eccentric to least eccentric
+            eccentricities = sorted(eccentricities.keys(), reverse=True, key=lambda x: eccentricities[x])
+            if servers_per_as > len(my_as):
+# trying to allocate more servers than nodes in the AS
+                LOG.warn("Attempting to allocate %s servers to AS %s containing %s routers" % (
+                    servers_per_as, my_as.name, len(my_as)))
+# assume only want one server in as - one per machine doesn't make much sense
+                LOG.debug("Resetting to single server for AS %s" % my_as.name)
+                servers_per_as = 1
+
+            local_dns_servers.update(eccentricities[:servers_per_as])
+        print "local dns servers for %s are %s " % (my_as.name, local_dns_servers)
+# legacy - choose first server to use
+        local_dns = list(local_dns_servers)[0]
+        network.graph.node[local_dns]['local_dns'] = True
+# end legacy
+# Mark all other nodes in AS to point to this central node
+        LOG.debug("Selected %s as DNS server for AS %s" % (network.label(local_dns), my_as.name))
+        client_nodes = (n for n in my_as if n not in local_dns_servers)
+        client_sessions = itertools.product(client_nodes, local_dns_servers)
+        dns_graph.add_edges_from(client_sessions)
+
+#TODO: allow this to scale to more levels in future
+
+# And also create session from local dns server to root server
+        client_sessions = itertools.product(local_dns_servers, root_dns_servers)
+        dns_graph.add_edges_from(client_sessions)
 
     pprint.pprint(dns_graph.nodes(data=True))
     pprint.pprint(dns_graph.edges(data=True))
     network.g_dns = dns_graph
 
 # also allocate to graph
+
+def is_dns_server(network, node):
+# if has children is server
+# note could also be child to own parent
+    pass
+
+def is_dns_client(network, node):
+# if has parent is client 
+    # note could also be server to own children
+    pass
+
+
 
 def get_dns_graph(network):
     return network.g_dns
@@ -70,6 +122,12 @@ def dns_list(network):
 
 def root_dns(network):
     LOG.debug("Allocating root DNS server")
+    root_dns_servers = [(n,d) for n,d in network.g_dns.out_degree().items()] 
+    print root_dns_servers
+
+    root_dns_servers = [n for n,d in network.g_dns.out_degree().items() if d==0] 
+    print "root servers", " ".join(network.label(n) for n in root_dns_servers)
+    #print 'root dns server is', network.label(dns_server)
     root_dns_server = [node for node,data in network.graph.nodes_iter(data=True)
                        if 'global_dns' in data]
     if len(root_dns_server) < 1:
@@ -82,7 +140,9 @@ def root_dns(network):
         return root_dns_server.pop()
     else:
         # Exactly one allocated, remove from list
-        return root_dns_server.pop()
+        retval =  root_dns_server.pop()
+        print "old method", network.label(retval)
+        return retval
 
 
 def reverse_subnet(ip_addr, prefixlen):
