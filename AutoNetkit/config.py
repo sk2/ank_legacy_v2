@@ -44,11 +44,12 @@ settings.merge(ConfigObj(user_config_file))
 # also try from current directory
 settings.merge(ConfigObj("autonetkit.cfg"))
 
-
 validator = validate.Validator()
 settings.validate(validator, copy=True)
 
-pprint.pprint(settings)
+#pprint.pprint(settings)
+#pprint.pprint(settings['Netkit Hosts'])
+#pprint.pprint(settings['Olive Hosts'])
 
 ank_main_dir = settings['Lab']['autonetkit_dir']
 
