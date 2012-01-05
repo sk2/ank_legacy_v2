@@ -154,7 +154,8 @@ class Internet:
 
         """              
         LOG.info("Plotting")      
-        #ank.plot(self.network, show, save)        
+        if config.settings['plotting']['matplotlib']:
+            ank.plot(self.network, show, save)        
         ank.jsplot(self.network)        
        
     def save(self):  
