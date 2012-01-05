@@ -328,7 +328,7 @@ class Internet:
             netkit_dir = config.lab_dir
             nkd.deploy(netkit_server, netkit_dir, self.network, data['xterm'])
 
-            if data['verfify']:
+            if data['verify']:
                 LOG.info("Verification not yet supported for Netkit")
                 #LOG.info("Verifyng Netkit lab")
                 #nk = netkit_deploy.NetkitDeploy(host, username)  
@@ -350,7 +350,7 @@ class Internet:
                     telnet_start_port = data['telnet start port'],
                     network = self.network, base_image = data['base image'])
             olive_deploy.deploy()
-            if data['verfify']:
+            if data['verify']:
                 LOG.info("Verification not yet supported for Olive")
 
 
