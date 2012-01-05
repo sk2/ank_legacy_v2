@@ -347,6 +347,7 @@ class Internet:
             olive_deploy = ank.deploy.olive_deploy.OliveDeploy(host = data['host'],
                     username = data['username'], 
                     qemu = data['qemu'], seabios = data['seabios'],
+                    parallel = data['parallel'],
                     telnet_start_port = data['telnet start port'],
                     network = self.network, base_image = data['base image'])
             olive_deploy.deploy()
