@@ -365,7 +365,8 @@ class OliveDeploy():
         qemu_routers = []
         startup_template = lookup.get_template("autonetkit/olive_startup.mako")
     #TODO: sort by name when getting telnet port so is done in sequence
-        for router_id, router in enumerate(self.network.graph):
+        routers = sorted(self.network.graph, key = lambda x: ank.rtr_folder_name(self.network, node))
+        for router_id, router in enumerate(routers):
             mac_list = self.mac_address_list(router_id, 6)
             router_info = router_info_tuple(
                     config_files[router].get('name'),
@@ -390,13 +391,14 @@ class OliveDeploy():
         #total_boot_time = 0
 
         num_worker_threads= self.parallel
-        num_worker_threads = 1
+        started_olives = []
         def worker():
                 while True:
                     router_info, startup_command = q.get()
                     shell = self.get_shell()
                     self.start_olive_vm(router_info, startup_command, shell)
                     q.task_done()
+                    started_olives.append(router_info.router_name)
 
         q = Queue.Queue()
 
@@ -406,15 +408,18 @@ class OliveDeploy():
             t.start()
 
         # Sort so starup looks neater
-        qemu_routers = sorted(qemu_routers, key = lambda x: x[0].router_name)
+#TODO: fix sort
         for router_info, startup_command in qemu_routers:
             q.put( (router_info, startup_command))
 
         while True:
             """ Using this instead of q.join allows easy way to quit all threads (but not allow cleanup)
             refer http://stackoverflow.com/questions/820111"""
-            time.sleep(1)
 #TODO: catch interrupt here, ask Iain if want to kill all qemu routers?
+            time.sleep(1)
+            if len(started_olives) == len(qemu_routers):
+# all routers started
+                break
 
         LOG.info( "Successfully started all Olives")
         LOG.info("Telnet ports: " + 
