@@ -306,7 +306,7 @@ class Internet:
         """
         for host, data in config.settings['Netkit Hosts'].items():
             if not data['active']:
-                LOG.debug("Not deploying the inactive host %s" % host)
+                LOG.debug("Not deploying inactive Netkit host %s" % host)
                 continue
             if not self.compile_targets['netkit']:
                 LOG.info("Netkit not compiled, not deploying to host %s" % host)
@@ -337,7 +337,7 @@ class Internet:
 
         for host, data in config.settings['Olive Hosts'].items():
             if not data['active']:
-                LOG.debug("Not deploying the inactive host %s" % host)
+                LOG.debug("Not deploying inactive Olive host %s" % host)
                 continue
             if not self.compile_targets['olive']:
                 LOG.info("Olive not compiled, not deploying to host %s" % host)
