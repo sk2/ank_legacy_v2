@@ -354,11 +354,6 @@ class Internet:
                 LOG.info("Verification not yet supported for Olive")
 
 
-    #TODO: implement verify if active in data
-            #TODO: implement this 
-            #LOG.info("Verifyng Netkit lab")
-            #nk = netkit_deploy.NetkitDeploy(host, username)  
-            #nkd = config.get_plugin("Netkit Deploy")
-            #nkd.verify(self.network)
-            pass
+        return
+
 
