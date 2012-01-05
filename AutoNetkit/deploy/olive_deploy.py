@@ -390,6 +390,7 @@ class OliveDeploy():
         #total_boot_time = 0
 
         num_worker_threads= self.parallel
+        num_worker_threads = 1
         def worker():
                 while True:
                     router_info, startup_command = q.get()
@@ -463,6 +464,6 @@ class OliveDeploy():
             return
         self.check_required_programs()
         self.create_folders()
-        #self.start_switch()
+        self.start_switch()
         self.start_olives()
 
