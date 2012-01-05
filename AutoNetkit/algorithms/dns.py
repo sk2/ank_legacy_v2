@@ -81,15 +81,18 @@ def allocate_dns_servers(network):
 #TODO: allow this to scale to more levels in future
 
 # Eccentricities are dictionary, key=node, value=eccentricity
-# Convert this into a list of nodes sorted by most eccentric to least eccentric
-    
-    eccentricities = nx.eccentricity(network.graph,
+# Convert this into a list of nodes sorted by most eccentric to least eccentricities
+    if len(all_dns_servers) == 1:
+# Single root DNS server
+        root_dns_servers.update(all_dns_servers)
+    else:
+        eccentricities = nx.eccentricity(network.graph,
 # Need to give nodes as a list, if set is hashable so nx tries to match as node
-            list(all_dns_servers))
-    eccentricities = sorted(eccentricities.keys(), 
-            reverse=True, key=lambda x: eccentricities[x])
-    root_server_count = 2
-    root_dns_servers.update(eccentricities[:root_server_count])
+                list(all_dns_servers))
+        eccentricities = sorted(eccentricities.keys(), 
+                reverse=True, key=lambda x: eccentricities[x])
+        root_server_count = 2
+        root_dns_servers.update(eccentricities[:root_server_count])
     LOG.debug("DNS Root servers are %s" % ", ".join(network.fqdn(s) 
         for s in root_dns_servers))
 
