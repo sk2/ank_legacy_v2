@@ -43,6 +43,49 @@ lookup = TemplateLookup(directories=[ template_dir ],
         #cache_enabled=True,
         )
 
+def get_shell(host=None, username=None, logfile=None, shell_type="bash",):
+    #TODO: pass shell_type in from main OliveDeploy module
+    """Connects to Netkit server (if remote)"""   
+    # Connects to the Linux machine running the Netkit lab   
+    LOG = logging.getLogger("ANK")
+    shell = None     
+    if host and username:  
+        # Connect to remote machine
+
+        shell = pxssh.pxssh()    
+        print "shell is ", shell
+        if logfile:
+            shell.logfile = logfile
+        LOG.info(  "Connecting to {0}".format(host) ) 
+
+        shell.login(host, username)
+        # with pass: shell.login(self.host, self.username, self.password)
+
+        LOG.info(  "Connected to " + host )  
+        shell.setecho(False)  
+        #TODO: set state to Netkit
+    else:   
+        shell = pexpect.spawn (shell_type) 
+        shell.sendline("uname")
+
+        if logfile:
+            shell.logfile = logfile    
+        shell.setecho(False)  
+        # Check Linux machine (Netkit won't run on other Unixes)   
+        i = shell.expect(["Linux", "Darwin", pexpect.EOF, LINUX_PROMPT]) 
+        if i == 0:
+            # Machine is running Linux. Send test command (ignore result)
+            shell.sendline("ls") 
+            shell.prompt()
+        elif i == 1:
+            LOG.warn("Specified Olive host is running Mac OS X, "
+                "please specify a Linux Olive host.")
+            return None 
+        else:
+            LOG.warn("Provided Netkit host is not running Linux")
+
+    return shell
+
 
 class Worker(threading.Thread):
   def __init__(self, queue, ):
@@ -59,22 +102,27 @@ class Worker(threading.Thread):
             if self.kill_received:
                 break
 # otherwise continue on
-            self.start_olive_vm(item)
+            #try:
+            if True:
+                router_info, startup_command, host, username, logfile = item
+                self.start_olive_vm(router_info, startup_command, host, username, logfile)
+            #except:
+                #LOG = logging.getLogger("ANK")
+                #LOG.warn("Error in starting router")
+                #return
 
-  def start_olive_vm(self):
+  def start_olive_vm(self, router_info, startup_command, host, username, logfile):
         LOG = logging.getLogger("ANK")
-        LOG.info( "Starting %s on port %s" % (self.router.router_name, self.router.telnet_port))
-        time.sleep(5)
-        LOG.info("done")
-        return
+        LOG.info( "Starting %s on port %s" % (router_info.router_name, router_info.telnet_port))
+        shell = get_shell(host, username, logfile)
+        
 
-        self.shell.sendline(self.startup_command)
-        self.shell.sendline("disown")
+        shell.sendline(startup_command)
+        shell.sendline("disown")
 # Telnet in
-        self.shell.prompt()
-        shell = self.shell
-        shell.sendline("telnet localhost %s" % self.router.telnet_port)
-        print "router name is ", self.router.router_name
+        shell.prompt()
+        shell.sendline("telnet localhost %s" % router_info.telnet_port)
+        print "router name is ", router_info.router_name
 
         ready_prompt = "starting local daemons"
 
@@ -94,13 +142,12 @@ class Worker(threading.Thread):
 # Matched, continue on
                 pass
             elif i == 1:
-                self.LOG.info( "Logging into Olive")
+                LOG.info( "Logging into Olive")
                 break
             else:
                 # print the progress status me= ssage
                 progress_message = shell.match.group(0)
-                print progress_message
-                LOG.info("Startup progress %s: %s", (self.router.router_name, progress_message))
+                LOG.info("Startup progress %s: %s" % (router_info.router_name, progress_message))
 
 # timedout, wait
         shell.expect("login:")
@@ -109,7 +156,7 @@ class Worker(threading.Thread):
         shell.sendline("Clouds")
         shell.expect("root@base-image%")
 # Now load our ank config
-        self.LOG.info( "Commiting configuration")
+        LOG.info( "Commiting configuration")
         shell.sendline("/usr/sbin/cli -c 'configure; load override ANK.conf; commit'")
         shell.expect("commit complete",timeout=120)
 # logout, expect a new login prompt
@@ -120,7 +167,7 @@ class Worker(threading.Thread):
         shell.expect("telnet>")
         shell.sendcontrol("D")
         shell.expect("Connection closed")
-        self.LOG.info( "Configuration committed to Olive")
+        LOG.info( "Configuration committed to Olive")
         shell.prompt()
         return
 
@@ -177,54 +224,9 @@ class OliveDeploy():
 # First line is echo, return the next line
             return result[1]
 
-    def get_shell(self):
-        """Connects to Netkit server (if remote)"""   
-        # Connects to the Linux machine running the Netkit lab   
-        shell = None     
-        if self.host and self.username:  
-            # Connect to remote machine
-
-            ssh_link = self.shell
-            if ssh_link != None: 
-                # ssh_link already set
-                return ssh_link
-
-            shell = pxssh.pxssh()    
-            shell.logfile = self.logfile
-            LOG.info(  "Connecting to {0}".format(self.host) ) 
-
-            shell.login(self.host, self.username)
-            # with pass: shell.login(self.host, self.username, self.password)
-
-            LOG.info(  "Connected to " + self.host )  
-            shell.setecho(False)  
-            #TODO: set state to Netkit
-        else:   
-            shell = pexpect.spawn (self.shell_type) 
-            shell.sendline("uname")
-            
-            shell.logfile = self.logfile    
-            shell.setecho(False)  
-            # Check Linux machine (Netkit won't run on other Unixes)   
-            i = shell.expect(["Linux", "Darwin", pexpect.EOF, LINUX_PROMPT]) 
-            if i == 0:
-                # Machine is running Linux. Send test command (ignore result)
-                shell.sendline("ls") 
-                shell.prompt()
-            elif i == 1:
-                LOG.warn("Specified Olive host is running Mac OS X, "
-                    "please specify a Linux Olive host.")
-                return None 
-            else:
-                LOG.warn("Provided Netkit host is not running Linux")
-
-        return shell
-
-
-
     def connect_to_server(self):  
 # Wrapper to work with existing code
-        self.shell = self.get_shell()
+        self.shell = get_shell(self.host, self.username, self.logfile, self.shell_type,)
         self.working_directory = self.get_cwd()
         self.linux_username = self.get_whoami()
         return True
@@ -420,48 +422,7 @@ class OliveDeploy():
         #qemu_routers = sorted(qemu_routers, key=lambda router: router.router_name)
         #total_boot_time = 0
 
-        """
-        q = Queue()
-        def consumer():
-
-        def producer(routers):
-            for router_info, startup_command in routers:
-                q.put( self.start_olive_vm(router_info, startup_command, shell) )
-
-        Thread(target=producer, args=[qemu_routers]).start()
-        for i in range(10):
-            Thread(target=consumer).start()
-
-        def producer(q, routers):
-            for router_info, startup_command in qemu_routers:
-                # Add the Geonames Username here before querying URL
-                # if put in earlier then would complicate cache handling
-                # It is only part of the way geonames is queried, not part of the
-                # query
-                shell = self.get_shell()
-                thread = OliveStarter(router_info, startup_command, shell)
-                thread.start()
-                q.put(thread, True)
-
-        finished = []
-        def consumer(q, router_count):
-            while (len(finished) < router_count):
-                print len(finished), "finished vs count ", router_count
-                thread = q.get(True)
-                thread.join()
-                finished.append(thread.get_result())
-
-#TODO: fill in with parallel parameter
-        q = Queue(1)
-        prod_thread = threading.Thread(target=producer, args=(q, qemu_routers))
-        cons_thread = threading.Thread(target=consumer, args=(q, len(qemu_routers)))
-        prod_thread.start()
-        cons_thread.start()
-        prod_thread.join()
-        cons_thread.join()
-        print "finished thread", finished
-        """
-
+        WORKERS = self.parallel
         WORKERS = 2
 
         queue = Queue.Queue(3)
@@ -474,13 +435,16 @@ class OliveDeploy():
                 # if put in earlier then would complicate cache handling
                 # It is only part of the way geonames is queried, not part of the
                 # query
-                shell = self.get_shell()
-                queue.put( (router_info, startup_command, shell))
+#def get_shell(host=None, username=None, shell_type="bash"):
+                queue.put( (router_info, startup_command, self.host, self.username, self.logfile))
 
         for i in range(WORKERS):
             queue.put(None) # add end-of-queue markers
 
         #TODO: check if queue is empty or not
+        while not queue.empty():
+            LOG.debug("Queue is not empty, waiting")
+            time.sleep(1)
 
         # Calculate how long took to boot machine, round to nearest integer so don't have verbose output
         #machine_boot_time = int(time.time() - start_time)
