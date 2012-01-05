@@ -13,7 +13,6 @@ from collections import namedtuple
 import os
 import time
 import AutoNetkit.config as config
-from Queue import Queue
 import datetime
 import pxssh
 import sys
@@ -22,6 +21,8 @@ import itertools
 import pprint
 import netaddr
 import threading
+
+import Queue
 
 # Used for EOF and TIMEOUT variables
 import pexpect
@@ -42,34 +43,87 @@ lookup = TemplateLookup(directories=[ template_dir ],
         #cache_enabled=True,
         )
 
-class OliveStarter(threading.Thread):
-    # based on http://www.artfulcode.net/articles/multi-threading-python/
-    def __init__(self, router, startup_command, shell):
-        self.router = router
-        self.result = None
-        self.startup_command = startup_command
-        self.shell = shell
-        self.LOG = logging.getLogger("ANK")
-        threading.Thread.__init__(self)
 
+class Worker(threading.Thread):
+  def __init__(self, queue, ):
+    threading.Thread.__init__(self)
+    self.__queue = queue
+    # A flag to notify the thread that it should finish up and exit
+    self.kill_received = False
 
-    def get_result(self):
-        return self.result
+  def run(self):
+      while 1:
+            item = self.__queue.get()
+            if item is None:
+                break # reached end of queue
+            if self.kill_received:
+                break
+# otherwise continue on
+            self.start_olive_vm(item)
 
-    def run(self):
-        print 'running thread'
-        self.LOG.info( "Starting %s on port %s" % (self.router.router_name, self.router.telnet_port))
+  def start_olive_vm(self):
+        LOG = logging.getLogger("ANK")
+        LOG.info( "Starting %s on port %s" % (self.router.router_name, self.router.telnet_port))
         time.sleep(5)
-        self.LOG.info("done")
-        self.result = "done"
+        LOG.info("done")
         return
 
         self.shell.sendline(self.startup_command)
         self.shell.sendline("disown")
 # Telnet in
         self.shell.prompt()
-        self.telnet_and_override(self.router.telnet_port, self.router.router_name, wait_for_bootup=True)
-        self.result = "Finished %s" % self.router.router_name
+        shell = self.shell
+        shell.sendline("telnet localhost %s" % self.router.telnet_port)
+        print "router name is ", self.router.router_name
+
+        ready_prompt = "starting local daemons"
+
+#TODO: explain why 100 used here
+        for loop_count in range(0, 100):
+            i = shell.expect([pexpect.TIMEOUT, ready_prompt, 
+                "Consoles: serial port",
+                "Booting \[/kernel\]\.",
+                "Initializing M/T platform properties",
+                "Trying to mount root",
+                "Creating initial configuration",
+                "Automatic reboot in progress...",
+                "Doing initial network setup",
+                "Doing additional network setup",
+                ]) 
+            if i == 0:
+# Matched, continue on
+                pass
+            elif i == 1:
+                self.LOG.info( "Logging into Olive")
+                break
+            else:
+                # print the progress status me= ssage
+                progress_message = shell.match.group(0)
+                print progress_message
+                LOG.info("Startup progress %s: %s", (self.router.router_name, progress_message))
+
+# timedout, wait
+        shell.expect("login:")
+        shell.sendline("root")
+        shell.expect("Password:")
+        shell.sendline("Clouds")
+        shell.expect("root@base-image%")
+# Now load our ank config
+        self.LOG.info( "Commiting configuration")
+        shell.sendline("/usr/sbin/cli -c 'configure; load override ANK.conf; commit'")
+        shell.expect("commit complete",timeout=120)
+# logout, expect a new login prompt
+        shell.sendline("exit")
+        shell.expect("login:")
+# Now disconnect telnet
+        shell.sendcontrol("]")
+        shell.expect("telnet>")
+        shell.sendcontrol("D")
+        shell.expect("Connection closed")
+        self.LOG.info( "Configuration committed to Olive")
+        shell.prompt()
+        return
+
 
 
 class OliveDeploy():  
@@ -107,60 +161,6 @@ class OliveDeploy():
     def get_cwd(self):
         return self.get_command_output("pwd")
 
-        def telnet_and_override(self, telnet_port, router_name, wait_for_bootup=False):
-        shell = self.shell
-        shell.sendline("telnet localhost %s" % telnet_port)
-        print "router name is ", router_name
-
-        if wait_for_bootup:
-            ready_prompt = "starting local daemons"
-        else:
-            ready_prompt = "Escape character is"
-
-        for loop_count in range(0, 100):
-            i = shell.expect([pexpect.TIMEOUT, ready_prompt, 
-                "Consoles: serial port",
-                "Booting \[/kernel\]\.",
-                "Initializing M/T platform properties",
-                "Trying to mount root",
-                "Creating initial configuration",
-                "Automatic reboot in progress...",
-                "Doing initial network setup",
-                "Doing additional network setup",
-                ]) 
-            if i == 0:
-# Matched, continue on
-                pass
-            elif i == 1:
-                self.LOG.info( "Logging into Olive")
-                break
-            else:
-                # print the progress status me= ssage
-                progress_message = shell.match.group(0)
-                print progress_message
-                self.LOG.info("Startup progress %s: %s", (router_name, progress_message))
-
-# timedout, wait
-        shell.expect("login:")
-        shell.sendline("root")
-        shell.expect("Password:")
-        shell.sendline("Clouds")
-        shell.expect("root@base-image%")
-# Now load our ank config
-        self.LOG.info( "Commiting configuration")
-        shell.sendline("/usr/sbin/cli -c 'configure; load override ANK.conf; commit'")
-        shell.expect("commit complete",timeout=120)
-# logout, expect a new login prompt
-        shell.sendline("exit")
-        shell.expect("login:")
-# Now disconnect telnet
-        shell.sendcontrol("]")
-        shell.expect("telnet>")
-        shell.sendcontrol("D")
-        shell.expect("Connection closed")
-        self.LOG.info( "Configuration committed to Olive")
-        shell.prompt()
-        return
 
     def get_whoami(self):
         return self.get_command_output("whoami")
@@ -420,6 +420,18 @@ class OliveDeploy():
         #qemu_routers = sorted(qemu_routers, key=lambda router: router.router_name)
         #total_boot_time = 0
 
+        """
+        q = Queue()
+        def consumer():
+
+        def producer(routers):
+            for router_info, startup_command in routers:
+                q.put( self.start_olive_vm(router_info, startup_command, shell) )
+
+        Thread(target=producer, args=[qemu_routers]).start()
+        for i in range(10):
+            Thread(target=consumer).start()
+
         def producer(q, routers):
             for router_info, startup_command in qemu_routers:
                 # Add the Geonames Username here before querying URL
@@ -448,6 +460,27 @@ class OliveDeploy():
         prod_thread.join()
         cons_thread.join()
         print "finished thread", finished
+        """
+
+        WORKERS = 2
+
+        queue = Queue.Queue(3)
+
+        for i in range(WORKERS):
+            Worker(queue).start() # start a worker
+
+        for router_info, startup_command in qemu_routers:
+                # Add the Geonames Username here before querying URL
+                # if put in earlier then would complicate cache handling
+                # It is only part of the way geonames is queried, not part of the
+                # query
+                shell = self.get_shell()
+                queue.put( (router_info, startup_command, shell))
+
+        for i in range(WORKERS):
+            queue.put(None) # add end-of-queue markers
+
+        #TODO: check if queue is empty or not
 
         # Calculate how long took to boot machine, round to nearest integer so don't have verbose output
         #machine_boot_time = int(time.time() - start_time)
