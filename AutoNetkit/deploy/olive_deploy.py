@@ -389,7 +389,7 @@ class OliveDeploy():
         #qemu_routers = sorted(qemu_routers, key=lambda router: router.router_name)
         #total_boot_time = 0
 
-        WORKERS = self.parallel
+        num_worker_threads= self.parallel
         def worker():
                 while True:
                     router_info, startup_command = q.get()
@@ -399,21 +399,16 @@ class OliveDeploy():
 
         q = Queue.Queue()
 
-        num_worker_threads = 1
-
         for i in range(num_worker_threads):
             t = threading.Thread(target=worker)
             t.setDaemon(True)
             t.start()
 
+        # Sort so starup looks neater
+        qemu_routers = sorted(qemu_routers, key = lambda x: x[0].router_name)
         for router_info, startup_command in qemu_routers:
-            # Add the Geonames Username here before querying URL
-            # if put in earlier then would complicate cache handling
-            # It is only part of the way geonames is queried, not part of the
-            # query
             q.put( (router_info, startup_command))
 
-        #q.join()
         while True:
             """ Using this instead of q.join allows easy way to quit all threads (but not allow cleanup)
             refer http://stackoverflow.com/questions/820111"""
