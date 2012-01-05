@@ -138,7 +138,7 @@ class Internet:
 
         #TODO: check that loaded network has at least one node, if not throw exception
     
-    def plot(self, show=False, save=True): 
+    def plot(self): 
         """Plot the network topology
 
         Args:
@@ -155,7 +155,7 @@ class Internet:
         """              
         LOG.info("Plotting")      
         if config.settings['Plotting']['matplotlib']:
-            ank.plot(self.network, show, save)        
+            ank.plot(self.network)        
         ank.jsplot(self.network)        
        
     def save(self):  
@@ -317,8 +317,7 @@ class Internet:
             except ImportError:
                 LOG.warn("Unable to import Netkit, ending deployment")
                 return
-            LOG.info("Deploying to Netkit")   
-            #TODO: make netkit a plugin also
+            LOG.info("Deploying to Netkit host %s" % host)   
             netkit_server = netkit.Netkit(data['host'], data['username'],
                     tapsn=self.tapsn)
 
@@ -328,24 +327,28 @@ class Internet:
             netkit_dir = config.lab_dir
             nkd.deploy(netkit_server, netkit_dir, self.network, data['xterm'])
 
+            if data['verfify']:
+                LOG.info("Verification not yet supported for Netkit")
+                #LOG.info("Verifyng Netkit lab")
+                #nk = netkit_deploy.NetkitDeploy(host, username)  
+                #nkd = config.get_plugin("Netkit Deploy")
+                #nkd.verify(self.network)
 
-            print netkithost, "has data", data
-        return
-        if self.compile_targets['olive']:
-            if not olive_base_image:
-                LOG.warn("Please specify Olive base image")
-                return
-            olive_deploy = ank.deploy.olive_deploy.OliveDeploy(host = olive_host, username = olive_username,
-                    network = self.network, base_image = olive_base_image)
-            # Need to tell deploy plugin where the netkit files are
+        for host, data in config.settings['Olive Hosts'].items():
+            if not data['active']:
+                LOG.debug("Not deploying the inactive host %s" % host)
+                continue
+            if not self.compile_targets['olive']:
+                LOG.info("Olive not compiled, not deploying to host %s" % host)
+
+            LOG.info("Deploying to Olive host %s" % host)   
+            olive_deploy = ank.deploy.olive_deploy.OliveDeploy(host = data['host'],
+                    username = data['username'], 
+                    telnet_start_port = data['telnet start port'],
+                    network = self.network, base_image = data['base image'])
             olive_deploy.deploy()
-
-        elif self.compile_targets['junosphere']:
-            LOG.warn("Junos automatic deployment not supported. "
-                    "Please manually upload Junosphere configuration file")
-        else:
-            LOG.warn("Only automated Netkit deployment is supported")
-
+            if data['verfify']:
+                LOG.info("Verification not yet supported for Olive")
 
 
     #TODO: implement verify if active in data

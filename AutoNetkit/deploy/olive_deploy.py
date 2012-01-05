@@ -44,7 +44,7 @@ class OliveDeploy():
     """ Deploy a given Junos lab to an Olive Host"""
 
     def __init__(self, host=None, username=None, network=None,
-            base_image = None,
+            base_image = None, telnet_start_port=None,
             lab_dir="junos_config_dir"):
         self.server = None    
         self.lab_dir = lab_dir
@@ -60,6 +60,7 @@ class OliveDeploy():
         self.vde_mgmt_socket_name = None
         self.base_image = base_image
         self.olive_dir = config.ank_main_dir
+        self.telnet_start_port = telnet_start_port
 
         self.local_server = True
         if self.host and self.username:
@@ -146,9 +147,12 @@ class OliveDeploy():
         LOG.debug(  "SCP result %s"% child.before.strip())
         return 
 
-    def unallocated_ports(self, start=11000):
+    def unallocated_ports(self, start=None):
         """ checks for allocated ports and returns a generator,
         which returns a free port"""
+        if not start:
+# use default
+            start = self.telnet_start_port
         shell = self.shell
         pattern = "tcp\s+\d\s+\d\s\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}:(\d+)"
         allocated_ports = set()
