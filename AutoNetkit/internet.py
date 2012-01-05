@@ -310,6 +310,7 @@ class Internet:
                 continue
             if not self.compile_targets['netkit']:
                 LOG.info("Netkit not compiled, not deploying to host %s" % host)
+                continue
 
             # Otherwise all checks ok, deploy
             try:
@@ -340,6 +341,7 @@ class Internet:
                 continue
             if not self.compile_targets['olive']:
                 LOG.info("Olive not compiled, not deploying to host %s" % host)
+                continue
 
             LOG.info("Deploying to Olive host %s" % host)   
             olive_deploy = ank.deploy.olive_deploy.OliveDeploy(host = data['host'],
