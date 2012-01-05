@@ -135,10 +135,9 @@ class OliveDeploy():
 
         return shell
 
-    def start_olive_vm(self, router_info, startup_command):
+    def start_olive_vm(self, router_info, startup_command, shell):
         LOG = logging.getLogger("ANK")
         LOG.info( "%s: Starting on port %s" % (router_info.router_name, router_info.telnet_port))
-        shell = self.shell
 
         shell.sendline(startup_command)
         shell.sendline("disown")
@@ -394,12 +393,13 @@ class OliveDeploy():
         def worker():
                 while True:
                     router_info, startup_command = q.get()
-                    self.start_olive_vm(router_info, startup_command)
+                    shell = self.get_shell()
+                    self.start_olive_vm(router_info, startup_command, shell)
                     q.task_done()
 
         q = Queue.Queue()
 
-        num_worker_threads = 3
+        num_worker_threads = 1
 
         for i in range(num_worker_threads):
             t = threading.Thread(target=worker)
@@ -411,7 +411,6 @@ class OliveDeploy():
             # if put in earlier then would complicate cache handling
             # It is only part of the way geonames is queried, not part of the
             # query
-            shell = self.get_shell()
             q.put( (router_info, startup_command))
 
         #q.join()
