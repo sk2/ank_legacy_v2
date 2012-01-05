@@ -163,7 +163,7 @@ class OliveDeploy():
 # Matched, continue on
                 pass
             elif i == 1:
-                LOG.info( "Logging into Olive")
+                LOG.info( "%s: Logging into Olive" % router_info.router_name)
                 break
             else:
                 # print the progress status me= ssage
@@ -413,8 +413,8 @@ class OliveDeploy():
             """ Using this instead of q.join allows easy way to quit all threads (but not allow cleanup)
             refer http://stackoverflow.com/questions/820111"""
             time.sleep(1)
+#TODO: catch interrupt here, ask Iain if want to kill all qemu routers?
 
-    
         LOG.info( "Successfully started all Olives")
         LOG.info("Telnet ports: " + 
                 ", ".join("%s: %s" % (router.router_name, router.telnet_port) for (router, _) in qemu_routers))
