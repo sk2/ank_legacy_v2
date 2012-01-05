@@ -237,7 +237,7 @@ class Internet:
             pol_parser = ank.BgpPolicyParser(self.network)
             pol_parser.apply_policy_file(self.policy_file)
             
-        
+#TODO: if deploy is specified, then compile for active targets
         # now configure
         if self.compile_targets['netkit']:
             nk_comp = ank.NetkitCompiler(self.network, self.services)
@@ -346,6 +346,7 @@ class Internet:
             LOG.info("Deploying to Olive host %s" % host)   
             olive_deploy = ank.deploy.olive_deploy.OliveDeploy(host = data['host'],
                     username = data['username'], 
+                    qemu = data['qemu'], seabios = data['seabios'],
                     telnet_start_port = data['telnet start port'],
                     network = self.network, base_image = data['base image'])
             olive_deploy.deploy()

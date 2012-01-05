@@ -45,6 +45,7 @@ class OliveDeploy():
 
     def __init__(self, host=None, username=None, network=None,
             base_image = None, telnet_start_port=None,
+            qemu="/usr/bin/qemu", seabios="-L /usr/share/seabios",
             lab_dir="junos_config_dir"):
         self.server = None    
         self.lab_dir = lab_dir
@@ -52,6 +53,8 @@ class OliveDeploy():
         self.host = host
         self.username = username
         self.shell = None
+        self.qemu = qemu
+        self.seabios = seabios
 # For use on local machine
         self.shell_type ="bash"
         self.logfile = open( os.path.join(config.log_dir, "pxssh.log"), 'w')
@@ -368,7 +371,9 @@ class OliveDeploy():
         for index, router in enumerate(qemu_routers):
             LOG.info( "Starting %s on port %s (%s/%s)" % (router.router_name, router.telnet_port, index+1, len(qemu_routers)))
             startup_command = startup_template.render(
-                    router_info = router
+                    router_info = router,
+                    qemu = self.qemu,
+                    seabios = self.seabios,
                     )
 
 # flatten into single line
