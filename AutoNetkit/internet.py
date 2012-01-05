@@ -46,10 +46,10 @@ class Internet:
                 olive_qemu_patched=False,
             igp='ospf'): 
         self.network = network.Network()
-        if isinstance(tapsn, str):
+        if isinstance(config.settings.get('tapsn'), str):
             # Convert to IPNetwork
             #TODO: exception handle this failing eg incorrect subnet
-            tapsn = IPNetwork(tapsn)
+            tapsn = IPNetwork(config.settings.get('tapsn'))
         self.tapsn = tapsn
         self.policy_file = policy_file
         self.compile_targets = {
@@ -65,9 +65,6 @@ class Internet:
         if filename:
             self.load(filename)
 
-        self.dynagen_image = None
-        self.dynagen_hypervisor = None
-        
         self.services = []
          
 
@@ -306,7 +303,14 @@ class Internet:
         >>> inet.deploy(host = "netkithost", username = "autonetkit")
 
         """
-        if self.compile_targets['netkit']:
+        for host, data in config.settings['Netkit Hosts'].items():
+            if not data['active']:
+                LOG.debug("Not deploying the inactive host %s" % host)
+                continue
+            if not self.compile_targets['netkit']:
+                LOG.info("Netkit not compiled, not deploying to host %s" % host)
+
+            # Otherwise all checks ok, deploy
             try:
                 import netkit
             except ImportError:
@@ -314,14 +318,19 @@ class Internet:
                 return
             LOG.info("Deploying to Netkit")   
             #TODO: make netkit a plugin also
-            netkit_server = netkit.Netkit(netkit_host, netkit_username, tapsn=self.tapsn)
+            netkit_server = netkit.Netkit(data['host'], data['username'],
+                    tapsn=self.tapsn)
 
             # Get the deployment plugin
             nkd = ank.deploy.netkit_deploy.NetkitDeploy()
             # Need to tell deploy plugin where the netkit files are
             netkit_dir = config.lab_dir
-            nkd.deploy(netkit_server, netkit_dir, self.network, xterm)
-        elif self.compile_targets['olive']:
+            nkd.deploy(netkit_server, netkit_dir, self.network, data['xterm'])
+
+
+            print netkithost, "has data", data
+        return
+        if self.compile_targets['olive']:
             if not olive_base_image:
                 LOG.warn("Please specify Olive base image")
                 return
@@ -336,27 +345,13 @@ class Internet:
         else:
             LOG.warn("Only automated Netkit deployment is supported")
 
-    def verify(self, host, username, platform="netkit" ):  
-        """Deploy compiled configuration files."
 
-        Args:
-           host:    host to deploy to (if remote machine)
-           username: username on remote host
-           platform:    platform to deploy to 
 
-        Returns:
-           None
-
-        Example usage:
-
-        >>> inet = ank.internet.Internet()
-        >>> inet.deploy(host = "netkithost", username = "autonetkit")
-
-        """
-        #TODO: implement this 
-        #LOG.info("Verifyng Netkit lab")
-        #nk = netkit_deploy.NetkitDeploy(host, username)  
-        #nkd = config.get_plugin("Netkit Deploy")
-        #nkd.verify(self.network)
-        pass
+    #TODO: implement verify if active in data
+            #TODO: implement this 
+            #LOG.info("Verifyng Netkit lab")
+            #nk = netkit_deploy.NetkitDeploy(host, username)  
+            #nkd = config.get_plugin("Netkit Deploy")
+            #nkd.verify(self.network)
+            pass
 

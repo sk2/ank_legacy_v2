@@ -31,28 +31,6 @@ def main():
                     help="Load configuration from FILE")        
     opt.add_option('--bgp_policy', default= None, 
                     help="Load BGP policy statements from FILE")     
-    opt.add_option('--netkit_host', default=None,
-                    help="Netkit host machine (if located on another machine)") 
-    opt.add_option('--netkit_username', default=None, 
-                    help=("Username for Netkit host machine (if connecting to "
-                    " external Netkit machine)"))
-    opt.add_option('--olive_host', default=None,
-                    help="Olive host machine (if located on another machine)") 
-    opt.add_option('--olive_username', default=None, 
-                    help=("Username for Olive host machine (if connecting to "
-                    " external Olive machine)"))
-    opt.add_option('--olive_base_image', default=None, help=("Base image to use on Olive"))
-
-    opt.add_option('--verify', '-v', action="store_true", dest="verify",
-                    default=False, help="Verify lab on Netkit host")      
-
-    opt.add_option('--xterm', action="store_true", dest="xterm",
-                    default=False, help=("Load each VM console in Xterm "
-                                        " This is the default in Netkit, "
-                                        " but not ANK due to "
-                                            "potentially large number of VMs"))
-    opt.add_option('--dynagen_image',  default= None, help="Image to use for dynagen") 
-    opt.add_option('--dynagen_hypervisor',  default= "localhost:7200", help="Hypervisor to use for dynagen") 
 
     opt.add_option('--debug',  action="store_true", default=False, help="Debugging output")
 
@@ -70,12 +48,6 @@ def main():
             help="Custom Qemu install (6 interface count")
     opt.add_option('--isis',  action="store_true", default=False, help="Use IS-IS as IGP")
     opt.add_option('--ospf',  action="store_true", default=False, help="Use OSPF as IGP")
-
-    opt.add_option('--tapsn', default="172.16.0.0/16", 
-                help= ("Tap subnet to use to connect to VMs. Will be split into "
-                        " /24 subnets, with first subnet allocated to tunnel VM. "
-                        "eg 172.16.0.1 is the linux host, 172.16.0.2 is the "
-                        " other end of the tunnel")) 
 
     options, arguments = opt.parse_args()
     config.add_logging(console_debug = options.debug)
@@ -105,18 +77,12 @@ def main():
         igp = "isis"
 
     use_junosphere = (options.junos or options.junosphere)
-    inet = Internet(tapsn = options.tapsn, netkit=options.netkit,
+    inet = Internet(netkit=options.netkit,
             cbgp=options.cbgp, dynagen=options.dynagen, junosphere=use_junosphere,
             junosphere_olive=options.junosphere_olive, olive=options.olive, 
             policy_file = options.bgp_policy,
             olive_qemu_patched=options.olive_qemu_patched, igp=igp)
     inet.load(f_name)
-
-
-    # set properties
-    inet.dynagen_hypervisor = options.dynagen_hypervisor
-    if options.dynagen_image:
-        inet.dynagen_image = options.dynagen_image
 
     inet.add_dns()
 
@@ -128,13 +94,7 @@ def main():
         inet.plot()      
 
     if(options.deploy):
-        inet.deploy(netkit_host = options.netkit_host, netkit_username = options.netkit_username,
-                olive_host = options.olive_host, olive_username = options.olive_username,
-                olive_base_image = options.olive_base_image,
-                xterm = options.xterm)     
-
-    if(options.verify):
-        inet.verify(host = options.netkithost, username = options.netkitusername)    
+        inet.deploy()     
 
 if __name__ == "__main__":
     try:
