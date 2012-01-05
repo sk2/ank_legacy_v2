@@ -13,9 +13,7 @@ from collections import namedtuple
 import os
 import time
 import AutoNetkit.config as config
-import datetime
 import pxssh
-import sys
 import AutoNetkit as ank
 import itertools
 import pprint
@@ -43,6 +41,7 @@ lookup = TemplateLookup(directories=[ template_dir ],
         #cache_enabled=True,
         )
 
+#TODO: this has to be here to be accessed by both thread worker and the main OliveDeploy modules
 def get_shell(host=None, username=None, logfile=None, shell_type="bash",):
     #TODO: pass shell_type in from main OliveDeploy module
     """Connects to Netkit server (if remote)"""   
@@ -53,7 +52,6 @@ def get_shell(host=None, username=None, logfile=None, shell_type="bash",):
         # Connect to remote machine
 
         shell = pxssh.pxssh()    
-        print "shell is ", shell
         if logfile:
             shell.logfile = logfile
         LOG.info(  "Connecting to {0}".format(host) ) 
@@ -115,14 +113,12 @@ class Worker(threading.Thread):
         LOG = logging.getLogger("ANK")
         LOG.info( "Starting %s on port %s" % (router_info.router_name, router_info.telnet_port))
         shell = get_shell(host, username, logfile)
-        
 
         shell.sendline(startup_command)
         shell.sendline("disown")
 # Telnet in
         shell.prompt()
         shell.sendline("telnet localhost %s" % router_info.telnet_port)
-        print "router name is ", router_info.router_name
 
         ready_prompt = "starting local daemons"
 
@@ -142,12 +138,12 @@ class Worker(threading.Thread):
 # Matched, continue on
                 pass
             elif i == 1:
-                LOG.info( "Logging into Olive")
+                LOG.info( "%s: Logging into Olive" % router_info.router_name)
                 break
             else:
                 # print the progress status me= ssage
                 progress_message = shell.match.group(0)
-                LOG.info("Startup progress %s: %s" % (router_info.router_name, progress_message))
+                LOG.info("%s: Startup progress: %s" % (router_info.router_name, progress_message))
 
 # timedout, wait
         shell.expect("login:")
@@ -156,7 +152,7 @@ class Worker(threading.Thread):
         shell.sendline("Clouds")
         shell.expect("root@base-image%")
 # Now load our ank config
-        LOG.info( "Commiting configuration")
+        LOG.info( "Commiting configuration for %s" % router_info.router_name)
         shell.sendline("/usr/sbin/cli -c 'configure; load override ANK.conf; commit'")
         shell.expect("commit complete",timeout=120)
 # logout, expect a new login prompt
@@ -167,7 +163,7 @@ class Worker(threading.Thread):
         shell.expect("telnet>")
         shell.sendcontrol("D")
         shell.expect("Connection closed")
-        LOG.info( "Configuration committed to Olive")
+        LOG.info( "%s: Configuration committed to Olive" % router_info.router_name)
         shell.prompt()
         return
 
@@ -423,28 +419,35 @@ class OliveDeploy():
         #total_boot_time = 0
 
         WORKERS = self.parallel
-        WORKERS = 2
+        WORKERS = 1
 
-        queue = Queue.Queue(3)
+        queue = Queue.Queue()
+        worker_list = []
 
-        for i in range(WORKERS):
-            Worker(queue).start() # start a worker
+        try:
+            for i in range(WORKERS):
+                work = Worker(queue).start() # start a worker
+                worker_list.append(work)
 
-        for router_info, startup_command in qemu_routers:
-                # Add the Geonames Username here before querying URL
-                # if put in earlier then would complicate cache handling
-                # It is only part of the way geonames is queried, not part of the
-                # query
+            for router_info, startup_command in qemu_routers:
+                    # Add the Geonames Username here before querying URL
+                    # if put in earlier then would complicate cache handling
+                    # It is only part of the way geonames is queried, not part of the
+                    # query
 #def get_shell(host=None, username=None, shell_type="bash"):
-                queue.put( (router_info, startup_command, self.host, self.username, self.logfile))
+                    queue.put( (router_info, startup_command, self.host, self.username, self.logfile))
 
-        for i in range(WORKERS):
-            queue.put(None) # add end-of-queue markers
+            for i in range(WORKERS):
+                queue.put(None) # add end-of-queue markers
 
-        #TODO: check if queue is empty or not
-        while not queue.empty():
-            LOG.debug("Queue is not empty, waiting")
-            time.sleep(1)
+            #TODO: check if queue is empty or not
+            while not queue.empty():
+                    LOG.debug("Queue is not empty, waiting")
+                    time.sleep(1)
+        except KeyboardInterrupt:
+            print "Ctrl-c received! Sending kill to threads..."
+            for t in worker_list:
+                t.kill_received = True
 
         # Calculate how long took to boot machine, round to nearest integer so don't have verbose output
         #machine_boot_time = int(time.time() - start_time)
@@ -482,7 +485,6 @@ class OliveDeploy():
                 self.vde_socket_name, self.vde_mgmt_socket_name)
         shell.sendline('%s' % start_vde_switch_cmd)
         shell.prompt()
-        #print "shell before is ", shell.before
 #TODO: catch address in use/device busy errors
         """
         i = shell.expect ([ "Address already in use" , "TUNSETIFF: Device or resource busy", pexpect.EOF])
