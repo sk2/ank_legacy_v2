@@ -398,8 +398,8 @@ class OliveDeploy():
     def start_switch(self):
         shell = self.shell
 
-        LOG.info("Please enter sudo password and type '^]' (Control and right square bracket) "
-                "to return to AutoNetkit")
+        #LOG.info("Please enter sudo password and type '^]' (Control and right square bracket) "
+        #        "to return to AutoNetkit")
         self.tap_name = "%s_%s" % (self.tap_name_base, self.linux_username)
         shell.sendline('sudo tunctl -u %s -t %s' % (self.linux_username, self.tap_name))
 	#sys.stdout.write (shell.after)
