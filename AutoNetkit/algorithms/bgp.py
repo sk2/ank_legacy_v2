@@ -13,14 +13,27 @@ Route-Reflection level rules:
     l2_cluster can be manually specified. If not specified, it defaults to being a PoP.
     If no PoPs specified, it defaults to being the AS.
 
+    l3_cluster defaults to asn if not set: we connect the l2 rr to all l3 rrs in the same AS.
+
+
+    The below tables show the matching attributes to use.
+    
+    1-level:
+
+    =========   ==========          ==========
+    Level       Peer                Parent
+    ---------   ----------          ----------
+    1           asn                 None      
+    =========   ==========          ==========
+
     2-level:
 
-    =========   =========       =======
-    Level       Peer            Parent
-    ---------   ---------       -------
-    1           None            l2_cluster
-    2           as_cluster      None
-    =========   =========       =======
+    =========   ==========          ==========
+    Level       Peer                Parent
+    ---------   ----------          ----------
+    1           None                l2_cluster
+    2           asn                 None
+    =========   ==========          ==========
 
     3-level:
 
@@ -29,7 +42,7 @@ Route-Reflection level rules:
     ---------   -------------       -----------
     1           None                l2_cluster
     2           l2_cluster          l3_cluster
-    3           as_cluster          None 
+    3           asn                 None 
     =========   =============       ===========
 
 """
@@ -86,8 +99,33 @@ def configure_ibgp_rr(network):
     """
     LOG.debug("Configuring iBGP route reflectors")
 # Add all nodes from physical graph
+#TODO: if no 
+    max_ibgp_level = max(data.get('ibgp_level') for node, data in network.graph.nodes(data=True))
+    print "max level", max_ibgp_level
     g_session = nx.DiGraph()
     g_session.add_nodes_from(network.graph)
+
+    if max_ibgp_level >= 2:
+        for node, data in network.graph.nodes(data=True):
+            # set l2_cluster
+
+            if max_ibgp_level == 3:
+                pass
+# also set l3_cluster 
+
+
+
+# Assign l2_cluster
+
+
+    """ Make groups
+    max_ibgp_level
+    == 1                no need, just use asn
+    >= 2                allocate l2_cluster as pop if not set
+    == 3                allocate l3_cluster as AS if not set
+    
+
+# No need for groups, just use 
     for node in g_session:
         data = network.graph.node[node]
         print data
@@ -142,6 +180,7 @@ def configure_ibgp_rr(network):
         if int(data.get("ibgp_level")) > 1:
             route_reflector = True
         network.graph.node[node]['route_reflector'] = route_reflector
+    """
 
 def initialise_ebgp(network):
     """Adds edge for links that have router in different ASes
