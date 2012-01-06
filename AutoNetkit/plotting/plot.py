@@ -47,6 +47,10 @@ def plot(network, show=False, save=True):
     graph = ank.get_ibgp_graph(network)
     labels = dict( (n, network.label(n)) for n in graph)
     plot_graph(graph, title="iBGP", pos=pos, labels=labels, show=show, save=save)
+
+    graph = ank.get_dns_graph(network)
+    labels = dict( (n, network.label(n)) for n in graph)
+    plot_graph(graph, title="DNS", pos=pos, labels=labels, show=show, save=save)
     
 def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
         node_color=None,

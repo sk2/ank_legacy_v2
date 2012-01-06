@@ -164,11 +164,13 @@ class Internet:
         ank.jsplot(self.network)        
        
     def save(self, filename="network.pickle"):  
+        #TODO: save into ank_lab directory
         LOG.info("Saving")
         output = open(filename, 'wb')
         pickle.dump(self.network, output, -1)
 
     def restore(self, filename="network.pickle"):
+        #TODO: load from ank_lab directory
         LOG.info("Loading network")
         input = open(filename, 'r')
         self.network = pickle.load(input)
