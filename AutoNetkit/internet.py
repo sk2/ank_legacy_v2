@@ -215,7 +215,6 @@ class Internet:
 
         #TODO: fix import order problem with doctests:
         #No handlers could be found for logger "ANK"
-        
         LOG.info("Compiling")
 
         # Sanity check

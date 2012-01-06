@@ -102,8 +102,7 @@ def configure_ibgp_rr(network):
     LOG.debug("Configuring iBGP route reflectors")
 # Add all nodes from physical graph
 #TODO: if no 
-    g_session = nx.DiGraph()
-    g_session.add_nodes_from(network.graph)
+    network.g_session.add_nodes_from(network.graph)
 
     def match_same_l2_cluster(u,v):
         return ( network.graph.node[u]['ibgp_l2_cluster'] == network.graph.node[u]['ibgp_l2_cluster'] != "" )
@@ -136,52 +135,45 @@ def configure_ibgp_rr(network):
                     # due to boolean evaluation will set in order from left to right
                     network.graph.node[node]['ibgp_l2_cluster'] = data.get("pop") or asn
 
-                if max_ibgp_level == 3:
-                    if not data.get("ibgp_l3_cluster"):
+                if max_ibgp_level == 3 and not data.get("ibgp_l3_cluster"):
                         # due to boolean evaluation will set in order from left to right
                         network.graph.node[node]['ibgp_l3_cluster'] = asn
 # Now connect
         edges_to_add = []
 # List of edges for easier iteration (rather than doing each time)
         as_edges = [ (s,t) for s in my_as for t in my_as if s != t]
+        if max_ibgp_level > 1:
+            same_l2_cluster_edges = [ (s,t) for (s,t) in as_edges if match_same_l2_cluster(s,t)]
+        if max_ibgp_level > 2:
+            same_l3_cluster_edges = [ (s,t) for (s,t) in as_edges if match_same_l3_cluster(s,t)]
 
         if max_ibgp_level == 1:
             #1           asn                 None      
-            edges_to_add += [(s, t, {'rr_dir': 'peer'}) for (s,t) in as_edges]
+            edges_to_add += [(s, t, 'peer') for (s,t) in as_edges]
         else:
-            same_l2_cluster_edges = [ (s,t) for (s,t) in as_edges if match_same_l2_cluster(s,t)]
-# This is the same for both level 2 and level 3 networks
-            #1           None                l2_cluster
-            edges_to_add += [(s,t, {'rr_dir': 'up'}) for (s,t) in same_l2_cluster_edges
+            edges_to_add += [(s,t, 'up') for (s,t) in same_l2_cluster_edges
                     if level(s) == 1 and level(t) == 2]
-            edges_to_add += [(s,t, {'rr_dir': 'down'}) for (s,t) in same_l2_cluster_edges
+            edges_to_add += [(s,t, 'down') for (s,t) in same_l2_cluster_edges
                     if level(s) == 2 and level(t) == 1]
 
         if max_ibgp_level == 2:
-            #1           None                l2_cluster
-# done above
-            #2           asn                 None
-# Full-mesh at level 2
-            edges_to_add += [(s, t, {'rr_dir': 'peer'}) for (s,t) in same_l2_cluster_edges 
+            edges_to_add += [(s, t, 'peer') for (s,t) in same_l2_cluster_edges 
                     if level(s) == level(t) == 2]
         elif max_ibgp_level == 3:
-            same_l3_cluster_edges = [ (s,t) for (s,t) in as_edges if match_same_l3_cluster(s,t)]
-            #1           None                l2_cluster
-# done above
-            #2           l2_cluster          l3_cluster
-            edges_to_add += [(s,t, {'rr_dir': 'peer'}) for (s,t) in same_l2_cluster_edges
+            edges_to_add += [(s,t, 'peer') for (s,t) in same_l2_cluster_edges
                     if level(s) == level(t) == 2]
-            edges_to_add += [(s,t, {'rr_dir': 'up'}) for (s,t) in same_l2_cluster_edges
+            edges_to_add += [(s,t, 'up') for (s,t) in same_l2_cluster_edges
                     if level(s) == 2 and level(t) == 3]
-            edges_to_add += [(s,t, {'rr_dir': 'down'}) for (s,t) in same_l2_cluster_edges
+            edges_to_add += [(s,t, 'down') for (s,t) in same_l2_cluster_edges
                     if level(s) == 3 and level(t) == 2]
-            #3           asn                 None 
-            edges_to_add += [(s, t, {'rr_dir': 'peer'}) for (s,t) in same_l3_cluster_edges 
+            edges_to_add += [(s, t, 'peer') for (s,t) in same_l3_cluster_edges 
                     if level(s) == level(t) == 3]
 
-        g_session.add_edges_from(edges_to_add)
+        # format into networkx format
+        edges_to_add = ( (s,t, {'rr_dir': rr_dir}) for (s, t, rr_dir) in edges_to_add)
 
-    network.g_session = g_session
+        network.g_session.add_edges_from(edges_to_add)
+
     for node, data in network.graph.nodes(data=True):
 # is route_reflector if level > 1
         network.graph.node[node]['route_reflector'] = int(data.get("ibgp_level")) > 1
