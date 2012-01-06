@@ -47,6 +47,7 @@ class OliveDeploy():
     """ Deploy a given Junos lab to an Olive Host"""
 
     def __init__(self, host=None, username=None, network=None,
+            host_alias = None,
             base_image = None, telnet_start_port=None, parallel = 1,
             qemu="/usr/bin/qemu", seabios="-L /usr/share/seabios",
             lab_dir="junos_config_dir"):
@@ -54,13 +55,14 @@ class OliveDeploy():
         self.lab_dir = lab_dir
         self.network = network 
         self.parallel = parallel
+        self.host_alias = host_alias
         self.host = host
         self.username = username
         self.shell = None
         self.qemu = qemu
         self.seabios = seabios
 # For use on local machine
-        self.shell_type ="bash"
+        self.shell_type = "bash"
         self.logfile = open( os.path.join(config.log_dir, "pxssh.log"), 'w')
         self.tap_name_base = "ank_tap_olive"
         self.vde_socket_name = None
@@ -77,7 +79,6 @@ class OliveDeploy():
 
     def get_cwd(self):
         return self.get_command_output("pwd")
-
 
     def get_whoami(self):
         return self.get_command_output("whoami")
@@ -191,6 +192,14 @@ class OliveDeploy():
         LOG.info( "%s: Configuration committed to Olive" % router_info.router_name)
         shell.prompt()
         return
+
+    def record_port(self, router, port):
+        """Records telnet port in router"""
+        try:
+            self.network.graph.node[router]['olive_ports'][self.host_alias] = port
+        except KeyError:
+            self.network.graph.node[router]['olive_ports'] = {}
+            self.network.graph.node[router]['olive_ports'][self.host_alias] = port
 
     def connect_to_server(self):  
 # Wrapper to work with existing code
@@ -368,12 +377,15 @@ class OliveDeploy():
         routers = sorted(self.network.graph, key = lambda x: ank.rtr_folder_name(self.network, node))
         for router_id, router in enumerate(routers):
             mac_list = self.mac_address_list(router_id, 6)
+            telnet_port = unallocated_ports.next()
+# And record for future
+            self.record_port(router, telnet_port)
             router_info = router_info_tuple(
                     config_files[router].get('name'),
                     config_files[router].get('config_file_snapshot'),
                     config_files[router].get('base_image_snapshot'),
                     mac_list,
-                    unallocated_ports.next(),
+                    telnet_port,
                     self.vde_socket_name,
                     config_files[router].get('monitor_socket'),
                     )
@@ -385,6 +397,8 @@ class OliveDeploy():
                     )
             startup_command = " ".join(item for item in startup_command.split("\n"))
             qemu_routers.append( (router_info, startup_command))
+
+        return
 
 #TODO: Sort routers by name so start in a more sensible order
         #qemu_routers = sorted(qemu_routers, key=lambda router: router.router_name)

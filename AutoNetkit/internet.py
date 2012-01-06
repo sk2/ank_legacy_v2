@@ -16,6 +16,11 @@ import AutoNetkit as ank
 import pprint
 from AutoNetkit import network
 
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+
 from netaddr import IPNetwork
 
 import config
@@ -158,9 +163,15 @@ class Internet:
             ank.plot(self.network)        
         ank.jsplot(self.network)        
        
-    def save(self):  
+    def save(self, filename="network.pickle"):  
         LOG.info("Saving")
-        self.network.save()
+        output = open(filename, 'wb')
+        pickle.dump(self.network, output, -1)
+
+    def restore(self, filename="network.pickle"):
+        LOG.info("Loading network")
+        input = open(filename, 'r')
+        self.network = pickle.load(input)
     
     def optimise(self):   
         """Optimise each AS within the network.
@@ -257,7 +268,6 @@ class Internet:
             cbgp_comp = ank.CbgpCompiler(self.network, self.services)
             cbgp_comp.configure()
 
-
             """
                 'junosphere': junosphere,
                 'junosphere_olive': junosphere_olive,
@@ -335,18 +345,19 @@ class Internet:
                 #nkd = config.get_plugin("Netkit Deploy")
                 #nkd.verify(self.network)
 
-        for host, data in config.settings['Olive Hosts'].items():
+        for host_alias, data in config.settings['Olive Hosts'].items():
             if not data['active']:
-                LOG.debug("Not deploying inactive Olive host %s" % host)
+                LOG.debug("Not deploying inactive Olive host %s" % host_alias)
                 continue
             if not self.compile_targets['olive']:
-                LOG.info("Olive not compiled, not deploying to host %s" % host)
+                LOG.info("Olive not compiled, not deploying to host %s" % host_alias)
                 continue
 
-            LOG.info("Deploying to Olive host %s" % host)   
+            LOG.info("Deploying to Olive host %s" % host_alias)   
             olive_deploy = ank.deploy.olive_deploy.OliveDeploy(host = data['host'],
                     username = data['username'], 
                     qemu = data['qemu'], seabios = data['seabios'],
+                    host_alias = host_alias,
                     parallel = data['parallel'],
                     telnet_start_port = data['telnet start port'],
                     network = self.network, base_image = data['base image'])
@@ -354,6 +365,7 @@ class Internet:
             if data['verify']:
                 LOG.info("Verification not yet supported for Olive")
 
+        pprint.pprint(self.network.graph.nodes(data=True))
 
         return
 

@@ -8,6 +8,7 @@ Main functions for AutoNetkit
 """
 import pprint   
 import AutoNetkit as ank
+import cPickle as pickle
 from itertools import groupby
 from AutoNetkit import deprecated 
 # NetworkX Modules

@@ -96,6 +96,10 @@ def main():
     if(options.deploy):
         inet.deploy()     
 
+    # finally, save the network
+    #inet.save()
+    #inet.restore()
+
 if __name__ == "__main__":
     try:
         main()
