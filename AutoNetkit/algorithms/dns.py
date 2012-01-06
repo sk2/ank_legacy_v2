@@ -44,11 +44,18 @@ def allocate_dns_servers(network):
                  " largest connected subgraph")
         connected_components = nx.strongly_connected_component_subgraphs(
             network.graph)
+        if len(connected_components) == len(network.graph):
+            LOG.warn("Graph has no connected nodes, not allocating DNS")
+            return
         # Find largest component
         connected_components.sort(key=len, reverse=True)
         largest_subgraph = connected_components[0]
         # Choose central node in this subgraph
-        global_dns = nx.center(largest_subgraph)[0]
+        print "largest_subgraph", largest_subgraph.nodes()
+        if len(largest_subgraph) == 1:
+            global_dns = largest_subgraph.nodes().pop()
+        else:
+            global_dns = nx.center(largest_subgraph)[0]
     network.graph.node[global_dns]['global_dns'] = True
 
     # Marks the global, as well as local DNS server for each AS

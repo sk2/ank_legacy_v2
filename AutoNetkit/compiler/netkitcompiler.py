@@ -516,9 +516,12 @@ class NetkitCompiler:
                 # Ensure only one copy of each route map, can't use set due to list inside tuples (which won't hash)
 # Use dict indexed by name, and then extract the dict items, dict hashing ensures only one route map per name
                 route_maps = dict( (route_map.name, route_map) for route_map in route_maps).values()
-                node_bgp_data = self.network.g_session.node[node]
-                community_lists = node_bgp_data.get('tags')
-                prefix_lists = node_bgp_data.get('prefixes')
+                community_lists = {}
+                prefix_lists = {}
+                node_bgp_data = self.network.g_session.node.get(node)
+                if node_bgp_data:
+                    community_lists = node_bgp_data.get('tags')
+                    prefix_lists = node_bgp_data.get('prefixes')
 
                 # advertise this subnet
                 if not adv_subnet in network_list:
@@ -568,6 +571,9 @@ class NetkitCompiler:
         dns_list = ank.dns_list(self.network)
 
         root_dns = ank.root_dns(self.network)
+        if not root_dns:
+            LOG.info("No root DNS for network, skipping DNS config")
+            return
         root_servers = {'name': root_dns,
                         'ip': self.network.lo_ip(root_dns).ip,
                         'hostname': ank.hostname(self.network, root_dns)}

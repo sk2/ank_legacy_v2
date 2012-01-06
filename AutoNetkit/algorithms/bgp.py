@@ -10,6 +10,9 @@ Route-Reflection level rules:
     * There are no child connections (eg 3->2)
     * as_cluster is the entire AS
 
+    l2_cluster can be manually specified. If not specified, it defaults to being a PoP.
+    If no PoPs specified, it defaults to being the AS.
+
     2-level:
 
     =========   =========       =======
@@ -80,12 +83,22 @@ def configure_ibgp_rr(network):
 
     Note: this currently needs ibgp_level to be set globally for route-reflection to work.
     Future work will implement on a per-AS basis.
-
-
-
-
     """
     LOG.debug("Configuring iBGP route reflectors")
+# Add all nodes from physical graph
+    g_session = nx.DiGraph()
+    g_session.add_nodes_from(network.graph)
+    for node in g_session:
+        data = network.graph.node[node]
+        print data
+
+
+
+    print "Session:"
+    pprint.pprint(g_session.nodes(data=True))
+    print
+
+    return
 
 
 
