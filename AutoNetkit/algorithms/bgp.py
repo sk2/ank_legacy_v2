@@ -1,6 +1,35 @@
 # -*- coding: utf-8 -*-
 """
 BGP
+
+
+Route-Reflection level rules:
+
+    * Peer column refers to connections at the same level (eg 2->2)
+    * Parent column refers to connections to level above (eg 1->2)
+    * There are no child connections (eg 3->2)
+    * as_cluster is the entire AS
+
+    2-level:
+
+    =========   =========       =======
+    Level       Peer            Parent
+    ---------   ---------       -------
+    1           None            l2_cluster
+    2           as_cluster      None
+    =========   =========       =======
+
+    3-level:
+
+    =========   =============       ===========
+    Level       Peer                Parent
+    ---------   -------------       -----------
+    1           None                l2_cluster
+    2           l2_cluster          l3_cluster
+    3           as_cluster          None 
+    =========   =============       ===========
+
+
 """
 __author__ = "\n".join(['Simon Knight'])
 #    Copyright (C) 2009-2011 by Simon Knight, Hung Nguyen
@@ -51,8 +80,16 @@ def configure_ibgp_rr(network):
     """Configures route-reflection properties based on work in (NEED CITE).
 
     Note: this currently needs ibgp_level to be set globally for route-reflection to work.
-    Future work will implement on a per-AS basis."""
+    Future work will implement on a per-AS basis.
+
+
+
+
+    """
     LOG.debug("Configuring iBGP route reflectors")
+
+
+
     edges_to_add = []
     for (s,t) in ((s,t) for s in network.graph.nodes() for t in network.graph.nodes() 
             if (s!= t # not same node
