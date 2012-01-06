@@ -186,8 +186,6 @@ def configure_ibgp_rr(network):
 # is route_reflector if level > 1
         network.graph.node[node]['route_reflector'] = int(data.get("ibgp_level")) > 1
 
-    pprint.pprint(network.graph.nodes(data=True))
-
 def initialise_ebgp(network):
     """Adds edge for links that have router in different ASes
 
