@@ -31,7 +31,8 @@ def load_graphml(net_file, default_asn = 1):
     if not os.path.isdir(pickle_dir):
         os.mkdir(pickle_dir)
     pickle_file = "{0}/{1}.pickle".format(pickle_dir, net_name)
-    if (os.path.isfile(pickle_file) and
+#TODO: re-enable pickle
+    if (False and os.path.isfile(pickle_file) and
         os.stat(net_file).st_mtime < os.stat(pickle_file).st_mtime):
         # Pickle file exists, and source_file is older
         input_graph = nx.read_gpickle(pickle_file)
@@ -58,6 +59,7 @@ def load_graphml(net_file, default_asn = 1):
     # Convert to single-edge and then back to directed, to ensure edge in both
     # directions
     #TODO: Document this that assume bi-directional
+
     input_graph = nx.Graph(input_graph)
     input_graph = input_graph.to_directed()
     
