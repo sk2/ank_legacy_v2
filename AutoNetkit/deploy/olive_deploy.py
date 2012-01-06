@@ -539,8 +539,8 @@ class OliveDeploy():
 # from http://stackoverflow.com/q/295135/
                 command_filename_format = (re.sub('[^\w\s-]', '', command).strip().lower())
                 filename = "%s_%s_%s.txt" % (full_routername,
-                        time.strftime("%Y%m%d_%H%M%S", time.localtime()),
-                        command_filename_format)
+                        command_filename_format,
+                        time.strftime("%Y%m%d_%H%M%S", time.localtime()))
                 filename = os.path.join(host_data_dir, filename)
                 
                 with open( filename, 'w') as f_out:
