@@ -336,13 +336,6 @@ class Internet:
             netkit_dir = config.lab_dir
             nkd.deploy(netkit_server, netkit_dir, self.network, data['xterm'])
 
-            if data['verify']:
-                LOG.info("Verification not yet supported for Netkit")
-                #LOG.info("Verifyng Netkit lab")
-                #nk = netkit_deploy.NetkitDeploy(host, username)  
-                #nkd = config.get_plugin("Netkit Deploy")
-                #nkd.verify(self.network)
-
         for host_alias, data in config.settings['Olive Hosts'].items():
             if not data['active']:
                 LOG.debug("Not deploying inactive Olive host %s" % host_alias)
@@ -364,5 +357,7 @@ class Internet:
                 LOG.info("Verification not yet supported for Olive")
 
         return
+
+
 
 
