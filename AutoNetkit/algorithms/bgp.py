@@ -2,8 +2,14 @@
 """
 BGP
 
+eBGP
+====
+eBGP is configured automatically, if there is an edge in the physical graph between two nodes that belong to different Autonomous Systems:
 
-Route-Reflection level rules:
+``if asn(s) != asn(t) for s,t in edges``
+
+iBGP
+====
 
     * Peer column refers to connections at the same level (eg 2->2)
     * Parent column refers to connections to level above (eg 1->2)
@@ -16,9 +22,14 @@ Route-Reflection level rules:
     l3_cluster defaults to asn if not set: we connect the l2 rr to all l3 rrs in the same AS.
 
     Three types of ibgp connection:
+
     * *up* to a server
     * *down* to a client
     * *over* to a peer
+
+    .. note::
+
+        If the network only has level 1 route-reflectors, then the connections are labelled as *peer*
 
 
     The below tables show the matching attributes to use.
