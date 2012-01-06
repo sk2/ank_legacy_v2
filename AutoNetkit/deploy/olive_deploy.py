@@ -509,7 +509,11 @@ class OliveDeploy():
 
 # use format as % gets mixed up
             LOG.info("Logging into %s" % router_name)
-            root_prompt = "root@{0}%".format(router_name)
+            router_name_junos = router_name
+#workaround for gh-120
+            if "." in router_name:
+                router_name_junos = router_name.split(".")[0]
+            root_prompt = "root@{0}%".format(router_name_junos)
             shell.sendline("telnet localhost %s" % telnet_port)
             shell.expect("Escape character is ")
             shell.sendline()
