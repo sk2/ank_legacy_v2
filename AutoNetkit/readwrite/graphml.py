@@ -48,7 +48,7 @@ def load_graphml(net_file, default_asn = 1):
     # check each node has an ASN allocated
     for node, data in input_graph.nodes_iter(data=True):
         if not 'asn' in data:
-            LOG.info("No asn set for node %s using default of %s" % 
+            LOG.debug("No asn set for node %s using default of %s" % 
                      (data['label'],
                       default_asn))
             input_graph.node[node]['asn'] = default_asn
