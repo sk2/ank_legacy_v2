@@ -104,12 +104,6 @@ def configure_ibgp_rr(network):
 #TODO: if no 
     network.g_session.add_nodes_from(network.graph)
 
-    def match_same_l2_cluster(u,v):
-        return ( network.graph.node[u]['ibgp_l2_cluster'] == network.graph.node[u]['ibgp_l2_cluster'] != "" )
-
-    def match_same_l3_cluster(u,v):
-        return ( network.graph.node[u]['ibgp_l3_cluster'] == network.graph.node[u]['ibgp_l3_cluster'] != "" )
-
     def level(u):
         return int(network.graph.node[u]['ibgp_level'])
 
@@ -128,7 +122,6 @@ def configure_ibgp_rr(network):
                 network.graph.node[node]['ibgp_level'] = 1
 
         max_ibgp_level = max(level(n) for n in my_as)
-
         if max_ibgp_level >= 2:
             for node, data in my_as.nodes(data=True):
                 if not data.get("ibgp_l2_cluster"):
@@ -143,9 +136,11 @@ def configure_ibgp_rr(network):
 # List of edges for easier iteration (rather than doing each time)
         as_edges = [ (s,t) for s in my_as for t in my_as if s != t]
         if max_ibgp_level > 1:
-            same_l2_cluster_edges = [ (s,t) for (s,t) in as_edges if match_same_l2_cluster(s,t)]
+            same_l2_cluster_edges = [ (s,t) for (s,t) in as_edges if 
+                    network.graph.node[s]['ibgp_l2_cluster'] == network.graph.node[t]['ibgp_l2_cluster']]
         if max_ibgp_level > 2:
-            same_l3_cluster_edges = [ (s,t) for (s,t) in as_edges if match_same_l3_cluster(s,t)]
+            same_l3_cluster_edges = [ (s,t) for (s,t) in as_edges if
+                    network.graph.node[s]['ibgp_l3_cluster'] == network.graph.node[t]['ibgp_l3_cluster']]
 
         if max_ibgp_level == 1:
             #1           asn                 None      
@@ -171,7 +166,6 @@ def configure_ibgp_rr(network):
 
         # format into networkx format
         edges_to_add = ( (s,t, {'rr_dir': rr_dir}) for (s, t, rr_dir) in edges_to_add)
-
         network.g_session.add_edges_from(edges_to_add)
 
     for node, data in network.graph.nodes(data=True):
