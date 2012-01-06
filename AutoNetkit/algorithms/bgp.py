@@ -31,7 +31,6 @@ iBGP
 
         If the network only has level 1 route-reflectors, then the connections are labelled as *peer*
 
-
     The below tables show the matching attributes to use.
     
     1-level:
@@ -132,7 +131,6 @@ def configure_ibgp_rr(network):
         max_ibgp_level = max(level(n) for n in my_as)
 
         if max_ibgp_level >= 2:
-            print "max level >= 2 is", max_ibgp_level
             for node, data in my_as.nodes(data=True):
                 if not data.get("ibgp_l2_cluster"):
                     # due to boolean evaluation will set in order from left to right
@@ -181,78 +179,14 @@ def configure_ibgp_rr(network):
             edges_to_add += [(s, t, {'rr_dir': 'peer'}) for (s,t) in same_l3_cluster_edges 
                     if level(s) == level(t) == 3]
 
-        print "edges to add", edges_to_add
         g_session.add_edges_from(edges_to_add)
 
     network.g_session = g_session
-    #pprint.pprint(g_session.nodes(data=True))
-    #pprint.pprint(g_session.edges(data=True))
-    for s,t,data in g_session.edges(data=True):
-        print network.label(s), network.label(t), data['rr_dir']
-
-    """ Make groups
-    max_ibgp_level
-    == 1                no need, just use asn
-    >= 2                allocate l2_cluster as pop if not set
-    == 3                allocate l3_cluster as AS if not set
-    
-
-# No need for groups, just use 
-    for node in g_session:
-        data = network.graph.node[node]
-        print data
-
-
-
-    print "Session:"
-    pprint.pprint(g_session.nodes(data=True))
-    print
-
-    return
-
-
-
-    edges_to_add = []
-    for (s,t) in ((s,t) for s in network.graph.nodes() for t in network.graph.nodes() 
-            if (s!= t # not same node
-                and network.asn(s) == network.asn(t) # Only iBGP for nodes in same ASes
-                )):
-        s_level = network.ibgp_level(s)
-        t_level = network.ibgp_level(t)
-# Intra-PoP
-#TODO: also make Intra-Cluster
-        if (
-                (network.pop(s) == network.pop(t)) # same PoP
-                or (network.ibgp_cluster(s) == network.ibgp_cluster(t) != None) # same cluster and cluster is set
-                ):
-            if s_level == t_level == 1:
-                # client to client: do nothing
-                pass
-            elif (s_level == 1) and (t_level == 2):
-                # client -> server: up
-                edges_to_add.append( (s, t, {'rr_dir': 'up'}) )
-            elif (s_level == 2) and (t_level == 1):
-                # server -> client: down
-                edges_to_add.append( (s, t, {'rr_dir': 'down'}) )
-            elif s_level == t_level == 2:
-                # server -> server: over
-                edges_to_add.append( (s, t, {'rr_dir': 'over'}) )
-        else:
-# Inter-PoP
-            if s_level == t_level == 2:
-                edges_to_add.append( (s, t, {'rr_dir': 'over'}) )
-
-
-    # Add with placeholders for ingress/egress policy
-    network.g_session.add_edges_from(edges_to_add)
-
-    # And mark route-reflector on physical graph
     for node, data in network.graph.nodes(data=True):
-        route_reflector = False
-        if int(data.get("ibgp_level")) > 1:
-            route_reflector = True
-        network.graph.node[node]['route_reflector'] = route_reflector
-    """
+# is route_reflector if level > 1
+        network.graph.node[node]['route_reflector'] = int(data.get("ibgp_level")) > 1
+
+    pprint.pprint(network.graph.nodes(data=True))
 
 def initialise_ebgp(network):
     """Adds edge for links that have router in different ASes
