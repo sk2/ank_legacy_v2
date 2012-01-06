@@ -178,7 +178,7 @@ class OliveDeploy():
         shell.sendline("Clouds")
         shell.expect("root@base-image%")
 # Now load our ank config
-        LOG.info( "%s: Commiting configuration" % router_info.router_name)
+        LOG.info( "%s: Committing configuration" % router_info.router_name)
         shell.sendline("/usr/sbin/cli -c 'configure; load override ANK.conf; commit'")
         shell.expect("commit complete",timeout=120)
 # logout, expect a new login prompt
