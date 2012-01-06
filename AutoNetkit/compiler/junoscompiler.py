@@ -266,7 +266,7 @@ class JunosCompiler:
         LOG.debug("Configuring BGP for %s" % self.network.fqdn(node))
         """ BGP configuration"""
 #TODO: Don't configure iBGP or eBGP if no eBGP edges
-# need to pass correctt blank dicts to templates then...
+# need to pass correct blank dicts to templates then...
 
 #TODO: put comments in for junos bgp peerings
         # route maps

@@ -15,6 +15,11 @@ Route-Reflection level rules:
 
     l3_cluster defaults to asn if not set: we connect the l2 rr to all l3 rrs in the same AS.
 
+    Three types of ibgp connection:
+    * *up* to a server
+    * *down* to a client
+    * *over* to a peer
+
 
     The below tables show the matching attributes to use.
     
@@ -78,19 +83,6 @@ def ibgp_edges(network):
     return ( (s,t) for s,t in network.g_session.edges()
             if network.asn(s) == network.asn(t))
 
-def ibgp_level_set_for_all_nodes(network):
-    """Test if ibgp_level property set for all nodes in network.
-    Warn user if ibgp_level set for some nodes, but not for all."""
-    ibgp_set_per_node = [d.get("ibgp_level") for n, d in network.graph.nodes(data=True)]
-    are_all_set = all(ibgp_set_per_node)
-    if are_all_set != any(ibgp_set_per_node):
-# some nodes have ibgp_level set, but not all nodes, warn possible error
-        set_node_count =  sum(True for n in ibgp_set_per_node if n)
-        total_nodes = len(ibgp_set_per_node)
-        LOG.warn("Possible mistake: ibgp_level is set for %s/%s nodes. Using full-mesh iBGP topology." 
-                % (set_node_count, total_nodes))
-    return are_all_set
-
 def configure_ibgp_rr(network):
     """Configures route-reflection properties based on work in (NEED CITE).
 
@@ -100,23 +92,80 @@ def configure_ibgp_rr(network):
     LOG.debug("Configuring iBGP route reflectors")
 # Add all nodes from physical graph
 #TODO: if no 
-    max_ibgp_level = max(data.get('ibgp_level') for node, data in network.graph.nodes(data=True))
-    print "max level", max_ibgp_level
     g_session = nx.DiGraph()
     g_session.add_nodes_from(network.graph)
 
-    if max_ibgp_level >= 2:
-        for node, data in network.graph.nodes(data=True):
-            # set l2_cluster
+    def match_same_asn(network, u,v):
+        return (u !=v and network.asn(u) == network.asn(v))
 
-            if max_ibgp_level == 3:
-                pass
-# also set l3_cluster 
+    def match_same_l2_cluster(graph, u,v):
+        return (u != v and 
+                graph.node[u]['ibgp_l2_cluster'] == graph.node[u]['ibgp_l2_cluster'] != "" )
+
+    def match_same_l3_cluster(graph, u,v):
+        return (u != v and graph.node[u]['ibgp_l3_cluster'] == graph.node[u]['ibgp_l3_cluster'] != "" )
+
+    def level(u):
+        return int(network.graph.node[u]['ibgp_level'])
+
+    for my_as in ank.get_as_graphs(network):
+        asn = my_as.name
+        pprint.pprint(my_as.nodes(data=True))
+        nodes_with_level_set = len([d.get("ibgp_level") for n, d in my_as.nodes(data=True)])
+        if nodes_with_level_set != len(my_as):
+            if nodes_with_level_set != 0:
+                LOG.info("Only %s/%s nodes in AS%s have ibgp_level set" % (nodes_with_level_set,
+                    len(my_as), asn))
+                LOG.info("Setting ibgp_level to 1 for nodes in AS%s" % asn)
+            # none set, user probably doesn't care for this AS, do full-mesh
+            LOG.debug("Setting ibgp_level to 1 for nodes in AS%s" % asn)
+            for node in my_as:
+                my_as.node[node]['ibgp_level'] = 1
+
+        max_ibgp_level = int(max(data.get('ibgp_level') for node, data in my_as.nodes(data=True)))
+
+        if max_ibgp_level >= 2:
+            for node, data in my_as.nodes(data=True):
+                if not data.get("ibgp_l2_cluster"):
+                    # due to boolean evaluation will set in order from left to right
+                    g_session.node[node]['ibgp_l2_cluster'] = data.get("pop") or asn
+
+                if max_ibgp_level == 3:
+                    if not data.get("ibgp_l3_cluster"):
+                        # due to boolean evaluation will set in order from left to right
+                        g_session.node[node]['ibgp_l3_cluster'] = asn
+
+# Now connect
+        edges_to_add = []
 
 
+        #Level       Peer                Parent
+        #1           None                l2_cluster
+        #2           l2_cluster          l3_cluster
+        #3           asn                 None 
 
-# Assign l2_cluster
+        if max_ibgp_level == 1:
+            #1           asn                 None      
+            edges =  [ (s,t) for s in g_session for t in g_session if match_same_asn(my_as, s,t)]
+            edges_to_add += [(s, t, {'rr_dir': 'over'}) for (s,t) in edges]
+            edges_to_add += [(t, s, {'rr_dir': 'over'}) for (s,t) in edges]
 
+        elif max_ibgp_level == 2:
+            #1           None                l2_cluster
+            edges =  [ (s,t) for s in g_session for t in g_session 
+                    if level(s) == 1 and level(t) == 2 and match_same_l2_cluster(my_as, s,t)]
+            edges_to_add += [(s, t, {'rr_dir': 'up'}) for (s,t) in edges]
+            edges_to_add += [(t, s, {'rr_dir': 'down'}) for (s,t) in edges]
+            #2           asn                 None
+
+        print "edges to add", edges_to_add
+        g_session.add_edges_from(edges_to_add)
+
+    network.g_session = g_session
+    #pprint.pprint(g_session.nodes(data=True))
+    #pprint.pprint(g_session.edges(data=True))
+    for s in g_session:
+        print s, network.label(s)
 
     """ Make groups
     max_ibgp_level
@@ -198,14 +247,7 @@ def initialise_ebgp(network):
 
 def initialise_ibgp(network):
     LOG.debug("Initialising iBGP")
-    if ibgp_level_set_for_all_nodes(network):
-        configure_ibgp_rr(network)
-    else:
-# Full mesh
-        edges_to_add = ( (s,t) for s in network.graph for t in network.graph 
-                if (s is not t and
-                    network.asn(s) == network.asn(t)))
-        network.g_session.add_edges_from(edges_to_add, rr_dir = 'peer')
+    configure_ibgp_rr(network)
 
 def initialise_bgp_sessions(network):
     """ add empty ingress/egress lists to each session.
