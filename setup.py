@@ -12,6 +12,7 @@ setup (
      entry_points = {
          'console_scripts': [
              'autonetkit = AutoNetkit.console_script:main',
+             'ank_collect_data = AutoNetkit.collect_data:main',
          ],
      },
 

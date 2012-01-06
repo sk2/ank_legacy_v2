@@ -102,8 +102,7 @@ def main():
         inet.verify()
 
     # finally, save the network
-    if options.save:
-        inet.save()
+    inet.save()
     #inet.restore()
 
 if __name__ == "__main__":

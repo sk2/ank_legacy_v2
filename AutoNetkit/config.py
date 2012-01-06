@@ -82,7 +82,11 @@ plot_dir = os.path.join(ank_main_dir, "plots")
 if not os.path.isdir(plot_dir):
     os.mkdir(plot_dir)
 
+pickle_dir = os.path.join(ank_main_dir, "snapshots")
+if not os.path.isdir(pickle_dir):
+    os.mkdir(pickle_dir)
 
+collected_data_dir = os.path.join(ank_main_dir, "collected_data")
 
 def add_logging(console_debug=False):
     import logging.handlers

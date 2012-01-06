@@ -13,6 +13,7 @@ from collections import namedtuple
 import os
 import time
 import AutoNetkit.config as config
+import re
 import datetime
 import pxssh
 import sys
@@ -475,8 +476,84 @@ class OliveDeploy():
 
         return
 
+    def collect_data(self, commands):
+        """Runs specified collect_data commands"""
+        LOG.info("Collecting data for %s" % self.host_alias)
+
+        nodes_with_ports = [(node, data.get('label'), data['olive_ports'].get(self.host_alias))
+            for node, data in self.network.graph.nodes(data=True)
+            if 'olive_ports' in data and data['olive_ports'].get(self.host_alias)]
+        if len(nodes_with_ports) == 0:
+            LOG.info("No allocated ports found for %s. Was this host deployed to?" % self.host_alias)
+            return
+
+        if not self.connect_to_server():
+# Problem starting ssh
+            LOG.warn("Unable to start shell for %s" % self.host_alias)
+            return
+        shell = self.shell
+        collected_data_dir = config.collected_data_dir
+        olive_data_dir = os.path.join(collected_data_dir, "olive")
+        if not os.path.isdir(olive_data_dir):
+                os.mkdir(olive_data_dir)
+        host_data_dir = os.path.join(olive_data_dir, self.host_alias)
+        if not os.path.isdir(host_data_dir):
+                os.mkdir(host_data_dir)
+
+        for (node, router_name, telnet_port) in nodes_with_ports:
+# Unique as includes ASN etc
+#TODO: check difference, if really need this...
+            full_routername = ank.rtr_folder_name(self.network, node)
+
+# use format as % gets mixed up
+            LOG.info("Logging into %s" % router_name)
+            root_prompt = "root@{0}%".format(router_name)
+            shell.sendline("telnet localhost %s" % telnet_port)
+            shell.expect("Escape character is ")
+            shell.sendline()
+
+            i = shell.expect(["login", root_prompt]) 
+            if i == 0:
+# Need to login
+                shell.sendline("root")
+                shell.expect("Password:")
+                shell.sendline("Clouds")
+                shell.expect(root_prompt)
+            elif i == 1:
+# logged in already
+                pass
+
+# Now load our ank config
+            for command in commands:
+                command_to_send = "echo %s |cli" % command
+                LOG.info("%s: running command %s" % (router_name, command))
+                shell.sendline(command_to_send)
+                shell.expect(root_prompt)
+                command_output = shell.before
+# from http://stackoverflow.com/q/295135/
+                command_filename_format = (re.sub('[^\w\s-]', '', command).strip().lower())
+                filename = "%s_%s_%s.txt" % (full_routername,
+                        time.strftime("%Y%m%d_%H%M%S", time.localtime()),
+                        command_filename_format)
+                filename = os.path.join(host_data_dir, filename)
+                
+                with open( filename, 'w') as f_out:
+                    f_out.write(command_output)
+
+# logout, expect a new login prompt
+            shell.sendline("exit")
+            shell.expect("login:")
+# Now disconnect telnet
+            shell.sendcontrol("]")
+            shell.expect("telnet>")
+            shell.sendcontrol("D")
+            shell.expect("Connection closed")
+            shell.prompt()
+
+
     def deploy(self):
         if not self.connect_to_server():
+            LOG.warn("Unable to start shell for %s" % self.host_alias)
 # Problem starting ssh
             return
         self.check_required_programs()

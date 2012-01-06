@@ -13,8 +13,11 @@ __author__ = """\n""".join(['Simon Knight (simon.knight@adelaide.edu.au)',
 import os
 
 import AutoNetkit as ank
+import time
 import pprint
 from AutoNetkit import network
+import gzip
+import glob
 
 try:
     import cPickle as pickle
@@ -163,17 +166,29 @@ class Internet:
             ank.plot(self.network)        
         ank.jsplot(self.network)        
        
-    def save(self, filename="network.pickle"):  
+    def save(self, filename=None):  
         #TODO: save into ank_lab directory
         LOG.info("Saving")
-        output = open(filename, 'wb')
+        if not filename:
+            filename = "autonetkit_%s.pickle" % time.strftime("%Y%m%d_%H%M%S", time.localtime())
+            pickle_dir = config.pickle_dir
+            filename = os.path.join(pickle_dir, filename)
+        output = gzip.GzipFile(filename, 'wb')
         pickle.dump(self.network, output, -1)
 
-    def restore(self, filename="network.pickle"):
+    def restore(self, filename=None):
         #TODO: load from ank_lab directory
-        LOG.info("Loading network")
-        input = open(filename, 'r')
-        self.network = pickle.load(input)
+        if not filename:
+# Look in pickle directory
+            snapshots = glob.glob(config.pickle_dir + os.sep + "*.pickle")
+# Most recent file from http://stackoverflow.com/q/2014554/
+            filename = max(snapshots, key=os.path.getmtime)
+            filename_only = os.path.splitext(os.path.split(filename)[1])[0]
+            LOG.info("Loading most recent snapshot: %s" % filename_only)
+            
+        LOG.info("Restoring network")
+        file = gzip.GzipFile(filename, 'rb')
+        self.network = pickle.load(file)
     
     def optimise(self):   
         """Optimise each AS within the network.
@@ -299,10 +314,7 @@ class Internet:
         """Deploy compiled configuration files."
 
         Args:
-           host:    host to deploy to (if remote machine)
-           username: username on remote host
-           platform:    automatically uses compile targets 
-           xterm: if to load an xterm window for each VM
+            None
 
         Returns:
            None
@@ -360,5 +372,29 @@ class Internet:
         return
 
 
+    def collect_data(self):
+        """ Collects data for hosts"""
+        collected_data_dir = config.collected_data_dir
+        if not os.path.isdir(collected_data_dir):
+            os.mkdir(collected_data_dir)
 
+        for host, data in config.settings['Netkit Hosts'].items():
+            if not data['collect data']:
+                LOG.debug("Data collection disabled for Netkit host %s" % host)
+                continue
+
+            LOG.info("Data collection not implemented for Netkit")
+
+        for host_alias, data in config.settings['Olive Hosts'].items():
+            if not data['collect data']:
+                LOG.debug("Data collection disabled for Olive host %s" % host)
+                continue
+
+            LOG.info("Collecting data from Olive host %s" % host_alias)   
+            olive_deploy = ank.deploy.olive_deploy.OliveDeploy(host = data['host'],
+                    username = data['username'], 
+                    host_alias = host_alias,
+                    network = self.network )
+            #TODO: get commands from config file
+            olive_deploy.collect_data(data['collect data commands'])
 
