@@ -95,23 +95,24 @@ def configure_ibgp_rr(network):
     g_session = nx.DiGraph()
     g_session.add_nodes_from(network.graph)
 
-    def match_same_asn(network, u,v):
+    def match_same_asn(u,v):
         return (u !=v and network.asn(u) == network.asn(v))
 
-    def match_same_l2_cluster(graph, u,v):
+    def match_same_l2_cluster(u,v):
         return (u != v and 
-                graph.node[u]['ibgp_l2_cluster'] == graph.node[u]['ibgp_l2_cluster'] != "" )
+                network.graph.node[u]['ibgp_l2_cluster'] == network.graph.node[u]['ibgp_l2_cluster'] != "" )
 
-    def match_same_l3_cluster(graph, u,v):
-        return (u != v and graph.node[u]['ibgp_l3_cluster'] == graph.node[u]['ibgp_l3_cluster'] != "" )
+    def match_same_l3_cluster(u,v):
+        return (u != v and 
+                network.graph.node[u]['ibgp_l3_cluster'] == network.graph.node[u]['ibgp_l3_cluster'] != "" )
 
     def level(u):
         return int(network.graph.node[u]['ibgp_level'])
 
     for my_as in ank.get_as_graphs(network):
+        #TODO: for neatness, look at redefining the above functions inside here setting my_as as network
         asn = my_as.name
-        pprint.pprint(my_as.nodes(data=True))
-        nodes_with_level_set = len([d.get("ibgp_level") for n, d in my_as.nodes(data=True)])
+        nodes_with_level_set = sum(1 for n in my_as if network.graph.node[n].get('ibgp_level'))
         if nodes_with_level_set != len(my_as):
             if nodes_with_level_set != 0:
                 LOG.info("Only %s/%s nodes in AS%s have ibgp_level set" % (nodes_with_level_set,
@@ -120,20 +121,20 @@ def configure_ibgp_rr(network):
             # none set, user probably doesn't care for this AS, do full-mesh
             LOG.debug("Setting ibgp_level to 1 for nodes in AS%s" % asn)
             for node in my_as:
-                my_as.node[node]['ibgp_level'] = 1
+                network.graph.node[node]['ibgp_level'] = 1
 
-        max_ibgp_level = int(max(data.get('ibgp_level') for node, data in my_as.nodes(data=True)))
+        max_ibgp_level = max(level(n) for n in my_as)
 
         if max_ibgp_level >= 2:
             for node, data in my_as.nodes(data=True):
                 if not data.get("ibgp_l2_cluster"):
                     # due to boolean evaluation will set in order from left to right
-                    g_session.node[node]['ibgp_l2_cluster'] = data.get("pop") or asn
+                    network.graph.node[node]['ibgp_l2_cluster'] = data.get("pop") or asn
 
                 if max_ibgp_level == 3:
                     if not data.get("ibgp_l3_cluster"):
                         # due to boolean evaluation will set in order from left to right
-                        g_session.node[node]['ibgp_l3_cluster'] = asn
+                        network.graph.node[node]['ibgp_l3_cluster'] = asn
 
 # Now connect
         edges_to_add = []
@@ -146,14 +147,14 @@ def configure_ibgp_rr(network):
 
         if max_ibgp_level == 1:
             #1           asn                 None      
-            edges =  [ (s,t) for s in g_session for t in g_session if match_same_asn(my_as, s,t)]
-            edges_to_add += [(s, t, {'rr_dir': 'over'}) for (s,t) in edges]
-            edges_to_add += [(t, s, {'rr_dir': 'over'}) for (s,t) in edges]
+            edges =  [ (s,t) for s in my_as for t in my_as if s != t]
+            edges_to_add += [(s, t, {'rr_dir': 'peer'}) for (s,t) in edges]
+            edges_to_add += [(t, s, {'rr_dir': 'peer'}) for (s,t) in edges]
 
         elif max_ibgp_level == 2:
             #1           None                l2_cluster
-            edges =  [ (s,t) for s in g_session for t in g_session 
-                    if level(s) == 1 and level(t) == 2 and match_same_l2_cluster(my_as, s,t)]
+            edges =  [ (s,t) for s in my_as for t in my_as 
+                    if level(s) == 1 and level(t) == 2 and match_same_l2_cluster(s,t)]
             edges_to_add += [(s, t, {'rr_dir': 'up'}) for (s,t) in edges]
             edges_to_add += [(t, s, {'rr_dir': 'down'}) for (s,t) in edges]
             #2           asn                 None
