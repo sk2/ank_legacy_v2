@@ -325,12 +325,12 @@ class Internet:
         >>> inet.deploy()
 
         """
-        for host, data in config.settings['Netkit Hosts'].items():
+        for host_alias, data in config.settings['Netkit Hosts'].items():
             if not data['active']:
-                LOG.debug("Not deploying inactive Netkit host %s" % host)
+                LOG.debug("Not deploying inactive Netkit host %s" % host_alias)
                 continue
             if not self.compile_targets['netkit']:
-                LOG.info("Netkit not compiled, not deploying to host %s" % host)
+                LOG.info("Netkit not compiled, not deploying to host %s" % host_alias)
                 continue
 
             # Otherwise all checks ok, deploy
@@ -339,15 +339,16 @@ class Internet:
             except ImportError:
                 LOG.warn("Unable to import Netkit, ending deployment")
                 return
-            LOG.info("Deploying to Netkit host %s" % host)   
+            LOG.info("Deploying to Netkit host %s" % host_alias)   
+#TODO: pass parallel count in to lstart here similar to with Olives and add to config
             netkit_server = netkit.Netkit(data['host'], data['username'],
                     tapsn=self.tapsn)
 
             # Get the deployment plugin
-            nkd = ank.deploy.netkit_deploy.NetkitDeploy()
-            # Need to tell deploy plugin where the netkit files are
             netkit_dir = config.lab_dir
-            nkd.deploy(netkit_server, netkit_dir, self.network, data['xterm'])
+            nkd = ank.deploy.netkit_deploy.NetkitDeploy(netkit_server, netkit_dir, self.network, data['xterm'], host_alias=host_alias)
+            # Need to tell deploy plugin where the netkit files are
+            nkd.deploy()
 
         for host_alias, data in config.settings['Olive Hosts'].items():
             if not data['active']:
@@ -378,12 +379,27 @@ class Internet:
         if not os.path.isdir(collected_data_dir):
             os.mkdir(collected_data_dir)
 
-        for host, data in config.settings['Netkit Hosts'].items():
+        for host_alias, data in config.settings['Netkit Hosts'].items():
             if not data['collect data']:
-                LOG.debug("Data collection disabled for Netkit host %s" % host)
+                LOG.debug("Data collection disabled for Netkit host %s" % host_alias)
                 continue
 
-            LOG.info("Data collection not implemented for Netkit")
+
+            #TODO: merge netkit server and netkit deploy
+            try:
+                import netkit
+            except ImportError:
+                LOG.warn("Unable to import Netkit, ending deployment")
+                return
+
+            netkit_server = netkit.Netkit(data['host'], data['username'],
+                    tapsn=self.tapsn)
+
+            # Get the deployment plugin
+            netkit_dir = config.lab_dir
+            nkd = ank.deploy.netkit_deploy.NetkitDeploy(netkit_server, netkit_dir, self.network, data['xterm'], host_alias=host_alias)
+            # Need to tell deploy plugin where the netkit files are
+            nkd.collect_data(data['collect data commands'])
 
         for host_alias, data in config.settings['Olive Hosts'].items():
             if not data['collect data']:

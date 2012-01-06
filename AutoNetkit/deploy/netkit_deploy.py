@@ -9,8 +9,10 @@ import logging
 LOG = logging.getLogger("ANK")
                                  
 import os     
+import re
 import time
 import AutoNetkit.config as config
+import AutoNetkit as ank
 
 # Used for EOF and TIMEOUT variables
 import pexpect
@@ -18,21 +20,19 @@ import pexpect
 class NetkitDeploy():  
     """ Deploy a given Netkit lab to a Netkit server"""
     
-    def __init__(self):
-        self.server = None    
-        self.lab_dir = None
-        self.network = None
-    
-    def deploy(self, server, lab_dir, network, xterm=False): 
-        """ Deploys lab_dir to Netkit server""" 
-        # stops lab, copies new lab over, starts lab 
-       
+    def __init__(self, server, lab_dir, network, xterm=False, host_alias=None):
         self.server = server
         self.lab_dir = lab_dir
         self.network = network
         self.xterm = xterm
+        self.host_alias = host_alias
+    
+    def deploy(self): 
+        """ Deploys lab_dir to Netkit server""" 
+        # stops lab, copies new lab over, starts lab 
         
         shell = self.server.get_shell()   
+        server = self.server
         #TODO: throw/catch exceptions instead of warning and errors  
 
         if not shell:
@@ -307,3 +307,62 @@ class NetkitDeploy():
                     "{0} seconds").format(delay))
                 time.sleep(delay)
         return    
+
+    def collect_data(self, commands):
+        shell = self.server.get_shell()
+        shell.setecho(False)
+
+        collected_data_dir = config.collected_data_dir
+        netkit_data_dir = os.path.join(collected_data_dir, "netkit")
+        if not os.path.isdir(netkit_data_dir):
+                os.mkdir(netkit_data_dir)
+        host_data_dir = os.path.join(netkit_data_dir, self.host_alias)
+        if not os.path.isdir(host_data_dir):
+                os.mkdir(host_data_dir)
+
+        #TODO: need to have way to allow privexec.... or just disable enable password?
+#TODO: Put term len 0 into configs
+
+        for node, data in self.network.graph.nodes(data=True):
+            routername = ank.fqdn(self.network, node)
+            full_routername = ank.rtr_folder_name(self.network, node)
+            user_exec_prompt = "%s>"%full_routername
+            priv_exec_prompt = "%s#"%full_routername
+            for port_command in commands:
+                LOG.info("%s: running %s" % (routername, port_command))
+                telnet_port, command = port_command.split(":")
+                shell.sendline("telnet %s %s" % (data.get("tap_ip"), telnet_port))
+                shell.expect("Password:")
+                shell.sendline("1234")
+                shell.expect(user_exec_prompt)
+                shell.sendline("en")
+                i = shell.expect(["Password:", priv_exec_prompt])
+                if i == 0:
+                    shell.sendline("1234")
+                else:
+# all good, in priv exec
+                    pass
+# just to be sure
+                set_term_length = "term len 0"
+                shell.sendline(set_term_length)
+                shell.expect(priv_exec_prompt)
+                shell.sendline(command)
+                shell.expect(priv_exec_prompt)
+# Can be an issue with the telnet x zebra command (not for bgpd it seems)
+                command_output = shell.before
+# If no command output, captured the previous command, try again
+                if command_output.strip() == set_term_length:
+                    shell.expect(priv_exec_prompt)
+                    command_output = shell.before
+                shell.sendline("exit")
+# from http://stackoverflow.com/q/295135/
+                command_filename_format = (re.sub('[^\w\s-]', '', command).strip().lower())
+                filename = "%s_%s_%s.txt" % (full_routername,
+                        command_filename_format,
+                        time.strftime("%Y%m%d_%H%M%S", time.localtime()))
+                filename = os.path.join(host_data_dir, filename)
+                
+                with open( filename, 'w') as f_out:
+                    f_out.write(command_output)
+                # check back at linux shell before continuing
+                shell.prompt() 
