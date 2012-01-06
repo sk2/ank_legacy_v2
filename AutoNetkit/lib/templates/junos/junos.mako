@@ -190,7 +190,7 @@ policy-options {
 		        % if action_clause.action == "addTag":
 		        community add ${action_clause.value};
 		        % elif action_clause.action == "setLP":
-		        set local-preference ${action_clause.value};      
+		        local-preference ${action_clause.value};      
 		        % elif action_clause.action == "setNextHop":
 		        next-hop ${action_clause.value};  
 		        % elif action_clause.action == "removeTag":
