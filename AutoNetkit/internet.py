@@ -174,7 +174,7 @@ class Internet:
             pickle_dir = config.pickle_dir
             filename = os.path.join(pickle_dir, filename)
         output = gzip.GzipFile(filename, 'wb')
-        pickle.dump(self.network, output, -1)
+        pickle.dump(self.network.graph, output, -1)
 
     def restore(self, filename=None):
         #TODO: load from ank_lab directory
@@ -188,7 +188,7 @@ class Internet:
             
         LOG.info("Restoring network")
         file = gzip.GzipFile(filename, 'rb')
-        self.network = pickle.load(file)
+        self.network.graph = pickle.load(file)
     
     def optimise(self):   
         """Optimise each AS within the network.

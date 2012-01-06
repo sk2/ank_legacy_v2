@@ -20,6 +20,12 @@ from collections import namedtuple
 
 LOG = logging.getLogger("ANK")
 
+match_tuple = namedtuple('match_tuple', "match_clauses, action_clauses, reject")
+match_tuple_with_seq_no = namedtuple('match_tuple', "seq_no, match_clauses, action_clauses, reject")
+route_map_tuple = namedtuple('route_map', "name, match_tuples")
+match_clause = namedtuple('match_clause', 'type, comparison, value')
+action_clause = namedtuple('action_clause', 'action, value')
+
 
 def tag_to_pl(tag):
     """Adds prefix list prefix to tag
@@ -83,11 +89,7 @@ class BgpPolicyParser:
                 '|': "or",
                 }
 
-        self.match_tuple = namedtuple('match_tuple', "match_clauses, action_clauses, reject")
-        self.match_tuple_with_seq_no = namedtuple('match_tuple', "seq_no, match_clauses, action_clauses, reject")
-        self.route_map_tuple = namedtuple('route_map', "name, match_tuples")
-        self.match_clause = namedtuple('match_clause', 'type, comparison, value')
-        self.action_clause = namedtuple('action_clause', 'action, value')
+
 
 # Both are of comparison to access in same manner when evaluating
         comparison = (lt | le | eq | ne | ge | gt).setResultsName("comparison")
@@ -352,7 +354,6 @@ class BgpPolicyParser:
     def query_to_tag(self, query):
         """ flattens a node select query into a tag
         """
-        print "got query ", query
 # flatten items into single list in lexicographic order
         retval = (item for sublist in query for item in sublist)
 # replace char if in mapping, else leave, eg = -> eq
