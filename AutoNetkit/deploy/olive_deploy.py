@@ -500,6 +500,8 @@ class OliveDeploy():
         if not os.path.isdir(host_data_dir):
                 os.mkdir(host_data_dir)
 
+        LOG.info("Saving collected data to %s" % host_data_dir)
+
         for (node, router_name, telnet_port) in nodes_with_ports:
 # Unique as includes ASN etc
 #TODO: check difference, if really need this...
