@@ -398,8 +398,6 @@ class OliveDeploy():
             startup_command = " ".join(item for item in startup_command.split("\n"))
             qemu_routers.append( (router_info, startup_command))
 
-        return
-
 #TODO: Sort routers by name so start in a more sensible order
         #qemu_routers = sorted(qemu_routers, key=lambda router: router.router_name)
         #total_boot_time = 0

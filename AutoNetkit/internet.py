@@ -294,9 +294,7 @@ class Internet:
             junos_comp.configure()
 
 
-    def deploy(self, netkit_host=None, netkit_username=None, 
-            olive_host=None, olive_username=None, olive_base_image=None,
-            xterm = False):  
+    def deploy(self):  
         """Deploy compiled configuration files."
 
         Args:
@@ -311,7 +309,7 @@ class Internet:
         Example usage:
 
         >>> inet = ank.internet.Internet()
-        >>> inet.deploy(host = "netkithost", username = "autonetkit")
+        >>> inet.deploy()
 
         """
         for host, data in config.settings['Netkit Hosts'].items():
@@ -364,8 +362,6 @@ class Internet:
             olive_deploy.deploy()
             if data['verify']:
                 LOG.info("Verification not yet supported for Olive")
-
-        pprint.pprint(self.network.graph.nodes(data=True))
 
         return
 
