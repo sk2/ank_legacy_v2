@@ -480,7 +480,7 @@ class OliveDeploy():
         """Runs specified collect_data commands"""
         LOG.info("Collecting data for %s" % self.host_alias)
 
-        nodes_with_ports = [(node, data.get('label'), data['olive_ports'].get(self.host_alias))
+        nodes_with_ports = [(node, ank.fqdn(self.network, node), data['olive_ports'].get(self.host_alias))
             for node, data in self.network.graph.nodes(data=True)
             if 'olive_ports' in data and data['olive_ports'].get(self.host_alias)]
         if len(nodes_with_ports) == 0:

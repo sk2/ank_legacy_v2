@@ -31,7 +31,6 @@ import time
 #TODO: move this into config
 template_cache_dir = config.template_cache_dir
 
-
 #TODO: use os.path.join here in lib/templates
 template_dir =  resource_filename("AutoNetkit","lib/templates")
 lookup = TemplateLookup(directories=[ template_dir ],
