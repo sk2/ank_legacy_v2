@@ -556,8 +556,6 @@ class OliveDeploy():
         LOG.info("Saving collected data to %s" % host_data_dir)
 
         num_worker_threads= self.parallel
-        num_worker_threads = 1
-        print "workers", num_worker_threads
         collected_hosts = []
 #TODO: make so don't need to log in each time - ie get shell outside of runner
         def worker():
@@ -589,9 +587,7 @@ class OliveDeploy():
 # all routers collected from
                 break
 
-        LOG.info( "Successfully started all Olives")
-
-
+        LOG.info( "Successfully collected data from %s" % self.host_alias)
 
     def deploy(self):
         if not self.connect_to_server():
