@@ -34,6 +34,9 @@ def allocate_dns_servers(network):
             
 
     root_dns_servers = set()
+    if not nx.is_strongly_connected(network.graph):
+        LOG.info("Network not fully connected, skipping DNS")
+        return
 
     if nx.is_strongly_connected(network.graph):
         global_dns =  nx.center(network.graph)[0]
@@ -67,6 +70,11 @@ def allocate_dns_servers(network):
 # add only router as DNS server
             local_dns_servers.update(my_as.nodes())
         else:
+            if not nx.is_strongly_connected(my_as):
+                # TODO: make select a number
+                LOG.info("AS%s is not fully connected, selecting random DNS server" % asn)
+                local_dns_servers.update(random.choice(my_as.nodes()))
+                continue
             eccentricities = nx.eccentricity(my_as)
             eccentricities = sorted(eccentricities.keys(), 
                 reverse=True, key=lambda x: eccentricities[x])

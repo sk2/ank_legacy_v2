@@ -8,6 +8,8 @@ __author__ = "\n".join(['Simon Knight'])
 __all__ = ['load_graphml']
 
 import networkx as nx
+import itertools
+import pprint
 import AutoNetkit as ank
 import os
 
@@ -41,9 +43,25 @@ def load_graphml(net_file, default_asn = 1):
         input_graph = nx.read_graphml(net_file)
         nx.write_gpickle(input_graph, pickle_file)
 
+
+# a->z for renaming
+# try intially for a, b, c, d
+    letters = (chr(x) for x in range(97,123)) 
+
+# set any blank labels to be letter for gh-122
+    empty_label_nodes = [n for n, d in input_graph.nodes(data=True) if not d.get("label")]
+    print "empty", empty_label_nodes
+    if len(empty_label_nodes) > 26:
+# use aa, ab, ac, etc
+        single_letters = list(letters)
+        letters = ("%s%s" % (a, b) for a in single_letters for b in single_letters)
+    mapping = dict( (n, letters.next()) for n in empty_label_nodes)
+    input_graph = nx.relabel_nodes(input_graph, mapping)
+   
+
     # set label if unset
-    for node in input_graph.nodes_iter():
-        if 'label' not in input_graph.node[node]:
+    for node, data in input_graph.nodes(data=True):
+        if 'label' not in data:
             input_graph.node[node]['label'] = node
 
     # check each node has an ASN allocated
