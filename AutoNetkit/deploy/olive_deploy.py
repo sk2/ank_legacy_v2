@@ -405,6 +405,9 @@ class OliveDeploy():
         #total_boot_time = 0
 
         num_worker_threads= self.parallel
+        if num_worker_threads > 1:
+# Explain why starting so many threads
+            LOG.info("Parallel startup: starting %s connections to %s" % (num_worker_threads, self.host_alias))
         started_olives = []
         def worker():
                 shell = self.get_shell()
@@ -556,6 +559,9 @@ class OliveDeploy():
         LOG.info("Saving collected data to %s" % host_data_dir)
 
         num_worker_threads= self.parallel
+        if num_worker_threads > 1:
+# Explain why starting so many threads
+            LOG.info("Parallel startup: starting %s connections to %s" % (num_worker_threads, self.host_alias))
         collected_hosts = []
 #TODO: make so don't need to log in each time - ie get shell outside of runner
         def worker():
