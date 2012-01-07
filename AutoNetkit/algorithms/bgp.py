@@ -107,6 +107,15 @@ def configure_ibgp_rr(network):
     def level(u):
         return int(network.graph.node[u]['ibgp_level'])
 
+    def format_asn(asn):
+        """Returns unique format for asn, so don't confuse with property of the same,
+        eg if ibgp_l2_cluster = 1 in as2, it could match as1 routers as 1==1
+        so set asn_1 so 1 != asn_1"""
+        return "asn_%s" % asn
+
+
+    #TODO: make "asn" eg "asn_1" as could conflict if asn=1 and ibgp_l2_cluster = 1 elsewhere and match the same
+
     for my_as in ank.get_as_graphs(network):
         #TODO: for neatness, look at redefining the above functions inside here setting my_as as network
         asn = my_as.name
@@ -126,11 +135,11 @@ def configure_ibgp_rr(network):
             for node, data in my_as.nodes(data=True):
                 if not data.get("ibgp_l2_cluster"):
                     # due to boolean evaluation will set in order from left to right
-                    network.graph.node[node]['ibgp_l2_cluster'] = data.get("pop") or asn
+                    network.graph.node[node]['ibgp_l2_cluster'] = data.get("pop") or format_asn(asn)
 
                 if max_ibgp_level == 3 and not data.get("ibgp_l3_cluster"):
                         # due to boolean evaluation will set in order from left to right
-                        network.graph.node[node]['ibgp_l3_cluster'] = asn
+                        network.graph.node[node]['ibgp_l3_cluster'] = format_asn(asn)
 # Now connect
         edges_to_add = []
 # List of edges for easier iteration (rather than doing each time)

@@ -251,6 +251,7 @@ class Internet:
         
         # Ensure nodes have a type set
         self.network.update_node_type(default_type="netkit_router")
+        ank.allocate_dns_servers(self.network)
 
         # Allocations  
         ank.allocate_subnets(self.network, IPNetwork("10.0.0.0/8")) 
@@ -269,8 +270,6 @@ class Internet:
         if self.compile_targets['netkit']:
             nk_comp = ank.NetkitCompiler(self.network, self.services)
             # Need to allocate DNS servers so they can be configured in Netkit
-            if("DNS" in self.services): 
-                ank.allocate_dns_servers(self.network)
             nk_comp.initialise()     
             nk_comp.configure()
 

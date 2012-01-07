@@ -110,16 +110,21 @@ def jsplot(network):
                 overlay_graph = True,
                 ))
 
+    #TODO: clarify difference of physical_graph and overlay_graph
+
     dns_graph = ank.get_dns_graph(network)
-    labels = dict( (n, network.label(n)) for n in dns_graph)
-    dns_graph = nx.relabel_nodes(dns_graph, labels)
+    node_list = []
+    for node in dns_graph.nodes():
+# Set label to be FQDN, so don't have multiple "Router A" nodes etc
+        data = { 'label': "%s (%s)" % (ank.fqdn(network, node), dns_graph.node[node].get("level"))}
+        node_list.append( (node, data))
     dns_filename = os.path.join(jsplot_dir, "dns.js")
     js_files.append("dns.js")
     with open( dns_filename, 'w') as f_js:
             f_js.write( js_template.render(
-                node_list = dns_graph.nodes(data=True),
+                node_list = node_list,
                 edge_list = dns_graph.edges(data=True),
-                overlay_graph = True,
+                physical_graph = True,
                 ))
 
     #TODO: add timestamps to plots

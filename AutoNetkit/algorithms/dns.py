@@ -153,11 +153,60 @@ def dns_allocate_v2(network):
     """Allocates DNS according to rules defined above
     
     TODO: allow 3 level (ie no pop caching, clients connect to AS server)
+    TODO: make DNS servers standalone rather that co-hosted with router
     
     """
     dns_graph = nx.DiGraph()
+
+    def format_asn(asn):
+        """Returns unique format for asn, so don't confuse with property of the same,
+        eg if ibgp_l2_cluster = 1 in as2, it could match as1 routers as 1==1
+        so set asn_1 so 1 != asn_1"""
+        return "asn_%s" % asn
+
+    def get_l2_cluster(node):
+        """syntactic sugar to access cluster"""
+        return dns_graph.node[node].get("dns_l2_cluster")
+
+    servers_per_l2_cluster = 1
+
 # Add routers, these form the level 1 clients
     dns_graph.add_nodes_from(network.graph.nodes(), level=1)
+    for node, data in network.graph.nodes(data=True):
+        if not data.get("dns_l2_cluster"):
+            dns_graph.node[node]['dns_l2_cluster'] = data.get("pop") or format_asn(network.asn(node))
+
+
+    for my_as in ank.get_as_graphs(network):
+        asn = my_as.name
+        if not nx.is_strongly_connected(my_as):
+            LOG.info("AS%s not fully connected, skipping DNS configuration" % asn)
+            continue
+# Break into dns_l2_cluster
+        nodes = sorted(my_as.nodes(), key= get_l2_cluster)
+        for l2_cluster, g in itertools.groupby(nodes, key = get_l2_cluster):
+            cluster_nodes = list(g)
+            #groups.append(list(g))      # Store group iterator as a list
+            #uniquekeys.append(k)
+#TODO: use eccentricities rather than just degree to choose location
+            nodes_by_degree = sorted(cluster_nodes, key = lambda node: my_as.degree(node))
+            cluster_attach_points = nodes_by_degree[:servers_per_l2_cluster]
+            for index, node in enumerate(cluster_attach_points):
+                server_name = "%s_%s_l2dns_%s" % (asn, l2_cluster, index+1)
+                server_label = "%s_dns_%s" % (l2_cluster, index+1)
+                dns_graph.add_node(server_name, level=2)
+# add to physical graph
+                network.graph.add_node(server_name, label=server_label, 
+                        platform = "NETKIT",
+                        type = 'dns_server',
+                        pop=network.pop(node), asn=asn)
+                network.graph.add_edge(server_name, node)
+                network.graph.add_edge(node, server_name)
+                dns_graph.add_edge(node, server_name)
+
+            pass
+
+    
     network.g_dns = dns_graph
     pprint.pprint(dns_graph.nodes(data=True))
 
