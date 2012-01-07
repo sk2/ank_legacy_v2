@@ -11,12 +11,10 @@ text-align: center;
 }
 
 h2 {
-font-size: medium;
 line-height: 200%;
 }     
 
 h3 {
-font-size: smaller;
 line-height: 200%;
 }
 
