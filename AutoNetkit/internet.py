@@ -167,6 +167,7 @@ class Internet:
         if config.settings['Plotting']['matplotlib']:
             ank.plot(self.network)        
         ank.jsplot(self.network)        
+        ank.summarydoc(self.network)
        
     def save(self, filename=None):  
         #TODO: save into ank_lab directory
@@ -256,9 +257,6 @@ class Internet:
         ank.alloc_interfaces(self.network)
 
         ank.alloc_tap_hosts(self.network, self.tapsn)
-    
-        # Summary
-        ank.summarydoc(self.network)
 
         if self.policy_file:
 # apply bgp policy_file
