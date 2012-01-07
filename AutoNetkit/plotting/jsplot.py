@@ -68,9 +68,7 @@ def jsplot(network):
     edge_list = network.graph.edges(data=True)
     for node in network.graph.nodes():
 # Set label to be FQDN, so don't have multiple "Router A" nodes etc
-        label = "%s %s" % (ank.fqdn(network, node), network.lo_ip(node).ip)
-        data = { 'label': label}
-        print "label is", label
+        data = { 'label': "%s %s" % (ank.fqdn(network, node), network.lo_ip(node).ip)}
         node_list.append( (node, data))
 
     canvas_id = itertools.count(0)
