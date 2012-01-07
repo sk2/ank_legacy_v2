@@ -4,12 +4,12 @@
 <html lang="en">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<title>AutoNetkit plot</title>
+  <title>AutoNetkit ${title} plot</title>
 	<link rel="stylesheet" href="../jsplot/style.css" type="text/css">
   <link rel="stylesheet" href=${css_filename} type="text/css">
 </head>
 <body>                   
-<h1>AutoNetkit plot</h1>                                 
+  <h1>AutoNetkit ${title} plot</h1>                                 
   <canvas id="viewport" width="1024" height="768"></canvas>
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>

@@ -116,7 +116,11 @@ def jsplot(network):
     node_list = []
     for node in dns_graph.nodes():
 # Set label to be FQDN, so don't have multiple "Router A" nodes etc
-        data = { 'label': "%s (%s)" % (ank.fqdn(network, node), dns_graph.node[node].get("level"))}
+        try:
+            label = ank.fqdn(network, node)
+        except KeyError:
+            label = node
+        data = { 'label': "%s (%s)" % (label, dns_graph.node[node].get("level"))}
         node_list.append( (node, data))
     dns_filename = os.path.join(jsplot_dir, "dns.js")
     js_files.append("dns.js")
@@ -134,24 +138,28 @@ def jsplot(network):
     with open( html_filename, 'w') as f_html:
             f_html.write( html_template.render( js_file = "main.js",
                 timestamp=timestamp,
+                title = "network",
                 css_filename = "./ank_style.css",))
 
     html_filename = os.path.join(plot_dir, "ibgp.html")
     with open( html_filename, 'w') as f_html:
             f_html.write( html_template.render( js_file = "ibgp.js",
                 timestamp=timestamp,
+                title = "iBGP",
                 css_filename = "./ank_style.css",))
 
     html_filename = os.path.join(plot_dir, "ebgp.html")
     with open( html_filename, 'w') as f_html:
             f_html.write( html_template.render( js_file = "ebgp.js",
                 timestamp=timestamp,
+                title = "eBGP",
                 css_filename = "./ank_style.css",))
 
     html_filename = os.path.join(plot_dir, "dns.html")
     with open( html_filename, 'w') as f_html:
             f_html.write( html_template.render( js_file = "dns.js",
                 timestamp=timestamp,
+                title = "DNS",
                 css_filename = "./ank_style.css",))
 
     css_filename = os.path.join(jsplot_dir, "style.css")
