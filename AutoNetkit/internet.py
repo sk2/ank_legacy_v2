@@ -128,6 +128,8 @@ class Internet:
             #TODO: use try/except block here
             self.network.graph = ank.load_example(filename)
 
+#TODO: allow url to be entered, eg from zoo, if so then download the file and proceed on as normal
+
         elif ext == ".gml":
             # GML file from Topology Zoo
             ank.load_zoo(self.network, filename)

@@ -8,6 +8,7 @@ __author__ = "\n".join(['Simon Knight'])
 __all__ = ['jsplot']
 
 import networkx as nx
+import time
 import AutoNetkit as ank
 import logging
 import os
@@ -63,6 +64,7 @@ def jsplot(network):
     js_template = lookup.get_template("arborjs/main_js.mako")
     css_template = lookup.get_template("arborjs/style_css.mako")
     html_template = lookup.get_template("arborjs/index_html.mako")
+    ank_css_template = lookup.get_template("autonetkit/style_css.mako")
 
     node_list = []
     edge_list = network.graph.edges(data=True)
@@ -71,8 +73,8 @@ def jsplot(network):
         data = { 'label': "%s %s" % (ank.fqdn(network, node), network.lo_ip(node).ip)}
         node_list.append( (node, data))
 
-    canvas_id = itertools.count(0)
     js_files = []
+    timestamp = time.strftime("%Y/%m/%d %H:%M:%S", time.localtime())
 
     js_filename = os.path.join(jsplot_dir, "main.js")
     js_files.append("main.js")
@@ -81,7 +83,6 @@ def jsplot(network):
                 node_list = node_list,
                 edge_list = edge_list,
                 physical_graph = True,
-                canvas_id = canvas_id.next(),
                 ))
     
     #TODO: work out how to do multiple on one page
@@ -121,26 +122,41 @@ def jsplot(network):
                 overlay_graph = True,
                 ))
 
+    #TODO: add timestamps to plots
     # put html file in main plot directory
+#TODO: parameterised/variable the css location
     html_filename = os.path.join(plot_dir, "plot.html")
     with open( html_filename, 'w') as f_html:
-            f_html.write( html_template.render( js_file = "main.js",))
+            f_html.write( html_template.render( js_file = "main.js",
+                timestamp=timestamp,
+                css_filename = "./ank_style.css",))
 
     html_filename = os.path.join(plot_dir, "ibgp.html")
     with open( html_filename, 'w') as f_html:
-            f_html.write( html_template.render( js_file = "ibgp.js"))
+            f_html.write( html_template.render( js_file = "ibgp.js",
+                timestamp=timestamp,
+                css_filename = "./ank_style.css",))
 
     html_filename = os.path.join(plot_dir, "ebgp.html")
     with open( html_filename, 'w') as f_html:
-            f_html.write( html_template.render( js_file = "ebgp.js"))
+            f_html.write( html_template.render( js_file = "ebgp.js",
+                timestamp=timestamp,
+                css_filename = "./ank_style.css",))
 
     html_filename = os.path.join(plot_dir, "dns.html")
     with open( html_filename, 'w') as f_html:
-            f_html.write( html_template.render( js_file = "dns.js"))
+            f_html.write( html_template.render( js_file = "dns.js",
+                timestamp=timestamp,
+                css_filename = "./ank_style.css",))
 
     css_filename = os.path.join(jsplot_dir, "style.css")
     with open( css_filename, 'w') as f_css:
             f_css.write( css_template.render())
+
+    # and ank css_template
+    css_filename = os.path.join(plot_dir, "ank_style.css")
+    with open( css_filename, 'w') as f_css:
+            f_css.write( ank_css_template.render())
 
     arbor_js_src_filename = os.path.join(template_dir, "arborjs", "arbor.js")
     arbor_js_dst_filename = os.path.join(jsplot_dir, "arbor.js")

@@ -6,6 +6,7 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<title>AutoNetkit plot</title>
 	<link rel="stylesheet" href="../jsplot/style.css" type="text/css">
+  <link rel="stylesheet" href=${css_filename} type="text/css">
 </head>
 <body>                   
 <h1>AutoNetkit plot</h1>                                 
@@ -18,7 +19,8 @@
                                               
   <script src="./jsplot/${js_file}"></script>       
   
-  Plotted by <a href="http://packages.python.org/AutoNetkit/">AutoNetkit</a> using <a href="http://arborjs.org/">arbor.js</a>
+  <p>
+  Plotted at ${timestamp} by <a href="http://packages.python.org/AutoNetkit/">AutoNetkit</a> using <a href="http://arborjs.org/">arbor.js</a>
 
 </body>
 </html>

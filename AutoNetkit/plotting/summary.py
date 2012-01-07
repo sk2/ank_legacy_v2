@@ -8,6 +8,7 @@ __author__ = "\n".join(['Simon Knight'])
 __all__ = ['summarydoc']
 
 import networkx as nx
+import time
 import AutoNetkit as ank
 import logging
 import os
@@ -56,6 +57,10 @@ def summarydoc(network):
     ank_main_dir = config.ank_main_dir
 
     html_template = lookup.get_template("autonetkit/summary_html.mako")
+    ank_css_template = lookup.get_template("autonetkit/style_css.mako")
+    
+    ebgp_graph = ank.get_ebgp_graph(network)
+    ibgp_graph = ank.get_ibgp_graph(network)
 
 # Network wide stats
     network_stats = {}
@@ -66,24 +71,58 @@ def summarydoc(network):
 
     as_stats = {}
 
-    for single_as in as_graphs:
+    for my_as in as_graphs:
         #print single_as.nodes(data=True)
 # Get ASN of first node
-        asn = network.asn(single_as.nodes()[0])
+        asn = my_as.name
         #print asn
-        asn_nodes = []
-        for node, data in single_as.nodes(data=True):
-            pass
+        node_list = {}
+        loopbacks = []
+        for node, data in my_as.nodes(data=True):
+            node_label = network.fqdn(node)
+            loopbacks.append( (node_label, network.lo_ip(node).ip))
+            node_list[node_label] = {}
+            interface_list = []
+            ibgp_list = []
+            ebgp_list = []
+            for _, dst, data in network.graph.edges(node, data=True):
+                interface_list.append( (ank.fqdn(network, dst), data['sn']))
+            node_list[node_label]['interface_list'] = interface_list
+            for _, dst, data in ebgp_graph.edges(node, data=True):
+                ebgp_list.append( (ank.fqdn(network, dst), network.lo_ip(dst).ip))
+            node_list[node_label]['ebgp_list'] = ebgp_list
+            for _, dst, data in ibgp_graph.edges(node, data=True):
+                ibgp_list.append( (ank.fqdn(network, dst), network.lo_ip(dst).ip))
+            node_list[node_label]['ibgp_list'] = ibgp_list
+
+
+        as_stats[my_as.name] = {
+                'asn': asn,
+                'loopbacks': loopbacks,
+                'node_list': node_list,
+                }
 
     
 
+    plot_dir = config.plot_dir
+    if not os.path.isdir(plot_dir):
+        os.mkdir(plot_dir)
+
+    timestamp = time.strftime("%Y/%m/%d %H:%M:%S", time.localtime())
+    
+    css_filename = os.path.join(plot_dir, "ank_style.css")
+    with open( css_filename, 'w') as f_css:
+            f_css.write( ank_css_template.render())
 
     # put html file in main plot directory
-    html_filename = os.path.join(ank_main_dir, "summary.html")
+    html_filename = os.path.join(plot_dir, "summary.html")
     #print html_filename
     with open( html_filename, 'w') as f_html:
             f_html.write( html_template.render(
                 network_stats = network_stats,
+                as_stats = as_stats,
+                timestamp=timestamp,
+                css_filename = "./ank_style.css",
                     )
                     )
 
