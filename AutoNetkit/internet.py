@@ -406,7 +406,7 @@ class Internet:
 
         for host_alias, data in config.settings['Olive Hosts'].items():
             if not data['collect data']:
-                LOG.debug("Data collection disabled for Olive host %s" % host)
+                LOG.debug("Data collection disabled for Olive host %s" % host_alias)
                 continue
 
             LOG.info("Collecting data from Olive host %s" % host_alias)   
