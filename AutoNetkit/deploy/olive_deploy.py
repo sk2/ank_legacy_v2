@@ -406,7 +406,8 @@ class OliveDeploy():
 
         num_worker_threads= self.parallel
         started_olives = []
-        def worker(shell):
+        def worker():
+                shell = self.get_shell()
                 while True:
                     router_info, startup_command = q.get()
                     self.start_olive_vm(router_info, startup_command, shell)
@@ -416,8 +417,7 @@ class OliveDeploy():
         q = Queue.Queue()
 
         for i in range(num_worker_threads):
-            shell = self.get_shell()
-            t = threading.Thread(target=worker, kwargs={'shell': shell})
+            t = threading.Thread(target=worker)
             t.setDaemon(True)
             t.start()
 
@@ -559,7 +559,9 @@ class OliveDeploy():
         num_worker_threads = 1
         print "workers", num_worker_threads
         collected_hosts = []
-        def worker(shell):
+#TODO: make so don't need to log in each time - ie get shell outside of runner
+        def worker():
+                shell = self.get_shell()
                 while True:
                     nodes_with_port, commands = q.get()
                     self.run_collect_data_command(nodes_with_port, commands, shell)
@@ -570,8 +572,7 @@ class OliveDeploy():
         q = Queue.Queue()
 
         for i in range(num_worker_threads):
-            shell = self.get_shell()
-            t = threading.Thread(target=worker, kwargs={'shell': shell})
+            t = threading.Thread(target=worker)
             t.setDaemon(True)
             t.start()
 
