@@ -266,7 +266,7 @@ def dns_allocate_v2(network):
             if level(s) == 3 and level(t) == 4]
     
     # format into networkx format
-    edges_to_add = ( (s,t, {'rr_dir': rr_dir}) for (s, t, rr_dir) in edges_to_add)
+    edges_to_add = ( (s,t, {'dns_dir': dns_dir}) for (s, t, dns_dir) in edges_to_add)
     dns_graph.add_edges_from(edges_to_add)
 
     network.g_dns = dns_graph
