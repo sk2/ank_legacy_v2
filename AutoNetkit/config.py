@@ -28,7 +28,7 @@ import ConfigParser
 settings = ConfigParser.RawConfigParser()
 
 ank_user_dir = os.path.expanduser("~") + os.sep + ".autonetkit"
-from configobj import ConfigObj
+from configobj import ConfigObj, flatten_errors
 
 # load defaults
 spec_file = pkg_resources.resource_filename(__name__,"/lib/configspec.cfg")
@@ -38,14 +38,22 @@ settings = ConfigObj(configspec=spec_file)
 user_config_file = os.path.join(ank_user_dir, "autonetkit.cfg")
 settings.merge(ConfigObj(user_config_file))
 
-
 #TODO: look at using configspec validation
 
 # also try from current directory
 settings.merge(ConfigObj("autonetkit.cfg"))
 
 validator = validate.Validator()
-settings.validate(validator, copy=True)
+results = settings.validate(validator)
+if results != True:
+    print "Error loading configuration file:"
+    for (section_list, key, _) in flatten_errors(settings, results):
+        if key is not None:
+            print 'Invalid key "%s" in section "%s"' % (key, ', '.join(section_list))
+        else:
+            print 'The following section was missing:%s ' % ', '.join(section_list)
+
+    sys.exit(0)
 
 #pprint.pprint(settings)
 #pprint.pprint(settings['Netkit Hosts'])
