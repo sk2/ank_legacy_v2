@@ -55,6 +55,9 @@ class OliveDeploy():
         self.server = None    
         self.lab_dir = lab_dir
         self.network = network 
+        if parallel > 10:
+            LOG.info("Max parallel sessions of 10")
+            parallel = 10
         self.parallel = parallel
         self.host_alias = host_alias
         self.host = host
