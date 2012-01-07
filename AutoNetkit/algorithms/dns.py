@@ -2,7 +2,35 @@
 """
 DNS
 
-Automated hiearchy:
+Automated hiearchy
+===================
+
+There are four levels.
+
+    Connectivity:
+
+    =========   ==============      ======  =========
+    Level       Name                Peer    Parent
+    ---------   --------------      ------  ---------
+    1           Client              None    dns_l2_cluster
+    2           Caching Server      ?       asn
+    3           AS Server           ?       root
+    4           Root                None    None
+    =========   ==============      ======  =========
+
+    Records:
+
+    =========   ================================
+    Level       Responsibility          
+    ---------   -------------------------------- 
+    1           None
+    2           Caching for clients 
+    3           Authoritative for dns_l2_cluster       
+    4           Root - announces relevant l3          
+    =========   =================================
+
+    dns_l2_cluster is PoP if set, if not is asn
+
 
 
 """
