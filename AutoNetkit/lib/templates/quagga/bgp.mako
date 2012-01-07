@@ -88,7 +88,9 @@ router bgp ${asn}
         % if action_clause.action == "addTag":
         set community ${action_clause.value}
         % elif action_clause.action == "setLP":
-        set local-preference ${action_clause.value}       
+        set local-preference ${action_clause.value} 
+        % elif action_clause.action == "setMED":
+        set metric ${action_clause.value};      
         % elif action_clause.action == "setNextHop":
         set ip next-hop ${action_clause.value}       
         % elif action_clause.action == "removeTag":  
