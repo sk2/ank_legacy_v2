@@ -43,8 +43,6 @@ settings.merge(ConfigObj(user_config_file))
 # also try from current directory
 settings.merge(ConfigObj("autonetkit.cfg"))
 
-pprint.pprint(settings)
-
 validator = validate.Validator()
 results = settings.validate(validator)
 if results != True:
