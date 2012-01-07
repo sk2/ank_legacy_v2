@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 DNS
+
+Automated hiearchy:
+
+
 """
 __author__ = "\n".join(['Simon Knight'])
 #    Copyright (C) 2009-2011 by Simon Knight, Hung Nguyen
@@ -31,7 +35,6 @@ def allocate_dns_servers(network):
             del network.graph.node[node]['local_dns']
         if 'global_dns' in data:
             del network.graph.node[node]['global_dns']
-            
 
     root_dns_servers = set()
     if not nx.is_strongly_connected(network.graph):
