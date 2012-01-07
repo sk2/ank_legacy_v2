@@ -68,7 +68,9 @@ def jsplot(network):
     edge_list = network.graph.edges(data=True)
     for node in network.graph.nodes():
 # Set label to be FQDN, so don't have multiple "Router A" nodes etc
-        data = { 'label': ank.fqdn(network, node)}
+        label = "%s %s" % (ank.fqdn(network, node), network.lo_ip(node).ip)
+        data = { 'label': label}
+        print "label is", label
         node_list.append( (node, data))
 
     canvas_id = itertools.count(0)
@@ -83,7 +85,6 @@ def jsplot(network):
                 physical_graph = True,
                 canvas_id = canvas_id.next(),
                 ))
-
     
     #TODO: work out how to do multiple on one page
     ebgp_graph = ank.get_ebgp_graph(network)
