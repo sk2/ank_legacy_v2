@@ -50,7 +50,6 @@ def load_graphml(net_file, default_asn = 1):
 
 # set any blank labels to be letter for gh-122
     empty_label_nodes = [n for n, d in input_graph.nodes(data=True) if not d.get("label")]
-    print "empty", empty_label_nodes
     if len(empty_label_nodes) > 26:
 # use aa, ab, ac, etc
         single_letters = list(letters)
