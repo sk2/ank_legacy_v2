@@ -18,7 +18,6 @@ import glob
 import time
 import tarfile
 
-
 import AutoNetkit as ank
 from AutoNetkit import config
 settings = config.settings
