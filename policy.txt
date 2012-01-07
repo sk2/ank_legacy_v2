@@ -1,3 +1,4 @@
 (asn = 1) egress-> (asn = 1): (if Origin(asn=2) then addTag a100 )
 (asn = 1) egress-> (asn = 2): (if tag = abc then setMED 200 )
-(asn = 1) egress-> (asn = 2): (if tag = cde then addTag a300 )
+(asn = 1) egress-> (asn = 2): (if tag = cde then addTag a300 )     
+(asn =1 ) ->ingress (asn=2): (setLP 200)

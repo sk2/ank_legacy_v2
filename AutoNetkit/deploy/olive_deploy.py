@@ -71,6 +71,7 @@ class OliveDeploy():
         self.base_image = base_image
         self.olive_dir = config.ank_main_dir
         self.telnet_start_port = telnet_start_port
+        self.host_data_dir = None
 
         self.local_server = True
         if self.host and self.username:
@@ -405,10 +406,9 @@ class OliveDeploy():
 
         num_worker_threads= self.parallel
         started_olives = []
-        def worker():
+        def worker(shell):
                 while True:
                     router_info, startup_command = q.get()
-                    shell = self.get_shell()
                     self.start_olive_vm(router_info, startup_command, shell)
                     q.task_done()
                     started_olives.append(router_info.router_name)
@@ -416,7 +416,8 @@ class OliveDeploy():
         q = Queue.Queue()
 
         for i in range(num_worker_threads):
-            t = threading.Thread(target=worker)
+            shell = self.get_shell()
+            t = threading.Thread(target=worker, kwargs={'shell': shell})
             t.setDaemon(True)
             t.start()
 
@@ -476,33 +477,8 @@ class OliveDeploy():
 
         return
 
-    def collect_data(self, commands):
-        """Runs specified collect_data commands"""
-        LOG.info("Collecting data for %s" % self.host_alias)
-
-        nodes_with_ports = [(node, ank.fqdn(self.network, node), data['olive_ports'].get(self.host_alias))
-            for node, data in self.network.graph.nodes(data=True)
-            if 'olive_ports' in data and data['olive_ports'].get(self.host_alias)]
-        if len(nodes_with_ports) == 0:
-            LOG.info("No allocated ports found for %s. Was this host deployed to?" % self.host_alias)
-            return
-
-        if not self.connect_to_server():
-# Problem starting ssh
-            LOG.warn("Unable to start shell for %s" % self.host_alias)
-            return
-        shell = self.shell
-        collected_data_dir = config.collected_data_dir
-        olive_data_dir = os.path.join(collected_data_dir, "olive")
-        if not os.path.isdir(olive_data_dir):
-                os.mkdir(olive_data_dir)
-        host_data_dir = os.path.join(olive_data_dir, self.host_alias)
-        if not os.path.isdir(host_data_dir):
-                os.mkdir(host_data_dir)
-
-        LOG.info("Saving collected data to %s" % host_data_dir)
-
-        for (node, router_name, telnet_port) in nodes_with_ports:
+    def run_collect_data_command(self, nodes_with_port, commands, shell):
+            node, router_name, telnet_port = nodes_with_port
 # Unique as includes ASN etc
 #TODO: check difference, if really need this...
             full_routername = ank.rtr_folder_name(self.network, node)
@@ -541,7 +517,7 @@ class OliveDeploy():
                 filename = "%s_%s_%s.txt" % (full_routername,
                         command_filename_format,
                         time.strftime("%Y%m%d_%H%M%S", time.localtime()))
-                filename = os.path.join(host_data_dir, filename)
+                filename = os.path.join(self.host_data_dir, filename)
                 
                 with open( filename, 'w') as f_out:
                     f_out.write(command_output)
@@ -555,6 +531,65 @@ class OliveDeploy():
             shell.sendcontrol("D")
             shell.expect("Connection closed")
             shell.prompt()
+            return
+
+    def collect_data(self, commands):
+        """Runs specified collect_data commands"""
+        LOG.info("Collecting data for %s" % self.host_alias)
+
+        nodes_with_ports = [(node, ank.fqdn(self.network, node), data['olive_ports'].get(self.host_alias))
+            for node, data in self.network.graph.nodes(data=True)
+            if 'olive_ports' in data and data['olive_ports'].get(self.host_alias)]
+        if len(nodes_with_ports) == 0:
+            LOG.info("No allocated ports found for %s. Was this host deployed to?" % self.host_alias)
+            return
+
+        collected_data_dir = config.collected_data_dir
+        olive_data_dir = os.path.join(collected_data_dir, "olive")
+        if not os.path.isdir(olive_data_dir):
+                os.mkdir(olive_data_dir)
+        host_data_dir = os.path.join(olive_data_dir, self.host_alias)
+        if not os.path.isdir(host_data_dir):
+                os.mkdir(host_data_dir)
+        self.host_data_dir = host_data_dir
+
+        LOG.info("Saving collected data to %s" % host_data_dir)
+
+        num_worker_threads= self.parallel
+        num_worker_threads = 1
+        print "workers", num_worker_threads
+        collected_hosts = []
+        def worker(shell):
+                while True:
+                    nodes_with_port, commands = q.get()
+                    self.run_collect_data_command(nodes_with_port, commands, shell)
+                    q.task_done()
+                    node = nodes_with_ports[0]
+                    collected_hosts.append(node)
+
+        q = Queue.Queue()
+
+        for i in range(num_worker_threads):
+            shell = self.get_shell()
+            t = threading.Thread(target=worker, kwargs={'shell': shell})
+            t.setDaemon(True)
+            t.start()
+
+        # Sort so starup looks neater
+#TODO: fix sort
+        for nodes_with_port in nodes_with_ports:
+            q.put( (nodes_with_port, commands))
+
+        while True:
+            """ Using this instead of q.join allows easy way to quit all threads (but not allow cleanup)
+            refer http://stackoverflow.com/questions/820111"""
+            time.sleep(1)
+            if len(collected_hosts) == len(nodes_with_ports):
+# all routers collected from
+                break
+
+        LOG.info( "Successfully started all Olives")
+
 
 
     def deploy(self):

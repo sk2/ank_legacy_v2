@@ -384,6 +384,9 @@ class Internet:
                 LOG.debug("Data collection disabled for Netkit host %s" % host_alias)
                 continue
 
+            if not data['active']:
+                LOG.debug("Skipping data collection for inactvie Netkit host %s" % host_alias)
+                continue
 
             #TODO: merge netkit server and netkit deploy
             try:
@@ -409,6 +412,7 @@ class Internet:
             LOG.info("Collecting data from Olive host %s" % host_alias)   
             olive_deploy = ank.deploy.olive_deploy.OliveDeploy(host = data['host'],
                     username = data['username'], 
+                    parallel = data['parallel'],
                     host_alias = host_alias,
                     network = self.network )
             #TODO: get commands from config file
