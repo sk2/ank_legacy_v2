@@ -32,7 +32,7 @@ from configobj import ConfigObj, flatten_errors
 
 # load defaults
 spec_file = pkg_resources.resource_filename(__name__,"/lib/configspec.cfg")
-settings = ConfigObj(configspec=spec_file)
+settings = ConfigObj(configspec=spec_file, encoding='UTF8')
 
 # Try in ~/.autonetkit/autonetkit.cfg
 user_config_file = os.path.join(ank_user_dir, "autonetkit.cfg")
@@ -42,6 +42,8 @@ settings.merge(ConfigObj(user_config_file))
 
 # also try from current directory
 settings.merge(ConfigObj("autonetkit.cfg"))
+
+pprint.pprint(settings)
 
 validator = validate.Validator()
 results = settings.validate(validator)
