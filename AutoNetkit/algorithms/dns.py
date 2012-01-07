@@ -27,7 +27,7 @@ There are four levels.
     2           Caching for clients 
     3           Authoritative for dns_l2_cluster       
     4           Root - announces relevant l3          
-    =========   =================================
+    =========   ================================
 
     dns_l2_cluster is PoP if set, if not is asn
 
@@ -146,8 +146,23 @@ def allocate_dns_servers(network):
     client_sessions = itertools.product(local_dns_servers, root_dns_servers)
     dns_graph.add_edges_from(client_sessions)
     network.g_dns = dns_graph
+    dns_allocate_v2(network)
 
-# also allocate to graph
+
+def dns_allocate_v2(network):
+    """Allocates DNS according to rules defined above
+    
+    TODO: allow 3 level (ie no pop caching, clients connect to AS server)
+    
+    """
+    dns_graph = nx.DiGraph()
+# Add routers, these form the level 1 clients
+    dns_graph.add_nodes_from(network.graph.nodes(), level=1)
+    network.g_dns = dns_graph
+    pprint.pprint(dns_graph.nodes(data=True))
+
+#TODO: also need to connect DNS servers into network, allocate IPs, etc
+
 
 def is_dns_server(network, node):
 # if has children is server
