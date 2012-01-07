@@ -31,6 +31,16 @@ There are four levels.
 
     dns_l2_cluster is PoP if set, if not is asn
 
+    #TODO: allow levels to be selected:
+
+    =========   ===============================================
+    Levels      Meaning          
+    ---------   ----------------------------------------------- 
+    1           NA
+    2           clients (1) connect to root (2)
+    3           clients (1) connect to as (3), as to root (4)       
+    4           full, as above
+    =========   ===============================================
 
 
 """
@@ -85,7 +95,6 @@ def allocate_dns_servers(network):
         connected_components.sort(key=len, reverse=True)
         largest_subgraph = connected_components[0]
         # Choose central node in this subgraph
-        print "largest_subgraph", largest_subgraph.nodes()
         if len(largest_subgraph) == 1:
             global_dns = largest_subgraph.nodes().pop()
         else:
@@ -155,6 +164,8 @@ def dns_allocate_v2(network):
     TODO: allow 3 level (ie no pop caching, clients connect to AS server)
     TODO: make DNS servers standalone rather that co-hosted with router
     
+    TODO: note set dns level on dns graph, but ibgp level on physical graph - inconsistent!
+    
     """
     dns_graph = nx.DiGraph()
 
@@ -168,13 +179,21 @@ def dns_allocate_v2(network):
         """syntactic sugar to access cluster"""
         return dns_graph.node[node].get("dns_l2_cluster")
 
+    def level(u):
+        return int(dns_graph.node[u]['level'])
+
     servers_per_l2_cluster = 1
+    servers_per_l3_cluster = 1
+    servers_per_l4_cluster = 2
 
 # Add routers, these form the level 1 clients
     dns_graph.add_nodes_from(network.graph.nodes(), level=1)
     for node, data in network.graph.nodes(data=True):
+        #TODO: the cluster should never be manually set, so can remove checks
         if not data.get("dns_l2_cluster"):
             dns_graph.node[node]['dns_l2_cluster'] = data.get("pop") or format_asn(network.asn(node))
+        if not data.get("dns_l3_cluster"):
+            dns_graph.node[node]['dns_l3_cluster'] = format_asn(network.asn(node))
 
 
     for my_as in ank.get_as_graphs(network):
@@ -183,32 +202,74 @@ def dns_allocate_v2(network):
             LOG.info("AS%s not fully connected, skipping DNS configuration" % asn)
             continue
 # Break into dns_l2_cluster
+            """
         nodes = sorted(my_as.nodes(), key= get_l2_cluster)
         for l2_cluster, g in itertools.groupby(nodes, key = get_l2_cluster):
             cluster_nodes = list(g)
-            #groups.append(list(g))      # Store group iterator as a list
-            #uniquekeys.append(k)
-#TODO: use eccentricities rather than just degree to choose location
-            nodes_by_degree = sorted(cluster_nodes, key = lambda node: my_as.degree(node))
-            cluster_attach_points = nodes_by_degree[:servers_per_l2_cluster]
-            for index, node in enumerate(cluster_attach_points):
-                server_name = "%s_%s_l2dns_%s" % (asn, l2_cluster, index+1)
-                server_label = "%s_dns_%s" % (l2_cluster, index+1)
-                dns_graph.add_node(server_name, level=2)
+            """
+
+        l2_clusters = list(set(dns_graph.node[n].get("dns_l2_cluster") for n in my_as))
+        for l2_cluster in l2_clusters:
+            for index in range(servers_per_l2_cluster):
+                server_name = "AS%s_%s_l2dns_%s" % (asn, l2_cluster, index+1)
+                dns_graph.add_node(server_name, level=2, dns_l2_cluster=l2_cluster,
+                        dns_l3_cluster = format_asn(asn))
 # add to physical graph
-                network.graph.add_node(server_name, label=server_label, 
-                        platform = "NETKIT",
-                        type = 'dns_server',
-                        pop=network.pop(node), asn=asn)
-                network.graph.add_edge(server_name, node)
-                network.graph.add_edge(node, server_name)
-                dns_graph.add_edge(node, server_name)
 
+        """
+        #TODO: work out appropriate attach points based on groups
+#TODO: use eccentricities rather than just degree to choose location
+        nodes_by_degree = sorted(my_as.nodes(), key = lambda node: my_as.degree(node))
+        cluster_attach_points = nodes_by_degree[:servers_per_l3_cluster]
+        for index, node in enumerate(cluster_attach_points):
             pass
-
+        #TODO: wrap this in a function
+        server_label = "%s_dns_%s" % (l2_cluster, index+1)
+        network.graph.add_node(server_name, label=server_label, 
+                platform = "NETKIT",
+                type = 'dns_server',
+                pop=network.pop(node), asn=asn)
+        network.graph.add_edge(server_name, node)
+        network.graph.add_edge(node, server_name)
+        """
+        for index in range(servers_per_l3_cluster):
+                server_name = "AS%s_l3dns_%s" % (asn, index+1)
+                dns_graph.add_node(server_name, level=3, 
+                        dns_l3_cluster = format_asn(asn))
     
+    # and level 4 connections
+    for index in range(servers_per_l4_cluster):
+            server_name = "root_dns_%s" % (index+1)
+            dns_graph.add_node(server_name, level=4)
+        
+    # now connect
+#TODO: scale to handle multiple levels same as ibgp (see doco at start for details)
+    edges_to_add = []
+    all_edges = [ (s,t) for s in dns_graph for t in dns_graph if s != t]
+    same_l3_cluster_edges = [ (s,t) for (s,t) in all_edges if 
+                    dns_graph.node[s].get('dns_l3_cluster') == dns_graph.node[t].get('dns_l3_cluster') != None]
+    same_l2_cluster_edges = [ (s,t) for (s,t) in same_l3_cluster_edges if 
+                    dns_graph.node[s].get('dns_l2_cluster') == dns_graph.node[t].get('dns_l2_cluster') != None]
+    
+
+# l1 -> l2 same l2 cluster
+    edges_to_add += [(s,t, 'up') for (s,t) in same_l2_cluster_edges
+            if level(s) == 1 and level(t) == 2]
+    # l2 -> l2 ???
+
+# l2 -> l3
+    edges_to_add += [(s,t, 'up') for (s,t) in same_l3_cluster_edges
+            if level(s) == 2 and level(t) == 3]
+
+# l3 -> l4
+    edges_to_add += [(s,t, 'up') for (s,t) in all_edges
+            if level(s) == 3 and level(t) == 4]
+    
+    # format into networkx format
+    edges_to_add = ( (s,t, {'rr_dir': rr_dir}) for (s, t, rr_dir) in edges_to_add)
+    dns_graph.add_edges_from(edges_to_add)
+
     network.g_dns = dns_graph
-    pprint.pprint(dns_graph.nodes(data=True))
 
 #TODO: also need to connect DNS servers into network, allocate IPs, etc
 
