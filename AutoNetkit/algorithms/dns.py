@@ -45,10 +45,11 @@ There are four levels.
 
 """
 __author__ = "\n".join(['Simon Knight'])
-#    Copyright (C) 2009-2011 by Simon Knight, Hung Nguyen
+#    Copyright (C) 2009-2012 by Simon Knight, Hung Nguyen
 
 __all__ = ['allocate_dns_servers', 'get_dns_graph',
-           'dns_list', 'root_dns', 'reverse_subnet', 'rev_dns_identifier']
+        'dns_servers', 'dns_level',
+        'dns_list', 'root_dns', 'reverse_subnet', 'rev_dns_identifier']
 
 import AutoNetkit as ank
 import networkx as nx
@@ -61,105 +62,6 @@ import logging
 LOG = logging.getLogger("ANK")
 
 def allocate_dns_servers(network):
-    # Remove any previously set DNS servers
-    #TODO: use ANK API rather than direct graph access
-    """ TODO: discuss with Hung - levels, what if both 3 (root) and 2 (local as)"""
-    LOG.debug("Allocating DNS servers")
-    dns_graph = nx.DiGraph()
-    dns_graph.add_nodes_from(network.graph)
-    
-    # remove existing dns servers
-    for node, data in network.graph.nodes_iter(data=True):
-        if 'local_dns' in data:
-            del network.graph.node[node]['local_dns']
-        if 'global_dns' in data:
-            del network.graph.node[node]['global_dns']
-
-    root_dns_servers = set()
-    if not nx.is_strongly_connected(network.graph):
-        LOG.info("Network not fully connected, skipping DNS")
-        return
-
-    if nx.is_strongly_connected(network.graph):
-        global_dns =  nx.center(network.graph)[0]
-    else:
-        # Network not fully connected, so central DNS server is arbitary choice
-        # choose a server from the largest connected component
-        LOG.debug("Network not strongly connected, choosing root DNS from "
-                 " largest connected subgraph")
-        connected_components = nx.strongly_connected_component_subgraphs(
-            network.graph)
-        if len(connected_components) == len(network.graph):
-            LOG.warn("Graph has no connected nodes, not allocating DNS")
-            return
-        # Find largest component
-        connected_components.sort(key=len, reverse=True)
-        largest_subgraph = connected_components[0]
-        # Choose central node in this subgraph
-        if len(largest_subgraph) == 1:
-            global_dns = largest_subgraph.nodes().pop()
-        else:
-            global_dns = nx.center(largest_subgraph)[0]
-    network.graph.node[global_dns]['global_dns'] = True
-
-    # Marks the global, as well as local DNS server for each AS
-    per_as_server_count = 1
-    all_dns_servers = set()
-    for my_as in ank.get_as_graphs(network):
-        local_dns_servers = set()
-        if len(my_as) == 1:
-# add only router as DNS server
-            local_dns_servers.update(my_as.nodes())
-        else:
-            if not nx.is_strongly_connected(my_as):
-                # TODO: make select a number
-                LOG.info("AS%s is not fully connected, selecting random DNS server" % asn)
-                local_dns_servers.update(random.choice(my_as.nodes()))
-                continue
-            eccentricities = nx.eccentricity(my_as)
-            eccentricities = sorted(eccentricities.keys(), 
-                reverse=True, key=lambda x: eccentricities[x])
-            local_dns_servers.update(eccentricities[:per_as_server_count])
-# legacy - choose first server to use
-        local_dns = list(local_dns_servers)[0]
-        network.graph.node[local_dns]['local_dns'] = True
-# end legacy
-# Mark all other nodes in AS to point to this central node
-        LOG.debug("DNS server(s) for AS %s are %s" % (my_as.asn, 
-            ", ".join(network.label(s) for s in local_dns_servers)))
-        all_dns_servers.update(local_dns_servers)
-
-# Now connect
-        client_nodes = (n for n in my_as if n not in local_dns_servers)
-        client_sessions = itertools.product(client_nodes, local_dns_servers)
-        dns_graph.add_edges_from(client_sessions)
-
-#TODO: allow this to scale to more levels in future
-
-# Eccentricities are dictionary, key=node, value=eccentricity
-# Convert this into a list of nodes sorted by most eccentric to least eccentricities
-    if len(all_dns_servers) == 1:
-# Single root DNS server
-        root_dns_servers.update(all_dns_servers)
-    else:
-        eccentricities = nx.eccentricity(network.graph,
-# Need to give nodes as a list, if set is hashable so nx tries to match as node
-                list(all_dns_servers))
-        eccentricities = sorted(eccentricities.keys(), 
-                reverse=True, key=lambda x: eccentricities[x])
-        root_server_count = 2
-        root_dns_servers.update(eccentricities[:root_server_count])
-    LOG.debug("DNS Root servers are %s" % ", ".join(network.fqdn(s) 
-        for s in root_dns_servers))
-
-    #TODO: do we connect root DNS servers together?
-    client_sessions = itertools.product(local_dns_servers, root_dns_servers)
-    dns_graph.add_edges_from(client_sessions)
-    network.g_dns = dns_graph
-    dns_allocate_v2(network)
-
-
-def dns_allocate_v2(network):
     """Allocates DNS according to rules defined above
     
     TODO: allow 3 level (ie no pop caching, clients connect to AS server)
@@ -284,6 +186,11 @@ def is_dns_client(network, node):
     # note could also be server to own children
     pass
 
+def dns_level(network, node):
+    return network.g_dns.node[node].get("level")
+
+def dns_servers(network):
+    return (n for n in network.g_dns.nodes_iter() if dns_level(network, n) > 1)
 
 
 def get_dns_graph(network):

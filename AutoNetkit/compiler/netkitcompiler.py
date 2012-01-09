@@ -543,6 +543,12 @@ class NetkitCompiler:
         pprint.pprint(self.network.graph.nodes(data=True))
         ip_as_allocs = ank.get_ip_as_allocs(self.network)
 
+        dns_servers = ank.dns_servers(self.network)
+        print "servers are", list(dns_servers)
+
+
+        return
+
         resolve_template = lookup.get_template("linux/resolv.mako")
         forward_template = lookup.get_template("bind/forward.mako")
 
