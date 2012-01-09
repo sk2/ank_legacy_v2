@@ -76,24 +76,24 @@ def summarydoc(network):
     for my_as in as_graphs:
         #print single_as.nodes(data=True)
 # Get ASN of first node
-        asn = my_as.name
+        asn = my_as.asn
         #print asn
         node_list = {}
         loopbacks = []
-        for node, data in my_as.nodes(data=True):
-            node_label = network.fqdn(node)
-            loopbacks.append( (node_label, network.lo_ip(node).ip))
+        for router in network.routers(asn):
+            node_label = network.fqdn(router)
+            loopbacks.append( (node_label, network.lo_ip(router).ip))
             node_list[node_label] = {}
             interface_list = []
             ibgp_list = []
             ebgp_list = []
-            for _, dst, data in network.graph.edges(node, data=True):
+            for _, dst, data in network.graph.edges(router, data=True):
                 interface_list.append( (ank.fqdn(network, dst), data['sn']))
             node_list[node_label]['interface_list'] = interface_list
-            for _, dst, data in ebgp_graph.edges(node, data=True):
+            for _, dst, data in ebgp_graph.edges(router, data=True):
                 ebgp_list.append( (ank.fqdn(network, dst), network.lo_ip(dst).ip))
             node_list[node_label]['ebgp_list'] = ebgp_list
-            for _, dst, data in ibgp_graph.edges(node, data=True):
+            for _, dst, data in ibgp_graph.edges(router, data=True):
                 ibgp_list.append( (ank.fqdn(network, dst), network.lo_ip(dst).ip))
             node_list[node_label]['ibgp_list'] = ibgp_list
 

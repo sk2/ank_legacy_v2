@@ -41,14 +41,20 @@
   % for node, node_data in sorted(as_data['node_list'].items()):
   <h3>${node}</h3>
   ${len(node_data['interface_list'])} interfaces
+
+  <table>
+    <tr><td>Interfaces</td><td>iBGP Peers</td><td>eBGP Peers</td></tr>
+    <tr><td>
 	<table>
     <tr> <th>Neighbour</th> <th>Subnet</th> </tr>     
     %for neigh, subnet in node_data['interface_list']:
     <tr> <td>${neigh}</td> <td>${subnet}</ td> </tr>       
       % endfor
   </table>
+
+</td>
+<td>
   
-  <h4>iBGP peers</h4>
   <table>
     <tr> <th>Neighbour</th> <th>Loopback</th> </tr>     
     %for neigh, subnet in node_data['ibgp_list']:
@@ -56,14 +62,18 @@
       % endfor
     </table>
 
-  <h4>eBGP peers</h4>
-  <table>
+
+  </td>
+  <td>
   <table>
     <tr> <th>Neighbour</th> <th>Loopback</th> </tr>     
     %for neigh, subnet in node_data['ebgp_list']:
     <tr> <td>${neigh}</td> <td>${subnet}</ td> </tr>       
       % endfor
   </table>
+</td>
+</tr>
+</table>
   % endfor
 
   <hr>
