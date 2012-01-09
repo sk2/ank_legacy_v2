@@ -3,9 +3,10 @@
 Autonomous System functions
 """
 __author__ = "\n".join(['Simon Knight'])
-#    Copyright (C) 2009-2011 by Simon Knight, Hung Nguyen
+#    Copyright (C) 2009-2012 by Simon Knight, Hung Nguyen
 
-__all__ = ['nodes_by_as', 'get_as_graphs', 'igp_graph', 'get_as_list']
+__all__ = ['nodes_by_as', 'get_as_graphs', 'igp_graph', 
+        'as_graph_dict', 'get_as_list']
 
 import networkx as nx
 from collections import defaultdict
@@ -27,9 +28,7 @@ def nodes_by_as(network):
 def get_as_list(network):    
     """Returns each AS ID in network."""        
     #returns list of unique as numbers 
-    as_list = ( network.asn(n) for n in network.graph )
-    # Use set to remove duplicates
-    return list(set(as_list))    
+    return set( network.asn(n) for n in network.graph )
 
 def igp_graph(network):
     """Returns IGP graph for network - based on physical graph with inter-AS links removed"""
@@ -39,6 +38,11 @@ def igp_graph(network):
             if network.asn(s) != network.asn(t))
     G.remove_edges_from(edges_to_remove)
     return G
+
+def as_graph_dict(network):
+    """as graphs indexed by asn
+#TODO: use this in ip allocs"""
+    return dict( (as_graph.asn, as_graph) for as_graph in get_as_graphs(network))
     
 def get_as_graphs(network):   
     """Returns a graph for each AS."""
