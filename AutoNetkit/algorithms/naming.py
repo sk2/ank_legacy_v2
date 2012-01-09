@@ -6,12 +6,23 @@ __author__ = "\n".join(['Simon Knight'])
 #    Copyright (C) 2009-2011 by Simon Knight, Hung Nguyen
 
 __all__ = ['domain', 'fqdn', 'rtr_folder_name', 'hostname',
-        'netkit_interface_id', 'tap_interface_id',
-        'junos_int_id_em', 'junos_int_id_olive_patched',
-        'junos_int_id_olive', 'junos_int_id_junos',
+        'interface_id', 'tap_interface_id',
         'junos_logical_int_id_ge',
         ]
 
+def interface_id(platform, olive_qemu_patched=False):
+    """Returns appropriate naming function based on target
+    olive_qemu_patched means can do int 0->6
+    
+    """
+    if platform == 'netkit':
+        return netkit_interface_id
+    if platform in ['junosphere', 'junosphere_olive']:
+            return junos_int_id_junos
+    if platform in ['olive', 'junosphere_olive']:
+        if olive_qemu_patched:
+            return junos_int_id_olive
+        return junos_int_id_olive_patched
 
 # interface naming
 def netkit_interface_id(numeric_id):

@@ -89,7 +89,7 @@ class NetkitCompiler:
         self.network = network
         self.services = services
         self.zebra_password = zebra_password
-        self.interface_id = ank.netkit_interface_id
+        self.interface_id = ank.interface_id('netkit')
         self.tap_interface_id = ank.tap_interface_id
         # Speed improvement: grab eBGP and iBGP  graphs
         #TODO: fetch eBGP and iBGP graphs and cache them

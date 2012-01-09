@@ -65,29 +65,26 @@ class JunosCompiler:
         self.services = services
         self.igp = igp
         self.target = target
+        self.olive_qemu_patched = olive_qemu_patched
 # easy reference to junosphere or olive
 
 # Function mapping to get int_id, set depending on target platform
-        self.int_id = None
+        self.int_id = ank.interface_id(target, olive_qemu_patched=olive_qemu_patched)
         self.interface_limit = 0
 
         self.junosphere = False
         if target in ['junosphere', 'junosphere_olive']:
             self.junosphere = True
-            self.int_id = ank.junos_int_id_junos
             self.interface_limit = 32
         self.olive = False
         if target in ['olive', 'junosphere_olive']:
             self.olive = True
-            self.int_id = ank.junos_int_id_olive
-        self.olive_qemu_patched = olive_qemu_patched
 
         if self.olive:
             self.interface_limit = 5
         if self.olive_qemu_patched:
 # Patch allows 6 interfaces
             self.interface_limit = 6
-            self.int_id = ank.junos_int_id_olive_patched
 
     def initialise(self):
         """Creates lab folder structure"""
