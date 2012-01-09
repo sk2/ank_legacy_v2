@@ -73,12 +73,13 @@ def allocate_dns_servers(network):
     """
     dns_graph = nx.DiGraph()
 
-    shortest_paths = nx.all_pairs_shortest_path_length(network.graph)
-
     def nodes_by_eccentricity(graph):
-        eccentricities = nx.eccentricity(graph, sp = shortest_paths)
-        nodes_by_eccentricity = eccentricities.keys()
-        return sorted(nodes_by_eccentricity, key = lambda n: eccentricities[n])
+        if len(graph) == 1:
+            return graph.nodes()
+# need to crop the global shortest paths otherwise get 
+#NetworkXError: Graph not connected: infinite path length
+        eccentricities = nx.eccentricity(graph)
+        return sorted(eccentricities.keys(), key = lambda n: eccentricities[n])
 
     def format_asn(asn):
         """Returns unique format for asn, so don't confuse with property of the same,
@@ -117,44 +118,21 @@ def allocate_dns_servers(network):
         if not nx.is_strongly_connected(my_as):
             LOG.info("AS%s not fully connected, skipping DNS configuration" % asn)
             continue
-# Break into dns_l2_cluster
-            """
-        nodes = sorted(my_as.nodes(), key= get_l2_cluster)
-        for l2_cluster, g in itertools.groupby(nodes, key = get_l2_cluster):
-            cluster_nodes = list(g)
-            """
+
 
         l2_clusters = list(set(dns_graph.node[n].get("dns_l2_cluster") for n in my_as))
         for l2_cluster in l2_clusters:
             for index in range(servers_per_l2_cluster):
-# neater server names
                 if l2_cluster == format_asn(asn):
 # Don't put asn into server name twice "AS2_asn_2_l2dns_1" vs "asn_2_l2dns_1"
                     server_name = "%s_l2dns_%s" % (l2_cluster, index+1)
                 else:
                     server_name = "AS%s_%s_l2dns_%s" % (asn, l2_cluster, index+1)
-
 #TODO: see what other properties to retain
                 node_name = network.add_device(server_name, asn=asn, device_type='server')
                 dns_graph.add_node(node_name, level=2, dns_l2_cluster=l2_cluster,
                         asn = asn, dns_l3_cluster = format_asn(asn))
-# add to physical graph
 
-        """
-        #TODO: work out appropriate attach points based on groups
-#TODO: use eccentricities rather than just degree to choose location
-        nodes_by_degree = sorted(my_as.nodes(), key = lambda node: my_as.degree(node))
-        cluster_attach_points = nodes_by_degree[:servers_per_l3_cluster]
-        for index, node in enumerate(cluster_attach_points):
-            pass
-        #TODO: wrap this in a function
-        server_label = "%s_dns_%s" % (l2_cluster, index+1)
-        network.graph.add_node(server_name, label=server_label, 
-                type = 'dns_server',
-                pop=network.pop(node), asn=asn)
-        network.graph.add_edge(server_name, node)
-        network.graph.add_edge(node, server_name)
-        """
         for index in range(servers_per_l3_cluster):
                 server_name = "AS%s_l3dns_%s" % (asn, index+1)
                 node_name = network.add_device(server_name, asn=asn, device_type='server')
@@ -168,7 +146,7 @@ def allocate_dns_servers(network):
         attach_point = global_eccentricities.pop()
         server_name = "root_dns_%s" % (index+1)
         asn = ank.asn(attach_point)
-        LOG.info("Attaching %s to %s in %s" % (server_name, ank.label(attach_point), asn))
+        LOG.debug("Attaching %s to %s in %s" % (server_name, ank.label(attach_point), asn))
         node_name = network.add_device(server_name, asn=asn, device_type='server')
         network.add_link(node_name, attach_point)
         dns_graph.add_node(node_name, level=4)
@@ -209,31 +187,39 @@ def allocate_dns_servers(network):
     devices = sorted(devices, key= get_l3_cluster)
     devices = sorted(devices, key= ank.asn)
     for asn, asn_devices in itertools.groupby(devices, key = ank.asn):
-        continue
 # if no asn set, then root server, which has already been allocated
         if asn:
             # asn is set, look at l3 groups
             for l3_cluster, l3_cluster_devices in itertools.groupby(asn_devices, key = get_l3_cluster):
-                print "l3 cluster", l3_cluster
+                if not l3_cluster:
+                    #TODO: see why getting empty cluster
+                    continue
                 l3_cluster_devices = set(l3_cluster_devices)
                 l3_cluster_servers = set(n for n in l3_cluster_devices if level(n) == 3)
                 l3_cluster_routers = set(n for n in l3_cluster_devices if n in routers)
+
                 l3_cluster_physical_graph = network.graph.subgraph(l3_cluster_routers)
+                l3_cluster_eccentricities = nodes_by_eccentricity(l3_cluster_physical_graph)
+                for server in l3_cluster_servers:
+                    attach_point = l3_cluster_eccentricities.pop()
+                    LOG.debug("Attaching %s to %s in %s" % (ank.label(server), 
+                        ank.label(attach_point), asn))
+                    network.add_link(server, attach_point)
 
                 l1l2_devices = l3_cluster_devices - set(l3_cluster_servers)
 # resort after set operations for groupby to work correctly
                 l1l2_devices = sorted(l1l2_devices, key= get_l2_cluster)
                 for l2_cluster, l2_cluster_devices in itertools.groupby(l1l2_devices, key = get_l2_cluster):
-                    print "l2 cluster", l2_cluster
                     l2_cluster_devices = set(l2_cluster_devices)
                     l2_cluster_servers = set(n for n in l2_cluster_devices if level(n) == 2)
                     l2_cluster_routers = set(n for n in l2_cluster_devices if level(n) == 1 and n in routers)
-                    print "routers", ",".join(network.label(n) for n in l2_cluster_routers)
-                    print "servers", l2_cluster, list(l2_cluster_servers)
                     l2_cluster_physical_graph = network.graph.subgraph(l2_cluster_routers)
-
-
-        print
+                    l2_cluster_eccentricities = nodes_by_eccentricity(l2_cluster_physical_graph)
+                    for server in l2_cluster_servers:
+                        attach_point = l2_cluster_eccentricities.pop()
+                        LOG.debug("Attaching %s to %s in %s" % (ank.label(server), 
+                            ank.label(attach_point), asn))
+                        network.add_link(server, attach_point)
 
 
 #TODO: set server type: root, authoritative (can be both if only one root)

@@ -67,19 +67,32 @@ def jsplot(network):
     ank_css_template = lookup.get_template("autonetkit/style_css.mako")
 #TODO: tidy these up with the embedded network in node name
 
-    node_list = []
-    edge_list = network.graph.edges(data=True)
-    edge_list = list( (src.id, dst.id, data) for (src, dst, data) in edge_list)
-    for node in network.graph.nodes():
-# Set label to be FQDN, so don't have multiple "Router A" nodes etc
-        data = { 'label': "%s %s" % (ank.fqdn(network, node), network.lo_ip(node).ip)}
-        node_list.append( (node.id, data))
+    node_list = ( (node.id, {'label': network.fqdn(node)}) for node in network.graph.nodes())
+    edge_list = list( (src.id, dst.id, {}) 
+            for (src, dst, data) in network.graph.edges(data=True))
+
 
     js_files = []
     timestamp = time.strftime("%Y/%m/%d %H:%M:%S", time.localtime())
 
     js_filename = os.path.join(jsplot_dir, "main.js")
     js_files.append("main.js")
+    with open( js_filename, 'w') as f_js:
+            f_js.write( js_template.render(
+                node_list = node_list,
+                edge_list = edge_list,
+                physical_graph = True,
+                ))
+
+    js_filename = os.path.join(jsplot_dir, "ip.js")
+    js_files.append("ip.js")
+    node_list = []
+    for node in network.graph.nodes():
+# Set label to be FQDN, so don't have multiple "Router A" nodes etc
+        data = { 'label': "%s %s" % (ank.fqdn(network, node), network.lo_ip(node).ip)}
+        node_list.append( (node.id, data))
+    edge_list = list( (src.id, dst.id, data) 
+            for (src, dst, data) in network.graph.edges(data=True))
     with open( js_filename, 'w') as f_js:
             f_js.write( js_template.render(
                 node_list = node_list,
@@ -142,7 +155,14 @@ def jsplot(network):
     with open( html_filename, 'w') as f_html:
             f_html.write( html_template.render( js_file = "main.js",
                 timestamp=timestamp,
-                title = "network",
+                title = "Physical Network",
+                css_filename = "./ank_style.css",))
+
+    html_filename = os.path.join(plot_dir, "ip.html")
+    with open( html_filename, 'w') as f_html:
+            f_html.write( html_template.render( js_file = "ip.js",
+                timestamp=timestamp,
+                title = "IP",
                 css_filename = "./ank_style.css",))
 
     html_filename = os.path.join(plot_dir, "ibgp.html")

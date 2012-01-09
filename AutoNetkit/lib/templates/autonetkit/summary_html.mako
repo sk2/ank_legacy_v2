@@ -12,7 +12,8 @@
 
 <h2>Plots</h2>
 <ul>
-  <li><a href="plot.html">Physical Graph</a></li>
+  <li><a href="plot.html">Physical Graph</a></li>     
+  <li><a href="ip.html">IP Graph</a></li>
   <li><a href="ibgp.html">iBGP Graph</a></li>
   <li><a href="ebgp.html">eBGP Graph</a></li>
   <li><a href="dns.html">DNS Graph</a></li>
