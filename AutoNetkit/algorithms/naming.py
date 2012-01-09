@@ -5,7 +5,50 @@ Naming
 __author__ = "\n".join(['Simon Knight'])
 #    Copyright (C) 2009-2011 by Simon Knight, Hung Nguyen
 
-__all__ = ['domain', 'fqdn', 'rtr_folder_name', 'hostname']
+__all__ = ['domain', 'fqdn', 'rtr_folder_name', 'hostname',
+        'netkit_interface_id', 'tap_interface_id',
+        'junos_int_id_em', 'junos_int_id_olive_patched',
+        'junos_int_id_olive', 'junos_int_id_junos',
+        'junos_logical_int_id_ge',
+        ]
+
+
+# interface naming
+def netkit_interface_id(numeric_id):
+    """Returns Netkit (Linux) format interface ID for an AutoNetkit interface ID"""
+    return 'eth%s' % numeric_id
+
+def tap_interface_id(network, node):
+    """ Returns the next free interface number for the tap interface"""
+    return network.get_edge_count(node)/2
+
+def junos_int_id_em(numeric_id):
+    """Returns Junos format interface ID for an AutoNetkit interface ID
+    eg em1"""
+# Junosphere uses em0 for external link
+    numeric_id += 1
+    return 'em%s' % numeric_id
+
+def junos_int_id_olive_patched(numeric_id):
+    return 'em%s' % numeric_id
+
+def junos_int_id_olive(numeric_id):
+    """remaps to em0, em1, em3, em4, em5"""
+    if numeric_id > 1:
+        numeric_id = numeric_id +1
+    return 'em%s' % numeric_id
+
+def junos_int_id_junos(numeric_id):
+    """Returns Junos format interface ID for an AutoNetkit interface ID
+    eg ge-0/0/1"""
+# Junosphere uses ge/0/0/0 for external link
+    numeric_id += 1
+    return 'ge-0/0/%s' % numeric_id
+
+def junos_logical_int_id_ge(int_id):
+    """ For routing protocols, refer to logical int id:
+    ge-0/0/1 becomes ge-0/0/1.0"""
+    return int_id + ".0"
 
 def domain(network, asn):
     """ Returns domain for a provided network and asn
@@ -72,3 +115,5 @@ def rtr_folder_name(network, node):
     while "__" in foldername:
         foldername = foldername.replace("__", "_")
     return foldername
+
+

@@ -81,15 +81,6 @@ def bind_dir(network, rtr):
     """Returns bind path for router rtr"""
     return os.path.join(etc_dir(network, rtr), "bind")
 
-def interface_id(numeric_id):
-    """Returns Netkit (Linux) format interface ID for an AutoNetkit interface ID"""
-    return 'eth%s' % numeric_id
-
-def tap_interface_id(network, node):
-    """ Returns the next free interface number for the tap interface"""
-    return network.get_edge_count(node)/2
-    
-
 
 class NetkitCompiler:
     """Compiler main"""
@@ -98,6 +89,8 @@ class NetkitCompiler:
         self.network = network
         self.services = services
         self.zebra_password = zebra_password
+        self.interface_id = ank.netkit_interface_id
+        self.tap_interface_id = ank.tap_interface_id
         # Speed improvement: grab eBGP and iBGP  graphs
         #TODO: fetch eBGP and iBGP graphs and cache them
 
@@ -225,7 +218,7 @@ class NetkitCompiler:
             # tap_int_id cannot conflict with already allocated interfaces
             # assume edges number sequentially, so next free int id is number of
             # edges
-            node_tap_id = tap_interface_id(self.network, node)
+            node_tap_id = self.tap_interface_id(self.network, node)
             tap_list_strings[rtr_folder_name] = (node_tap_id,
                                                  self.network[node].get('tap_ip'))
 
@@ -285,7 +278,7 @@ class NetkitCompiler:
 
             # Ethernet interfaces
             for src, dst, data in self.network.graph.edges(node, data=True):
-                int_id = interface_id(data['id'])
+                int_id = self.interface_id(data['id'])
                 subnet = data['sn']
                 
                 subnet = self.network.edge(src, dst).get('sn')

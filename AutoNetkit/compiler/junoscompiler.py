@@ -56,33 +56,6 @@ def router_conf_path(network, node):
     r_file = router_conf_file(network, node)
     return os.path.join(router_conf_dir(), r_file)
 
-def int_id_em(numeric_id):
-    """Returns Junos format interface ID for an AutoNetkit interface ID
-    eg em1"""
-# Junosphere uses em0 for external link
-    numeric_id += 1
-    return 'em%s' % numeric_id
-
-def int_id_olive_patched(numeric_id):
-    return 'em%s' % numeric_id
-
-def int_id_olive(numeric_id):
-    """remaps to em0, em1, em3, em4, em5"""
-    if numeric_id > 1:
-        numeric_id = numeric_id +1
-    return 'em%s' % numeric_id
-
-def int_id_junos(numeric_id):
-    """Returns Junos format interface ID for an AutoNetkit interface ID
-    eg ge-0/0/1"""
-# Junosphere uses ge/0/0/0 for external link
-    numeric_id += 1
-    return 'ge-0/0/%s' % numeric_id
-
-def logical_int_id_ge(int_id):
-    """ For routing protocols, refer to logical int id:
-    ge-0/0/1 becomes ge-0/0/1.0"""
-    return int_id + ".0"
 
 class JunosCompiler:
     """Compiler main"""
@@ -101,12 +74,12 @@ class JunosCompiler:
         self.junosphere = False
         if target in ['junosphere', 'junosphere_olive']:
             self.junosphere = True
-            self.int_id = int_id_junos
+            self.int_id = ank.junos_int_id_junos
             self.interface_limit = 32
         self.olive = False
         if target in ['olive', 'junosphere_olive']:
             self.olive = True
-            self.int_id = int_id_olive
+            self.int_id = ank.junos_int_id_olive
         self.olive_qemu_patched = olive_qemu_patched
 
         if self.olive:
@@ -114,7 +87,7 @@ class JunosCompiler:
         if self.olive_qemu_patched:
 # Patch allows 6 interfaces
             self.interface_limit = 6
-            self.int_id = int_id_olive_patched
+            self.int_id = ank.junos_int_id_olive_patched
 
     def initialise(self):
         """Creates lab folder structure"""
@@ -165,7 +138,7 @@ class JunosCompiler:
 
                 topology_data[hostname]['interfaces'].append({
                     'description': description,
-                    'id': int_id_em(data['id']),
+                    'id': self.int_id_em(data['id']),
                     'id_ge':  self.int_id(data['id']),
                     'bridge_id': bridge_id,
                     })
@@ -234,7 +207,7 @@ class JunosCompiler:
             # Only start IGP process if IGP links
             igp_interfaces.append({ 'id': 'lo0', 'passive': True})
             for src, dst, data in igp_graph.edges(node, data=True):
-                int_id = logical_int_id_ge(self.int_id(data['id']))
+                int_id = ank.junos_logical_int_id_ge(self.int_id(data['id']))
                 description = 'Interface %s -> %s' % (
                     ank.fqdn(self.network, src), 
                     ank.fqdn(self.network, dst))
@@ -248,7 +221,7 @@ class JunosCompiler:
             for src, dst in ebgp_graph.edges(node):
 # Get relevant edges from ebgp_graph, and edge data from physical graph
                 data = self.network.graph[src][dst]
-                int_id = logical_int_id_ge(self.int_id(data['id']))
+                int_id = ank.junos_logical_int_id_ge(self.int_id(data['id']))
                 description = 'Interface %s -> %s' % (
                     ank.fqdn(self.network, src), 
                     ank.fqdn(self.network, dst))
