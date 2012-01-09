@@ -229,6 +229,8 @@ def allocate_dns_servers(network):
                         network.add_link(server, attach_point)
 
 
+#TODO: authoritative might need to be a graph also
+
 #TODO: set server type: root, authoritative (can be both if only one root)
 #TODO: allow EDGES that server is authoritative for (and allow adding of eBGP edge)
 # TODO: handle different levels
@@ -239,15 +241,15 @@ def allocate_dns_servers(network):
         for server in as_l3_servers:
             dns_graph.node[server]['advertise_edges'] = advertise_edges
 
-
-
-    ank.debug_nodes(dns_graph)
-    ank.debug_nodes(network.graph)
+    #ank.debug_nodes(dns_graph)
 
     network.g_dns = dns_graph
 
 #TODO: also need to connect DNS servers into network, allocate IPs, etc
 
+def dns_advertise_link(network, src, dst):
+    pass
+# a
 
 def is_dns_server(network, node):
 # if has children is server
