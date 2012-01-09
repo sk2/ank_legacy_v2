@@ -544,7 +544,7 @@ class NetkitCompiler:
         ip_as_allocs = ank.get_ip_as_allocs(self.network)
 
         dns_servers = ank.dns_servers(self.network)
-        print "servers are", list(dns_servers)
+        print "servers are", ank.label(dns_servers)
 
 
         return

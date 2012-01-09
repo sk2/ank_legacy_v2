@@ -273,13 +273,14 @@ class Network(object):
 
     def label(self, node):
         """ syntactic sugar for accessing label of a node """
-        #return ('label' for n in nodes)
-        #return (self.graph.node[n]['label'] for n in nodes)
-        label = self.graph.node[node].get('label')
-        if label:
-            return label
-# no label set, return node name
-        return str(node.id)
+        if node in self.graph:
+            label = self.graph.node[node].get('label')
+            if label:
+                return label
+            return str(node.id)
+        else:
+            return [self.label(n) for n in node]
+
 
     def fqdn(self, node):
         """Shortcut to fqdn"""

@@ -58,6 +58,7 @@ import pprint
 import itertools
 import random
 
+
 import logging
 LOG = logging.getLogger("ANK")
 
@@ -85,9 +86,6 @@ def allocate_dns_servers(network):
     def get_l3_cluster(node):
         """syntactic sugar to access cluster"""
         return dns_graph.node[node].get("dns_l3_cluster")
-
-    def get_asn(node):
-        return network.asn(node)
 
     def level(u):
         return int(dns_graph.node[u]['level'])
@@ -198,8 +196,8 @@ def allocate_dns_servers(network):
     devices = dns_graph.nodes()
     devices = sorted(devices, key= get_l2_cluster)
     devices = sorted(devices, key= get_l3_cluster)
-    devices = sorted(devices, key= get_asn)
-    for asn, asn_devices in itertools.groupby(devices, key = get_asn):
+    devices = sorted(devices, key= ank.asn)
+    for asn, asn_devices in itertools.groupby(devices, key = ank.asn):
         continue
         if asn:
             # asn is set, look at l3 groups

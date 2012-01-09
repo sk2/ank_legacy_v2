@@ -11,7 +11,22 @@ LOG = logging.getLogger("ANK")
 __all__ = ['domain', 'fqdn', 'rtr_folder_name', 'hostname',
         'interface_id', 'tap_interface_id',
         'junos_logical_int_id_ge',
+        #move these to seperate module
+        'asn', 'label',
         ]
+
+
+
+#TODO: move these into a seperate module
+def asn(node):
+    return node.network.asn(node)
+
+def label(node):
+    try:
+        node.network.label(node)
+    except AttributeError:
+# see if list of nodes
+        return [n.network.label(n) for n in node]
 
 def interface_id(platform, olive_qemu_patched=False):
     """Returns appropriate naming function based on target
