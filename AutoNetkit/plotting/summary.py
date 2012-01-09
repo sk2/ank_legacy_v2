@@ -64,7 +64,9 @@ def summarydoc(network):
 
 # Network wide stats
     network_stats = {}
-    network_stats['node_count'] = network.graph.number_of_nodes()
+    network_stats['device_count'] = len(list(network.devices()))
+    network_stats['router_count'] = len(list(network.routers()))
+    network_stats['server_count'] = len(list(network.servers()))
     network_stats['edge_count'] = network.graph.number_of_edges()
     as_graphs = ank.get_as_graphs(network)
     network_stats['as_count'] = len(as_graphs)

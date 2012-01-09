@@ -21,7 +21,9 @@
 
 <h2>Network Statistics</h2>
 	<table>
-		<tr> <th>Total Routers:</th> <td>${network_stats['node_count']}</td> </tr>     
+		<tr> <th>Total Devices:</th> <td>${network_stats['device_count']}</td> </tr>     
+		<tr> <th>Total Routers:</th> <td>${network_stats['router_count']}</td> </tr>     
+		<tr> <th>Total Servers:</th> <td>${network_stats['server_count']}</td> </tr>     
 		<tr> <th>Total Links:</th> <td>${network_stats['edge_count']}</
 			td> </tr>       
 		<tr> <th>Autonomous Systems:</th> <td>${network_stats['as_count']}</td> </tr>                         

@@ -126,19 +126,23 @@ def allocate_dns_servers(network):
         l2_clusters = list(set(dns_graph.node[n].get("dns_l2_cluster") for n in my_as))
         for l2_cluster in l2_clusters:
             for index in range(servers_per_l2_cluster):
+                label = "%s_dns_%s" % (l2_cluster, index+1)
                 if l2_cluster == format_asn(asn):
 # Don't put asn into server name twice "AS2_asn_2_l2dns_1" vs "asn_2_l2dns_1"
                     server_name = "%s_l2dns_%s" % (l2_cluster, index+1)
                 else:
                     server_name = "AS%s_%s_l2dns_%s" % (asn, l2_cluster, index+1)
 #TODO: see what other properties to retain
-                node_name = network.add_device(server_name, asn=asn, device_type='server')
+                node_name = network.add_device(server_name, asn=asn, 
+                        device_type='server', label=label)
                 dns_graph.add_node(node_name, level=2, dns_l2_cluster=l2_cluster,
                         asn = asn, dns_l3_cluster = format_asn(asn))
 
         for index in range(servers_per_l3_cluster):
+                label = "%s_dns_%s" % (asn, index+1)
                 server_name = "AS%s_l3dns_%s" % (asn, index+1)
-                node_name = network.add_device(server_name, asn=asn, device_type='server')
+                node_name = network.add_device(server_name, asn=asn, 
+                        device_type='server', label=label)
 #TODO: check if need to add l2 here - was coded before, possible mistake?
                 dns_graph.add_node(node_name, level=3, 
                         asn = asn, dns_l3_cluster = format_asn(asn))
