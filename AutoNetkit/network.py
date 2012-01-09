@@ -11,6 +11,8 @@ import AutoNetkit as ank
 import cPickle as pickle
 from itertools import groupby
 from AutoNetkit import deprecated 
+from collections import namedtuple
+
 # NetworkX Modules
 import networkx as nx   
 pp = pprint.PrettyPrinter(indent=4)       
@@ -43,6 +45,10 @@ to pass through to the netx graph methods for quick access
 # TODO: abstract eBGP etc to be subgraph by property,
 # with eBGP just being split on the 'asn' property
 
+node_namedtuple = namedtuple('node', "id, network")
+link_namedtuple = namedtuple('link', "id, subnet, reject")
+
+
 class Network(object): 
     """ Main network containing router graph"""
 
@@ -68,6 +74,31 @@ class Network(object):
         for node, data in self.graph.nodes(data=True):
             if 'type' not in data: 
                 self.graph.node[node]['type'] = default_type
+
+    # store network reference in node
+
+#TODO: add add_device function, which auto relabels with network reference
+    def instantiate_nodes(self):
+        #mapping = dict( node_namedtuple(n, self) for n in self.graph)
+        mapping = dict( (n, node_namedtuple(n, self)) for n in self.graph)
+        nx.relabel_nodes(self.graph, mapping, copy=False)
+
+    def add_device(self, node_id, asn=None, device_type=None, **kwargs):
+        """ Adds a device to the physical graph"""
+#TODO: keep internal counter of number of nodes that should be present, and compare in verification step - ie if user has added their own, possible corruption
+        if not asn:
+            asn = 1
+#TODO: set this to debug once finished with
+            LOG.info("Setting default asn=1 for added device %s" % node_id)
+        if not device_type:
+            device_type = 1
+#TODO: set this to debug once finished with
+            LOG.info("Setting default device_type='router' for added device %s" % node_id)
+        node = node_namedtuple(node_id, self)
+        self.graph.add_node(node, asn=asn, device_type=device_type, **kwargs)
+        print "added device", self.graph.node[node]
+# Return name for reference
+        return node
 
     ################################################## 
     #### Initial Public API functions ###
@@ -176,8 +207,7 @@ class Network(object):
     def devices(self, asn=None):
         """return devices in a network"""
         if asn:
-            return (n for n,d in self.graph.nodes(data=True)
-                    if d.get("asn") == asn)
+            return (n for n in self.graph if self.asn(n) == asn)
         else:
 # return all nodes
             return self.graph.nodes_iter()
@@ -249,7 +279,7 @@ class Network(object):
         if label:
             return label
 # no label set, return node name
-        return str(node)
+        return str(node.id)
 
     def fqdn(self, node):
         """Shortcut to fqdn"""
@@ -272,5 +302,11 @@ class Network(object):
 
     def link_subnet(self, src, dst):
         return self.graph[src][dst].get("ip")
+
+    def link(e):
+        """ Returns a named-tuple for accessing link properties"""
+
+        
+
 
 

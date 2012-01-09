@@ -13,6 +13,7 @@ __author__ = """\n""".join(['Simon Knight (simon.knight@adelaide.edu.au)',
 import os
 
 import AutoNetkit as ank
+import networkx as nx
 import time
 import pprint
 from AutoNetkit import network
@@ -144,6 +145,7 @@ class Internet:
             LOG.warn("AutoNetkit does not support file format %s" % ext)
 
         #TODO: check that loaded network has at least one node, if not throw exception
+        self.network.instantiate_nodes()
     
     def plot(self): 
         """Plot the network topology
@@ -174,6 +176,10 @@ class Internet:
             pickle_dir = config.pickle_dir
             filename = os.path.join(pickle_dir, filename)
         output = gzip.GzipFile(filename, 'wb')
+# workaround for pickle unable to store named-tuples
+        mapping = dict( (n, n.id) for n in self.network.graph)
+        nx.relabel_nodes(self.network.graph, mapping, copy=False)
+
         pickle.dump(self.network.graph, output, -1)
 
     def restore(self, filename=None):
@@ -189,6 +195,8 @@ class Internet:
         LOG.info("Restoring network")
         file = gzip.GzipFile(filename, 'rb')
         self.network.graph = pickle.load(file)
+# workaround for pickle, re-instantiate
+        self.network.instantiate_nodes()
     
     def optimise(self):   
         """Optimise each AS within the network.

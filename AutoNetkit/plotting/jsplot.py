@@ -65,13 +65,15 @@ def jsplot(network):
     css_template = lookup.get_template("arborjs/style_css.mako")
     html_template = lookup.get_template("arborjs/index_html.mako")
     ank_css_template = lookup.get_template("autonetkit/style_css.mako")
+#TODO: tidy these up with the embedded network in node name
 
     node_list = []
     edge_list = network.graph.edges(data=True)
+    edge_list = list( (src.id, dst.id, data) for (src, dst, data) in edge_list)
     for node in network.graph.nodes():
 # Set label to be FQDN, so don't have multiple "Router A" nodes etc
         data = { 'label': "%s %s" % (ank.fqdn(network, node), network.lo_ip(node).ip)}
-        node_list.append( (node, data))
+        node_list.append( (node.id, data))
 
     js_files = []
     timestamp = time.strftime("%Y/%m/%d %H:%M:%S", time.localtime())
@@ -88,7 +90,7 @@ def jsplot(network):
     #TODO: work out how to do multiple on one page
     ebgp_graph = ank.get_ebgp_graph(network)
     labels = dict( (n, network.label(n)) for n in ebgp_graph)
-    ebgp_graph = nx.relabel_nodes(ebgp_graph, labels)
+    nx.relabel_nodes(ebgp_graph, labels, copy=False)
     ebgp_filename = os.path.join(jsplot_dir, "ebgp.js")
     js_files.append("ebgp.js")
     with open( ebgp_filename, 'w') as f_js:
@@ -100,7 +102,7 @@ def jsplot(network):
 
     ibgp_graph = ank.get_ibgp_graph(network)
     labels = dict( (n, network.label(n)) for n in ibgp_graph)
-    ibgp_graph = nx.relabel_nodes(ibgp_graph, labels)
+    nx.relabel_nodes(ibgp_graph, labels, copy=False)
     ibgp_filename = os.path.join(jsplot_dir, "ibgp.js")
     js_files.append("ibgp.js")
     with open( ibgp_filename, 'w') as f_js:
@@ -121,13 +123,15 @@ def jsplot(network):
         except KeyError:
             label = node
         data = { 'label': "%s (%s)" % (label, dns_graph.node[node].get("level"))}
-        node_list.append( (node, data))
+        node_list.append( (node.id, data))
     dns_filename = os.path.join(jsplot_dir, "dns.js")
+    edge_list = dns_graph.edges(data=True)
+    edge_list = list( (src.id, dst.id, data) for (src, dst, data) in edge_list)
     js_files.append("dns.js")
     with open( dns_filename, 'w') as f_js:
             f_js.write( js_template.render(
                 node_list = node_list,
-                edge_list = dns_graph.edges(data=True),
+                edge_list = edge_list,
                 physical_graph = True,
                 ))
 

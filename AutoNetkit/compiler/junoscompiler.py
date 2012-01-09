@@ -339,7 +339,6 @@ class JunosCompiler:
 
         #TODO: correct this router type selector
         for router in self.network.routers():
-            
             #check interfaces feasible
             if self.network.graph.in_degree(router) > self.interface_limit:
                 LOG.warn("%s exceeds interface count: %s (max %s)" % (self.network.label(router),

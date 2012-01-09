@@ -87,10 +87,6 @@ def allocate_dns_servers(network):
         return dns_graph.node[node].get("dns_l3_cluster")
 
     def get_asn(node):
-        if level(node) > 1:
-# server, has asn stored
-            return dns_graph.node[node].get("asn")
-# l1 client, asn in physical graph
         return network.asn(node)
 
     def level(u):
@@ -132,7 +128,9 @@ def allocate_dns_servers(network):
                 else:
                     server_name = "AS%s_%s_l2dns_%s" % (asn, l2_cluster, index+1)
 
-                dns_graph.add_node(server_name, level=2, dns_l2_cluster=l2_cluster,
+#TODO: see what other properties to retain
+                node_name = network.add_device(server_name, asn=asn, device_type='server')
+                dns_graph.add_node(node_name, level=2, dns_l2_cluster=l2_cluster,
                         asn = asn, dns_l3_cluster = format_asn(asn))
 # add to physical graph
 
@@ -153,13 +151,18 @@ def allocate_dns_servers(network):
         """
         for index in range(servers_per_l3_cluster):
                 server_name = "AS%s_l3dns_%s" % (asn, index+1)
-                dns_graph.add_node(server_name, level=3, 
+                node_name = network.add_device(server_name, asn=asn, device_type='server')
+#TODO: check if need to add l2 here - was coded before, possible mistake?
+                dns_graph.add_node(node_name, level=3, 
                         asn = asn, dns_l3_cluster = format_asn(asn))
     
     # and level 4 connections
+#TODO: need to determine the right place to put the server - order issue between allocating for root as need an ASN for the device before  know best place - for now use asn = 1, and move if needed
     for index in range(servers_per_l4_cluster):
             server_name = "root_dns_%s" % (index+1)
-            dns_graph.add_node(server_name, level=4)
+            default_asn = 1
+            node_name = network.add_device(server_name, asn=default_asn, device_type='server')
+            dns_graph.add_node(node_name, level=4)
         
     # now connect
 #TODO: scale to handle multiple levels same as ibgp (see doco at start for details)
@@ -197,6 +200,7 @@ def allocate_dns_servers(network):
     devices = sorted(devices, key= get_l3_cluster)
     devices = sorted(devices, key= get_asn)
     for asn, asn_devices in itertools.groupby(devices, key = get_asn):
+        continue
         if asn:
             # asn is set, look at l3 groups
             for l3_cluster, l3_cluster_devices in itertools.groupby(asn_devices, key = get_l3_cluster):
@@ -225,6 +229,10 @@ def allocate_dns_servers(network):
             #TODO: could list if any not having ASN set? compare list lengths?
 
         print
+
+
+#TODO: set server type: root, authoritative (can be both if only one root)
+#TODO: allow EDGES that server is authoritative for (and allow adding of eBGP edge)
 
 
     network.g_dns = dns_graph
