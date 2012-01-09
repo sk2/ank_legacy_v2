@@ -96,7 +96,6 @@ class Network(object):
             LOG.info("Setting default device_type='router' for added device %s" % node_id)
         node = node_namedtuple(node_id, self)
         self.graph.add_node(node, asn=asn, device_type=device_type, **kwargs)
-        print "added device", self.graph.node[node]
 # Return name for reference
         return node
 
@@ -304,10 +303,16 @@ class Network(object):
     def link_subnet(self, src, dst):
         return self.graph[src][dst].get("ip")
 
-    def link(e):
+    def link(self, e):
         """ Returns a named-tuple for accessing link properties"""
+        pass
 
-        
+    def add_link(self, src, dst):
+        self.graph.add_edge(src, dst)
+        self.graph.add_edge(dst, src)
 
+    def link_count(self, node):
+        # TODO: check in_degree == out_degree if not then WARN
+        return self.graph.in_degree(node)
 
 

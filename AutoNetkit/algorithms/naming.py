@@ -23,7 +23,7 @@ def asn(node):
 
 def label(node):
     try:
-        node.network.label(node)
+        return node.network.label(node)
     except AttributeError:
 # see if list of nodes
         return [n.network.label(n) for n in node]
