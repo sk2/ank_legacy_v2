@@ -156,8 +156,6 @@ class Network(object):
             if prop not in data:
                 self.graph.node[node][prop] = value
 
-    def get_node_property(self, node, prop):
-        return self.graph.node[node][prop]
 
     @deprecated
     def set_default_edge_property(self, prop, value):
@@ -168,33 +166,34 @@ class Network(object):
                 self.graph[src][dst][prop] = value
 
     @deprecated
-    def set_edge_property(self, src, dest, prop, value):
+    def set_edge_property(self, src, dst, prop, value):
         self.graph[src][dst][prop] = value
-
-    @deprecated
-    def get_edge_property(self, src, dst, prop):
-        return self.graph[src][dst][prop]
 
     @deprecated
     def get_subgraph(self, nodes):
         return self.graph.subgraph(nodes)
 
-    @deprecated
-    def central_node(self, graph):  
-        """returns first item (if multiple) central node for a given network."""
-        if graph.number_of_nodes() is 1:
-            # only one node in network, so this is the centre
-            return graph.nodes()[0]
-
-        if nx.is_strongly_connected(graph):   
-            return nx.center(graph)[0]
+    def devices(self, asn=None):
+        """return devices in a network"""
+        if asn:
+            return (n for n,d in self.graph.nodes(data=True)
+                    if d.get("asn") == asn)
         else:
-            #TODO: break into connected components and find centre of largest of
-            # these
-            LOG.warn(("Error finding central node: "
-                      "graph {0} is not fully connected").format(graph.name) )
-            # Return a "random" node
-            return graph.nodes()[0]
+# return all nodes
+            return self.graph.nodes_iter()
+
+
+    def device_type(self, node):
+        return self.graph.node[node].get("device_type")
+
+    def routers(self, asn=None):
+        """return routers in network"""
+        return (n for n in self.devices(asn) if self.device_type(n) == 'router')
+
+    def servers(self, asn=None):
+        """return servers in network"""
+        return (n for n in self.devices(asn) if self.device_type(n) == 'server')
+
 
     ################################################## 
     #TODO: move these into a nodes shortcut module
@@ -257,6 +256,21 @@ class Network(object):
         return ank.fqdn(self, node)
 
 
+# edge accessors
+
+
     # For dealing with BGP Sessions graphs
 #TODO: expand this to work with arbitrary graphs
+    def link_weight(self, src, dst):
+        return self.graph[src][dst].get("weight")
+
+    def interface_number(self, src, dst):
+        return self.graph[src][dst].get("id")
+
+    def int_ip(self, src, dst):
+        return self.graph[src][dst].get("ip")
+
+    def link_subnet(self, src, dst):
+        return self.graph[src][dst].get("ip")
+
 

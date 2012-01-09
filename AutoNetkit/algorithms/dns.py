@@ -227,7 +227,6 @@ def dns_allocate_v2(network):
         #TODO: wrap this in a function
         server_label = "%s_dns_%s" % (l2_cluster, index+1)
         network.graph.add_node(server_name, label=server_label, 
-                platform = "NETKIT",
                 type = 'dns_server',
                 pop=network.pop(node), asn=asn)
         network.graph.add_edge(server_name, node)

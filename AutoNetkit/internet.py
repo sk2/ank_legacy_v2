@@ -143,9 +143,6 @@ class Internet:
         else:
             LOG.warn("AutoNetkit does not support file format %s" % ext)
 
-#TODO: remove this legacy requirement
-        self.network.set_default_node_property('platform', "NETKIT")
-
         #TODO: check that loaded network has at least one node, if not throw exception
     
     def plot(self): 

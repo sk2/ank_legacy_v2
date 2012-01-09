@@ -25,6 +25,7 @@ def load_graphml(net_file, default_asn = 1):
     """
     Loads a network from Graphml into AutoNetkit.
     """
+    default_device_type = 'router'
     path, filename = os.path.split(net_file)
     net_name = os.path.splitext(filename)[0]
     # get full path
@@ -57,11 +58,16 @@ def load_graphml(net_file, default_asn = 1):
     mapping = dict( (n, letters.next()) for n in empty_label_nodes)
     input_graph = nx.relabel_nodes(input_graph, mapping)
    
-
     # set label if unset
     for node, data in input_graph.nodes(data=True):
         if 'label' not in data:
             input_graph.node[node]['label'] = node
+        if 'device_type' not in data:
+            input_graph.node[node]['device_type'] = default_device_type 
+            LOG.debug("Setting device_type for %s to %s" % ( 
+                input_graph.node[node]['label'], default_device_type) )
+
+
 
     # check each node has an ASN allocated
     for node, data in input_graph.nodes_iter(data=True):

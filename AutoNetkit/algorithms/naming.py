@@ -3,7 +3,10 @@
 Naming
 """
 __author__ = "\n".join(['Simon Knight'])
-#    Copyright (C) 2009-2011 by Simon Knight, Hung Nguyen
+#    Copyright (C) 2009-2012 by Simon Knight, Hung Nguyen
+
+import logging
+LOG = logging.getLogger("ANK")
 
 __all__ = ['domain', 'fqdn', 'rtr_folder_name', 'hostname',
         'interface_id', 'tap_interface_id',
@@ -23,6 +26,9 @@ def interface_id(platform, olive_qemu_patched=False):
         if olive_qemu_patched:
             return junos_int_id_olive
         return junos_int_id_olive_patched
+
+    LOG.warn("Unable to map interface id for platform %s" % platform)
+#TODO: throw exception
 
 # interface naming
 def netkit_interface_id(numeric_id):

@@ -59,7 +59,6 @@ def shared_dir():
 # Refer http://wiki.netkit.org/man/man1/lstart.1.html#lbAE
     return os.path.join(lab_dir(), "shared")
 
-
 def shared_etc_dir():
     return os.path.join(shared_dir(), "etc")
 
@@ -205,7 +204,7 @@ class NetkitCompiler:
         #pprint.pprint(list(self.network.q()))
         #pprint.pprint(self.network.groupby('asn'))
 
-        for node in self.network.q(platform="NETKIT"):
+        for node in self.network.devices():
             #TODO: see if rtr label is still needed, if so replace with
             # appropriate naming module function
             rtr_folder_name = ank.rtr_folder_name(self.network, node)
@@ -320,7 +319,6 @@ class NetkitCompiler:
         LOG.debug("Configuring IGP")
         template = lookup.get_template("quagga/ospf.mako")
         self.network.set_default_edge_property('weight', 1)
-        netkit_routers = list(self.network.q(platform="NETKIT"))
 
         # configures IGP for each AS
         as_graphs = ank.get_as_graphs(self.network)
@@ -331,11 +329,11 @@ class NetkitCompiler:
                 continue
 
             for node in my_as:
-                label = self.network.get_node_property(node, 'label')
+                label = self.network.label(node)
 
                 # Note use the AS, not the network graph for edges,
                 # as only concerned with intra-AS edges for IGP
-                LOG.debug("Configuring IGP for {0}".format(label))
+                LOG.debug("Configuring IGP for %s" % label)
 
                 interface_list = []
                 network_list = []
@@ -348,30 +346,25 @@ class NetkitCompiler:
                 network_list.append ( { 'cidr': lo_ip.cidr, 'ip': lo_ip.ip,
                                     'netmask': lo_ip.netmask,
                                     'area': 0, 'remote_ip': "Loopback" })
-                for src, dst in my_as.edges(node):
+                for src, dst, data in my_as.edges(node, data=True):
 
-                    int_id = self.network.get_edge_property(src, dst, 'id')
-                    weight = self.network.get_edge_property(src, dst, 'weight')
-                    interface_list.append ({ 'id':  'eth{0}'.format(int_id),
+                    int_id = self.interface_id(data['id'])
+                    weight = self.network.link_weight(src, dst)
+                    interface_list.append ({ 'id':  int_id,
                                             'weight': weight,
                                             'remote_router': dst, } )
 
                     # fetch and format the ip details
-                    subnet = self.network.get_edge_property(src, dst, 'sn')
-                    local_ip = self.network.get_edge_property(src, dst, 'ip')
-                    remote_ip = self.network.get_edge_property(dst, src, 'ip')
+                    subnet = data['sn']
+                    local_ip = data['ip']
+                    remote_ip = self.network.int_ip(dst, src)
                     network_list.append ( { 'cidr': subnet.cidr, 'ip': local_ip,
                                         'netmask': subnet.netmask,
                                         'remote_ip': remote_ip, 'area': 0, } )
 
                 #TODO: see if need to use router-id for ospfd in quagga
-                if node in netkit_routers:
-                    f_handle = open( os.path.join(zebra_dir(self.network, node),
+                f_handle = open( os.path.join(zebra_dir(self.network, node),
                         "ospfd.conf"), 'w')
-                else:
-                    LOG.warn("looking at node {0}".format(my_as[node]))
-                    LOG.warn("IGP not supported for device \
-                        type {0}".format(my_as.node[node]["platform"]) )
 
                 f_handle.write(template.render
                                (
@@ -395,8 +388,6 @@ class NetkitCompiler:
         template = lookup.get_template("quagga/bgp.mako")
 
         route_maps = {}
-        access_list = []
-        communities_dict = {}
 
         ibgp_graph = ank.get_ibgp_graph(self.network)
         ebgp_graph = ank.get_ebgp_graph(self.network)
@@ -549,6 +540,7 @@ class NetkitCompiler:
     def configure_dns(self):
         """Generates BIND configuration files for DNS"""
         pprint.pprint(self.network.graph.edges(data=True))
+        pprint.pprint(self.network.graph.nodes(data=True))
         ip_as_allocs = ank.get_ip_as_allocs(self.network)
 
         resolve_template = lookup.get_template("linux/resolv.mako")

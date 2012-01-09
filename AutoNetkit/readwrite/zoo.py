@@ -186,7 +186,15 @@ def load_zoo(network, net_file):
         network.graph.add_edges_from(add_edge_list)
     #TODO: make this only apply to graph nodes for newly added graph not
     #globally to whole network
-    network.set_default_node_property('platform', "NETKIT")
+
+    for node, data in network.graph.nodes(data=True):
+        if 'label' not in data:
+            input_graph.node[node]['label'] = node
+        if 'device_type' not in data:
+            default_device_type = 'router'
+            input_graph.node[node]['device_type'] = default_device_type 
+            LOG.debug("Setting device_type for %s to %s" % ( 
+                input_graph.node[node]['label'], default_device_type) )
 
 
 def graph_to_ank(network, graph, asn=None, include_ext_nodes=True):
