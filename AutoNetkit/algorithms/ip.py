@@ -36,10 +36,6 @@ def allocate_subnets(network, address_block=IPNetwork("10.0.0.0/8")):
     """
     LOG.debug("Allocating subnets")
     # Initialise IP list to be graph edge format
-    #ip_list =  nx.to_dict_of_dicts(graph,
-    #     edge_data={'sn': None, 'ip': None})
-    # the above does wacky things with references
-    #TODO work out why!
     ip_as_allocs = {}
 
     # allocates subnets to the edges and loopback in network graph
@@ -105,6 +101,9 @@ def allocate_subnets(network, address_block=IPNetwork("10.0.0.0/8")):
 
                 #TODO: fix the technique for accessing edges
                 # as it breaks with multigraphs, as it creates a new edge
+                if network.asn(dst) != asn:
+# eBGP link where dst has IP allocated from subnet of this AS
+                    network.graph[dst][src]['remote_as_sn_block'] = True
 
                 network.graph[src][dst]['sn'] = subnet
                 network.graph[dst][src]['sn'] = subnet

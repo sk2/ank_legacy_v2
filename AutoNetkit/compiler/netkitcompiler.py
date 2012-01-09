@@ -555,6 +555,7 @@ class NetkitCompiler:
 
     def configure_dns(self):
         """Generates BIND configuration files for DNS"""
+        pprint.pprint(self.network.graph.edges(data=True))
         ip_as_allocs = ank.get_ip_as_allocs(self.network)
 
         resolve_template = lookup.get_template("linux/resolv.mako")
@@ -646,6 +647,8 @@ class NetkitCompiler:
                     # skip links not belonging to this AS's subnet, eBGP links
                     if ip_addr in subnet:
                         #TODO: use a function for this
+#TODO: use the platform passed into DNS, eg junosphere/olive/netkit and map the interface fn appropriately (like in junos compiler)
+#TODO: this requires making the interface functions part of ank. ratehr than inside each compiler...
                         int_id = "eth{0}".format(int_id)
                         reverse = ank.reverse_subnet(ip_addr, subnet.prefixlen)
                         for_entry_list.append( {'int_id': int_id,
@@ -736,6 +739,7 @@ class NetkitCompiler:
 
             #TODO: fix reverse dns
             # Sort the list based on the reverse IP
+#TODO: can use item getter?
             rev_entry_list.sort(key=lambda x: (x['reverse']))
             f_reverse.write(reverse_template.render(
                 subnet = subnet,
