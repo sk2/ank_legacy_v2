@@ -539,8 +539,8 @@ class NetkitCompiler:
 
     def configure_dns(self):
         """Generates BIND configuration files for DNS"""
-        pprint.pprint(self.network.graph.edges(data=True))
-        pprint.pprint(self.network.graph.nodes(data=True))
+        #pprint.pprint(self.network.graph.edges(data=True))
+        #pprint.pprint(self.network.graph.nodes(data=True))
         ip_as_allocs = ank.get_ip_as_allocs(self.network)
 
         dns_servers = ank.dns_servers(self.network)

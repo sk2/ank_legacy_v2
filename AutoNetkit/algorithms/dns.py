@@ -82,6 +82,17 @@ def allocate_dns_servers(network):
         """syntactic sugar to access cluster"""
         return dns_graph.node[node].get("dns_l2_cluster")
 
+    def get_l3_cluster(node):
+        """syntactic sugar to access cluster"""
+        return dns_graph.node[node].get("dns_l3_cluster")
+
+    def get_asn(node):
+        if level(node) > 1:
+# server, has asn stored
+            return dns_graph.node[node].get("asn")
+# l1 client, asn in physical graph
+        return network.asn(node)
+
     def level(u):
         return int(dns_graph.node[u]['level'])
 
@@ -114,9 +125,15 @@ def allocate_dns_servers(network):
         l2_clusters = list(set(dns_graph.node[n].get("dns_l2_cluster") for n in my_as))
         for l2_cluster in l2_clusters:
             for index in range(servers_per_l2_cluster):
-                server_name = "AS%s_%s_l2dns_%s" % (asn, l2_cluster, index+1)
+# neater server names
+                if l2_cluster == format_asn(asn):
+# Don't put asn into server name twice "AS2_asn_2_l2dns_1" vs "asn_2_l2dns_1"
+                    server_name = "%s_l2dns_%s" % (l2_cluster, index+1)
+                else:
+                    server_name = "AS%s_%s_l2dns_%s" % (asn, l2_cluster, index+1)
+
                 dns_graph.add_node(server_name, level=2, dns_l2_cluster=l2_cluster,
-                        dns_l3_cluster = format_asn(asn))
+                        asn = asn, dns_l3_cluster = format_asn(asn))
 # add to physical graph
 
         """
@@ -137,7 +154,7 @@ def allocate_dns_servers(network):
         for index in range(servers_per_l3_cluster):
                 server_name = "AS%s_l3dns_%s" % (asn, index+1)
                 dns_graph.add_node(server_name, level=3, 
-                        dns_l3_cluster = format_asn(asn))
+                        asn = asn, dns_l3_cluster = format_asn(asn))
     
     # and level 4 connections
     for index in range(servers_per_l4_cluster):
@@ -149,11 +166,10 @@ def allocate_dns_servers(network):
     edges_to_add = []
     all_edges = [ (s,t) for s in dns_graph for t in dns_graph if s != t]
     same_l3_cluster_edges = [ (s,t) for (s,t) in all_edges if 
-                    dns_graph.node[s].get('dns_l3_cluster') == dns_graph.node[t].get('dns_l3_cluster') != None]
+                    get_l3_cluster(s) == get_l3_cluster(t) != None]
     same_l2_cluster_edges = [ (s,t) for (s,t) in same_l3_cluster_edges if 
-                    dns_graph.node[s].get('dns_l2_cluster') == dns_graph.node[t].get('dns_l2_cluster') != None]
+                    get_l2_cluster(s) == get_l2_cluster(t) != None]
     
-
 # l1 -> l2 same l2 cluster
     edges_to_add += [(s,t, 'up') for (s,t) in same_l2_cluster_edges
             if level(s) == 1 and level(t) == 2]
@@ -170,6 +186,47 @@ def allocate_dns_servers(network):
     # format into networkx format
     edges_to_add = ( (s,t, {'dns_dir': dns_dir}) for (s, t, dns_dir) in edges_to_add)
     dns_graph.add_edges_from(edges_to_add)
+
+# and create attach points
+# take advantage of Python sorts being stable
+# refer http://wiki.python.org/moin/HowTo/Sorting
+#TODO: note assumes routers are level 1 - need to also check type is router!
+    routers = set(network.routers())
+    devices = dns_graph.nodes_iter()
+    devices = sorted(devices, key= get_l2_cluster)
+    devices = sorted(devices, key= get_l3_cluster)
+    devices = sorted(devices, key= get_asn)
+    for asn, asn_devices in itertools.groupby(devices, key = get_asn):
+        if asn:
+            # asn is set, look at l3 groups
+            for l3_cluster, l3_cluster_devices in itertools.groupby(asn_devices, key = get_l3_cluster):
+                print "l3 cluster", l3_cluster
+                l3_cluster_devices = set(l3_cluster_devices)
+                l3_cluster_servers = set(n for n in l3_cluster_devices if level(n) == 3)
+                l3_cluster_routers = set(n for n in l3_cluster_devices if n in routers)
+                print "routers", ",".join(network.label(n) for n in l3_cluster_routers)
+                print "servers", l3_cluster, l3_cluster_servers
+                l1l2_devices = l3_cluster_devices - set(l3_cluster_servers)
+                for l2_cluster, l2_cluster_devices in itertools.groupby(l1l2_devices, key = get_l2_cluster):
+                    print "l2 cluster|", l2_cluster, "|"
+                    l2_cluster_devices = set(l2_cluster_devices)
+                    l2_cluster_servers = set(n for n in l2_cluster_devices if level(n) == 2)
+                    l2_cluster_routers = set(n for n in l2_cluster_devices if level(n) == 1 and n in routers)
+                    print "routers", ",".join(network.label(n) for n in l2_cluster_routers)
+                    print "servers", l2_cluster, list(l2_cluster_servers)
+
+        else:
+            # No asn set, operate on level 4 servers
+            root_servers = (n for n in asn_devices if level(n) == 4)
+            print "root servers", list(root_servers)
+            #TODO: could list if any not having ASN set? compare list lengths?
+
+        print
+
+    for node, data in dns_graph.nodes(data=True):
+        if node in network.graph:
+            print network.label(node), data
+
 
     network.g_dns = dns_graph
 
