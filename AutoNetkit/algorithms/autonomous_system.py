@@ -57,7 +57,7 @@ def get_as_graphs(network):
             as_graph = nx.DiGraph(network.graph.subgraph(nodes))
         else:
             as_graph = nx.Graph(network.graph.subgraph(nodes))
-        as_graph.name = int(asn)
+        as_graph.name = as_graph.asn = int(asn)
         as_graphs.append(as_graph)
     return as_graphs
 

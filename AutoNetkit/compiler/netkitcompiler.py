@@ -332,7 +332,7 @@ class NetkitCompiler:
         # configures IGP for each AS
         as_graphs = ank.get_as_graphs(self.network)
         for my_as in as_graphs:
-            LOG.debug("Configuring IGP for AS {0}".format(my_as.name))
+            LOG.debug("Configuring IGP for AS {0}".format(my_as.asn))
             if my_as.number_of_edges() == 0:
                 # No edges, nothing to configure
                 continue
@@ -410,7 +410,7 @@ class NetkitCompiler:
         physical_graph = self.network.graph
 
         for my_as in ank.get_as_graphs(self.network):
-            LOG.debug("Configuring BGP for AS {0}".format(my_as.name))
+            LOG.debug("Configuring BGP for AS {0}".format(my_as.asn))
             # get nodes ie intersection
             #H = nx.intersection(my_as, ibgp_graph)
             # get ibgp graph that contains only nodes from this AS
@@ -586,7 +586,7 @@ class NetkitCompiler:
         root_dns_server_domain = None
 
         for my_as in ank.get_as_graphs(self.network):
-            asn = my_as.name
+            asn = my_as.asn
             subnet = ip_as_allocs[asn]
             domain = ank.domain(self.network, asn)
 

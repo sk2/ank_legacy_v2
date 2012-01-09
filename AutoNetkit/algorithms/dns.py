@@ -55,6 +55,7 @@ import networkx as nx
 from netaddr import IPAddress, IPNetwork
 import pprint
 import itertools
+import random
 
 import logging
 LOG = logging.getLogger("ANK")
@@ -124,7 +125,7 @@ def allocate_dns_servers(network):
         network.graph.node[local_dns]['local_dns'] = True
 # end legacy
 # Mark all other nodes in AS to point to this central node
-        LOG.debug("DNS server(s) for AS %s are %s" % (my_as.name, 
+        LOG.debug("DNS server(s) for AS %s are %s" % (my_as.asn, 
             ", ".join(network.label(s) for s in local_dns_servers)))
         all_dns_servers.update(local_dns_servers)
 
@@ -197,7 +198,7 @@ def dns_allocate_v2(network):
 
 
     for my_as in ank.get_as_graphs(network):
-        asn = my_as.name
+        asn = my_as.asn
         if not nx.is_strongly_connected(my_as):
             LOG.info("AS%s not fully connected, skipping DNS configuration" % asn)
             continue
