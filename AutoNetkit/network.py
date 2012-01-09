@@ -280,14 +280,9 @@ class Network(object):
         else:
             return [self.label(n) for n in node]
 
-
     def fqdn(self, node):
         """Shortcut to fqdn"""
         return ank.fqdn(self, node)
-
-
-# edge accessors
-
 
     # For dealing with BGP Sessions graphs
 #TODO: expand this to work with arbitrary graphs
@@ -312,7 +307,7 @@ class Network(object):
         self.graph.add_edge(dst, src)
 
     def link_count(self, node):
-        # TODO: check in_degree == out_degree if not then WARN
+        # TODO: check in_degree == out_degree if not then WARN - or put into consistency check function
         return self.graph.in_degree(node)
 
 

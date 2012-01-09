@@ -13,8 +13,20 @@ __all__ = ['domain', 'fqdn', 'rtr_folder_name', 'hostname',
         'junos_logical_int_id_ge',
         #move these to seperate module
         'asn', 'label',
+        'debug_nodes', 'debug_edges',
         ]
 
+
+def debug_nodes(graph):
+    import pprint
+    debug_data = dict( (node.network.fqdn(node), data) for node, data in graph.nodes(data=True))
+    pprint.pprint(debug_data)
+
+def debug_edges(graph):
+    import pprint
+    debug_data = dict( (src.network.fqdn(src), dst.network.fqdn(dst), data) 
+            for src, dst, data in graph.edges(data=True))
+    pprint.pprint(debug_data)
 
 
 #TODO: move these into a seperate module
