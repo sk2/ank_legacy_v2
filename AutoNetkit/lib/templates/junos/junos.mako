@@ -192,7 +192,7 @@ policy-options {
 		        % elif action_clause.action == "setLP":
 		        local-preference ${action_clause.value};   
 		        % elif action_clause.action == "setMED":
-		        metric-out ${action_clause.value};   
+		        metric ${action_clause.value};   
 		        % elif action_clause.action == "setNextHop":
 		        next-hop ${action_clause.value};  
 		        % elif action_clause.action == "removeTag":
