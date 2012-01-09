@@ -192,7 +192,7 @@ def allocate_dns_servers(network):
 # refer http://wiki.python.org/moin/HowTo/Sorting
 #TODO: note assumes routers are level 1 - need to also check type is router!
     routers = set(network.routers())
-    devices = dns_graph.nodes_iter()
+    devices = dns_graph.nodes()
     devices = sorted(devices, key= get_l2_cluster)
     devices = sorted(devices, key= get_l3_cluster)
     devices = sorted(devices, key= get_asn)
@@ -204,16 +204,19 @@ def allocate_dns_servers(network):
                 l3_cluster_devices = set(l3_cluster_devices)
                 l3_cluster_servers = set(n for n in l3_cluster_devices if level(n) == 3)
                 l3_cluster_routers = set(n for n in l3_cluster_devices if n in routers)
-                print "routers", ",".join(network.label(n) for n in l3_cluster_routers)
-                print "servers", l3_cluster, l3_cluster_servers
+                l3_cluster_physical_graph = network.graph.subgraph(l3_cluster_routers)
+
                 l1l2_devices = l3_cluster_devices - set(l3_cluster_servers)
+# resort after set operations for groupby to work correctly
+                l1l2_devices = sorted(l1l2_devices, key= get_l2_cluster)
                 for l2_cluster, l2_cluster_devices in itertools.groupby(l1l2_devices, key = get_l2_cluster):
-                    print "l2 cluster|", l2_cluster, "|"
+                    print "l2 cluster", l2_cluster
                     l2_cluster_devices = set(l2_cluster_devices)
                     l2_cluster_servers = set(n for n in l2_cluster_devices if level(n) == 2)
                     l2_cluster_routers = set(n for n in l2_cluster_devices if level(n) == 1 and n in routers)
                     print "routers", ",".join(network.label(n) for n in l2_cluster_routers)
                     print "servers", l2_cluster, list(l2_cluster_servers)
+                    l2_cluster_physical_graph = network.graph.subgraph(l2_cluster_routers)
 
         else:
             # No asn set, operate on level 4 servers
@@ -222,10 +225,6 @@ def allocate_dns_servers(network):
             #TODO: could list if any not having ASN set? compare list lengths?
 
         print
-
-    for node, data in dns_graph.nodes(data=True):
-        if node in network.graph:
-            print network.label(node), data
 
 
     network.g_dns = dns_graph
