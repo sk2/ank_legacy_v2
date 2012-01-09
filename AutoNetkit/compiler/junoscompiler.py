@@ -47,13 +47,13 @@ def router_conf_dir():
     """Directory for individual Junos router configs"""
     return os.path.join(lab_dir(), "configset")
 
-def router_conf_file(network, node):
+def router_conf_file(network, router):
     """Returns filename for config file for router"""
-    return "%s.conf" % ank.rtr_folder_name(network, node)
+    return "%s.conf" % ank.rtr_folder_name(network, router)
 
-def router_conf_path(network, node):
+def router_conf_path(network, router):
     """ Returns full path to router config file"""
-    r_file = router_conf_file(network, node)
+    r_file = router_conf_file(network, router)
     return os.path.join(router_conf_dir(), r_file)
 
 
@@ -112,14 +112,14 @@ class JunosCompiler:
         bridge_id_generator = ('private%s'%i for i in itertools.count(0))
         collision_to_bridge_mapping = {}
 
-        for node in self.network.graph:
-            hostname = ank.fqdn(self.network, node)
+        for device in self.network.devices():
+            hostname = ank.fqdn(self.network, device)
             topology_data[hostname] = {
                     'image': 'VJX1000_LATEST',
-                    'config': router_conf_file(self.network, node),
+                    'config': router_conf_file(self.network, device),
                     'interfaces': [],
                     }
-            for src, dst, data in self.network.graph.edges(node, data=True):
+            for src, dst, data in self.network.graph.edges(device, data=True):
                 subnet = data['sn']
                 description = 'Interface %s -> %s' % (
                         ank.fqdn(self.network, src), 
@@ -150,10 +150,10 @@ class JunosCompiler:
                 topology_data = topology_data,
                 ))
 
-    def configure_interfaces(self, node):
-        LOG.debug("Configuring interfaces for %s" % self.network.fqdn(node))
+    def configure_interfaces(self, device):
+        LOG.debug("Configuring interfaces for %s" % self.network.fqdn(device))
         """Interface configuration"""
-        lo_ip = self.network.lo_ip(node)
+        lo_ip = self.network.lo_ip(device)
         interfaces = []
 
         interfaces.append({
@@ -165,19 +165,7 @@ class JunosCompiler:
             'description': 'Loopback',
         })
 
-        # Add em0.0 for Qemu
-#TODO: make this enabled with switch for QEMU
-        """
-        interfaces.append({
-            'id':          'em0',# modified from "em0.0"
-            'ip':           str(self.network[node].get('tap_ip')),
-            'netmask':      str(tap_subnet.netmask),
-            'prefixlen':    32,# modified into 32
-            'description': 'Admin for Qemu',
-        })
-        """
-
-        for src, dst, data in self.network.graph.edges(node, data=True):
+        for src, dst, data in self.network.graph.edges(device, data=True):
             subnet = data['sn']
             int_id = self.int_id(data['id'])
             description = 'Interface %s -> %s' % (
@@ -195,15 +183,15 @@ class JunosCompiler:
 
         return interfaces
 
-    def configure_igp(self, node, igp_graph, ebgp_graph):
+    def configure_igp(self, router, igp_graph, ebgp_graph):
         """igp configuration"""
-        LOG.debug("Configuring IGP for %s" % self.network.label(node))
+        LOG.debug("Configuring IGP for %s" % self.network.label(router))
         default_weight = 1
         igp_interfaces = []
-        if igp_graph.degree(node) > 0:
+        if igp_graph.degree(router) > 0:
             # Only start IGP process if IGP links
             igp_interfaces.append({ 'id': 'lo0', 'passive': True})
-            for src, dst, data in igp_graph.edges(node, data=True):
+            for src, dst, data in igp_graph.edges(router, data=True):
                 int_id = ank.junos_logical_int_id_ge(self.int_id(data['id']))
                 description = 'Interface %s -> %s' % (
                     ank.fqdn(self.network, src), 
@@ -215,7 +203,7 @@ class JunosCompiler:
                     })
 
 # Need to add eBGP edges as passive interfaces
-            for src, dst in ebgp_graph.edges(node):
+            for src, dst in ebgp_graph.edges(router):
 # Get relevant edges from ebgp_graph, and edge data from physical graph
                 data = self.network.graph[src][dst]
                 int_id = ank.junos_logical_int_id_ge(self.int_id(data['id']))
@@ -231,8 +219,8 @@ class JunosCompiler:
 
         return igp_interfaces
 
-    def configure_bgp(self, node, physical_graph, ibgp_graph, ebgp_graph):
-        LOG.debug("Configuring BGP for %s" % self.network.fqdn(node))
+    def configure_bgp(self, router, physical_graph, ibgp_graph, ebgp_graph):
+        LOG.debug("Configuring BGP for %s" % self.network.fqdn(router))
         """ BGP configuration"""
 #TODO: Don't configure iBGP or eBGP if no eBGP edges
 # need to pass correct blank dicts to templates then...
@@ -241,13 +229,13 @@ class JunosCompiler:
         # route maps
         bgp_groups = {}
         route_maps = []
-        if node in ibgp_graph:
+        if router in ibgp_graph:
             internal_peers = []
-            for peer in ibgp_graph.neighbors(node):
+            for peer in ibgp_graph.neighbors(router):
                 route_maps_in = [route_map for route_map in 
-                        self.network.g_session[peer][node]['ingress']]
+                        self.network.g_session[peer][router]['ingress']]
                 route_maps_out = [route_map for route_map in 
-                        self.network.g_session[node][peer]['egress']]
+                        self.network.g_session[router][peer]['egress']]
                 route_maps += route_maps_in
                 route_maps += route_maps_out   
                 internal_peers.append({
@@ -262,12 +250,12 @@ class JunosCompiler:
 
         ibgp_neighbor_list = []
         ibgp_rr_client_list = []
-        if node in ibgp_graph:
-            for src, neigh, data in ibgp_graph.edges(node, data=True):
+        if router in ibgp_graph:
+            for src, neigh, data in ibgp_graph.edges(router, data=True):
                 route_maps_in = [route_map for route_map in 
-                        self.network.g_session[neigh][node]['ingress']]
+                        self.network.g_session[neigh][router]['ingress']]
                 route_maps_out = [route_map for route_map in 
-                        self.network.g_session[node][neigh]['egress']]
+                        self.network.g_session[router][neigh]['egress']]
                 route_maps += route_maps_in
                 route_maps += route_maps_out     
                 description = data.get("rr_dir") + " to " + ank.fqdn(self.network, neigh)
@@ -297,19 +285,19 @@ class JunosCompiler:
             bgp_groups['internal_rr'] = {
                     'type': 'internal',
                     'neighbors': ibgp_rr_client_list,
-                    'cluster': self.network.lo_ip(node).ip,
+                    'cluster': self.network.lo_ip(router).ip,
                     }
 
-        if node in ebgp_graph:
+        if router in ebgp_graph:
             external_peers = []
-            for peer in ebgp_graph.neighbors(node):
+            for peer in ebgp_graph.neighbors(router):
                 route_maps_in = [route_map for route_map in 
-                        self.network.g_session[peer][node]['ingress']]
+                        self.network.g_session[peer][router]['ingress']]
                 route_maps_out = [route_map for route_map in 
-                        self.network.g_session[node][peer]['egress']]
+                        self.network.g_session[router][peer]['egress']]
                 route_maps += route_maps_in
                 route_maps += route_maps_out   
-                peer_ip = physical_graph[peer][node]['ip']
+                peer_ip = physical_graph[peer][router]['ip']
                 external_peers.append({
                     'id': peer_ip, 
                     'route_maps_in': [r.name for r in route_maps_in],
@@ -325,7 +313,7 @@ class JunosCompiler:
 
         community_lists = {}
         prefix_lists = {}
-        node_bgp_data = self.network.g_session.node.get(node)
+        node_bgp_data = self.network.g_session.node.get(router)
         if node_bgp_data:
             community_lists = node_bgp_data.get('tags')
             prefix_lists = node_bgp_data.get('prefixes')
@@ -350,28 +338,29 @@ class JunosCompiler:
         ebgp_graph = ank.get_ebgp_graph(self.network)
 
         #TODO: correct this router type selector
-        for node in self.network.graph:
+        for router in self.network.routers():
+            
             #check interfaces feasible
-            if self.network.graph.in_degree(node) > self.interface_limit:
-                LOG.warn("%s exceeds interface count: %s (max %s)" % (self.network.label(node),
-                    self.network.graph.in_degree(node), self.interface_limit))
-            asn = self.network.asn(node)
+            if self.network.graph.in_degree(router) > self.interface_limit:
+                LOG.warn("%s exceeds interface count: %s (max %s)" % (self.network.label(router),
+                    self.network.graph.in_degree(router), self.interface_limit))
+            asn = self.network.asn(router)
             network_list = []
-            lo_ip = self.network.lo_ip(node)
+            lo_ip = self.network.lo_ip(router)
 
-            interfaces = self.configure_interfaces(node)
-            igp_interfaces = self.configure_igp(node, igp_graph,ebgp_graph)
-            (bgp_groups, policy_options) = self.configure_bgp(node, physical_graph, ibgp_graph, ebgp_graph)
+            interfaces = self.configure_interfaces(router)
+            igp_interfaces = self.configure_igp(router, igp_graph,ebgp_graph)
+            (bgp_groups, policy_options) = self.configure_bgp(router, physical_graph, ibgp_graph, ebgp_graph)
 
             # advertise AS subnet
             adv_subnet = self.network.ip_as_allocs[asn]
             if not adv_subnet in network_list:
                 network_list.append(adv_subnet)
 
-            juniper_filename = router_conf_path(self.network, node)
+            juniper_filename = router_conf_path(self.network, router)
             with open( juniper_filename, 'w') as f_jun:
                 f_jun.write( junos_template.render(
-                    hostname = ank.fqdn(self.network, node),
+                    hostname = ank.fqdn(self.network, router),
                     username = 'autonetkit',
                     interfaces=interfaces,
                     igp_interfaces=igp_interfaces,

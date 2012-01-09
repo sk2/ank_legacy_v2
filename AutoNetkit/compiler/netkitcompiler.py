@@ -323,30 +323,29 @@ class NetkitCompiler:
         # configures IGP for each AS
         as_graphs = ank.get_as_graphs(self.network)
         for my_as in as_graphs:
-            LOG.debug("Configuring IGP for AS {0}".format(my_as.asn))
+            asn = my_as.asn
+            LOG.debug("Configuring IGP for AS %s " % asn)
             if my_as.number_of_edges() == 0:
                 # No edges, nothing to configure
+                LOG.debug("Skipping IGP for AS%s as no internal links" % asn)
                 continue
 
-            for node in my_as:
-                label = self.network.label(node)
-
+            for router in self.network.routers(asn):
                 # Note use the AS, not the network graph for edges,
                 # as only concerned with intra-AS edges for IGP
-                LOG.debug("Configuring IGP for %s" % label)
 
                 interface_list = []
                 network_list = []
 
                 # Add loopback info
-                lo_ip = self.network.lo_ip(node)
+                lo_ip = self.network.lo_ip(router)
                 interface_list.append ( {'id':  "lo", 'weight':  1,
                                         'remote_router': "NA (loopback)",
                                         'remote_int': "Loopback"})
                 network_list.append ( { 'cidr': lo_ip.cidr, 'ip': lo_ip.ip,
                                     'netmask': lo_ip.netmask,
                                     'area': 0, 'remote_ip': "Loopback" })
-                for src, dst, data in my_as.edges(node, data=True):
+                for src, dst, data in my_as.edges(router, data=True):
 
                     int_id = self.interface_id(data['id'])
                     weight = self.network.link_weight(src, dst)
@@ -363,17 +362,17 @@ class NetkitCompiler:
                                         'remote_ip': remote_ip, 'area': 0, } )
 
                 #TODO: see if need to use router-id for ospfd in quagga
-                f_handle = open( os.path.join(zebra_dir(self.network, node),
+                f_handle = open( os.path.join(zebra_dir(self.network, router),
                         "ospfd.conf"), 'w')
 
                 f_handle.write(template.render
                                (
-                                   hostname = ank.fqdn(self.network, node),
+                                   hostname = ank.fqdn(self.network, router),
                                    password = self.zebra_password,
                                    enable_password = self.zebra_password,
                                    interface_list = interface_list,
                                    network_list = network_list,
-                                   routerID = node,
+                                   routerID = router,
                                    use_igp = True,
                                    logfile = "/var/log/zebra/ospfd.log",
                                    use_debug = False,
@@ -394,12 +393,13 @@ class NetkitCompiler:
         physical_graph = self.network.graph
 
         for my_as in ank.get_as_graphs(self.network):
-            LOG.debug("Configuring BGP for AS {0}".format(my_as.asn))
+            asn = my_as.asn
+            LOG.debug("Configuring IGP for AS %s " % asn)
             # get nodes ie intersection
             #H = nx.intersection(my_as, ibgp_graph)
             # get ibgp graph that contains only nodes from this AS
 
-            for node in my_as.nodes():
+            for router in self.network.routers(asn):
                 #TODO: look at making this a set for greater comparison efficiency
                 network_list = []
                 route_map_call_groups = {}
@@ -409,14 +409,14 @@ class NetkitCompiler:
                 ibgp_neighbor_list = []
                 ibgp_rr_client_list = []
                 route_reflector = False
-                if node in ibgp_graph:
+                if router in ibgp_graph:
                     #TODO: look at replacing this with a check to len of ibgp_rr_client_list
 #TODO: set cluster id explicitly from python, not auto in mako (decisions/logic in python)
-                    if self.network.route_reflector(node):
+                    if self.network.route_reflector(router):
                         route_reflector = True
-                    for src, neigh, data in ibgp_graph.edges(node, data=True):
+                    for src, neigh, data in ibgp_graph.edges(router, data=True):
                         route_maps_in = [route_map for route_map in 
-                                self.network.g_session[neigh][node]['ingress']]
+                                self.network.g_session[neigh][router]['ingress']]
                         rm_call_group_name_in = None
                         if len(route_maps_in):
                             rm_call_group_name_in = "rm_call_%s_in" % self.network.fqdn(neigh).replace(".", "_")
@@ -425,7 +425,7 @@ class NetkitCompiler:
 
                         rm_call_group_name_out = "rm_call_%s_out" % self.network.fqdn(neigh).replace(".", "_")
                         route_maps_out = [route_map for route_map in 
-                                self.network.g_session[node][neigh]['egress']]
+                                self.network.g_session[router][neigh]['egress']]
                         rm_call_group_name_out = None
                         if len(route_maps_out):
                             rm_call_group_name_out = "rm_call_%s_out" % (
@@ -456,10 +456,10 @@ class NetkitCompiler:
 
                 # iBGP
                 ebgp_neighbor_list = []
-                if node in ebgp_graph:
-                    for neigh in ebgp_graph.neighbors(node):
+                if router in ebgp_graph:
+                    for neigh in ebgp_graph.neighbors(router):
                         route_maps_in = [route_map for route_map in 
-                                self.network.g_session[neigh][node]['ingress']]
+                                self.network.g_session[neigh][router]['ingress']]
                         rm_call_group_name_in = None
                         if len(route_maps_in):
                             rm_call_group_name_in = "rm_call_%s_in" % self.network.fqdn(neigh).replace(".", "_")
@@ -468,7 +468,7 @@ class NetkitCompiler:
 
                         rm_call_group_name_out = "rm_call_%s_out" % self.network.fqdn(neigh).replace(".", "_")
                         route_maps_out = [route_map for route_map in 
-                                self.network.g_session[node][neigh]['egress']]
+                                self.network.g_session[router][neigh]['egress']]
                         rm_call_group_name_out = None
                         if len(route_maps_out):
                             rm_call_group_name_out = "rm_call_%s_out" % (
@@ -477,7 +477,7 @@ class NetkitCompiler:
                             route_maps += route_maps_out
 
                         description = ank.fqdn(self.network, neigh)
-                        peer_ip = physical_graph[neigh][node]['ip']
+                        peer_ip = physical_graph[neigh][router]['ip']
                         ebgp_neighbor_list.append(
                             {
                                 #'remote_ip':        neigh.lo_ip.ip  ,
@@ -494,14 +494,14 @@ class NetkitCompiler:
                             })
 
 
-                adv_subnet = ip_as_allocs[self.network.asn(node)]
+                adv_subnet = ip_as_allocs[self.network.asn(router)]
 
                 # Ensure only one copy of each route map, can't use set due to list inside tuples (which won't hash)
 # Use dict indexed by name, and then extract the dict items, dict hashing ensures only one route map per name
                 route_maps = dict( (route_map.name, route_map) for route_map in route_maps).values()
                 community_lists = {}
                 prefix_lists = {}
-                node_bgp_data = self.network.g_session.node.get(node)
+                node_bgp_data = self.network.g_session.node.get(router)
                 if node_bgp_data:
                     community_lists = node_bgp_data.get('tags')
                     prefix_lists = node_bgp_data.get('prefixes')
@@ -510,20 +510,20 @@ class NetkitCompiler:
                 if not adv_subnet in network_list:
 # Not already listed to be advertised, advertise
                     network_list.append(adv_subnet)
-                f_handle = open(os.path.join(zebra_dir(self.network, node),
+                f_handle = open(os.path.join(zebra_dir(self.network, router),
                                              "bgpd.conf"),'w')
 
                 f_handle.write(template.render(
-                        hostname = ank.fqdn(self.network, node),
-                        asn = self.network.asn(node),
+                        hostname = ank.fqdn(self.network, router),
+                        asn = self.network.asn(router),
                         password = self.zebra_password,
                         enable_password = self.zebra_password,
-                        router_id = self.network.lo_ip(node).ip,
+                        router_id = self.network.lo_ip(router).ip,
                         network_list = network_list,
                         community_lists = community_lists,
                         prefix_lists = prefix_lists,
                         #TODO: see how this differs to router_id
-                        identifying_loopback = self.network.lo_ip(node),
+                        identifying_loopback = self.network.lo_ip(router),
                         ibgp_neighbor_list = ibgp_neighbor_list,
                         ebgp_neighbor_list = ebgp_neighbor_list,
                         route_reflector = route_reflector,
