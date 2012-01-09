@@ -99,9 +99,12 @@ def allocate_dns_servers(network):
         return int(dns_graph.node[u]['level'])
 
     servers_per_l2_cluster = 1
-    servers_per_l3_cluster = 1
+    servers_per_l3_cluster = 2
     root_dns_servers = 1
     global_eccentricities = nodes_by_eccentricity(network.graph)
+
+
+#TODO: add count of each cluster occurence so can round servers down - dont want 3 servers in a one router network!
 
 # Add routers, these form the level 1 clients
     dns_graph.add_nodes_from(network.graph.nodes(), level=1)
@@ -200,8 +203,10 @@ def allocate_dns_servers(network):
 
                 l3_cluster_physical_graph = network.graph.subgraph(l3_cluster_routers)
                 l3_cluster_eccentricities = nodes_by_eccentricity(l3_cluster_physical_graph)
+# Cycle in event more servers to attach than routers
+                l3_cluster_eccentricities = itertools.cycle(l3_cluster_eccentricities)
                 for server in l3_cluster_servers:
-                    attach_point = l3_cluster_eccentricities.pop()
+                    attach_point = l3_cluster_eccentricities.next()
                     LOG.debug("Attaching %s to %s in %s" % (ank.label(server), 
                         ank.label(attach_point), asn))
                     network.add_link(server, attach_point)
@@ -215,8 +220,10 @@ def allocate_dns_servers(network):
                     l2_cluster_routers = set(n for n in l2_cluster_devices if level(n) == 1 and n in routers)
                     l2_cluster_physical_graph = network.graph.subgraph(l2_cluster_routers)
                     l2_cluster_eccentricities = nodes_by_eccentricity(l2_cluster_physical_graph)
+                    # Cycle in event more servers to attach than routers
+                    l2_cluster_eccentricities = itertools.cycle(l2_cluster_eccentricities)
                     for server in l2_cluster_servers:
-                        attach_point = l2_cluster_eccentricities.pop()
+                        attach_point = l2_cluster_eccentricities.next()
                         LOG.debug("Attaching %s to %s in %s" % (ank.label(server), 
                             ank.label(attach_point), asn))
                         network.add_link(server, attach_point)
@@ -224,7 +231,18 @@ def allocate_dns_servers(network):
 
 #TODO: set server type: root, authoritative (can be both if only one root)
 #TODO: allow EDGES that server is authoritative for (and allow adding of eBGP edge)
+# TODO: handle different levels
+# in 3 level model, l3 servers advertise for AS
+    for my_as in ank.get_as_graphs(network):
+        advertise_edges = [ (src, dst) for (src, dst) in my_as.edges()]
+        as_l3_servers = (n for n in my_as if level(n) == 3)
+        for server in as_l3_servers:
+            dns_graph.node[server]['advertise_edges'] = advertise_edges
 
+
+
+    ank.debug_nodes(dns_graph)
+    ank.debug_nodes(network.graph)
 
     network.g_dns = dns_graph
 
