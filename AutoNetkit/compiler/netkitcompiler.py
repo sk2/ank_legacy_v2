@@ -564,10 +564,22 @@ class NetkitCompiler:
 #TODO: use with for opening files
 
         for server in root_servers:
-            continue
-            print "root", server
-            print "children", ank.dns.dns_hiearchy_children(server)
-            print
+            children = ank.dns.dns_hiearchy_children(server)
+            dns_servers = []
+            for child in children:
+                advertise_block = ip_as_allocs[child.asn]
+                reverse_identifier = ank.rev_dns_identifier(advertise_block)
+                dns_servers.append( (child.domain, reverse_identifier, child.lo_ip.ip))
+            f_root_db = open(os.path.join(bind_dir(self.network, server), "db.root"), 'w') 
+            f_root_db.write( root_dns_template.render(
+                dns_servers = dns_servers,
+                server = server,
+            ))
+
+            f_named = open( os.path.join(bind_dir(self.network, server), "named.conf"), 'w')
+            f_named.write(root_dns_named_template.render(
+                logging = True,
+            ))
 
         for server in auth_servers:
             named_list = []

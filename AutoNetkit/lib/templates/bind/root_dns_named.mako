@@ -7,30 +7,7 @@ zone "." {
         type master;
         file "/etc/bind/db.root";         
 	};          
-	                  
-	                   
-%if domain:
-// This host is also the DNS server for AS it belongs to
-// So add information on its zones
-zone "${domain}." IN {
-	type master;
-	file "/etc/bind/db.${domain}";  
-	allow-query { "any"; };
-};      
-
-
-## Entries
-% for e in entry_list:
-zone "${e['identifier']}.in-addr.arpa" {
-	type master; 
-	file "${e['bind_dir']}/db.${e['identifier']}";        
-	allow-query { "any"; };
-};	     
-%endfor     
-
-%endif
-
-             
+   
 %if logging:
 logging {
 category "default" { "debug"; };

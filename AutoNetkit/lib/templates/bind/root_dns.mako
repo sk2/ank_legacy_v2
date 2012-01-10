@@ -9,12 +9,12 @@ $TTL 1D
                 )
                  
 @			IN	NS	DNSroot.
-DNSroot.		IN	A	${root_servers['ip']}
-% for e in dns_servers:
+DNSroot.		IN	A	${server.lo_ip.ip}    
 
-${e['domain']}.				IN	NS	NS.${e['domain']}.
-${e['reverse']}.in-addr.arpa	IN	NS	NS.${e['domain']}.
-NS.${e['domain']}.			IN	A 	${e['ip']}
+% for (domain, reverse, ip) in dns_servers:
+${domain}.				IN	NS	NS.${domain}.
+${reverse}		IN	NS	NS.${domain}.
+NS.${domain}.		  	  IN	A 	${ip}
 
 %endfor
 
