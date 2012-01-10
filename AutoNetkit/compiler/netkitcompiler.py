@@ -118,24 +118,19 @@ class NetkitCompiler:
         if not os.path.isdir(shared_etc_dir()):
             os.mkdir(shared_etc_dir())
         
-        if "DNS" in self.services:
-            dns_list = ank.dns_list(self.network)
-            dns_root = ank.root_dns(self.network)
+        dns_servers = set(self.network.dns_servers())
 
-        for node in self.network.graph:
+        for device in self.network.devices():
                 # Make folders - note order counts:
                 # need to make router dir before zebra, etc dirs
-                for test_dir in [router_dir(self.network, node),
-                                 etc_dir(self.network, node),
-                                 zebra_dir(self.network, node)]:
+                for test_dir in [router_dir(self.network, device),
+                                 etc_dir(self.network, device),
+                                 zebra_dir(self.network, device)]:
                     if not os.path.isdir(test_dir):
                         os.mkdir(test_dir)
 
-                if "DNS" in self.services and (node in dns_list.values()
-                    or node == dns_root):
-
-                    # This router is a DNS server
-                    b_dir = bind_dir(self.network, node)
+                if "DNS" in self.services and device in dns_servers:
+                    b_dir = bind_dir(self.network, device)
                     if not os.path.isdir(b_dir):
                         os.mkdir(b_dir)
         return
@@ -181,28 +176,8 @@ class NetkitCompiler:
         ebgp_routers = ank.ebgp_routers(self.network)
         igp_graph = ank.igp_graph(self.network)
 
-        if "DNS" in self.services:
-            dns_list = ank.dns_list(self.network)
-            #TODO-ING: generate a proper list of root DNS servers
-            #TODO: replace by API call
-            root_dns = ank.root_dns(self.network)
-
-        #pprint.pprint(self.network.get_nodes_by_property('platform', 'NETKIT'))
-        #pprint.pprint(list())
-        #myset = self.network.q(color='red')
-        #myset = list(myset)
-        #print myset
-        #myset = self.network.q(myset, asn='2')
-        #print self.network.graph.nodes(data=True)
-        #print "after filtering subset"
-        #print list(myset)
-        #myset = self.network.q(platform='NETKIT', color='green', area=5)
-        #print list(myset)
-        #myset = self.network.q(global_dns=True)
-        #self.network.u(myset, ram=500)
-        #pprint.pprint(self.network.graph.nodes(data=True))
-        #pprint.pprint(list(self.network.q()))
-        #pprint.pprint(self.network.groupby('asn'))
+        dns_servers = set(self.network.dns_servers())
+        routers = set(self.network.routers())
 
         for node in self.network.devices():
             #TODO: see if rtr label is still needed, if so replace with
@@ -221,12 +196,11 @@ class NetkitCompiler:
             tap_list_strings[rtr_folder_name] = (node_tap_id,
                                                  self.network[node].get('tap_ip'))
 
-            if "DNS" in self.services:
-                if (node in dns_list.values()) or (node == root_dns):
-                    startup_daemon_list.append("bind")
-                    dns_memory = 64 # Allocate more memory to DNS server 
-                    #TODO: remove key, val and make it just key: val
-                    lab_conf[rtr_folder_name].append( ('mem', dns_memory))
+            if node in dns_servers:
+                startup_daemon_list.append("bind")
+                dns_memory = 64 # Allocate more memory to DNS server 
+                #TODO: remove key, val and make it just key: val
+                lab_conf[rtr_folder_name].append( ('mem', dns_memory))
 
             # Zebra Daemons
             zebra_daemon_list = []
@@ -276,20 +250,18 @@ class NetkitCompiler:
             })
 
             # Ethernet interfaces
-            for src, dst, data in self.network.graph.edges(node, data=True):
-                int_id = self.interface_id(data['id'])
-                subnet = data['sn']
-                
-                subnet = self.network.edge(src, dst).get('sn')
+            for link in self.network.links(node):
+                int_id = self.interface_id(link.id)
+                subnet = link.subnet
 
                 # replace the / from subnet label
                 collision_domain = "%s.%s" % (subnet.ip, subnet.prefixlen)
     
                 # lab.conf has id in form host[0]=... for eth0 of host
-                lab_conf[rtr_folder_name].append((str(data['id']), collision_domain))
+                lab_conf[rtr_folder_name].append((link.id, collision_domain))
                 startup_int_list.append({
                     'int':          int_id,
-                    'ip':           str(data['ip']),
+                    'ip':           str(link.ip),
                     'netmask':      str(subnet.netmask),
                     'broadcast':    str(subnet.broadcast),
                 })
@@ -545,6 +517,10 @@ class NetkitCompiler:
 
         dns_servers = ank.dns_servers(self.network)
         #print "servers are", ank.label(dns_servers)
+        #ank.debug_nodes(self.network.g_dns)
+
+        for server in self.network.dns_servers():
+            print "dns server", server
 
 
         return
@@ -777,9 +753,7 @@ class NetkitCompiler:
 
         # and append the root config to named file, for root DNS of all domains
         # the previously written named.conf was for each domain root DNS server
-        f_named = open( os.path.join(bind_dir(self.network, root_dns),
-                                     "named.conf"),
-                       'w')
+        f_named = open( os.path.join(bind_dir(self.network, root_dns), "named.conf"), 'w')
 
         f_named.write(root_dns_named_template.render(
             domain = root_dns_server_domain,

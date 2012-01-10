@@ -90,6 +90,11 @@ class link_namedtuple (namedtuple('link', "network, src, dst")):
         return self.dst
 
     @property
+    def ip(self):
+        return self.local_ip
+
+
+    @property
     def local_ip(self):
         return self.network.graph[self.src][self.dst]['ip']
 
@@ -97,9 +102,6 @@ class link_namedtuple (namedtuple('link', "network, src, dst")):
     def remote_ip(self):
         """Assume bi-directional link"""
         return self.network.graph[self.dst][self.src]['ip']
-
-
-
 
 class Network(object): 
     """ Main network containing router graph"""
@@ -205,6 +207,9 @@ class Network(object):
 
     def edge(self, src, dst):
         return self.graph[src][dst]
+
+    def dns_servers(self):
+        return ank.dns_servers(self)
 
     def q(self, nodes=None, **kwargs):
         if not nodes:

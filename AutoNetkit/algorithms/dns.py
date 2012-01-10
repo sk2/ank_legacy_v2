@@ -49,14 +49,12 @@ __author__ = "\n".join(['Simon Knight'])
 
 __all__ = ['allocate_dns_servers', 'get_dns_graph',
         'dns_servers', 'dns_level',
-        'dns_list', 'root_dns', 'reverse_subnet', 'rev_dns_identifier']
+        'reverse_subnet', 'rev_dns_identifier']
 
 import AutoNetkit as ank
 import networkx as nx
-from netaddr import IPAddress, IPNetwork
 import pprint
 import itertools
-import random
 
 
 import logging
@@ -235,8 +233,6 @@ def allocate_dns_servers(network):
 
 #TODO: authoritative might need to be a graph also
 
-#TODO: set server type: root, authoritative (can be both if only one root)
-#TODO: allow EDGES that server is authoritative for (and allow adding of eBGP edge)
 # TODO: handle different levels
 # in 3 level model, l3 servers advertise for AS
     for my_as in ank.get_as_graphs(network):
@@ -245,7 +241,6 @@ def allocate_dns_servers(network):
         for server in as_l3_servers:
             dns_graph.node[server]['advertise_edges'] = advertise_edges
 
-    #ank.debug_nodes(dns_graph)
 
     network.g_dns = dns_graph
 
@@ -271,38 +266,8 @@ def dns_level(network, node):
 def dns_servers(network):
     return (n for n in network.g_dns.nodes_iter() if dns_level(network, n) > 1)
 
-
 def get_dns_graph(network):
     return network.g_dns
-
-#TODO: make more efficient for large networks - eg size of KDL from Zoo
-def dns_list(network):
-    """Return first central node for each AS ."""
-    retval =  dict( (data['asn'], node) for node, data in
-                   network.graph.nodes_iter(data=True) if 'local_dns' in data)
-    #TODO: check exactly one DNS server per AS allocated
-    return retval
-
-def root_dns(network):
-    LOG.debug("Allocating root DNS server")
-    root_dns_servers = [(n,d) for n,d in network.g_dns.out_degree().items()] 
-
-    root_dns_servers = [n for n,d in network.g_dns.out_degree().items() if d==0] 
-    root_dns_server = [node for node,data in network.graph.nodes_iter(data=True)
-                       if 'global_dns' in data]
-    if len(root_dns_server) < 1:
-        # No DNS server allocated
-        logging.warn("No global DNS server allocated")
-        return None
-    elif len(root_dns_server) > 1:
-        logging.warn("More than one global DNS server allocated")
-        # return last server (order unimportant as should only have one)
-        return root_dns_server.pop()
-    else:
-        # Exactly one allocated, remove from list
-        retval =  root_dns_server.pop()
-        return retval
-
 
 def reverse_subnet(ip_addr, prefixlen):
     """Returns reverse address for given IP Address
