@@ -320,6 +320,8 @@ class NetkitCompiler:
         template = lookup.get_template("quagga/ospf.mako")
         self.network.set_default_edge_property('weight', 1)
 
+        ank.debug_edges(self.network.g_dns)
+
         # configures IGP for each AS
         as_graphs = ank.get_as_graphs(self.network)
         for my_as in as_graphs:
@@ -330,7 +332,15 @@ class NetkitCompiler:
                 LOG.debug("Skipping IGP for AS%s as no internal links" % asn)
                 continue
 
+            print "all edges", list(self.network.links())
+
             for router in self.network.routers(asn):
+
+                print "links:"
+                for link in self.network.links(router):
+                    print link
+
+                print "router is", router.fqdn
                 # Note use the AS, not the network graph for edges,
                 # as only concerned with intra-AS edges for IGP
 
@@ -338,13 +348,14 @@ class NetkitCompiler:
                 network_list = []
 
                 # Add loopback info
-                lo_ip = self.network.lo_ip(router)
+                lo_ip = router.lo_ip 
                 interface_list.append ( {'id':  "lo", 'weight':  1,
                                         'remote_router': "NA (loopback)",
                                         'remote_int': "Loopback"})
                 network_list.append ( { 'cidr': lo_ip.cidr, 'ip': lo_ip.ip,
                                     'netmask': lo_ip.netmask,
                                     'area': 0, 'remote_ip': "Loopback" })
+
                 for src, dst, data in my_as.edges(router, data=True):
 
                     int_id = self.interface_id(data['id'])

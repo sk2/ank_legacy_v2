@@ -45,8 +45,37 @@ to pass through to the netx graph methods for quick access
 # TODO: abstract eBGP etc to be subgraph by property,
 # with eBGP just being split on the 'asn' property
 
-node_namedtuple = namedtuple('node', "id, network")
-link_namedtuple = namedtuple('link', "id, subnet, reject")
+class node_namedtuple (namedtuple('node', "network, id")):
+    __slots = ()
+
+    def __repr__(self):
+        return self.fqdn
+
+    @property
+    def label(self):
+        return self.network.label(self)
+
+    @property
+    def fqdn(self):
+        return self.network.fqdn(self)
+
+    @property
+    def lo_ip(self):
+        return self.network.lo_ip(self)
+
+
+class link_namedtuple (namedtuple('link', "network, src, dst")):
+    __slots = ()
+    def __repr__(self):
+        return "(%s, %s)" % (self.src, self.dst)
+
+    @property
+    def label(self):
+        return self.network.label(self)
+
+    @property
+    def fqdn(self):
+        return self.network.fqdn(self)
 
 
 class Network(object): 
@@ -80,7 +109,7 @@ class Network(object):
 #TODO: add add_device function, which auto relabels with network reference
     def instantiate_nodes(self):
         #mapping = dict( node_namedtuple(n, self) for n in self.graph)
-        mapping = dict( (n, node_namedtuple(n, self)) for n in self.graph)
+        mapping = dict( (n, node_namedtuple(self, n)) for n in self.graph)
         nx.relabel_nodes(self.graph, mapping, copy=False)
 
     def add_device(self, node_id, asn=None, device_type=None, **kwargs):
@@ -94,7 +123,7 @@ class Network(object):
             device_type = 1
 #TODO: set this to debug once finished with
             LOG.info("Setting default device_type='router' for added device %s" % node_id)
-        node = node_namedtuple(node_id, self)
+        node = node_namedtuple(self, node_id)
         self.graph.add_node(node, asn=asn, device_type=device_type, **kwargs)
 # Return name for reference
         return node
@@ -309,5 +338,8 @@ class Network(object):
     def link_count(self, node):
         # TODO: check in_degree == out_degree if not then WARN - or put into consistency check function
         return self.graph.in_degree(node)
+
+    def links(self, router=None):
+        return ( link_namedtuple(self, src, dst) for (src, dst) in self.graph.edges(router))
 
 

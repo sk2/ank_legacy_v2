@@ -24,7 +24,7 @@ def debug_nodes(graph):
 
 def debug_edges(graph):
     import pprint
-    debug_data = dict( (src.network.fqdn(src), dst.network.fqdn(dst), data) 
+    debug_data = dict( ((src.fqdn, dst.fqdn), data) 
             for src, dst, data in graph.edges(data=True))
     pprint.pprint(debug_data)
 
