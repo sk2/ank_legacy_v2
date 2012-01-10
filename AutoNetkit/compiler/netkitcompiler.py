@@ -511,16 +511,19 @@ class NetkitCompiler:
 
     def configure_dns(self):
         """Generates BIND configuration files for DNS"""
-        #pprint.pprint(self.network.graph.edges(data=True))
-        #pprint.pprint(self.network.graph.nodes(data=True))
+        from netaddr import IPSet
         ip_as_allocs = ank.get_ip_as_allocs(self.network)
 
         dns_servers = ank.dns_servers(self.network)
-        #print "servers are", ank.label(dns_servers)
-        #ank.debug_nodes(self.network.g_dns)
+        root_dns_servers = ank.root_dns_servers(self.network)
 
         for server in self.network.dns_servers():
-            print "dns server", server
+            dns_level = ank.dns_level(server)
+            LOG.info("DNS server %s is dns_level %s" % (server, dns_level))
+            advertise_edges= list(ank.advertise_edges(server))
+            LOG.debug("DNS server %s advertises %s" % (server, advertise_edges))
+            subnets = list(link.subnet for link in advertise_edges)
+            #print IPSet(subnets)
 
 
         return

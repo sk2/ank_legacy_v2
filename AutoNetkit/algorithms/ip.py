@@ -54,6 +54,8 @@ def allocate_subnets(network, address_block=IPNetwork("10.0.0.0/8")):
         # a subnet. (The AS choice is arbitrary)
         src_as = asgraphs[network.asn(src)]
         src_as.add_edge(src, dst)
+# record for DNS purposes
+        ank.dns_advertise_link(src, dst)
 
     #reverse so that allocate subnets in ascending order
     for my_as in sorted(asgraphs.values()):

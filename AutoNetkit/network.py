@@ -45,6 +45,7 @@ to pass through to the netx graph methods for quick access
 # TODO: abstract eBGP etc to be subgraph by property,
 # with eBGP just being split on the 'asn' property
 
+#TODO: make these access network attribute directly rather than calling the network.label() etc
 class node_namedtuple (namedtuple('node', "network, id")):
     __slots = ()
 
@@ -62,6 +63,10 @@ class node_namedtuple (namedtuple('node', "network, id")):
     @property
     def lo_ip(self):
         return self.network.lo_ip(self)
+
+    @property
+    def asn(self):
+        return self.network.asn(self)
 
 
 class link_namedtuple (namedtuple('link', "network, src, dst")):
@@ -120,6 +125,7 @@ class Network(object):
             self._graphs['physical'] = physical_graph
         self._graphs['bgp_session'] = nx.DiGraph()
         self._graphs['dns'] = nx.DiGraph()
+        self._graphs['dns_authoritative'] = nx.DiGraph()
         self.compiled_labs = {} # Record compiled lab filenames, and configs
 
     @deprecated
@@ -183,6 +189,16 @@ class Network(object):
     @g_dns.setter
     def g_dns(self, value):
         self._graphs['dns'] = value
+
+    @property
+    def g_dns_auth(self):
+        return self._graphs['dns_authoritative']
+
+    @g_dns_auth.setter
+    def g_dns_auth(self, value):
+        self._graphs['dns_authoritative'] = value
+
+        
 
     @deprecated
     def get_edges(self, node=None):
@@ -373,4 +389,9 @@ class Network(object):
         else:
             return ( link_namedtuple(self, src, dst) for (src, dst) in self.graph.edges(router))
 
+    def ebgp_graph(self):
+        return ank.ebgp_graph(self)
+
+    def ibgp_graph(self):
+        return ank.ibgp_graph(self)
 

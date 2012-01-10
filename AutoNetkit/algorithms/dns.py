@@ -48,11 +48,13 @@ __author__ = "\n".join(['Simon Knight'])
 #    Copyright (C) 2009-2012 by Simon Knight, Hung Nguyen
 
 __all__ = ['allocate_dns_servers', 'get_dns_graph',
-        'dns_servers', 'dns_level',
+        'dns_servers', 'dns_level', 'advertise_edges',
+        'dns_advertise_link', 'root_dns_servers',
         'reverse_subnet', 'rev_dns_identifier']
 
 import AutoNetkit as ank
 import networkx as nx
+from netaddr import IPAddress, IPNetwork
 import pprint
 import itertools
 
@@ -70,6 +72,7 @@ def allocate_dns_servers(network):
     
     """
     dns_graph = nx.DiGraph()
+    dns_advertise_graph = nx.DiGraph()
 
     def nodes_by_eccentricity(graph):
         if len(graph) == 1:
@@ -124,7 +127,7 @@ def allocate_dns_servers(network):
         l2_clusters = list(set(dns_graph.node[n].get("dns_l2_cluster") for n in my_as))
         for l2_cluster in l2_clusters:
             for index in range(servers_per_l2_cluster):
-                label = "%s_dns_%s" % (l2_cluster, index+1)
+                label = "l2_%s_dns_%s" % (l2_cluster, index+1)
                 if l2_cluster == format_asn(asn):
 # Don't put asn into server name twice "AS2_asn_2_l2dns_1" vs "asn_2_l2dns_1"
                     server_name = "%s_l2dns_%s" % (l2_cluster, index+1)
@@ -137,7 +140,7 @@ def allocate_dns_servers(network):
                         asn = asn, dns_l3_cluster = format_asn(asn))
 
         for index in range(servers_per_l3_cluster):
-                label = "%s_dns_%s" % (asn, index+1)
+                label = "l3_%s_dns_%s" % (asn, index+1)
                 server_name = "AS%s_l3dns_%s" % (asn, index+1)
                 node_name = network.add_device(server_name, asn=asn, 
                         device_type='server', label=label)
@@ -236,19 +239,39 @@ def allocate_dns_servers(network):
 # TODO: handle different levels
 # in 3 level model, l3 servers advertise for AS
     for my_as in ank.get_as_graphs(network):
-        advertise_edges = [ (src, dst) for (src, dst) in my_as.edges()]
+        devices = [ n for n in my_as]
         as_l3_servers = (n for n in my_as if level(n) == 3)
-        for server in as_l3_servers:
-            dns_graph.node[server]['advertise_edges'] = advertise_edges
-
+        edges = itertools.product(devices, as_l3_servers)
+        dns_advertise_graph.add_edges_from(edges)
 
     network.g_dns = dns_graph
+    network.g_dns_auth = dns_advertise_graph
 
-#TODO: also need to connect DNS servers into network, allocate IPs, etc
+def dns_advertise_link(src, dst):
+# find servers responsible for src
+    for src_server in dns_auth_parents(src):
+        add_dns_auth_child(src_server, dst)
 
-def dns_advertise_link(network, src, dst):
-    pass
-# a
+def add_dns_auth_child(parent, child):
+    parent.network.g_dns_auth.add_edge(child, parent)
+  
+def dns_auth_parents(node):
+    return node.network.g_dns_auth.successors(node)
+
+def dns_auth_children(node):
+    return node.network.g_dns_auth.predecessors(node)
+
+def root_dns_servers(network):
+    return (n for n in network.servers() if dns_level(n) == 4)
+
+def advertise_edges(node):
+    auth_children = dns_auth_children(node)
+    auth_subgraph = node.network.graph.subgraph(auth_children)
+    edges = auth_subgraph.edges()
+    if edges:
+        return (ank.network.link_namedtuple(node.network, src, dst) for (src, dst) in edges)
+    else:
+        return []
 
 def is_dns_server(network, node):
 # if has children is server
@@ -260,11 +283,11 @@ def is_dns_client(network, node):
     # note could also be server to own children
     pass
 
-def dns_level(network, node):
-    return network.g_dns.node[node].get("level")
+def dns_level(node):
+    return node.network.g_dns.node[node].get("level")
 
 def dns_servers(network):
-    return (n for n in network.g_dns.nodes_iter() if dns_level(network, n) > 1)
+    return (n for n in network.g_dns.nodes_iter() if dns_level(n) > 1)
 
 def get_dns_graph(network):
     return network.g_dns

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?><graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key attr.name="label" attr.type="string" for="node" id="d0" />
+  <graph edgedefault="directed">
+    <node id="1a.AS1">
+      <data key="d0">1a</data>
+    </node>
+    <node id="l32dns1.AS2">
+      <data key="d0">l3_2_dns_1</data>
+    </node>
+    <node id="l2asn2dns1.AS2">
+      <data key="d0">l2_asn_2_dns_1</data>
+    </node>
+    <node id="1c.AS1">
+      <data key="d0">1c</data>
+    </node>
+    <node id="l2asn1dns1.AS1">
+      <data key="d0">l2_asn_1_dns_1</data>
+    </node>
+    <node id="2a.AS2">
+      <data key="d0">2a</data>
+    </node>
+    <node id="l32dns2.AS2">
+      <data key="d0">l3_2_dns_2</data>
+    </node>
+    <node id="3a.AS3">
+      <data key="d0">3a</data>
+    </node>
+    <node id="l2asn3dns1.AS3">
+      <data key="d0">l2_asn_3_dns_1</data>
+    </node>
+    <node id="2b.AS2">
+      <data key="d0">2b</data>
+    </node>
+    <node id="l33dns1.AS3">
+      <data key="d0">l3_3_dns_1</data>
+    </node>
+    <node id="l31dns2.AS1">
+      <data key="d0">l3_1_dns_2</data>
+    </node>
+    <node id="2c.AS2">
+      <data key="d0">2c</data>
+    </node>
+    <node id="l33dns2.AS3">
+      <data key="d0">l3_3_dns_2</data>
+    </node>
+    <node id="2d.AS2">
+      <data key="d0">2d</data>
+    </node>
+    <node id="l31dns1.AS1">
+      <data key="d0">l3_1_dns_1</data>
+    </node>
+    <node id="rootdns1.AS2">
+      <data key="d0">root_dns_1</data>
+    </node>
+    <node id="1b.AS1">
+      <data key="d0">1b</data>
+    </node>
+    <edge source="1a.AS1" target="l31dns2.AS1" />
+    <edge source="1a.AS1" target="l31dns1.AS1" />
+    <edge source="l32dns1.AS2" target="l32dns1.AS2" />
+    <edge source="l32dns1.AS2" target="l32dns2.AS2" />
+    <edge source="l2asn2dns1.AS2" target="l32dns1.AS2" />
+    <edge source="l2asn2dns1.AS2" target="l32dns2.AS2" />
+    <edge source="1c.AS1" target="l31dns2.AS1" />
+    <edge source="1c.AS1" target="l31dns1.AS1" />
+    <edge source="l2asn1dns1.AS1" target="l31dns2.AS1" />
+    <edge source="l2asn1dns1.AS1" target="l31dns1.AS1" />
+    <edge source="2a.AS2" target="l32dns1.AS2" />
+    <edge source="2a.AS2" target="l32dns2.AS2" />
+    <edge source="l32dns2.AS2" target="l32dns1.AS2" />
+    <edge source="l32dns2.AS2" target="l32dns2.AS2" />
+    <edge source="3a.AS3" target="l33dns1.AS3" />
+    <edge source="3a.AS3" target="l33dns2.AS3" />
+    <edge source="l2asn3dns1.AS3" target="l33dns1.AS3" />
+    <edge source="l2asn3dns1.AS3" target="l33dns2.AS3" />
+    <edge source="2b.AS2" target="l32dns1.AS2" />
+    <edge source="2b.AS2" target="l32dns2.AS2" />
+    <edge source="l33dns1.AS3" target="l33dns1.AS3" />
+    <edge source="l33dns1.AS3" target="l33dns2.AS3" />
+    <edge source="l31dns2.AS1" target="l31dns2.AS1" />
+    <edge source="l31dns2.AS1" target="l31dns1.AS1" />
+    <edge source="2c.AS2" target="l32dns1.AS2" />
+    <edge source="2c.AS2" target="l32dns2.AS2" />
+    <edge source="l33dns2.AS3" target="l33dns1.AS3" />
+    <edge source="l33dns2.AS3" target="l33dns2.AS3" />
+    <edge source="2d.AS2" target="l32dns1.AS2" />
+    <edge source="2d.AS2" target="l32dns2.AS2" />
+    <edge source="l31dns1.AS1" target="l31dns2.AS1" />
+    <edge source="l31dns1.AS1" target="l31dns1.AS1" />
+    <edge source="rootdns1.AS2" target="l32dns1.AS2" />
+    <edge source="rootdns1.AS2" target="l32dns2.AS2" />
+    <edge source="1b.AS1" target="l31dns2.AS1" />
+    <edge source="1b.AS1" target="l31dns1.AS1" />
+  </graph>
+</graphml>
