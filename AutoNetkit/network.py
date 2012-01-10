@@ -65,12 +65,24 @@ class node_namedtuple (namedtuple('node', "network, id")):
         return self.network.lo_ip(self)
 
     @property
+    def device_type(self):
+        return self.network.device_type(self)
+
+    @property
     def asn(self):
         return self.network.asn(self)
+
+    @property
+    def domain(self):
+        return ank.domain(self)
     
     @property
     def pop(self):
         return self.network.pop(self)
+
+    @property
+    def dns_hostname(self):
+        return ank.hostname(self)
 
 
 class link_namedtuple (namedtuple('link', "network, src, dst")):
@@ -101,7 +113,6 @@ class link_namedtuple (namedtuple('link', "network, src, dst")):
     @property
     def ip(self):
         return self.local_ip
-
 
     @property
     def local_ip(self):

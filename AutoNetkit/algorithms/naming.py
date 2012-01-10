@@ -115,10 +115,10 @@ def fqdn(network, node):
         name = name.replace(illegal_char, "")
     return name
 
-def hostname(network, node):
+def hostname(node):
     """ Returns name with spaces, underscores and other illegal characters
     removed. Useful for Bind/DNS"""
-    name = network.label(node)
+    name = node.network.label(node)
     if not name:
         # Numeric ID, so unique
         name = str(node) 

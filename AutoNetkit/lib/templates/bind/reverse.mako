@@ -10,6 +10,6 @@ $TTL 1D
       	IN      NS       lo0.${dns_server}.${domain}.
                        
 ## Entries
-% for e in entry_list:
-${e['reverse']}		PTR	${e['int_id']}.${e['host']}.	     
+% for (reverse, int_id, host) in entry_list:
+${reverse}		PTR	${int_id}.${host}.	     
 %endfor

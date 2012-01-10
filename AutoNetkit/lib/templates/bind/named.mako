@@ -12,10 +12,10 @@ zone "${domain}." IN {
                  
    
 ## Entries
-% for e in entry_list:
-zone "${e['identifier']}.in-addr.arpa" {
+% for reverse_identifier in entry_list:
+zone "${reverse_identifier}" {
 	type master; 
-	file "${e['bind_dir']}/db.${e['identifier']}";        
+	file "${bind_dir}/db.${reverse_identifier}";        
 	allow-query { "any"; };
 };	     
 %endfor

@@ -80,6 +80,11 @@ def bind_dir(network, rtr):
     """Returns bind path for router rtr"""
     return os.path.join(etc_dir(network, rtr), "bind")
 
+def lo_interface(int_id=0):
+    """Returns Linux format lo_interface id for int_id"""
+    #TODO: use this throughout the module
+    return "lo%s" % int_id
+
 
 class NetkitCompiler:
     """Compiler main"""
@@ -90,6 +95,7 @@ class NetkitCompiler:
         self.zebra_password = zebra_password
         self.interface_id = ank.interface_id('netkit')
         self.tap_interface_id = ank.tap_interface_id
+        self.lo_interface = lo_interface
         # Speed improvement: grab eBGP and iBGP  graphs
         #TODO: fetch eBGP and iBGP graphs and cache them
 
@@ -512,6 +518,7 @@ class NetkitCompiler:
     def configure_dns(self):
         """Generates BIND configuration files for DNS"""
         from netaddr import IPSet
+        linux_bind_dir = "/etc/bind"
         resolve_template = lookup.get_template("linux/resolv.mako")
         forward_template = lookup.get_template("bind/forward.mako")
 
@@ -528,6 +535,9 @@ class NetkitCompiler:
         root_servers = ank.root_dns_servers(self.network)
         auth_servers = ank.dns.dns_auth_servers(self.network)
         clients = ank.dns.dns_clients(self.network)
+        routers = set(self.network.routers())
+
+#TODO: use with for opening files
 
         for server in root_servers:
             continue
@@ -537,13 +547,72 @@ class NetkitCompiler:
 
         for server in auth_servers:
             print "auth", server
-            advertise_links= list(ank.advertise_links(server))
+            named_list = []
+            advertise_links = list(ank.advertise_links(server))
+            advertise_hosts = list(ank.dns_auth_children(server))
             LOG.debug("DNS server %s advertises %s" % (server, advertise_links))
-            subnets = list(link.subnet for link in advertise_links) 
-            #print "parents", ank.dns.dns_hiearchy_parents(server)
-            for link in advertise_links:
-                #print link.ip, ank.reverse_subnet(link.ip, link.subnet.prefixlen)
-                pass
+#TODO: make reverse dns handle domains other than /8 /16 /24
+            advertise_block = ip_as_allocs[server.asn]
+            reverse_identifier = ank.rev_dns_identifier(advertise_block)
+#TODO: look at using advertise_block.network.reverse_dns - check what Bind needs
+            named_list.append(reverse_identifier)
+
+            f_named = open( os.path.join(bind_dir(self.network, server), "named.conf"), 'w')
+            f_named.write(named_template.render(
+                domain = server.domain,
+                entry_list = named_list,
+                bind_dir = linux_bind_dir,
+                logging = False,
+            ))
+            f_named.close()
+
+            for_entry_list = ( (self.interface_id(link.id), link.local_host.dns_hostname, link.ip) 
+                    for link in advertise_links)
+            rev_entry_list = ( 
+                    (ank.reverse_subnet(link), self.interface_id(link.id), link.local_host.dns_hostname) 
+                    for link in advertise_links)
+
+
+            #TODO: provide better way to get eg eth0.host than string concat inside the template
+
+            host_cname_list = []
+            for host in advertise_hosts:
+                if host.asn != server.asn:
+# host is from another asn, skip.
+#TODO: extend this to make sure matches same asn, l3group and l2group
+                    continue
+
+                if host in routers:
+# has lo_ip
+                    cname = "%s.%s" % (self.lo_interface(), host.dns_hostname)
+                else:
+# choose an interface - arbitrary choice, choose first host link
+                    host_links = self.network.links(host)
+                    cname = "%s.%s" % (self.interface_id(host_links.next().id), host.dns_hostname)
+            
+                host_cname_list.append( (host.dns_hostname, cname))
+            
+            f_forward = open ( os.path.join(bind_dir(self.network, server), "db.%s" % server.domain), 'w')
+            f_forward.write(forward_template.render(
+                        domain = server.domain,
+                        entry_list = for_entry_list,
+                        host_cname_list =  host_cname_list,
+                        dns_server = server.dns_hostname,
+                ))
+
+            f_reverse = open(os.path.join(bind_dir(self.network, server), "db.%s" % reverse_identifier), 'w')
+
+            #ToDO: look at using reverse_dns from netaddr eg ip.reverse_dns
+
+            #TODO: fix reverse dns
+            # Sort the list based on the reverse IP
+            f_reverse.write(reverse_template.render(
+                domain = server.domain,
+                identifier = reverse_identifier,
+                entry_list = rev_entry_list,
+                dns_server= server.dns_hostname,
+                ))
+
             root_servers = list(ank.dns_hiearchy_parents(server))
             f_root = open( os.path.join(bind_dir(self.network, server), "db.root"), 'w')
             f_root.write( root_template.render( root_servers = root_servers))
@@ -555,9 +624,10 @@ class NetkitCompiler:
             f_resolv = open( os.path.join(etc_dir(self.network, client), "resolv.conf"), 'w')
             f_resolv.write ( resolve_template.render(
                 nameservers = server_ips,
-                domain = ank.domain(client)))
+                domain = client.domain))
 
         return
+
 
 
 

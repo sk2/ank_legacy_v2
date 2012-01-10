@@ -8,12 +8,12 @@ $TTL 1D
 		4W         		;expire
 		1D          	;negative cache TTL
 		)
-@       IN      NS       lo0.${dns_server}
+@       IN      NS       lo0.${dns_server}.
         
 
 ## Entries
-% for e in entry_list:
-${e['int_id']}.${e['host']}	IN	A	${e['int_ip']}	     
+% for (interface_id, host, ip) in entry_list:
+${interface_id}.${host}	IN	A	${ip}	     
 %endfor    
 
 ## CNAME Entries  (note lo:0 is invalid dns name so use lo0 instead )

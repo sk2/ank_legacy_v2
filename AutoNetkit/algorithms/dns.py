@@ -51,7 +51,7 @@ __all__ = ['allocate_dns_servers', 'get_dns_graph',
         'dns_servers', 'dns_level', 'advertise_links',
         'dns_advertise_link', 'root_dns_servers',
         'dns_auth_servers', 'get_dns_auth_graph',
-        'dns_clients',
+        'dns_clients', 'dns_auth_children',
         'dns_hiearchy_children', 'dns_hiearchy_parents',
         'reverse_subnet', 'rev_dns_identifier']
 
@@ -319,7 +319,7 @@ def get_dns_graph(network):
 def get_dns_auth_graph(network):
     return network.g_dns_auth
 
-def reverse_subnet(ip_addr, prefixlen):
+def reverse_subnet(link):
     """Returns reverse address for given IP Address
 
     * w.x.y.z/prefixlen
@@ -344,8 +344,8 @@ def reverse_subnet(ip_addr, prefixlen):
     '4'
     
     """
-    octets = ip_addr.words
-    return ".".join(str(octets[x]) for x in range(3, prefixlen/8-1, -1))
+    octets = link.ip.words
+    return ".".join(str(octets[x]) for x in range(3, link.subnet.prefixlen/8-1, -1))
    
 def rev_dns_identifier(subnet):
     """ Returns Identifier part of subnet for use in reverse dns identification.
@@ -370,8 +370,10 @@ def rev_dns_identifier(subnet):
                 % subnet)
         return
 
-# /8 -> return first octet, /16 -> first two, /24 -> first 3
-    last_octet = subnet.prefixlen/8-1  # index of last octet to include
-    octets = IPAddress(subnet.network).words
-    return ".".join(str(octets[x]) for x in range(last_octet, -1, -1))
-
+    reversed = subnet.network.reverse_dns.split(".")
+# Drop the first/second octets if class A/B
+    if subnet.prefixlen == 8:
+        reversed = reversed[1:]
+    elif subnet.prefixlen == 16:
+        reversed = reversed[2:]
+    return ".".join(reversed)
