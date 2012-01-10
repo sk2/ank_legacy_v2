@@ -551,7 +551,8 @@ class NetkitCompiler:
             host_links = self.network.links(node)
             return self.interface_id(host_links.next().id)
 
-        from netaddr import IPSet
+        import netaddr
+        ip_localhost = netaddr.IPAddress("127.0.0.1")
         linux_bind_dir = "/etc/bind"
         resolve_template = lookup.get_template("linux/resolv.mako")
         forward_template = lookup.get_template("bind/forward.mako")
@@ -576,14 +577,14 @@ class NetkitCompiler:
 
         for server in root_servers:
             children = ank.dns.dns_hiearchy_children(server)
-            dns_servers = []
+            child_servers = []
             for child in children:
                 advertise_block = ip_as_allocs[child.asn]
                 reverse_identifier = ank.rev_dns_identifier(advertise_block)
-                dns_servers.append( (child.domain, reverse_identifier, server_ip(child)))
+                child_servers.append( (child.domain, reverse_identifier, server_ip(child)))
             f_root_db = open(os.path.join(bind_dir(self.network, server), "db.root"), 'w') 
             f_root_db.write( root_dns_template.render(
-                dns_servers = dns_servers,
+                dns_servers = child_servers,
                 server = server,
             ))
 
@@ -659,10 +660,6 @@ class NetkitCompiler:
 
             f_reverse = open(os.path.join(bind_dir(self.network, server), "db.%s" % reverse_identifier), 'w')
 
-            #ToDO: look at using reverse_dns from netaddr eg ip.reverse_dns
-
-            #TODO: fix reverse dns
-            # Sort the list based on the reverse IP
             f_reverse.write(reverse_template.render(
                 domain = server.domain,
                 identifier = reverse_identifier,
@@ -673,6 +670,13 @@ class NetkitCompiler:
             root_servers = list(ank.dns_hiearchy_parents(server))
             f_root = open( os.path.join(bind_dir(self.network, server), "db.root"), 'w')
             f_root.write( root_template.render( root_servers = root_servers))
+
+        for server in dns_servers:
+            f_resolv = open( os.path.join(etc_dir(self.network, server), "resolv.conf"), 'w')
+            f_resolv.write ( resolve_template.render(
+                nameservers = [ip_localhost],
+                domain = server.domain))
+
 
 # Configure clients
         for client in clients:
