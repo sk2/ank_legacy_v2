@@ -515,7 +515,18 @@ class NetkitCompiler:
         ip_as_allocs = ank.get_ip_as_allocs(self.network)
 
         dns_servers = ank.dns_servers(self.network)
-        root_dns_servers = ank.root_dns_servers(self.network)
+        root_servers = ank.root_dns_servers(self.network)
+        auth_servers = ank.dns.dns_auth_servers(self.network)
+
+        for server in root_servers:
+            print "root", server
+            print "children", ank.dns.dns_hiearchy_children(server)
+
+        for server in auth_servers:
+            print "auth", server
+            print "parents", ank.dns.dns_hiearchy_parents(server)
+
+        return
 
         for server in self.network.dns_servers():
             dns_level = ank.dns_level(server)
@@ -526,7 +537,6 @@ class NetkitCompiler:
             #print IPSet(subnets)
 
 
-        return
 
         resolve_template = lookup.get_template("linux/resolv.mako")
         forward_template = lookup.get_template("bind/forward.mako")

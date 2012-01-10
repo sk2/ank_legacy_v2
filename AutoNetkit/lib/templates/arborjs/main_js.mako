@@ -143,7 +143,7 @@
         % endfor
     
         % for node, data in node_list:
-        sys.addNode('${node}', {name: "${data['label']}"})        
+        sys.addNode('${node}', {name: "${data.get('label', '')}"})        
         % endfor 
     % elif overlay_graph:
         % for src, dst, data in edge_list:

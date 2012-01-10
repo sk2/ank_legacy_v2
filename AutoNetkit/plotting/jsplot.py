@@ -132,7 +132,7 @@ def jsplot(network):
     for node in dns_graph.nodes():
 # Set label to be FQDN, so don't have multiple "Router A" nodes etc
         try:
-            label = ank.fqdn(network, node)
+            label = node.label
         except KeyError:
             label = node
         data = { 'label': "%s (%s)" % (label, dns_graph.node[node].get("level"))}
@@ -141,6 +141,24 @@ def jsplot(network):
     edge_list = dns_graph.edges(data=True)
     edge_list = list( (src.id, dst.id, data) for (src, dst, data) in edge_list)
     js_files.append("dns.js")
+    with open( dns_filename, 'w') as f_js:
+            f_js.write( js_template.render(
+                node_list = node_list,
+                edge_list = edge_list,
+                physical_graph = True,
+                ))
+
+
+    dns_auth_graph = ank.get_dns_auth_graph(network)
+    node_list = []
+    for node in dns_auth_graph.nodes():
+# Set label to be FQDN, so don't have multiple "Router A" nodes etc
+        data = { 'label': "%s" % node.label}
+        node_list.append( (node.id, data))
+    dns_filename = os.path.join(jsplot_dir, "dns_auth.js")
+    edge_list = dns_auth_graph.edges(data=True)
+    edge_list = list( (src.id, dst.id, data) for (src, dst, data) in edge_list)
+    js_files.append("dns_auth.js")
     with open( dns_filename, 'w') as f_js:
             f_js.write( js_template.render(
                 node_list = node_list,
@@ -183,7 +201,14 @@ def jsplot(network):
     with open( html_filename, 'w') as f_html:
             f_html.write( html_template.render( js_file = "dns.js",
                 timestamp=timestamp,
-                title = "DNS",
+                title = "DNS Hiearchy",
+                css_filename = "./ank_style.css",))
+
+    html_filename = os.path.join(plot_dir, "dns_auth.html")
+    with open( html_filename, 'w') as f_html:
+            f_html.write( html_template.render( js_file = "dns_auth.js",
+                timestamp=timestamp,
+                title = "DNS Authority",
                 css_filename = "./ank_style.css",))
 
     css_filename = os.path.join(jsplot_dir, "style.css")

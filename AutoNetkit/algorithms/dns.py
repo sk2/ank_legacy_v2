@@ -50,6 +50,8 @@ __author__ = "\n".join(['Simon Knight'])
 __all__ = ['allocate_dns_servers', 'get_dns_graph',
         'dns_servers', 'dns_level', 'advertise_edges',
         'dns_advertise_link', 'root_dns_servers',
+        'dns_auth_servers', 'get_dns_auth_graph',
+        'dns_hiearchy_children', 'dns_hiearchy_parents',
         'reverse_subnet', 'rev_dns_identifier']
 
 import AutoNetkit as ank
@@ -57,7 +59,6 @@ import networkx as nx
 from netaddr import IPAddress, IPNetwork
 import pprint
 import itertools
-
 
 import logging
 LOG = logging.getLogger("ANK")
@@ -235,6 +236,13 @@ def allocate_dns_servers(network):
 
 
 #TODO: authoritative might need to be a graph also
+# setup domains
+
+    for server in dns_servers(network):
+        children = dns_auth_children(server)
+        if len(children):
+# does auth, set domain
+            network.g_dns.node[server]['domain'] = "AS%s" % server.asn
 
 # TODO: handle different levels
 # in 3 level model, l3 servers advertise for AS
@@ -251,6 +259,12 @@ def dns_advertise_link(src, dst):
 # find servers responsible for src
     for src_server in dns_auth_parents(src):
         add_dns_auth_child(src_server, dst)
+
+def dns_hiearchy_children(node):
+    return node.network.g_dns.predecessors(node)
+
+def dns_hiearchy_parents(node):
+    return node.network.g_dns.successors(node)
 
 def add_dns_auth_child(parent, child):
     parent.network.g_dns_auth.add_edge(child, parent)
@@ -287,10 +301,18 @@ def dns_level(node):
     return node.network.g_dns.node[node].get("level")
 
 def dns_servers(network):
+    """Servers that have DNS level > 1"""
     return (n for n in network.g_dns.nodes_iter() if dns_level(n) > 1)
+
+def dns_auth_servers(network):
+    """Servers that have auth children"""
+    return (n for n in dns_servers(network) if len(dns_auth_children(n)))
 
 def get_dns_graph(network):
     return network.g_dns
+
+def get_dns_auth_graph(network):
+    return network.g_dns_auth
 
 def reverse_subnet(ip_addr, prefixlen):
     """Returns reverse address for given IP Address
