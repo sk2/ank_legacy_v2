@@ -67,12 +67,6 @@ interfaces {
 }            
 
 routing-options {
-    aggregate {
-        route 
-		%for n in network_list:  
-		${n};
-		%endfor  
-    }
     router-id ${router_id};
     autonomous-system ${asn};
 } 
@@ -113,6 +107,7 @@ protocols {
 	% if bgp_groups:         
 	bgp {                  
 		export adverts;
+		advertise-inactive;
 		% for groupname, group_data in bgp_groups.items():   
 			group ${groupname} {
 				type ${group_data['type']};    
@@ -214,7 +209,7 @@ policy-options {
 	
     policy-statement adverts {
         term 1 {
-            from protocol [ aggregate direct ];
+            from protocol [ local direct ];
             then accept;
         }
     }
