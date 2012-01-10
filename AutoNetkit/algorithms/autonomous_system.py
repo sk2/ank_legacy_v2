@@ -14,6 +14,9 @@ from collections import defaultdict
 #TODO: cut the number of functions presented here, many can be built from
 # other functions
 
+#TODO: return a namedtuple for my_as that has properties for links for simplicity
+# so can do "for link in my_as.links:"
+
 def nodes_by_as(network):
     """ returns dict of nodes indexed by AS """
 #TODO: use itertools and groupby here

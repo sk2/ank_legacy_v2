@@ -331,9 +331,7 @@ class NetkitCompiler:
                 continue
 
             for router in self.network.routers(asn):
-
-                # Note use the AS, not the network graph for edges,
-                # as only concerned with intra-AS edges for IGP
+                #TODO: can probably through most of these straight into the template and use properties there!
 
                 interface_list = []
                 network_list = []
@@ -369,7 +367,7 @@ class NetkitCompiler:
 
                 f_handle.write(template.render
                                (
-                                   hostname = ank.fqdn(self.network, router),
+                                   hostname = router,
                                    password = self.zebra_password,
                                    enable_password = self.zebra_password,
                                    interface_list = interface_list,
