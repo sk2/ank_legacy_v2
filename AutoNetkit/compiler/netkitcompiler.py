@@ -546,7 +546,6 @@ class NetkitCompiler:
             print
 
         for server in auth_servers:
-            print "auth", server
             named_list = []
             advertise_links = list(ank.advertise_links(server))
             advertise_hosts = list(ank.dns_auth_children(server))
@@ -616,7 +615,6 @@ class NetkitCompiler:
             root_servers = list(ank.dns_hiearchy_parents(server))
             f_root = open( os.path.join(bind_dir(self.network, server), "db.root"), 'w')
             f_root.write( root_template.render( root_servers = root_servers))
-            print
 
 # Configure clients
         for client in clients:
