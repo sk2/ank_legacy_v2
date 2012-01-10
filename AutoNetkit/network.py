@@ -82,7 +82,7 @@ class node_namedtuple (namedtuple('node', "network, id")):
 
     @property
     def tap_ip(self):
-        return self.network.node[self].get("tap_ip")
+        return self.network.graph.node[self].get("tap_ip")
 
     @property
     def dns_hostname(self):

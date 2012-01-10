@@ -320,10 +320,12 @@ class NetkitDeploy():
         if not os.path.isdir(host_data_dir):
                 os.mkdir(host_data_dir)
 
+        servers = set(self.network.servers())
+
         #TODO: need to have way to allow privexec.... or just disable enable password?
 #TODO: Put term len 0 into configs
 
-        for node, data in self.network.graph.nodes(data=True):
+        for node in self.network.devices():
             routername = ank.fqdn(self.network, node)
             full_routername = ank.rtr_folder_name(self.network, node)
             user_exec_prompt = "%s>" % node.dns_hostname
@@ -336,11 +338,17 @@ class NetkitDeploy():
                     shell.sendline(command)
                     shell.expect(self.server.NETKIT_PROMPT)
                     self.server.disconnect_vm(shell)
+                    print "waiting on prompt"
+                    shell.prompt()
+                    print "got it"
 
 # need to ssh into this machine
                 else:
+                    if node in servers:
+# don't try telnet into zebra
+                        continue
 # use telnet
-                    shell.sendline("telnet %s %s" % (data.get("tap_ip"), telnet_port))
+                    shell.sendline("telnet %s %s" % (node.tap_ip, telnet_port))
                     shell.expect("Password:")
                     shell.sendline("1234")
                     shell.expect(user_exec_prompt)
@@ -364,7 +372,9 @@ class NetkitDeploy():
                         shell.expect(priv_exec_prompt)
                         command_output = shell.before
                     shell.sendline("exit")
+                    shell.prompt() 
 # from http://stackoverflow.com/q/295135/
+                print "savng"
                 command_filename_format = (re.sub('[^\w\s-]', '', command).strip().lower())
                 filename = "%s_%s_%s.txt" % (full_routername,
                         command_filename_format,
@@ -374,4 +384,3 @@ class NetkitDeploy():
                 with open( filename, 'w') as f_out:
                     f_out.write(command_output)
                 # check back at linux shell before continuing
-                shell.prompt() 
