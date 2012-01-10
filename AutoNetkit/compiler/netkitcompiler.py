@@ -608,7 +608,7 @@ class NetkitCompiler:
             f_named.write(named_template.render(
                 entry_list = [],
                 bind_dir = linux_bind_dir,
-                logging = False,
+                logging = True,
             ))
             f_named.close()
 
@@ -628,14 +628,14 @@ class NetkitCompiler:
                 domain = server.domain,
                 entry_list = named_list,
                 bind_dir = linux_bind_dir,
-                logging = False,
+                logging = True,
             ))
             f_named.close()
 
             for_entry_list = ( (self.interface_id(link.id), link.local_host.dns_hostname, link.ip) 
                     for link in advertise_links)
             rev_entry_list = ( 
-                    (ank.reverse_subnet(link), self.interface_id(link.id), link.local_host.dns_hostname) 
+                    (ank.reverse_subnet(link, advertise_block.prefixlen), self.interface_id(link.id), link.local_host.dns_hostname) 
                     for link in advertise_links)
 
 
@@ -674,7 +674,7 @@ class NetkitCompiler:
                 dns_server= server.dns_hostname,
                 ))
 
-            root_servers = list(ank.dns_hiearchy_parents(server))
+            root_servers = ( (n.dns_hostname, server_ip(n)) for n in ank.dns_hiearchy_parents(server))
             f_root = open( os.path.join(bind_dir(self.network, server), "db.root"), 'w')
             f_root.write( root_template.render( root_servers = root_servers))
 

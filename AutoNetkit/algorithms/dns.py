@@ -323,7 +323,7 @@ def get_dns_graph(network):
 def get_dns_auth_graph(network):
     return network.g_dns_auth
 
-def reverse_subnet(link):
+def reverse_subnet(link, prefixlen):
     """Returns reverse address for given IP Address
 
     * w.x.y.z/prefixlen
@@ -349,7 +349,7 @@ def reverse_subnet(link):
     
     """
     octets = link.ip.words
-    return ".".join(str(octets[x]) for x in range(3, link.subnet.prefixlen/8-1, -1))
+    return ".".join(str(octets[x]) for x in range(3, prefixlen/8-1, -1))
    
 def rev_dns_identifier(subnet):
     """ Returns Identifier part of subnet for use in reverse dns identification.
