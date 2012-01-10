@@ -29,7 +29,7 @@ def debug_edges(graph):
     pprint.pprint(debug_data)
 
 
-#TODO: move these into a seperate module
+#TODO: remove these
 def asn(node):
     return node.network.asn(node)
 
@@ -94,32 +94,22 @@ def junos_logical_int_id_ge(int_id):
     ge-0/0/1 becomes ge-0/0/1.0"""
     return int_id + ".0"
 
-def domain(network, asn):
-    """ Returns domain for a provided network and asn
-    Accesses set domain for network, for prodived asn"""
-    #TODO: check if can remove this now handle eBGP seperately
-    asn = int(asn)
-    as_domain = ""
-    if asn in network.as_names:
-        as_domain = network.as_names[asn]
-    else:
-        as_domain = "AS{0}".format(asn)
+def domain(device):
+    """ Returns domain for device"""
+    as_name = "AS%s" % device.asn
+    domain_elements = [as_name]
+    if device.pop:
+        domain_elements = [device.pop, as_name]
 
+    domain_label = ".".join(str(e) for e in domain_elements)
     for illegal_char in [" ", "/", "_", ",", "&amp;", "-"]:
-        as_domain = as_domain.replace(illegal_char, "")
-    return as_domain
+        domain_label = domain_label.replace(illegal_char, "")
+    return domain_label
 
 def fqdn(network, node):
     """Returns formatted domain name for
     node r in graph graph."""
-    asn = network.asn(node)
-    node_domain = domain(network, asn)
-    node_label = network.label(node)
-    if not node_label:
-        # Numeric ID, so unique
-        node_label = str(node) 
-    name = "{0}.{1}".format(node_label,
-                            node_domain)
+    name = "%s.%s" % (node.label, domain(node))
     # / spaces and underscores are illegal in hostnames
     for illegal_char in [" ", "/", "_", ",", "&amp;", "-"]:
         name = name.replace(illegal_char, "")

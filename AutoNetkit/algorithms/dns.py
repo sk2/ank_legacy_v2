@@ -51,6 +51,7 @@ __all__ = ['allocate_dns_servers', 'get_dns_graph',
         'dns_servers', 'dns_level', 'advertise_edges',
         'dns_advertise_link', 'root_dns_servers',
         'dns_auth_servers', 'get_dns_auth_graph',
+        'dns_clients',
         'dns_hiearchy_children', 'dns_hiearchy_parents',
         'reverse_subnet', 'rev_dns_identifier']
 
@@ -303,6 +304,10 @@ def dns_level(node):
 def dns_servers(network):
     """Servers that have DNS level > 1"""
     return (n for n in network.g_dns.nodes_iter() if dns_level(n) > 1)
+
+def dns_clients(network):
+    """Devices that have DNS level == 1"""
+    return (n for n in network.g_dns.nodes_iter() if dns_level(n) == 1)
 
 def dns_auth_servers(network):
     """Servers that have auth children"""

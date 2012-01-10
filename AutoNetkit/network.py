@@ -67,6 +67,10 @@ class node_namedtuple (namedtuple('node', "network, id")):
     @property
     def asn(self):
         return self.network.asn(self)
+    
+    @property
+    def pop(self):
+        return self.network.pop(self)
 
 
 class link_namedtuple (namedtuple('link', "network, src, dst")):

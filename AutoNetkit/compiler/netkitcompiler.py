@@ -511,33 +511,6 @@ class NetkitCompiler:
 
     def configure_dns(self):
         """Generates BIND configuration files for DNS"""
-        from netaddr import IPSet
-        ip_as_allocs = ank.get_ip_as_allocs(self.network)
-
-        dns_servers = ank.dns_servers(self.network)
-        root_servers = ank.root_dns_servers(self.network)
-        auth_servers = ank.dns.dns_auth_servers(self.network)
-
-        for server in root_servers:
-            print "root", server
-            print "children", ank.dns.dns_hiearchy_children(server)
-
-        for server in auth_servers:
-            print "auth", server
-            print "parents", ank.dns.dns_hiearchy_parents(server)
-
-        return
-
-        for server in self.network.dns_servers():
-            dns_level = ank.dns_level(server)
-            LOG.info("DNS server %s is dns_level %s" % (server, dns_level))
-            advertise_edges= list(ank.advertise_edges(server))
-            LOG.debug("DNS server %s advertises %s" % (server, advertise_edges))
-            subnets = list(link.subnet for link in advertise_edges)
-            #print IPSet(subnets)
-
-
-
         resolve_template = lookup.get_template("linux/resolv.mako")
         forward_template = lookup.get_template("bind/forward.mako")
 
@@ -548,235 +521,42 @@ class NetkitCompiler:
         root_dns_template = lookup.get_template("bind/root_dns.mako")
         root_dns_named_template = lookup.get_template("bind/root_dns_named.mako")
 
-        dns_list = ank.dns_list(self.network)
+        from netaddr import IPSet
+        ip_as_allocs = ank.get_ip_as_allocs(self.network)
 
-        root_dns = ank.root_dns(self.network)
-        if not root_dns:
-            LOG.info("No root DNS for network, skipping DNS config")
-            return
-        root_servers = {'name': root_dns,
-                        'ip': self.network.lo_ip(root_dns).ip,
-                        'hostname': ank.hostname(self.network, root_dns)}
+        dns_servers = ank.dns_servers(self.network)
+        root_servers = ank.root_dns_servers(self.network)
+        auth_servers = ank.dns.dns_auth_servers(self.network)
+        clients = ank.dns.dns_clients(self.network)
 
-        # Need ebgp graph to check for eBGP links allocated from this subnet
-        ebgp_graph = ank.get_ebgp_graph(self.network)
+        for server in root_servers:
+            continue
+            print "root", server
+            print "children", ank.dns.dns_hiearchy_children(server)
+            print
 
-        # Information for case when AS DNS server is same as Internet DNS server
-        root_dns_server_entry_list = {}
-        root_dns_server_domain = None
+        for server in auth_servers:
+            print "auth", server
+            advertise_edges= list(ank.advertise_edges(server))
+            LOG.debug("DNS server %s advertises %s" % (server, advertise_edges))
+            subnets = list(link.subnet for link in advertise_edges) 
+            #print "parents", ank.dns.dns_hiearchy_parents(server)
+            print
 
-        for my_as in ank.get_as_graphs(self.network):
-            asn = my_as.asn
-            subnet = ip_as_allocs[asn]
-            domain = ank.domain(self.network, asn)
+# Configure clients
+        for client in clients:
+            print ank.domain(client)
+            continue
+            f_resolv = open( os.path.join(etc_dir(self.network, rtr), "resolv.conf"), 'w')
+            f_resolv.write ( resolve_template.render(
+                nameserver = dns_server_ip,
+                    domain = ank.domain(node)))
+            print client
+        
 
-            named_list = []
-            for_entry_list = []
-            #TODO: use the same list for both?
-            rev_entry_list = []
-            host_cname_list = []
-
-            # Look at eBGP nodes in this subnet, the set union of nodes in both
-            as_ebgp_nodes = set(my_as.nodes()) & set(ebgp_graph.nodes())
-            # See if any eBGP link out of this AS uses IP from the AS subnet, if
-            # so need to also add the destination for reverse DNS
-            for node in as_ebgp_nodes:
-                for src, dst, data in ebgp_graph.edges(node, data=True):
-                    ebgp_sn = self.network.graph[src][dst]['sn']
-                    if ebgp_sn in subnet:
-                        # Int id and ip of link from dst (in remote AS) to src
-                        int_id = ank.int_id(self.network, dst, src)
-                        int_id = "eth{0}".format(int_id)
-                        ip_addr = ank.ip_addr(self.network, dst, src)
-                        reverse = ank.reverse_subnet(ip_addr, subnet.prefixlen)
-                        # Add remote host to reverse DNS for subnet of this AS
-                        rev_entry_list.append( {'int_id': int_id,
-                                                'reverse': reverse,
-                                                'host': ank.fqdn(self.network,
-                                                                 dst)})
-
-            #TODO: support non-classful AS subnets (base on ANKv1 code)
-            if subnet.prefixlen not in [8, 16, 24]:
-                LOG.warn("Only classful subnet allocations supported for DNS")
-                return
-
-            for rtr in my_as.nodes():
-                hostname = ank.hostname(self.network, rtr)
-
-                #TODO: make this a function rather than hardcoded lo0
-                host_cname_list.append((hostname, "lo0.{0}".format(hostname)))
-                asn = self.network.asn(rtr)
-
-                # Obtain DNS server for this AS
-                dns_server = dns_list[asn]
-                dns_server_hostname = ank.hostname(self.network, dns_server)
-                dns_server_ip = self.network.lo_ip(dns_server).ip
-
-                f_resolv = open( os.path.join(etc_dir(self.network, rtr),
-                                              "resolv.conf"), 'w')
-                f_resolv.write ( resolve_template.render(
-                    nameserver = dns_server_ip,
-                    domain = ank.domain(self.network, asn) ))
-
-                # get link data for this router
-                for src, dst in self.network.get_edges(rtr):
-                    int_id = ank.int_id(self.network, src, dst)
-                    ip_addr = ank.ip_addr(self.network, src, dst)
-
-                    #TODO: map int_id into eth, en, etc based on a dict
-                    # skip links not belonging to this AS's subnet, eBGP links
-                    if ip_addr in subnet:
-                        #TODO: use a function for this
-#TODO: use the platform passed into DNS, eg junosphere/olive/netkit and map the interface fn appropriately (like in junos compiler)
-#TODO: this requires making the interface functions part of ank. ratehr than inside each compiler...
-                        int_id = "eth{0}".format(int_id)
-                        reverse = ank.reverse_subnet(ip_addr, subnet.prefixlen)
-                        for_entry_list.append( {'int_id': int_id,
-                                                'int_ip': str(ip_addr),
-                                                'host': hostname})
-                        rev_entry_list.append( {'int_id': int_id,
-                                                'reverse': reverse,
-                                                'host': ank.fqdn(self.network,
-                                                                 rtr)})
-                    else:
-                        LOG.debug("Skipping link {0}.{1} as {2} "
-                                  " not in {3}".format(int_id, rtr,
-                                                     ip_addr, subnet))
-
-                # and add loopbacks
-                # loopback ip is a subnet, extract IP from it
-                lo_subnet = self.network.lo_ip(rtr)
-                #TODO: make this a universal constant
-                int_id = "lo0"
-                reverse = ank.reverse_subnet(lo_subnet.ip, subnet.prefixlen)
-
-                for_entry_list.append( {'int_id': int_id,
-                                        'int_ip': str(lo_subnet.ip),
-                                        'host': hostname   })
-                rev_entry_list.append( {'int_id': int_id,
-                                        'reverse': reverse,
-                                        'host': ank.fqdn(self.network, rtr) })
-
-            # Now setup the server
-            LOG.debug("DNS server for AS{0} is {1}".format(asn, dns_server))
-
-            rtr = dns_list[asn]
-            hostname = ank.hostname(self.network, rtr)
-
-            # Check if DNS server for this AS is same as global root DNS
-            if dns_list[asn] == root_dns:
-                root_dns_server_entry_list = named_list
-                root_dns_server_domain = domain
-
-            # DNS server for AS
-            f_root = open( os.path.join(bind_dir(self.network, rtr),
-                                        "db.root"), 'w')
-            f_root.write( root_template.render(
-                    root_servers = root_servers,
-                ))
-
-            # needs to be in format like db.0.0.10 or db.0.10
-            identifier = ank.rev_dns_identifier(subnet)
-
-            # Store for named.conf entry
-            named_entry = {'identifier': identifier,
-                           'bind_dir': "/etc/bind",
-                           'filename': identifier}
-            #don't duplicate entries
-            #TODO: tidy this up - list comprehension?
-            if(named_entry not in named_list):
-                named_list.append(named_entry)
-
-            f_named = open( os.path.join(bind_dir(self.network, rtr),
-                                         "named.conf"), 'w')
-            f_named.write(named_template.render(
-                domain = domain,
-                entry_list = named_list,
-                logging = True,
-            ))
-            f_named.close()
-
-            # forward entries
-            # eg db.AS1
-            f_forward = open ( os.path.join(bind_dir(self.network, rtr),
-                                            "db.{0}".format(domain)), 'w')
-            f_forward.write(forward_template.render(
-                domain = domain,
-                        # Only concerned the DNS entries,
-                        # not the subnets they belong to
-                        entry_list = for_entry_list,
-                        host_cname_list =  host_cname_list,
-                        #entryList =[],
-                        dns_server= dns_server_hostname,
-                        dns_server_ip= dns_server_ip,
-                ))
-
-            # reverse entries
-            f_reverse = open(os.path.join(bind_dir(self.network, rtr),
-                "db.{0}".format(identifier)), 'w')
-
-            #ToDO: look at using reverse_dns from netaddr eg ip.reverse_dns
-
-            #TODO: fix reverse dns
-            # Sort the list based on the reverse IP
-#TODO: can use item getter?
-            rev_entry_list.sort(key=lambda x: (x['reverse']))
-            f_reverse.write(reverse_template.render(
-                subnet = subnet,
-                domain = domain,
-                identifier = identifier,
-                entry_list = rev_entry_list,
-                dns_server_ip=dns_server_ip,
-                dns_server= dns_server_hostname,
-                dns_server_reverse_ip = dns_server_ip.reverse_dns,
-                ))
-
-
-        # TODO: Make sure this is not one of
-        #  the AS dns servers, otherwise the configuration will overwrite each
-        # other. (probably best
-        #  to make sure of this in the self.network.root_dns() call
-
-        dns_servers = []
-        for asn in dns_list:
-            subnet = ip_as_allocs[asn]
-            identifier = ank.rev_dns_identifier(subnet)
-            rtr = dns_list[asn]
-            domain = ank.domain(self.network, asn)
-            hostname = ank.hostname(self.network, rtr)
-            dns_servers.append({"ip": self.network.lo_ip(rtr).ip,
-                                "name": rtr,
-                                "AS": asn,
-                                "hostname" : hostname,
-                                "domain": domain,
-                                "reverse": identifier})
-
-        #return
-        #write the db.root for the finding the delegation servers
-        # Root DB for all of networks
-        f_root_db = open(os.path.join(bind_dir(self.network, root_dns),
-                                      "db.root"), 'w')
-
-        #ToDO: see if can reduce number of calls to bind_dir here
-        f_root_db.write( root_dns_template.render(
-                dns_servers = dns_servers,
-                root_servers= root_servers,
-            ))
-
-
-        # and append the root config to named file, for root DNS of all domains
-        # the previously written named.conf was for each domain root DNS server
-        f_named = open( os.path.join(bind_dir(self.network, root_dns), "named.conf"), 'w')
-
-        f_named.write(root_dns_named_template.render(
-            domain = root_dns_server_domain,
-            entry_list = root_dns_server_entry_list,
-            logging = True,
-        ))
-
-        #TODO: build in checks eg named-checkconf named.conf
-        # and named-checkzone . db.root
         return
+
+
 
     def configure(self):
         """Configure Netkit"""
