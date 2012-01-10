@@ -70,12 +70,35 @@ class link_namedtuple (namedtuple('link', "network, src, dst")):
         return "(%s, %s)" % (self.src, self.dst)
 
     @property
-    def label(self):
-        return self.network.label(self)
+    def id(self):
+        return self.network.graph[self.src][self.dst]['id']
 
     @property
-    def fqdn(self):
-        return self.network.fqdn(self)
+    def weight(self):
+        return self.network.graph[self.src][self.dst].get("weight")
+
+    @property
+    def subnet(self):
+        return self.network.graph[self.src][self.dst]['sn']
+
+    @property
+    def local_host(self):
+        return self.src
+
+    @property
+    def remote_host(self):
+        return self.dst
+
+    @property
+    def local_ip(self):
+        return self.network.graph[self.src][self.dst]['ip']
+
+    @property
+    def remote_ip(self):
+        """Assume bi-directional link"""
+        return self.network.graph[self.dst][self.src]['ip']
+
+
 
 
 class Network(object): 
@@ -339,7 +362,10 @@ class Network(object):
         # TODO: check in_degree == out_degree if not then WARN - or put into consistency check function
         return self.graph.in_degree(node)
 
-    def links(self, router=None):
-        return ( link_namedtuple(self, src, dst) for (src, dst) in self.graph.edges(router))
+    def links(self, router=None, graph=None):
+        if graph:
+            return ( link_namedtuple(self, src, dst) for (src, dst) in graph.edges(router))
+        else:
+            return ( link_namedtuple(self, src, dst) for (src, dst) in self.graph.edges(router))
 
 

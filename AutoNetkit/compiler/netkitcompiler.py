@@ -318,9 +318,7 @@ class NetkitCompiler:
         """Generates IGP specific configuration files (eg ospfd)"""
         LOG.debug("Configuring IGP")
         template = lookup.get_template("quagga/ospf.mako")
-        self.network.set_default_edge_property('weight', 1)
-
-        ank.debug_edges(self.network.g_dns)
+        default_weight = 1
 
         # configures IGP for each AS
         as_graphs = ank.get_as_graphs(self.network)
@@ -332,15 +330,8 @@ class NetkitCompiler:
                 LOG.debug("Skipping IGP for AS%s as no internal links" % asn)
                 continue
 
-            print "all edges", list(self.network.links())
-
             for router in self.network.routers(asn):
 
-                print "links:"
-                for link in self.network.links(router):
-                    print link
-
-                print "router is", router.fqdn
                 # Note use the AS, not the network graph for edges,
                 # as only concerned with intra-AS edges for IGP
 
@@ -356,18 +347,18 @@ class NetkitCompiler:
                                     'netmask': lo_ip.netmask,
                                     'area': 0, 'remote_ip': "Loopback" })
 
-                for src, dst, data in my_as.edges(router, data=True):
+                for link in self.network.links(router, my_as):
 
-                    int_id = self.interface_id(data['id'])
-                    weight = self.network.link_weight(src, dst)
+                    int_id = self.interface_id(link.id)
+                    weight = link.weight or default_weight
                     interface_list.append ({ 'id':  int_id,
                                             'weight': weight,
-                                            'remote_router': dst, } )
+                                            'remote_router': link.remote_host, } )
 
                     # fetch and format the ip details
-                    subnet = data['sn']
-                    local_ip = data['ip']
-                    remote_ip = self.network.int_ip(dst, src)
+                    subnet = link.subnet
+                    local_ip = link.local_ip
+                    remote_ip = link.remote_ip
                     network_list.append ( { 'cidr': subnet.cidr, 'ip': local_ip,
                                         'netmask': subnet.netmask,
                                         'remote_ip': remote_ip, 'area': 0, } )
