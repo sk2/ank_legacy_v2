@@ -2,16 +2,15 @@ options {
     	allow-query { "any"; };
 };   
 
-
-//zone for each AS
+% if domain:       
+//zone for each AS    
 zone "${domain}." IN {
 	type master;
 	file "/etc/bind/db.${domain}";  
 	allow-query { "any"; };
-};      
-                 
+};          
+% endif
    
-## Entries
 % for reverse_identifier in entry_list:
 zone "${reverse_identifier}" {
 	type master; 
@@ -20,16 +19,12 @@ zone "${reverse_identifier}" {
 };	     
 %endfor
        
-
-	// prime the server with knowledge of the root servers
+// prime the server with knowledge of the root servers
 zone "." {
         type hint;
         file "/etc/bind/db.root";       
 	};
                              
-
-
-
 %if logging:
 logging {
 category "default" { "debug"; };

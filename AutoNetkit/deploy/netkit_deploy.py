@@ -338,14 +338,11 @@ class NetkitDeploy():
                     shell.sendline(command)
                     shell.expect(self.server.NETKIT_PROMPT)
                     self.server.disconnect_vm(shell)
-                    print "waiting on prompt"
                     shell.prompt()
-                    print "got it"
-
 # need to ssh into this machine
                 else:
                     if node in servers:
-# don't try telnet into zebra
+# don't try telnet into as zebra not running
                         continue
 # use telnet
                     shell.sendline("telnet %s %s" % (node.tap_ip, telnet_port))

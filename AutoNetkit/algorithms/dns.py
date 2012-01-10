@@ -52,6 +52,7 @@ __all__ = ['allocate_dns_servers', 'get_dns_graph',
         'dns_advertise_link', 'root_dns_servers',
         'dns_auth_servers', 'get_dns_auth_graph',
         'dns_clients', 'dns_auth_children',
+        'dns_cache_servers',
         'dns_hiearchy_children', 'dns_hiearchy_parents',
         'reverse_subnet', 'rev_dns_identifier']
 
@@ -278,6 +279,9 @@ def dns_auth_children(node):
 
 def root_dns_servers(network):
     return (n for n in network.servers() if dns_level(n) == 4)
+
+def dns_cache_servers(network):
+    return (n for n in network.servers() if dns_level(n) == 2)
 
 def advertise_links(node):
     auth_children = dns_auth_children(node)

@@ -541,6 +541,16 @@ class NetkitCompiler:
             bash-3.2$ named-checkconf ank_lab/netkit_lab/AS3_l3_3_dns_1/etc/bind/named.conf 
         
         """
+        def server_ip(node):
+            """Servers don't have a loopback IP"""
+            host_links = self.network.links(node)
+            return host_links.next().ip
+
+        def server_interface(node):
+            """Servers don't have a loopback interface"""
+            host_links = self.network.links(node)
+            return self.interface_id(host_links.next().id)
+
         from netaddr import IPSet
         linux_bind_dir = "/etc/bind"
         resolve_template = lookup.get_template("linux/resolv.mako")
@@ -558,6 +568,7 @@ class NetkitCompiler:
         dns_servers = ank.dns_servers(self.network)
         root_servers = ank.root_dns_servers(self.network)
         auth_servers = ank.dns.dns_auth_servers(self.network)
+        caching_servers = ank.dns.dns_cache_servers(self.network)
         clients = ank.dns.dns_clients(self.network)
         routers = set(self.network.routers())
 
@@ -569,7 +580,7 @@ class NetkitCompiler:
             for child in children:
                 advertise_block = ip_as_allocs[child.asn]
                 reverse_identifier = ank.rev_dns_identifier(advertise_block)
-                dns_servers.append( (child.domain, reverse_identifier, child.lo_ip.ip))
+                dns_servers.append( (child.domain, reverse_identifier, server_ip(child)))
             f_root_db = open(os.path.join(bind_dir(self.network, server), "db.root"), 'w') 
             f_root_db.write( root_dns_template.render(
                 dns_servers = dns_servers,
@@ -580,6 +591,18 @@ class NetkitCompiler:
             f_named.write(root_dns_named_template.render(
                 logging = True,
             ))
+
+        for server in caching_servers:
+            root_servers = list(ank.dns_hiearchy_parents(server))
+            f_root = open( os.path.join(bind_dir(self.network, server), "db.root"), 'w')
+            f_root.write( root_template.render( root_servers = root_servers))
+            f_named = open( os.path.join(bind_dir(self.network, server), "named.conf"), 'w')
+            f_named.write(named_template.render(
+                entry_list = [],
+                bind_dir = linux_bind_dir,
+                logging = False,
+            ))
+            f_named.close()
 
         for server in auth_servers:
             named_list = []
@@ -622,8 +645,7 @@ class NetkitCompiler:
                     cname = "%s.%s" % (self.lo_interface(), host.dns_hostname)
                 else:
 # choose an interface - arbitrary choice, choose first host link
-                    host_links = self.network.links(host)
-                    cname = "%s.%s" % (self.interface_id(host_links.next().id), host.dns_hostname)
+                    cname = "%s.%s" % (server_interface(host), host.dns_hostname)
             
                 host_cname_list.append( (host.dns_hostname, cname))
             
@@ -654,7 +676,7 @@ class NetkitCompiler:
 
 # Configure clients
         for client in clients:
-            server_ips = (server.lo_ip.ip for server in ank.dns_hiearchy_parents(client))
+            server_ips = (server_ip(server) for server in ank.dns_hiearchy_parents(client))
             f_resolv = open( os.path.join(etc_dir(self.network, client), "resolv.conf"), 'w')
             f_resolv.write ( resolve_template.render(
                 nameservers = server_ips,
