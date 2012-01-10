@@ -13,6 +13,7 @@ import os
 import logging
 LOG = logging.getLogger("ANK")
 
+            #TODO: replace other if node in servers with node.is_server
 import shutil
 import glob
 import time
@@ -23,7 +24,6 @@ from AutoNetkit import config
 settings = config.settings
 
 import pprint
-pp = pprint.PrettyPrinter(indent=4)
 
 # Check can write to template cache directory
 #TODO: make function to provide cache directory
@@ -272,6 +272,12 @@ class NetkitCompiler:
                     'broadcast':    str(subnet.broadcast),
                 })
 
+            default_route = None
+            if node.is_server:
+                default_route = ank.default_route(node)
+# add default_route for server to router
+
+
             #Write startup file for this router
             f_startup = open( os.path.join(netkit_dir(self.network, node),
                 "{0}.startup".format(rtr_folder_name)), 'w')
@@ -281,6 +287,7 @@ class NetkitCompiler:
                 add_localhost=True,
                 #don't send out the tap interface
                 del_default_route=True,
+                default_route = default_route,
                 daemons=startup_daemon_list,
                 ))
             f_startup.close()
@@ -594,7 +601,7 @@ class NetkitCompiler:
             ))
 
         for server in caching_servers:
-            root_servers = list(ank.dns_hiearchy_parents(server))
+            root_servers = ( (n.dns_hostname, server_ip(n)) for n in ank.dns_hiearchy_parents(server))
             f_root = open( os.path.join(bind_dir(self.network, server), "db.root"), 'w')
             f_root.write( root_template.render( root_servers = root_servers))
             f_named = open( os.path.join(bind_dir(self.network, server), "named.conf"), 'w')

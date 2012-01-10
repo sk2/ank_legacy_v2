@@ -20,4 +20,7 @@ route del default
 %endfor              
 %if set_hostname:
 /etc/init.d/hostname.sh 
-%endif              
+%endif    
+% if default_route:
+route add default gw ${default_route}
+% endif        

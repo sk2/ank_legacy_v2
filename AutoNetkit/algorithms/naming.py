@@ -12,10 +12,21 @@ __all__ = ['domain', 'fqdn', 'rtr_folder_name', 'hostname',
         'interface_id', 'tap_interface_id',
         'junos_logical_int_id_ge',
         #move these to seperate module
-        'asn', 'label',
+        'asn', 'label', 'default_route',
         'debug_nodes', 'debug_edges',
         ]
 
+
+def default_route(node):
+    """Returns default router for a server"""
+#TODO: check node is a server
+    if not node.is_server:
+        LOG.debug("Only return default route for servers, %s is a %s" % (node, node.device_type))
+        return
+
+    for link in node.network.links(node):
+        if link.remote_host.is_router:
+            return link.remote_ip
 
 def debug_nodes(graph):
     import pprint

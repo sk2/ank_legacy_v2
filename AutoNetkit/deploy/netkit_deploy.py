@@ -337,6 +337,7 @@ class NetkitDeploy():
                     self.server.connect_vm(node.tap_ip, shell)
                     shell.sendline(command)
                     shell.expect(self.server.NETKIT_PROMPT)
+                    command_output = shell.before
                     self.server.disconnect_vm(shell)
                     shell.prompt()
 # need to ssh into this machine

@@ -88,6 +88,14 @@ class node_namedtuple (namedtuple('node', "network, id")):
     def dns_hostname(self):
         return ank.hostname(self)
 
+    @property
+    def is_router(self):
+        return self.device_type == "router"
+
+    @property
+    def is_server(self):
+        return self.device_type == "server"
+
 
 class link_namedtuple (namedtuple('link', "network, src, dst")):
     __slots = ()
@@ -314,7 +322,6 @@ class Network(object):
     def servers(self, asn=None):
         """return servers in network"""
         return (n for n in self.devices(asn) if self.device_type(n) == 'server')
-
 
     ################################################## 
     #TODO: move these into a nodes shortcut module
