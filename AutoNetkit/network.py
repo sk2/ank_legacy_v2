@@ -81,6 +81,10 @@ class node_namedtuple (namedtuple('node', "network, id")):
         return self.network.pop(self)
 
     @property
+    def tap_ip(self):
+        return self.network.node[self].get("tap_ip")
+
+    @property
     def dns_hostname(self):
         return ank.hostname(self)
 

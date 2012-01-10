@@ -56,6 +56,7 @@ class Netkit:
         # Assume that the admin 
         self.tap_host = tapsn[1]
         self.tap_ip = tapsn[2]
+        self.NETKIT_PROMPT = NETKIT_PROMPT
              
         #TODO configure these
         self.tap_hostname = "taptunnelvm"
@@ -214,15 +215,15 @@ class Netkit:
 
             return True
         
-    def disconnect_vm(self): 
+    def disconnect_vm(self, shell): 
         """ Disconnects from a Netkit virtual machine"""
-        shell = self.get_shell()
         shell.sendline("exit")
         shell.expect("Connection to \d{1,3}.\d{1,3}.\d{1,3}.\d{1,3} closed.")
         return
 
-    def connect_vm(self, host, username="root", password="1234"): 
+    def connect_vm(self, host, shell, username="root", password="1234"): 
         """ Connects to a Netkit virtual machine"""
+#TODO: modify this to use own shell, to allow multithreading
                               
         shell = self.get_shell()
         #TODO: maintain state - eg if connected to netkit server or to

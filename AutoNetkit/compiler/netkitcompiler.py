@@ -239,7 +239,7 @@ class NetkitCompiler:
             f_z = open( os.path.join(zebra_dir(self.network, node),
                                      "zebra.conf"), 'w')
             f_z.write( zebra_template.render(
-                hostname = ank.fqdn(self.network, node),
+                hostname = node.dns_hostname,
                 password = self.zebra_password,
                 enable_password = self.zebra_password,
                 use_snmp = True,
@@ -345,7 +345,7 @@ class NetkitCompiler:
 
                 f_handle.write(template.render
                                (
-                                   hostname = router,
+                                   hostname = router.dns_hostname,
                                    password = self.zebra_password,
                                    enable_password = self.zebra_password,
                                    interface_list = interface_list,
@@ -492,7 +492,7 @@ class NetkitCompiler:
                                              "bgpd.conf"),'w')
 
                 f_handle.write(template.render(
-                        hostname = ank.fqdn(self.network, router),
+                        hostname = router.dns_hostname,
                         asn = self.network.asn(router),
                         password = self.zebra_password,
                         enable_password = self.zebra_password,

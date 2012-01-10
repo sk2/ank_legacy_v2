@@ -201,7 +201,7 @@ def jsplot(network):
     with open( html_filename, 'w') as f_html:
             f_html.write( html_template.render( js_file = "dns.js",
                 timestamp=timestamp,
-                title = "DNS Hiearchy",
+                title = "DNS Hierarchy",
                 css_filename = "./ank_style.css",))
 
     html_filename = os.path.join(plot_dir, "dns_auth.html")

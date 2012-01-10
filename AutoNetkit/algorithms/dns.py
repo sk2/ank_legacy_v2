@@ -101,7 +101,7 @@ def allocate_dns_servers(network):
     def level(u):
         return int(dns_graph.node[u]['level'])
 
-    servers_per_l2_cluster = 2
+    servers_per_l2_cluster = 1
     servers_per_l3_cluster = 1
     root_dns_servers = 1
     global_eccentricities = nodes_by_eccentricity(network.graph)

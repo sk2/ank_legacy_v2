@@ -326,35 +326,44 @@ class NetkitDeploy():
         for node, data in self.network.graph.nodes(data=True):
             routername = ank.fqdn(self.network, node)
             full_routername = ank.rtr_folder_name(self.network, node)
-            user_exec_prompt = "%s>"%full_routername
-            priv_exec_prompt = "%s#"%full_routername
+            user_exec_prompt = "%s>" % node.dns_hostname
+            priv_exec_prompt = "%s#" % node.dns_hostname
             for port_command in commands:
                 LOG.info("%s: running %s" % (routername, port_command))
                 telnet_port, command = port_command.split(":")
-                shell.sendline("telnet %s %s" % (data.get("tap_ip"), telnet_port))
-                shell.expect("Password:")
-                shell.sendline("1234")
-                shell.expect(user_exec_prompt)
-                shell.sendline("en")
-                i = shell.expect(["Password:", priv_exec_prompt])
-                if i == 0:
-                    shell.sendline("1234")
+                if telnet_port == 'ssh':
+                    self.server.connect_vm(node.tap_ip, shell)
+                    shell.sendline(command)
+                    shell.expect(self.server.NETKIT_PROMPT)
+                    self.server.disconnect_vm(shell)
+
+# need to ssh into this machine
                 else:
+# use telnet
+                    shell.sendline("telnet %s %s" % (data.get("tap_ip"), telnet_port))
+                    shell.expect("Password:")
+                    shell.sendline("1234")
+                    shell.expect(user_exec_prompt)
+                    shell.sendline("en")
+                    i = shell.expect(["Password:", priv_exec_prompt])
+                    if i == 0:
+                        shell.sendline("1234")
+                    else:
 # all good, in priv exec
-                    pass
+                        pass
 # just to be sure
-                set_term_length = "term len 0"
-                shell.sendline(set_term_length)
-                shell.expect(priv_exec_prompt)
-                shell.sendline(command)
-                shell.expect(priv_exec_prompt)
-# Can be an issue with the telnet x zebra command (not for bgpd it seems)
-                command_output = shell.before
-# If no command output, captured the previous command, try again
-                if command_output.strip() == set_term_length:
+                    set_term_length = "term len 0"
+                    shell.sendline(set_term_length)
                     shell.expect(priv_exec_prompt)
+                    shell.sendline(command)
+                    shell.expect(priv_exec_prompt)
+# Can be an issue with the telnet x zebra command (not for bgpd it seems)
                     command_output = shell.before
-                shell.sendline("exit")
+# If no command output, captured the previous command, try again
+                    if command_output.strip() == set_term_length:
+                        shell.expect(priv_exec_prompt)
+                        command_output = shell.before
+                    shell.sendline("exit")
 # from http://stackoverflow.com/q/295135/
                 command_filename_format = (re.sub('[^\w\s-]', '', command).strip().lower())
                 filename = "%s_%s_%s.txt" % (full_routername,
