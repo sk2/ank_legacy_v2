@@ -516,7 +516,31 @@ class NetkitCompiler:
                 ))
 
     def configure_dns(self):
-        """Generates BIND configuration files for DNS"""
+        """Generates BIND configuration files for DNS
+
+        Can check configs eg:
+
+        Forward::
+
+            bash-3.2$ named-checkzone -d AS3 ank_lab/netkit_lab/AS3_l3_3_dns_1/etc/bind/db.AS3
+            loading "AS3" from "ank_lab/netkit_lab/AS3_l3_3_dns_1/etc/bind/db.AS3" class "IN"
+            zone AS3/IN: loaded serial 2008080101
+            OK
+
+
+        Reverse::
+
+            bash-3.2$ named-checkzone -d 0.10.in-addr.arpa ank_lab/netkit_lab/AS3_l3_3_dns_1/etc/bind/db.0.10.in-addr.arpa. 
+            loading "0.10.in-addr.arpa" from "ank_lab/netkit_lab/AS3_l3_3_dns_1/etc/bind/db.0.10.in-addr.arpa." class "IN"
+            zone 0.10.in-addr.arpa/IN: loaded serial 2008080101
+            OK
+
+
+        named::
+
+            bash-3.2$ named-checkconf ank_lab/netkit_lab/AS3_l3_3_dns_1/etc/bind/named.conf 
+        
+        """
         from netaddr import IPSet
         linux_bind_dir = "/etc/bind"
         resolve_template = lookup.get_template("linux/resolv.mako")
