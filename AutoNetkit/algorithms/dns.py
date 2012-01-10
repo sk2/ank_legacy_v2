@@ -48,7 +48,7 @@ __author__ = "\n".join(['Simon Knight'])
 #    Copyright (C) 2009-2012 by Simon Knight, Hung Nguyen
 
 __all__ = ['allocate_dns_servers', 'get_dns_graph',
-        'dns_servers', 'dns_level', 'advertise_edges',
+        'dns_servers', 'dns_level', 'advertise_links',
         'dns_advertise_link', 'root_dns_servers',
         'dns_auth_servers', 'get_dns_auth_graph',
         'dns_clients',
@@ -101,8 +101,8 @@ def allocate_dns_servers(network):
     def level(u):
         return int(dns_graph.node[u]['level'])
 
-    servers_per_l2_cluster = 1
-    servers_per_l3_cluster = 2
+    servers_per_l2_cluster = 2
+    servers_per_l3_cluster = 1
     root_dns_servers = 1
     global_eccentricities = nodes_by_eccentricity(network.graph)
 
@@ -279,7 +279,7 @@ def dns_auth_children(node):
 def root_dns_servers(network):
     return (n for n in network.servers() if dns_level(n) == 4)
 
-def advertise_edges(node):
+def advertise_links(node):
     auth_children = dns_auth_children(node)
     auth_subgraph = node.network.graph.subgraph(auth_children)
     edges = auth_subgraph.edges()

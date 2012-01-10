@@ -511,6 +511,7 @@ class NetkitCompiler:
 
     def configure_dns(self):
         """Generates BIND configuration files for DNS"""
+        from netaddr import IPSet
         resolve_template = lookup.get_template("linux/resolv.mako")
         forward_template = lookup.get_template("bind/forward.mako")
 
@@ -521,7 +522,6 @@ class NetkitCompiler:
         root_dns_template = lookup.get_template("bind/root_dns.mako")
         root_dns_named_template = lookup.get_template("bind/root_dns_named.mako")
 
-        from netaddr import IPSet
         ip_as_allocs = ank.get_ip_as_allocs(self.network)
 
         dns_servers = ank.dns_servers(self.network)
@@ -537,22 +537,25 @@ class NetkitCompiler:
 
         for server in auth_servers:
             print "auth", server
-            advertise_edges= list(ank.advertise_edges(server))
-            LOG.debug("DNS server %s advertises %s" % (server, advertise_edges))
-            subnets = list(link.subnet for link in advertise_edges) 
+            advertise_links= list(ank.advertise_links(server))
+            LOG.debug("DNS server %s advertises %s" % (server, advertise_links))
+            subnets = list(link.subnet for link in advertise_links) 
             #print "parents", ank.dns.dns_hiearchy_parents(server)
+            for link in advertise_links:
+                #print link.ip, ank.reverse_subnet(link.ip, link.subnet.prefixlen)
+                pass
+            root_servers = list(ank.dns_hiearchy_parents(server))
+            f_root = open( os.path.join(bind_dir(self.network, server), "db.root"), 'w')
+            f_root.write( root_template.render( root_servers = root_servers))
             print
 
 # Configure clients
         for client in clients:
-            print ank.domain(client)
-            continue
-            f_resolv = open( os.path.join(etc_dir(self.network, rtr), "resolv.conf"), 'w')
+            server_ips = (server.lo_ip.ip for server in ank.dns_hiearchy_parents(client))
+            f_resolv = open( os.path.join(etc_dir(self.network, client), "resolv.conf"), 'w')
             f_resolv.write ( resolve_template.render(
-                nameserver = dns_server_ip,
-                    domain = ank.domain(node)))
-            print client
-        
+                nameservers = server_ips,
+                domain = ank.domain(client)))
 
         return
 
