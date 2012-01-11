@@ -31,13 +31,13 @@ def default_route(node):
 def debug_nodes(graph):
     import pprint
     debug_data = dict( (node.network.fqdn(node), data) for node, data in graph.nodes(data=True))
-    pprint.pprint(debug_data)
+    return pprint.pformat(debug_data)
 
 def debug_edges(graph):
     import pprint
     debug_data = dict( ((src.fqdn, dst.fqdn), data) 
             for src, dst, data in graph.edges(data=True))
-    pprint.pprint(debug_data)
+    return pprint.pformat(debug_data)
 
 
 #TODO: remove these
