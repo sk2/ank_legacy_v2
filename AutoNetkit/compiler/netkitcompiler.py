@@ -72,6 +72,10 @@ def etc_dir(network, rtr):
     #TODO: rewrite these using join
     return os.path.join(router_dir(network, rtr), "etc")
 
+def ssh_dir(network, rtr):
+    """Returns formatted ssh path"""
+    return os.path.join(etc_dir(network, rtr), "ssh")
+
 def zebra_dir(network, rtr):
     """Returns formatted Zebra path"""
     return os.path.join(etc_dir(network, rtr), "zebra")
@@ -131,6 +135,7 @@ class NetkitCompiler:
                 # need to make router dir before zebra, etc dirs
                 for test_dir in [router_dir(self.network, device),
                                  etc_dir(self.network, device),
+                                 ssh_dir(self.network, device),
                                  zebra_dir(self.network, device)]:
                     if not os.path.isdir(test_dir):
                         os.mkdir(test_dir)
@@ -152,6 +157,7 @@ class NetkitCompiler:
         zebra_daemons_template = lookup.get_template(
             "quagga/zebra_daemons.mako")
         zebra_template = lookup.get_template("quagga/zebra.mako")
+        sshd_template = lookup.get_template("linux/sshd.mako")
         motd_template = lookup.get_template("quagga/motd.mako")
 
         # Shared (common) configuration
@@ -169,6 +175,7 @@ class NetkitCompiler:
             daemons=startup_daemon_list,
             ))
         f_startup.close()
+
 
 # Files for indvidual node configuration
 
@@ -189,6 +196,11 @@ class NetkitCompiler:
             #TODO: see if rtr label is still needed, if so replace with
             # appropriate naming module function
             rtr_folder_name = ank.rtr_folder_name(self.network, node)
+
+            # sshd options
+            f_sshd = open( os.path.join(ssh_dir(self.network, node), "sshd_config"), 'w')
+            f_sshd.write(sshd_template.render())
+            f_sshd.close()
 
             lab_conf[rtr_folder_name] = []
             startup_daemon_list = ["zebra"]
