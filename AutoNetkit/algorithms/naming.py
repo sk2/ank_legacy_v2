@@ -10,7 +10,7 @@ LOG = logging.getLogger("ANK")
 
 __all__ = ['domain', 'fqdn', 'rtr_folder_name', 'hostname',
         'interface_id', 'tap_interface_id',
-        'junos_logical_int_id_ge',
+        'junos_logical_int_id_ge', 'junos_int_id_em',
         #move these to seperate module
         'asn', 'label', 'default_route',
         'debug_nodes', 'debug_edges',

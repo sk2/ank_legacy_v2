@@ -76,6 +76,7 @@ class JunosCompiler:
         if target in ['junosphere', 'junosphere_olive']:
             self.junosphere = True
             self.interface_limit = 32
+            self.int_id_em = ank.naming.junos_int_id_em
         self.olive = False
         if target in ['olive', 'junosphere_olive']:
             self.olive = True
@@ -327,7 +328,7 @@ class JunosCompiler:
 
     def configure_junos(self):
         """ Configures Junos"""
-        LOG.info("Configuring Junos")
+        LOG.info("Configuring Junos: %s" % self.target)
         junos_template = lookup.get_template("junos/junos.mako")
         ank_version = pkg_resources.get_distribution("AutoNetkit").version
         date = time.strftime("%Y-%m-%d %H:%M", time.localtime())
