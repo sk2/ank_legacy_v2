@@ -601,10 +601,8 @@ class NetkitCompiler:
             ))
 
         for server in caching_servers:
-            #root_db_hint = ( (n.dns_hostname, server_ip(n)) for n in ank.dns_hiearchy_parents(server))
+            root_db_hint = ( (n.dns_hostname, server_ip(n)) for n in ank.dns_hiearchy_parents(server))
 #TODO: make caching use parent rather than global root
-            root_db_hint = ( (n.dns_hostname, server_ip(n)) for n in root_servers)
-            root_db_hint = list(root_db_hint)
             f_root = open( os.path.join(bind_dir(self.network, server), "db.root"), 'w')
             f_root.write( root_template.render( root_servers = root_db_hint))
             f_named = open( os.path.join(bind_dir(self.network, server), "named.conf"), 'w')
@@ -650,8 +648,6 @@ class NetkitCompiler:
             rev_entry_list += ( (ank.reverse_subnet(host.lo_ip, advertise_block.prefixlen), self.lo_interface(0), host.dns_hostname)
                     #TODO: make thise check l3 group rather than asn (generalise)
                     for host in advertise_hosts if host.is_router and host.asn == server.asn)
-            print rev_entry_list
-
 
             #TODO: provide better way to get eg eth0.host than string concat inside the template
 
@@ -695,8 +691,7 @@ class NetkitCompiler:
                 ))
 
             #TODO: make l2 use l3 for caching
-            #root_servers = ( (n.dns_hostname, server_ip(n)) for n in ank.dns_hiearchy_parents(server))
-            root_db_hint = ( (n.dns_hostname, server_ip(n)) for n in root_servers)
+            root_db_hint = ( (n.dns_hostname, server_ip(n)) for n in ank.dns_hiearchy_parents(server))
             f_root = open( os.path.join(bind_dir(self.network, server), "db.root"), 'w')
             f_root.write( root_template.render( root_servers = root_db_hint))
 
