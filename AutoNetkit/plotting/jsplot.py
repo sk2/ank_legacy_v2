@@ -127,6 +127,8 @@ def jsplot(network):
 
     #TODO: clarify difference of physical_graph and overlay_graph
 
+#TODO: see if js_files ever used
+
     dns_graph = ank.get_dns_graph(network)
     node_list = []
     for node in dns_graph.nodes():
