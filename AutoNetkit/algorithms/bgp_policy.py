@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Parse BGP policy from a file. Work in progress.
+Parse BGP policy from a file. 
+
+.. warning::
+
+    Work in progress.
+
 """
 __author__ = "\n".join(['Simon Knight'])
 #    Copyright (C) 2009-2011 by Simon Knight, Hung Nguyen
@@ -37,6 +42,37 @@ def tag_to_cl(tag):
     
     """
     return "cl_%s" % tag
+
+
+#TODO: see if can return in a data structure that pretty-print works nicely on
+class match_tuple (namedtuple('match_tuple', "match_clauses, action_clauses, reject")):
+    __slots__ = ()
+    def __repr__(self):
+        return "%s, %s, reject=%s" % (self.match_clauses, self.action_clauses, self.reject)
+
+class match_tuple_with_seq_no (namedtuple('match_tuple', "seq_no, match_clauses, action_clauses, reject")):
+    __slots__ = ()
+    def __repr__(self):
+        return "seq%s %s %s reject=%s" % (self.seq_no, 
+                self.match_clauses, 
+                self.action_clauses, 
+                self.reject)
+
+class route_map_tuple (namedtuple('route_map', "name, match_tuples")):
+    __slots__ = ()
+    def __repr__(self):
+        return "%s %s" % (self.name, self.match_tuples)
+
+class match_clause (namedtuple('match_clause', 'type, comparison, value')):
+    __slots__ = ()
+    def __repr__(self):
+        return "%s %s %s" % (self.type, self.comparison, self.value)
+
+class action_clause (namedtuple('action_clause', 'action, value')):
+    __slots__ = ()
+    def __repr__(self):
+        return "%s %s" % (self.action, self.value)
+
 
 class BgpPolicyParser:
     """Parser class"""
@@ -84,11 +120,7 @@ class BgpPolicyParser:
                 '|': "or",
                 }
 
-        self.match_tuple = namedtuple('match_tuple', "match_clauses, action_clauses, reject")
-        self.match_tuple_with_seq_no = namedtuple('match_tuple', "seq_no, match_clauses, action_clauses, reject")
-        self.route_map_tuple = namedtuple('route_map', "name, match_tuples")
-        self.match_clause = namedtuple('match_clause', 'type, comparison, value')
-        self.action_clause = namedtuple('action_clause', 'action, value')
+
 
 # Both are of comparison to access in same manner when evaluating
         comparison = (lt | le | eq | ne | ge | gt).setResultsName("comparison")
@@ -224,30 +256,36 @@ class BgpPolicyParser:
         """Applies policy to network 
 
 
-#TODO: move these tests out
         >>> pol_parser = ank.BgpPolicyParser(ank.network.Network(ank.load_example("multias")))
+
+#TODO: move these tests out
+
+        Testing internals:
+
         >>> attributestring = "2a.as1"
         >>> result = pol_parser.attribute.parseString(attributestring)
+
+        Node and edge queries:
 
         >>> nodestring = "node = '2ab.ab'"
         >>> result = pol_parser.nodeQuery.parseString(nodestring)
         >>> result = pol_parser.edgeQuery.parseString("(" + nodestring + ") egress-> (node = b)")
-
         >>> result = pol_parser.edgeQuery.parseString("(node = a.b) egress-> (node = b)")
 
-        pol_parser.apply_bgp_policy("(node = 2a.AS2) egress-> (*): (if prefix_list = pl_asn_eq_2 then addTag cl_asn_eq_2)")
+        Full policy queries:
 
+        >>> pol_parser.apply_bgp_policy("(node = '2a.AS2') egress-> (*): (if prefix_list = pl_asn_eq_2 then addTag cl_asn_eq_2)")
         >>> pol_parser.apply_bgp_policy("(Network = AS1 ) ->ingress (Network = AS2): (if tag = deprefme then setLP 90) ")
         >>> pol_parser.apply_bgp_policy("(Network = AS1 ) ->ingress (Network = AS2): (addTag ABC & setLP 90) ")
         >>> pol_parser.apply_bgp_policy("(asn = 1) egress-> (asn = 1): (if Origin(asn=2) then addTag a100 )")
-
-        pol_parser.apply_bgp_policy("(node = a_b ) ->ingress (Network = AS2): (addTag ABC & setLP 90) ")
+        >>> pol_parser.apply_bgp_policy("(asn = 1) egress-> (asn = 1): (if Transit(asn=2) then addTag a100 )")
+        >>> pol_parser.apply_bgp_policy("(node = a_b ) ->ingress (Network = AS2): (addTag ABC & setLP 90) ")
         """
         LOG.debug("Applying policy %s" % qstring)
         result = self.bgpApplicationQuery.parseString(qstring)
         LOG.debug("Query string is %s " % qstring)
         set_a = self.node_select_query(result.query_a)
-        LOG.debug("Set b is %s " % set_a)
+        LOG.debug("Set a is %s " % set_a)
         set_b = self.node_select_query(result.query_b)
         LOG.debug("Set b is %s " % set_b)
         select_type = result.edgeType
@@ -257,6 +295,7 @@ class BgpPolicyParser:
         node_set = set_a | set_b
 
         edges = self.network.g_session.edges(node_set)
+        LOG.debug("Edges are %s " % edges)
 # 1 ->, 2 <-, 3 <->
 
         def select_fn_u_to_v( (u, v), src_set, dst_set):
@@ -286,12 +325,12 @@ class BgpPolicyParser:
             ingress_or_egress = 'egress'
 
         # apply policy to edges
-        selected_edges = ( e for e in edges if select_function(e, set_a, set_b))
+        selected_edges = list( e for e in edges if select_function(e, set_a, set_b))
+        LOG.info("Selected edges are %s" % selected_edges)
         for u,v in selected_edges:
             LOG.debug("Applying policy %s to %s of %s->%s" % ( per_session_policy, ingress_or_egress, 
                 self.network.fqdn(u), self.network.fqdn(v)))
             self.network.g_session[u][v][ingress_or_egress].append(per_session_policy)
-
     def evaluate_node_stack(self, stack):
         """Evaluates a stack of nodes with join queries"""
         LOG.debug("Evaluating node stack %s" % stack)
@@ -341,7 +380,7 @@ class BgpPolicyParser:
 
 # different function depending on value type: numeric or string
             if token == self.wildcard:
-                result_set = set(n for n in self.network.graph )
+                result_set = set(n for n in self.network.routers() )
                 stack.append(result_set)
                 continue
             elif token.attribute == "node":
@@ -404,28 +443,40 @@ class BgpPolicyParser:
 # extract the node queryParser
 #TODO: handle case of multiple matches......
 # rather than getting first element, iterate over
+#TODO: need to handle origin different here to transit - diff policy
         nodes = self.node_select_query(match_query)
         tag = self.query_to_tag(match_query)
         tag_pl = tag_to_pl(tag)
         tag_cl = tag_to_cl(tag)
+        if match_type == "Transit":
+                policy = "(addTag %s)" % tag_cl
+                LOG.info("Transit policy: %s" % policy)
+        else:
+
 # efficiency: check if query has already been executed (ie if already prefixes for this tag)
 #TODO: see if need to have unique name for prefix list and comm val: eg pl_tag and 
-        if tag_pl in self.prefix_lists:
-            LOG.debug( "already executed prefix lookup for", tag_pl)
-        else:
-            prefixes = self.get_prefixes(nodes)
-            self.prefix_lists[tag_pl] = prefixes
+            if tag_pl in self.prefix_lists:
+                LOG.debug( "already executed prefix lookup for", tag_pl)
+            else:
+                prefixes = self.get_prefixes(nodes)
+                self.prefix_lists[tag_pl] = prefixes
 # and mark prefixes
-            for node in nodes:
-                #print "node is", node
-                apply_prefix_query = ("(node = '%s') egress-> (*): "
-                        "(if prefix_list = %s then addTag %s)") % (node, tag_pl, tag_cl)
-                LOG.debug( apply_prefix_query)
-                self.apply_bgp_policy(apply_prefix_query)
-
+                policy = "(if prefix_list = %s then addTag %s)" % (tag_pl, tag_cl)
+                LOG.info("Origin policy: %s" % policy)
+# now apply policy to all egress from nodes
 # store tag
-            self.tags_to_allocate.update([tag])
-        return self.match_clause("tag", "=", tag_cl)
+                self.tags_to_allocate.update([tag])
+
+
+        # Parse the string into policy tuples
+        parsed = self.bgpSessionQuery.parseString(policy)
+        per_session_policy = self.process_if_then_else(parsed.bgpSessionQuery)
+
+        for node in nodes:
+            for u, v in self.network.g_session.out_edges(node):
+                LOG.info("Applying O/T policy to %s egress -> %s" % (u, v))
+                self.network.g_session[u][v]['egress'].append(per_session_policy)
+        return match_clause("tag", "=", tag_cl)
 
     def process_if_then_else(self, parsed_query):
         """Processes if-then-else query"""
@@ -436,18 +487,18 @@ class BgpPolicyParser:
             if not parsed_query.ifThenClause:
 # Special case of action only clause (no "if" clause)
                 reject = any(True for (action, value) in token if action == self.reject)
-                else_tuples = [self.action_clause(action, value) for
+                else_tuples = [action_clause (action, value) for
                         (action, value) in token
                         if action != self.reject]
-                retval.append(self.match_tuple([], else_tuples, reject))
+                retval.append(match_tuple([], else_tuples, reject))
 
             elif token == parsed_query.else_clause:
 # Special case of else (at end)
                 reject = any(True for (action, value) in token if action == self.reject)
-                else_tuples = [self.action_clause(action, value) for
+                else_tuples = [action_clause (action, value) for
                         (action, value) in token
                         if action != self.reject]
-                retval.append(self.match_tuple([], else_tuples, reject))
+                retval.append(match_tuple([], else_tuples, reject))
             else:
                 #TODO: check is in ifthen
                 (if_clause, then_clause) = token
@@ -456,13 +507,13 @@ class BgpPolicyParser:
 # Check for reject
                 if_tuples = [
                         self.proc_ot_match(attribute, value) if attribute in origin_transit_keywords
-                        else self.match_clause(attribute, comparison, value)
+                        else match_clause(attribute, comparison, value)
                         for (attribute, comparison, value) in if_clause]
                 reject = any(True for (action, value) in then_clause if action == self.reject)
-                then_tuples = [self.action_clause(action, value) for
+                then_tuples = [action_clause (action, value) for
                         (action, value) in then_clause
                         if action != self.reject]
-                retval.append(self.match_tuple(if_tuples, then_tuples, reject))
+                retval.append(match_tuple(if_tuples, then_tuples, reject))
         return retval
 
     def cl_and_pl_per_node(self):
@@ -488,11 +539,11 @@ class BgpPolicyParser:
                         for action_clause in match_tuple.action_clauses:
                             if action_clause.action in set(['addTag']):
                                 tags.update([action_clause.value])
-                        match_tuples_with_seqno.append(self.match_tuple_with_seq_no(seq_no.next(), 
+                        match_tuples_with_seqno.append(match_tuple_with_seq_no(seq_no.next(), 
                             match_tuple.match_clauses, match_tuple.action_clauses, match_tuple.reject))
                     route_map_name = "rm_ingress_%s_%s" % (self.network.fqdn(dst).replace(".", "_"), counter.next())
 # allocate sequence number
-                    session_policy_tuples.append(self.route_map_tuple(route_map_name, match_tuples_with_seqno))
+                    session_policy_tuples.append(route_map_tuple(route_map_name, match_tuples_with_seqno))
                 # Update with the named policy tuples
                 LOG.debug("Storing session tuples %s to %s %s ingress" % (session_policy_tuples, self.network.fqdn(src), self.network.fqdn(dst)))
                 self.network.g_session[dst][src]['ingress'] = session_policy_tuples
@@ -512,12 +563,12 @@ class BgpPolicyParser:
                         for action_clause in match_tuple.action_clauses:
                             if action_clause.action in set(['addTag']):
                                 tags.update([action_clause.value])
-                        match_tuples_with_seqno.append(self.match_tuple_with_seq_no(seq_no.next(), 
+                        match_tuples_with_seqno.append(match_tuple_with_seq_no(seq_no.next(), 
                             match_tuple.match_clauses, match_tuple.action_clauses, match_tuple.reject))
                     route_map_name = "rm_egress_%s_%s" % (self.network.fqdn(dst).replace(".", "_"), 
                             counter.next())
 # allocate sequence number
-                    session_policy_tuples.append(self.route_map_tuple(route_map_name, match_tuples_with_seqno))
+                    session_policy_tuples.append(route_map_tuple(route_map_name, match_tuples_with_seqno))
                 # Update with the named policy tuples
                 self.network.g_session[src][dst]['egress'] = session_policy_tuples
                 LOG.debug("Storing session tuples %s to %s %s egress" % (session_policy_tuples, self.network.fqdn(src), self.network.fqdn(dst)))
@@ -686,4 +737,5 @@ class BgpPolicyParser:
         self.cl_and_pl_per_node()
         self.allocate_tags()
         self.store_tags_per_router()
+        print ank.debug_edges(self.network.g_session)
         #self.apply_gao_rexford()
