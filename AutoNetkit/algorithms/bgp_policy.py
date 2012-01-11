@@ -48,12 +48,12 @@ def tag_to_cl(tag):
 class match_tuple (namedtuple('match_tuple', "match_clauses, action_clauses, reject")):
     __slots__ = ()
     def __repr__(self):
-        return "%s, %s, reject=%s" % (self.match_clauses, self.action_clauses, self.reject)
+        return "if %s then %s reject: %s" % (self.match_clauses, self.action_clauses, self.reject)
 
 class match_tuple_with_seq_no (namedtuple('match_tuple', "seq_no, match_clauses, action_clauses, reject")):
     __slots__ = ()
     def __repr__(self):
-        return "seq%s %s %s reject=%s" % (self.seq_no, 
+        return "seq %s if %s then %s reject: %s" % (self.seq_no, 
                 self.match_clauses, 
                 self.action_clauses, 
                 self.reject)
@@ -330,7 +330,7 @@ class BgpPolicyParser:
 
         # apply policy to edges
         selected_edges = list( e for e in edges if select_function(e, set_a, set_b))
-        LOG.info("Selected edges are %s" % selected_edges)
+        LOG.debug("Selected edges are %s" % selected_edges)
         for u,v in selected_edges:
             LOG.debug("Applying policy %s to %s of %s->%s" % ( per_session_policy, ingress_or_egress, 
                 self.network.fqdn(u), self.network.fqdn(v)))
@@ -449,13 +449,12 @@ class BgpPolicyParser:
 # rather than getting first element, iterate over
 #TODO: need to handle origin different here to transit - diff policy
         nodes = self.node_select_query(match_query)
-        print "nodes for query", match_query, "are", nodes
         tag = self.query_to_tag(match_query)
-        tag_pl = tag_to_pl(tag)
-        tag_cl = tag_to_cl(tag)
+        tag_pl = "%s_%s" % (match_type.lower(), tag_to_pl(tag))
+        tag_cl = "%s_%s" % (match_type.lower(), tag_to_cl(tag))
         if match_type == "Transit":
                 policy = "(addTag %s)" % tag_cl
-                LOG.info("Transit policy: %s" % policy)
+                LOG.debug("Transit policy: %s" % policy)
         else:
 
 # efficiency: check if query has already been executed (ie if already prefixes for this tag)
@@ -467,7 +466,7 @@ class BgpPolicyParser:
                 self.prefix_lists[tag_pl] = prefixes
 # and mark prefixes
                 policy = "(if prefix_list = %s then addTag %s)" % (tag_pl, tag_cl)
-                LOG.info("Origin policy: %s" % policy)
+                LOG.debug("Origin policy: %s" % policy)
 # now apply policy to all egress from nodes
 # store tag
                 self.tags_to_allocate.update([tag])
@@ -479,7 +478,7 @@ class BgpPolicyParser:
 
         for node in nodes:
             for u, v in self.network.g_session.out_edges(node):
-                LOG.info("Applying O/T policy to %s egress -> %s" % (u, v))
+                LOG.debug("Applying %s policy to %s egress -> %s" % (match_type, u, v))
                 self.network.g_session[u][v]['egress'].append(per_session_policy)
         return match_clause("tag", "=", tag_cl)
 
@@ -550,7 +549,8 @@ class BgpPolicyParser:
 # allocate sequence number
                     session_policy_tuples.append(route_map_tuple(route_map_name, match_tuples_with_seqno))
                 # Update with the named policy tuples
-                LOG.debug("Storing session tuples %s to %s %s ingress" % (session_policy_tuples, self.network.fqdn(src), self.network.fqdn(dst)))
+                if len(session_policy_tuples):
+                    LOG.debug("Storing session tuples %s to %s->%s ingress" % (session_policy_tuples, self.network.fqdn(src), self.network.fqdn(dst)))
                 self.network.g_session[dst][src]['ingress'] = session_policy_tuples
 
             for (src, dst, session_data) in self.network.g_session.out_edges(node, data=True):
@@ -576,7 +576,8 @@ class BgpPolicyParser:
                     session_policy_tuples.append(route_map_tuple(route_map_name, match_tuples_with_seqno))
                 # Update with the named policy tuples
                 self.network.g_session[src][dst]['egress'] = session_policy_tuples
-                LOG.debug("Storing session tuples %s to %s %s egress" % (session_policy_tuples, self.network.fqdn(src), self.network.fqdn(dst)))
+                if len(session_policy_tuples):
+                    LOG.debug("Storing session tuples %s to %s->%s egress" % (session_policy_tuples, src.fqdn, dst.fqdn))
 
             self.network.g_session.node[node]['tags'] = tags
             self.network.g_session.node[node]['prefixes'] = prefixes
