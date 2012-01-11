@@ -51,10 +51,11 @@ class Internet:
     def __init__(self, filename=None, tapsn=IPNetwork("172.16.0.0/16"),
             netkit=True, cbgp=False, dynagen=False,
             junosphere=False, junosphere_olive=False, olive=False,
-            policy_file=None,
-                olive_qemu_patched=False,
+            policy_file=None, olive_qemu_patched=False, deploy = False,
             igp='ospf'): 
         self.network = network.Network()
+# Keep track of if deploying to smarten up compiler
+        self.will_deploy = deploy
         if isinstance(config.settings.get('tapsn'), str):
             # Convert to IPNetwork
             #TODO: exception handle this failing eg incorrect subnet
@@ -265,13 +266,16 @@ class Internet:
         ank.alloc_tap_hosts(self.network, self.tapsn)
 
         if self.policy_file:
-# apply bgp policy_file
             LOG.info("Applying BGP policy from %s" % self.policy_file)
             pol_parser = ank.BgpPolicyParser(self.network)
             pol_parser.apply_policy_file(self.policy_file)
             
-#TODO: if deploy is specified, then compile for active targets
-        # now configure
+        if self.will_deploy and not self.compile_targets['netkit']:
+            auto_compile = any( data.get("active") 
+                    for data in config.settings['Netkit Hosts'].values())
+            if auto_compile:
+                LOG.info("Active Netkit deployment target, automatically compiling")
+                self.compile_targets['netkit'] = True
         if self.compile_targets['netkit']:
             nk_comp = ank.NetkitCompiler(self.network, self.services)
             # Need to allocate DNS servers so they can be configured in Netkit
@@ -306,6 +310,12 @@ class Internet:
             #junos_comp.initialise()
             #junos_comp.configure()
 
+        if self.will_deploy and not self.compile_targets['olive']:
+            auto_compile = any( data.get("active") 
+                    for data in config.settings['Olive Hosts'].values())
+            if auto_compile:
+                self.compile_targets['olive'] = True
+                LOG.info("Active Olive deployment target, automatically compiling")
         if self.compile_targets['olive']:
             olive_qemu_patched = self.compile_targets['olive_qemu_patched']
             junos_comp = ank.JunosCompiler(self.network, self.services, self.igp, target="olive",

@@ -60,29 +60,19 @@ def main():
         sys.exit(0)
         logging.setLevel(logging.DEBUG)
 
-    if not (options.netkit or options.cbgp or options.dynagen or 
-            options.junosphere or options.junosphere_olive or options.olive):
-        LOG.warn("Please specify a target environment, eg --netkit")
-        sys.exit(0)
-
-    if ((options.junosphere or options.junosphere_olive or options.olive )
-        and not (options.isis or options.ospf)):
-        LOG.warn("Please specify an IGP if using junos: --isis or --ospf")
-        sys.exit(0)
-                
 #TODO: if topology file doesn't exist, then try inside lib/examples/topologies/
     f_name = options.file  
-# check exists
-#TODO: handle this properly using default arguments
-    igp = "ospf"
+    igp = None
+    if options.ospf:
+        igp = "ospf"
     if options.isis:
         igp = "isis"
-
+    
     use_junosphere = (options.junos or options.junosphere)
     inet = Internet(netkit=options.netkit,
             cbgp=options.cbgp, dynagen=options.dynagen, junosphere=use_junosphere,
             junosphere_olive=options.junosphere_olive, olive=options.olive, 
-            policy_file = options.bgp_policy,
+            policy_file = options.bgp_policy, deploy = options.deploy,
             olive_qemu_patched=options.olive_qemu_patched, igp=igp)
     inet.load(f_name)
 
