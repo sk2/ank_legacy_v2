@@ -2,17 +2,28 @@
 """
 Parse BGP policy from a file. 
 
+
+Example Policies::
+
+        (asn = 1) egress-> (node = a.b): (if Origin(asn=2) then addTag a100)
+        (asn = 1) egress-> (asn = 2): (if tag = abc then setMED 200)
+        (asn = 1) egress-> (asn = 2): (if tag = cde then addTag a300)     
+        (asn =1 ) ->ingress (asn=2): (setLP 200)         
+        (asn = 1) egress-> (asn = 3): (if Transit(asn = 2) then addTag t_test)
+        (asn = 1) egress-> (asn = 3): (if Origin(asn = 2) then addTag o_test)
+
 .. warning::
 
     Work in progress.
 
 """
 __author__ = "\n".join(['Simon Knight'])
-#    Copyright (C) 2009-2011 by Simon Knight, Hung Nguyen
+#    Copyright (C) 2009-2012 by Simon Knight, Hung Nguyen
 
 import networkx as nx
 import logging
 import AutoNetkit as ank
+import os
 from AutoNetkit import config
 LOG = logging.getLogger("ANK")
 #TODO: only import from pyparsing what is needed
@@ -744,5 +755,6 @@ class BgpPolicyParser:
         self.cl_and_pl_per_node()
         self.allocate_tags()
         self.store_tags_per_router()
-        #print ank.debug_edges(self.network.g_session)
+        with open( os.path.join(config.log_dir, "pol_dump.txt"), 'w') as f_pol_dump:
+            f_pol_dump.write(ank.debug_edges(self.network.g_session))
         #self.apply_gao_rexford()
