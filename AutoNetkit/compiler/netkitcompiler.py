@@ -632,8 +632,13 @@ class NetkitCompiler:
             ))
             f_named.close()
 
-            for_entry_list = ( (self.interface_id(link.id), link.local_host.dns_hostname, link.ip) 
+            for_entry_list = list( (self.interface_id(link.id), link.local_host.dns_hostname, link.ip) 
                     for link in advertise_links)
+# Add loopbacks for routers
+            for_entry_list += ( (self.lo_interface(0), host.dns_hostname, host.lo_ip.ip)
+                    #TODO: make thise check l3 group rather than asn (generalise)
+                    for host in advertise_hosts if host.is_router and host.asn == server.asn)
+            
             rev_entry_list = ( 
                     (ank.reverse_subnet(link, advertise_block.prefixlen), self.interface_id(link.id), link.local_host.dns_hostname) 
                     for link in advertise_links)
@@ -648,7 +653,7 @@ class NetkitCompiler:
 #TODO: extend this to make sure matches same asn, l3group and l2group
                     continue
 
-                if host in routers:
+                if host.is_router:
 # has lo_ip
                     cname = "%s.%s" % (self.lo_interface(), host.dns_hostname)
                 else:
@@ -656,6 +661,10 @@ class NetkitCompiler:
                     cname = "%s.%s" % (server_interface(host), host.dns_hostname)
             
                 host_cname_list.append( (host.dns_hostname, cname))
+
+            host_cname_list = sorted(host_cname_list, key = lambda x: x[1])
+            for_entry_list = sorted(for_entry_list)
+            for_entry_list = sorted(for_entry_list, key = lambda x: x[1])
             
             f_forward = open ( os.path.join(bind_dir(self.network, server), "db.%s" % server.domain), 'w')
             f_forward.write(forward_template.render(

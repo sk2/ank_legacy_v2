@@ -14,7 +14,7 @@ $TTL 1D
 ## Entries
 % for (interface_id, host, ip) in entry_list:
 ${interface_id}.${host}	IN	A	${ip}	     
-%endfor    
+%endfor                      
 
 ## CNAME Entries  (note lo:0 is invalid dns name so use lo0 instead )
 % for alias, host in host_cname_list:
