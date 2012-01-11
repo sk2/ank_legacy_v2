@@ -143,7 +143,11 @@ class BgpPolicyParser:
 #TODO fix this matching 2a.ab when that should match a string
         numericQuery = Group(attribute + comparison + float_string).setResultsName( "numericQuery")
 
-        stringValues = (attribute | quotedString.setParseAction(removeQuotes)
+
+    #TODO:  duplicate attribute, as want to supress the attribute name
+# solution: replace attribute.setResultsName() and put setResultsName on each use of attribute
+        string_value = Word(alphanums+'_'+".")
+        stringValues = (string_value | quotedString.setParseAction(removeQuotes)
                 ).setResultsName("value")
 
         stringQuery =  Group(attribute + stringComparison + stringValues).setResultsName( "stringQuery")
@@ -445,6 +449,7 @@ class BgpPolicyParser:
 # rather than getting first element, iterate over
 #TODO: need to handle origin different here to transit - diff policy
         nodes = self.node_select_query(match_query)
+        print "nodes for query", match_query, "are", nodes
         tag = self.query_to_tag(match_query)
         tag_pl = tag_to_pl(tag)
         tag_cl = tag_to_cl(tag)
@@ -737,5 +742,5 @@ class BgpPolicyParser:
         self.cl_and_pl_per_node()
         self.allocate_tags()
         self.store_tags_per_router()
-        print ank.debug_edges(self.network.g_session)
+        #print ank.debug_edges(self.network.g_session)
         #self.apply_gao_rexford()
