@@ -342,17 +342,17 @@ class OliveDeploy():
         config_files = {}
 
 #TODO: tidy the multiple loops into one simple loop
-        for node in self.network.graph:
-            node_filename = ank.rtr_folder_name(self.network, node)
-            config_files[node] = {}
-            config_files[node]['name'] = node_filename
-            config_files[node]['config_file_full_path'] = (os.path.join(working_directory, configset_directory, "%s.conf" % node_filename))
-            config_files[node]['config_file_snapshot'] = os.path.join(self.snapshot_folder, "%s.iso" % node_filename)
-            config_files[node]['base_image_snapshot'] = os.path.join(self.snapshot_folder, "%s.img" % node_filename)
-            config_files[node]['monitor_socket'] = os.path.join(configset_directory_full_path, "%s-monitor.sock" % node_filename)
+        for router in self.network.routers():
+            node_filename = router.rtr_folder_name
+            config_files[router] = {}
+            config_files[router]['name'] = node_filename
+            config_files[router]['config_file_full_path'] = (os.path.join(working_directory, configset_directory, "%s.conf" % node_filename))
+            config_files[router]['config_file_snapshot'] = os.path.join(self.snapshot_folder, "%s.iso" % node_filename)
+            config_files[router]['base_image_snapshot'] = os.path.join(self.snapshot_folder, "%s.img" % node_filename)
+            config_files[router]['monitor_socket'] = os.path.join(configset_directory_full_path, "%s-monitor.sock" % node_filename)
 
         LOG.debug("Making ISO FS")
-        for node, data in config_files.items():
+        for router, data in config_files.items():
             cmd = "mkisofs -o %s %s " % (data.get('config_file_snapshot'), 
                     data.get('config_file_full_path'))
             shell.sendline(cmd)
@@ -360,7 +360,7 @@ class OliveDeploy():
         shell.prompt()
 
         LOG.info("Running qemu-img")
-        for node, data in config_files.items():
+        for router, data in config_files.items():
             cmd =  "qemu-img create -f qcow2 -b %s %s" % (self.base_image,
                     data['base_image_snapshot'])
             shell.sendline(cmd)
@@ -379,7 +379,7 @@ class OliveDeploy():
         qemu_routers = []
         startup_template = lookup.get_template("autonetkit/olive_startup.mako")
     #TODO: sort by name when getting telnet port so is done in sequence
-        routers = sorted(self.network.graph, key = lambda x: ank.rtr_folder_name(self.network, node))
+        routers = sorted(self.network.routers(), key = lambda x: x.rtr_folder_name)
         for router_id, router in enumerate(routers):
             mac_list = self.mac_address_list(router_id, 6)
             telnet_port = unallocated_ports.next()
@@ -487,7 +487,7 @@ class OliveDeploy():
             node, router_name, telnet_port = nodes_with_port
 # Unique as includes ASN etc
 #TODO: check difference, if really need this...
-            full_routername = ank.rtr_folder_name(self.network, node)
+            full_routername = node.rtr_folder_name 
 
 # use format as % gets mixed up
             LOG.info("Logging into %s" % router_name)
@@ -543,9 +543,9 @@ class OliveDeploy():
         """Runs specified collect_data commands"""
         LOG.info("Collecting data for %s" % self.host_alias)
 
-        nodes_with_ports = [(node, ank.fqdn(self.network, node), data['olive_ports'].get(self.host_alias))
-            for node, data in self.network.graph.nodes(data=True)
-            if 'olive_ports' in data and data['olive_ports'].get(self.host_alias)]
+        nodes_with_ports = [(router, router.fqdn, router.olive_ports.get(self.host_alias))
+            for router in self.network.routers()
+            if router.olive_ports.get(self.host_alias)]
         if len(nodes_with_ports) == 0:
             LOG.info("No allocated ports found for %s. Was this host deployed to?" % self.host_alias)
             return

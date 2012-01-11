@@ -93,8 +93,16 @@ class node_namedtuple (namedtuple('node', "network, id")):
         return self.device_type == "router"
 
     @property
+    def rtr_folder_name(self):
+        return ank.rtr_folder_name(self.network, self)
+
+    @property
     def is_server(self):
         return self.device_type == "server"
+
+    @property
+    def olive_ports(self):
+        return self.network.graph.node[self].get("olive_ports")
 
 
 class link_namedtuple (namedtuple('link', "network, src, dst")):
