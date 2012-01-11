@@ -724,6 +724,7 @@ class BgpPolicyParser:
         LOG.debug("Applying policy file %s" % policy_in_file)
         with open( policy_in_file, 'r') as f_pol:
             for line in f_pol.readlines():
+                line = line.strip()
                 if line.startswith("#"):
                     LOG.debug("Skipping commented line %s", line)
                     continue
