@@ -45,7 +45,8 @@ class BgpPolicyParser:
         self.g_business_relationship = nx.DiGraph()
 
         # Grammars
-        attribute = Word(alphas, alphanums+'_').setResultsName("attribute")
+        attribute = Word(alphanums+'_'+".").setResultsName("attribute")
+        self.attribute = attribute
 
         lt = Literal("<").setResultsName("<")
         le = Literal("<=").setResultsName("<=")
@@ -107,9 +108,10 @@ class BgpPolicyParser:
         boolean = (boolean_and | boolean_or).setResultsName("boolean")
         self._boolean = boolean # need to use in checking
 
+#TODO fix this matching 2a.ab when that should match a string
         numericQuery = Group(attribute + comparison + float_string).setResultsName( "numericQuery")
 
-        stringValues = (Word(alphanums) | quotedString.setParseAction(removeQuotes)
+        stringValues = (attribute | quotedString.setParseAction(removeQuotes)
                 ).setResultsName("value")
 
         stringQuery =  Group(attribute + stringComparison + stringValues).setResultsName( "stringQuery")
@@ -195,6 +197,10 @@ class BgpPolicyParser:
         bgpSessionQuery =  bgpSessionQuery | unconditionalAction
         self.bgpSessionQuery = bgpSessionQuery
 
+
+#todo: remove testing
+        self.stringQuery = stringQuery
+
         self.bgpApplicationQuery = self.edgeQuery + Suppress(":") + self.bgpSessionQuery
 
 # business relationship building
@@ -217,14 +223,33 @@ class BgpPolicyParser:
     def apply_bgp_policy(self, qstring):
         """Applies policy to network 
 
+
+#TODO: move these tests out
         >>> pol_parser = ank.BgpPolicyParser(ank.network.Network(ank.load_example("multias")))
+        >>> attributestring = "2a.as1"
+        >>> result = pol_parser.attribute.parseString(attributestring)
+
+        >>> nodestring = "node = '2ab.ab'"
+        >>> result = pol_parser.nodeQuery.parseString(nodestring)
+        >>> result = pol_parser.edgeQuery.parseString("(" + nodestring + ") egress-> (node = b)")
+
+        >>> result = pol_parser.edgeQuery.parseString("(node = a.b) egress-> (node = b)")
+
+        pol_parser.apply_bgp_policy("(node = 2a.AS2) egress-> (*): (if prefix_list = pl_asn_eq_2 then addTag cl_asn_eq_2)")
+
         >>> pol_parser.apply_bgp_policy("(Network = AS1 ) ->ingress (Network = AS2): (if tag = deprefme then setLP 90) ")
         >>> pol_parser.apply_bgp_policy("(Network = AS1 ) ->ingress (Network = AS2): (addTag ABC & setLP 90) ")
+        >>> pol_parser.apply_bgp_policy("(asn = 1) egress-> (asn = 1): (if Origin(asn=2) then addTag a100 )")
+
+        pol_parser.apply_bgp_policy("(node = a_b ) ->ingress (Network = AS2): (addTag ABC & setLP 90) ")
         """
         LOG.debug("Applying policy %s" % qstring)
         result = self.bgpApplicationQuery.parseString(qstring)
+        LOG.debug("Query string is %s " % qstring)
         set_a = self.node_select_query(result.query_a)
+        LOG.debug("Set b is %s " % set_a)
         set_b = self.node_select_query(result.query_b)
+        LOG.debug("Set b is %s " % set_b)
         select_type = result.edgeType
         per_session_policy = self.process_if_then_else(result.bgpSessionQuery)
 
@@ -278,6 +303,15 @@ class BgpPolicyParser:
             return self._opn[op](a, self.evaluate_node_stack(stack))
 
     def node_select_query(self, qstring):
+        """
+        >>> pol_parser = ank.BgpPolicyParser(ank.network.Network(ank.load_example("multias")))
+        >>> pol_parser.node_select_query("asn = 1")
+        set(['n0', 'n1', 'n3'])
+        >>> pol_parser.node_select_query("name = a.b")
+        set([])
+        >>> pol_parser.node_select_query("name = a_b")
+        set([])
+        """
         LOG.debug("Processing node select query %s" % qstring)
         if isinstance(qstring, str):
             result = self.nodeQuery.parseString(qstring)
@@ -383,7 +417,8 @@ class BgpPolicyParser:
             self.prefix_lists[tag_pl] = prefixes
 # and mark prefixes
             for node in nodes:
-                apply_prefix_query = ("(node = %s) egress-> (*): "
+                #print "node is", node
+                apply_prefix_query = ("(node = '%s') egress-> (*): "
                         "(if prefix_list = %s then addTag %s)") % (node, tag_pl, tag_cl)
                 LOG.debug( apply_prefix_query)
                 self.apply_bgp_policy(apply_prefix_query)
@@ -639,6 +674,7 @@ class BgpPolicyParser:
 # blank line
                     continue
                 try:
+                    LOG.debug("Trying policy %s" % line)
                     self.apply_bgp_policy(line)
                 except:
                     raise
