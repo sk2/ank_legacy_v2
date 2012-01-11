@@ -180,10 +180,10 @@ class NetkitCompiler:
         startup_daemon_list.append("ssh")
         # Need to chown root dir for ssh keys
 # refer http://list.dia.uniroma3.it/pipermail/netkit.users/2010-February/000552.html
-        chown_root = False
+        use_ssh_key = False
         if config.settings['Lab']['netkit ssh key']:
             #chown root:root /root
-            chown_root = True
+            use_ssh_key = True
 
         f_startup = open( os.path.join(lab_dir(), "shared.startup"), 'w')
         f_startup.write(startup_template.render(
@@ -192,7 +192,7 @@ class NetkitCompiler:
             #don't send out the tap interface
             del_default_route=True,
             daemons=startup_daemon_list,
-            chown_root = chown_root,
+            use_ssh_key = use_ssh_key,
             ))
         f_startup.close()
 

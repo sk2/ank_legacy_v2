@@ -24,7 +24,7 @@ route del default
 % if default_route:
 route add default gw ${default_route}
 % endif     
-% if chown_root:
+% if use_ssh_key:
 chown -R root:root /root     
 chmod 755 /root
 chmod 755 /root/.ssh
