@@ -67,12 +67,22 @@ def router_dir(network, rtr):
     foldername = ank.rtr_folder_name(network, rtr)
     return os.path.join(netkit_dir(network, rtr), foldername)
 
+def root_dir(network, rtr):
+    """Returns root path for router rtr"""
+    #TODO: rewrite these using join
+    return os.path.join(router_dir(network, rtr), "root")
+
+def dot_ssh_dir(network, rtr):
+    """Returns .ssh path for router rtr"""
+    #TODO: rewrite these using join
+    return os.path.join(root_dir(network, rtr), ".ssh")
+
 def etc_dir(network, rtr):
     """Returns etc path for router rtr"""
     #TODO: rewrite these using join
     return os.path.join(router_dir(network, rtr), "etc")
 
-def ssh_dir(network, rtr):
+def sshd_dir(network, rtr):
     """Returns formatted ssh path"""
     return os.path.join(etc_dir(network, rtr), "ssh")
 
@@ -133,9 +143,12 @@ class NetkitCompiler:
         for device in self.network.devices():
                 # Make folders - note order counts:
                 # need to make router dir before zebra, etc dirs
+#TODO: only append root_dir and sshd_dir if netkit ssh key set
                 for test_dir in [router_dir(self.network, device),
                                  etc_dir(self.network, device),
-                                 ssh_dir(self.network, device),
+                                 sshd_dir(self.network, device),
+                                 root_dir(self.network, device),
+                                 dot_ssh_dir(self.network, device),
                                  zebra_dir(self.network, device)]:
                     if not os.path.isdir(test_dir):
                         os.mkdir(test_dir)
@@ -165,6 +178,12 @@ class NetkitCompiler:
         #Setup ssh
         shutil.copy(resource_filename("AutoNetkit","lib/shadow"), shared_etc_dir())
         startup_daemon_list.append("ssh")
+        # Need to chown root dir for ssh keys
+# refer http://list.dia.uniroma3.it/pipermail/netkit.users/2010-February/000552.html
+        chown_root = False
+        if config.settings['Lab']['netkit ssh key']:
+            #chown root:root /root
+            chown_root = True
 
         f_startup = open( os.path.join(lab_dir(), "shared.startup"), 'w')
         f_startup.write(startup_template.render(
@@ -173,6 +192,7 @@ class NetkitCompiler:
             #don't send out the tap interface
             del_default_route=True,
             daemons=startup_daemon_list,
+            chown_root = chown_root,
             ))
         f_startup.close()
 
@@ -198,7 +218,7 @@ class NetkitCompiler:
             rtr_folder_name = ank.rtr_folder_name(self.network, node)
 
             # sshd options
-            f_sshd = open( os.path.join(ssh_dir(self.network, node), "sshd_config"), 'w')
+            f_sshd = open( os.path.join(sshd_dir(self.network, node), "sshd_config"), 'w')
             f_sshd.write(sshd_template.render())
             f_sshd.close()
 
@@ -219,6 +239,11 @@ class NetkitCompiler:
                 dns_memory = 64 # Allocate more memory to DNS server 
                 #TODO: remove key, val and make it just key: val
                 lab_conf[rtr_folder_name].append( ('mem', dns_memory))
+
+            if config.settings['Lab']['netkit ssh key']:
+                f_auth_keys = open(os.path.join(dot_ssh_dir(self.network, node), "authorized_keys"), "w")
+                f_auth_keys.write(config.settings['Lab']['netkit ssh key'])
+                f_auth_keys.close()
 
             # Zebra Daemons
             zebra_daemon_list = []

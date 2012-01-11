@@ -1,1 +1,2 @@
-UseDNS no
+UseDNS no                              
+LogLevel DEBUG

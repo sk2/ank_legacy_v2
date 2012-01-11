@@ -23,4 +23,10 @@ route del default
 %endif    
 % if default_route:
 route add default gw ${default_route}
-% endif        
+% endif     
+% if chown_root:
+chown -R root:root /root     
+chmod 755 /root
+chmod 755 /root/.ssh
+chmod 644 /root/.ssh/authorized_keys
+% endif 

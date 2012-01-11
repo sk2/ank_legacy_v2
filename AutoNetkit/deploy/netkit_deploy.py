@@ -372,7 +372,6 @@ class NetkitDeploy():
                     shell.sendline("exit")
                     shell.prompt() 
 # from http://stackoverflow.com/q/295135/
-                print "savng"
                 command_filename_format = (re.sub('[^\w\s-]', '', command).strip().lower())
                 filename = "%s_%s_%s.txt" % (full_routername,
                         command_filename_format,
