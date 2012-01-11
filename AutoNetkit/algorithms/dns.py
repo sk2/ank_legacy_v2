@@ -2,6 +2,10 @@
 """
 DNS
 
+.. warning::
+
+    Work in progress.
+
 Automated hiearchy
 ===================
 

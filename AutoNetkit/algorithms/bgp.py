@@ -2,6 +2,10 @@
 """
 BGP
 
+.. warning::
+
+    Work in progress.
+
 eBGP
 ====
 eBGP is configured automatically, if there is an edge in the physical graph between two nodes that belong to different Autonomous Systems:
