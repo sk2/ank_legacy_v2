@@ -8,10 +8,11 @@ $TTL 1D
 		4W         		;expire
 		1D          	;negative cache TTL
 		)
-@       IN      NS       lo0.${dns_server}.
+@       IN      NS       ns.
         
 
-## Entries
+## Entries               
+ns		IN	A	${dns_server_ip}
 % for (interface_id, host, ip) in entry_list:
 ${interface_id}.${host}	IN	A	${ip}	     
 %endfor                      

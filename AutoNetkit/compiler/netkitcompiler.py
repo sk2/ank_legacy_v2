@@ -574,7 +574,7 @@ class NetkitCompiler:
         ip_as_allocs = ank.get_ip_as_allocs(self.network)
 
         dns_servers = ank.dns_servers(self.network)
-        root_servers = ank.root_dns_servers(self.network)
+        root_servers = list(ank.root_dns_servers(self.network))
         auth_servers = ank.dns.dns_auth_servers(self.network)
         caching_servers = ank.dns.dns_cache_servers(self.network)
         clients = ank.dns.dns_clients(self.network)
@@ -601,9 +601,12 @@ class NetkitCompiler:
             ))
 
         for server in caching_servers:
-            root_servers = ( (n.dns_hostname, server_ip(n)) for n in ank.dns_hiearchy_parents(server))
+            #root_db_hint = ( (n.dns_hostname, server_ip(n)) for n in ank.dns_hiearchy_parents(server))
+#TODO: make caching use parent rather than global root
+            root_db_hint = ( (n.dns_hostname, server_ip(n)) for n in root_servers)
+            root_db_hint = list(root_db_hint)
             f_root = open( os.path.join(bind_dir(self.network, server), "db.root"), 'w')
-            f_root.write( root_template.render( root_servers = root_servers))
+            f_root.write( root_template.render( root_servers = root_db_hint))
             f_named = open( os.path.join(bind_dir(self.network, server), "named.conf"), 'w')
             f_named.write(named_template.render(
                 entry_list = [],
@@ -619,7 +622,8 @@ class NetkitCompiler:
             LOG.debug("DNS server %s advertises %s" % (server, advertise_links))
 #TODO: make reverse dns handle domains other than /8 /16 /24
             advertise_block = ip_as_allocs[server.asn]
-            reverse_identifier = ank.rev_dns_identifier(advertise_block)
+# remove trailing fullstop
+            reverse_identifier = ank.rev_dns_identifier(advertise_block).rstrip(".")
 #TODO: look at using advertise_block.network.reverse_dns - check what Bind needs
             named_list.append(reverse_identifier)
 
@@ -639,9 +643,14 @@ class NetkitCompiler:
                     #TODO: make thise check l3 group rather than asn (generalise)
                     for host in advertise_hosts if host.is_router and host.asn == server.asn)
             
-            rev_entry_list = ( 
+            rev_entry_list = list( 
                     (ank.reverse_subnet(link, advertise_block.prefixlen), self.interface_id(link.id), link.local_host.dns_hostname) 
                     for link in advertise_links)
+            # Add loopbacks for routers
+            rev_entry_list += ( (ank.reverse_subnet(host.lo_ip, advertise_block.prefixlen), self.lo_interface(0), host.dns_hostname)
+                    #TODO: make thise check l3 group rather than asn (generalise)
+                    for host in advertise_hosts if host.is_router and host.asn == server.asn)
+            print rev_entry_list
 
 
             #TODO: provide better way to get eg eth0.host than string concat inside the template
@@ -662,6 +671,7 @@ class NetkitCompiler:
             
                 host_cname_list.append( (host.dns_hostname, cname))
 
+            #Sort to make format nicer
             host_cname_list = sorted(host_cname_list, key = lambda x: x[1])
             for_entry_list = sorted(for_entry_list)
             for_entry_list = sorted(for_entry_list, key = lambda x: x[1])
@@ -672,6 +682,7 @@ class NetkitCompiler:
                         entry_list = for_entry_list,
                         host_cname_list =  host_cname_list,
                         dns_server = server.dns_hostname,
+                        dns_server_ip = server_ip(server),
                 ))
 
             f_reverse = open(os.path.join(bind_dir(self.network, server), "db.%s" % reverse_identifier), 'w')
@@ -683,9 +694,11 @@ class NetkitCompiler:
                 dns_server= server.dns_hostname,
                 ))
 
-            root_servers = ( (n.dns_hostname, server_ip(n)) for n in ank.dns_hiearchy_parents(server))
+            #TODO: make l2 use l3 for caching
+            #root_servers = ( (n.dns_hostname, server_ip(n)) for n in ank.dns_hiearchy_parents(server))
+            root_db_hint = ( (n.dns_hostname, server_ip(n)) for n in root_servers)
             f_root = open( os.path.join(bind_dir(self.network, server), "db.root"), 'w')
-            f_root.write( root_template.render( root_servers = root_servers))
+            f_root.write( root_template.render( root_servers = root_db_hint))
 
         for server in dns_servers:
             f_resolv = open( os.path.join(etc_dir(self.network, server), "resolv.conf"), 'w')
