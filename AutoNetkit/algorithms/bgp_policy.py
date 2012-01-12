@@ -602,6 +602,7 @@ class BgpPolicyParser:
     def library_test(self):
         """Note you need a blank newline after a function definition"""
         library_file = "library.txt"
+        f_library_debug = open( os.path.join(config.log_dir, "library_dump.txt"), "w")
         with open( library_file, 'r') as f_lib:
             library_data = f_lib.read()
 
@@ -678,6 +679,7 @@ class BgpPolicyParser:
             defined_functions[function_name]['param_indices'] = param_indices
 
         for name, params in function_applications:
+            f_library_debug.write("---\n%s (%s)\n" % (name, ", ".join(params)))
             LOG.info("Applying function %s(%s)" % (name, ", ".join(params)))
             try:
                 fn_def = defined_functions[name]
@@ -685,13 +687,27 @@ class BgpPolicyParser:
                 LOG.info('No function definition found for "%s"' % name)
                 continue
 
+# check param length
+            param_indices = fn_def['param_indices']
+            if len(params) != len(param_indices):
+                LOG.info("Incorrect parameter count for function %s(%s)" % (name, ", ".join(params)))
+                continue
+
             for function_line in fn_def['entries']:
                 query_a = function_line['query_a']
                 query_b = function_line['query_b']
                 edge_type = function_line['edge_type']
                 bgp_query = function_line['bgp_query'].strip()
-                query_a_index = fn_def['param_indices'][query_a]
-                query_b_index = fn_def['param_indices'][query_b]
+                try:
+                    query_a_index = param_indices[query_a]
+                except KeyError:
+                    LOG.info("Parameter %s not found in function definition for %s" % (query_a, name))
+                    continue
+                try:
+                    query_b_index = param_indices[query_b]
+                except KeyError:
+                    LOG.info("Parameter %s not found in function definition for %s" % (query_b, name))
+                    continue
 # find the parameters that map to these
                 q_a_map = params[query_a_index]
                 q_b_map = params[query_b_index]
@@ -716,7 +732,9 @@ class BgpPolicyParser:
 
                     policy_line = "(%s = %s) %s (%s = %s): %s" % (attribute_a, val_a, edge_type, attribute_b, val_b, bgp_query)
                     LOG.debug("Policy: %s" % policy_line)
+                    f_library_debug.write(policy_line + "\n")
                     self.apply_bgp_policy(policy_line)
+        f_library_debug.close()
 
 
 
