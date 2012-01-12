@@ -58,7 +58,11 @@ class node_namedtuple (namedtuple('node', "network, id")):
 
     @property
     def fqdn(self):
-        return self.network.fqdn(self)
+        return ank.naming.fqdn(self.network, self)
+
+    @property
+    def hostname(self):
+        return ank.naming.hostname(self)
 
     @property
     def lo_ip(self):
@@ -235,8 +239,6 @@ class Network(object):
     @g_dns_auth.setter
     def g_dns_auth(self, value):
         self._graphs['dns_authoritative'] = value
-
-        
 
     @deprecated
     def get_edges(self, node=None):

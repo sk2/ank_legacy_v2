@@ -114,7 +114,7 @@ class JunosCompiler:
         collision_to_bridge_mapping = {}
 
         for device in self.network.devices():
-            hostname = ank.fqdn(self.network, device)
+            hostname = device.hostname
             topology_data[hostname] = {
                     'image': 'VJX1000_LATEST',
                     'config': router_conf_file(self.network, device),
@@ -360,7 +360,7 @@ class JunosCompiler:
             juniper_filename = router_conf_path(self.network, router)
             with open( juniper_filename, 'w') as f_jun:
                 f_jun.write( junos_template.render(
-                    hostname = ank.fqdn(self.network, router),
+                    hostname = router.rtr_folder_name,
                     username = 'autonetkit',
                     interfaces=interfaces,
                     igp_interfaces=igp_interfaces,

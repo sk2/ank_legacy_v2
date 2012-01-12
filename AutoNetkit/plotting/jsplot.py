@@ -147,7 +147,7 @@ def jsplot(network):
             label = node.label
         except KeyError:
             label = node
-        data = { 'label': "%s (%s)" % (label.fqdn, dns_graph.node[node].get("level"))}
+        data = { 'label': "%s (%s)" % (node.fqdn, dns_graph.node[node].get("level"))}
         node_list.append( (node.id, data))
     dns_filename = os.path.join(jsplot_dir, "dns.js")
     edge_list = dns_graph.edges(data=True)

@@ -129,7 +129,7 @@ def fqdn(network, node):
 def hostname(node):
     """ Returns name with spaces, underscores and other illegal characters
     removed. Useful for Bind/DNS"""
-    name = node.network.label(node)
+    name = fqdn(node.network, node)
     if not name:
         # Numeric ID, so unique
         name = str(node) 
@@ -139,21 +139,11 @@ def hostname(node):
 
 def rtr_folder_name(network, node):
     """Returns file system safe name for device, used for folders."""
-    asn = network.asn(node)
-    asn = int(asn)
-    if asn in network.as_names:
-        as_domain = network.as_names[asn]
-    else:
-        as_domain = "AS{0}".format(asn)
+    foldername = fqdn(network, node)
 
     #TODO: come up with shortest unique name, eg Adelaide, Aarnet becomes
     # adl.aar, as want descriptive, but also short name
-    label = network.label(node)
-    if not label:
-        # Numeric ID, so unique
-        label = str(node) 
     # Use asn not domain, as domain leads to long filenames
-    foldername = "{0}_{1}".format(as_domain, label)
     for illegal_char in [" ", "/", "_", ",", ".", "&amp;", "-", "(", ")"]:
         foldername = foldername.replace(illegal_char, "_")
     # Don't want double _

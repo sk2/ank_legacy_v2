@@ -74,10 +74,8 @@ class Internet:
         self.igp = igp
         if filename:
             self.load(filename)
-
         self.services = []
          
-
     def add_dns(self):        
         """Set compiler to configure DNS.
 
