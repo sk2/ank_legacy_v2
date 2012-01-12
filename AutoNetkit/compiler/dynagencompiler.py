@@ -227,8 +227,8 @@ class dynagenCompiler:
                             {
                                 'id':  self.network.lo_ip(neigh).ip,
                                 'description':      description,
-                                'route_maps_in': [r.name for r in route_maps_in],
-                                'route_maps_out': [r.name for r in route_maps_out],
+                                'route_maps_in': rm_call_group_name_in,
+                                'route_maps_out': rm_call_group_name_out,
                                 })
                 elif (data.get('rr_dir') in set(['up', 'over', 'peer'])
                         or data.get('rr_dir') is None):
@@ -255,17 +255,30 @@ class dynagenCompiler:
             external_peers = []
             for peer in ebgp_graph.neighbors(router):
                 route_maps_in = [route_map for route_map in 
-                        self.network.g_session[peer][router]['ingress']]
+                                self.network.g_session[peer][router]['ingress']]
+                rm_call_group_name_in = None
+                if len(route_maps_in):
+                    rm_call_group_name_in = "rm_call_%s_in" % self.network.fqdn(peer).replace(".", "_")
+                    route_map_call_groups[rm_call_group_name_in] = [r.name for r in route_maps_in]
+                route_maps += route_maps_in
+
+                rm_call_group_name_out = "rm_call_%s_out" % self.network.fqdn(peer).replace(".", "_")
                 route_maps_out = [route_map for route_map in 
                         self.network.g_session[router][peer]['egress']]
-                route_maps += route_maps_in
-                route_maps += route_maps_out   
-                peer_ip = physical_graph[peer][router]['ip']
-                external_peers.append({
-                    'id': peer_ip, 
-                    'route_maps_in': [r.name for r in route_maps_in],
-                    'route_maps_out': [r.name for r in route_maps_out],
-                    'peer_as': self.network.asn(peer)})
+                rm_call_group_name_out = None
+                if len(route_maps_out):
+                    rm_call_group_name_out = "rm_call_%s_out" % (
+                            self.network.fqdn(peer).replace(".", "_"))
+                    route_map_call_groups[rm_call_group_name_out] = [r.name for r in route_maps_out]
+                    route_maps += route_maps_out
+
+                peer_ip = physical_graph[peer][router]['ip'] 
+
+            external_peers.append({
+                'id': peer_ip, 
+                'route_maps_in': rm_call_group_name_in,
+                'route_maps_out': rm_call_group_name_out,
+                'peer_as': self.network.asn(peer)})
             bgp_groups['external_peers'] = {
                     'type': 'external', 
                     'neighbors': external_peers}
@@ -284,6 +297,7 @@ class dynagenCompiler:
                 'community_lists': community_lists,
                 'prefix_lists': prefix_lists,
                 'route_maps': route_maps,
+                'route_map_call_groups': route_map_call_groups,
                 }
 
         return (bgp_groups, policy_options)
@@ -351,8 +365,6 @@ class dynagenCompiler:
         LOG.info("Configuring Dynagen")
 
         # Location of IOS binary
-        working_dir = "/tmp" 
-        # Set up lab
 
         # Set up routers
         lab_template = lookup.get_template("dynagen/topology.mako")
@@ -360,7 +372,8 @@ class dynagenCompiler:
         # Counter starting at 2000, eg 2000, 2001, 2002, etc
         console_port = itertools.count(2000)
 
-        # also map lat/long to x,y if present
+#TODO: what is this used for?
+        working_dir = "/tmp"
 
 
         #TODO: need nice way to map ANK graph into feasible hardware graph
@@ -420,8 +433,8 @@ class dynagenCompiler:
                     # Src is node, dst is router connected to. Link data in data
                     local_id = data['id']
                     remote_id = graph.edge[dst][src]['id']
-                    local_cisco_id = cisco_int_name(local_id)
-                    remote_cisco_id = cisco_int_name(remote_id)
+                    local_cisco_id = self.cisco_int_name(local_id)
+                    remote_cisco_id = self.cisco_int_name(remote_id)
                     remote_hostname = ank.fqdn(self.network, dst)
                     router_links.append( (local_cisco_id, remote_cisco_id,
                                           remote_hostname))

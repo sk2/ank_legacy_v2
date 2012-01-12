@@ -100,9 +100,18 @@ ip community-list standard ${name} permit ${value}
  % for prefix in values: 
 ip prefix-list ${name} seq 5 permit ${prefix}
  % endfor
-% endfor    
-!
-% for route_map in policy_options['route_maps']:
+% endfor 
+!       
+! Route-map call-groups 
+% for name, members in sorted(policy_options['route_map_call_groups'].items()):    
+route-map ${name} permit 10
+	% for member in members:
+	call ${member}
+	on-match next
+	%endfor 
+!            
+%endfor 
+% for route_map in sorted(policy_options['route_maps']):
   % for match_tuple in route_map.match_tuples:
     % if match_tuple.reject:
 route-map ${route_map.name} deny ${match_tuple.seq_no * 10}
@@ -127,7 +136,7 @@ route-map ${route_map.name} permit ${match_tuple.seq_no * 10}
     %if len(match_tuple.action_clauses) or match_tuple.reject:
       %for action_clause in match_tuple.action_clauses:
         % if action_clause.action == "addTag":
- set community ${action_clause.value} additive
+ set community ${policy_options['community_lists'][action_clause.value]} additive
 	% elif action_clause.action == "setLP":
  set local-preference ${action_clause.value}
 	% elif action_clause.action == "setMED":
@@ -140,4 +149,5 @@ route-map ${route_map.name} permit ${match_tuple.seq_no * 10}
       %endfor   
     % endif
  % endfor
+!
 % endfor
