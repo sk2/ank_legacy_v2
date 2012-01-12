@@ -15,6 +15,8 @@ import shutil
 import glob
 import netaddr
 import time
+import string
+import itertools
 import tarfile
 
 import AutoNetkit as ank
@@ -83,6 +85,7 @@ class dynagenCompiler:
         self.igp = igp
         self.interface_limit = 6
         self.interface_names = config.settings['Lab']['dynagen interfaces']
+        self.interface_mapping = {"FastEthernet": "f"}
 
     def initialise(self):  
         """Creates lab folder structure"""
@@ -201,7 +204,7 @@ class dynagenCompiler:
         ibgp_neighbor_list = []
         ibgp_rr_client_list = []
         route_map_call_groups = {}
-        
+
         if router in ibgp_graph:
             for src, neigh, data in ibgp_graph.edges(router, data=True):
                 route_maps_in = [route_map for route_map in 
@@ -360,6 +363,14 @@ class dynagenCompiler:
         #TODO: try/except in case index not found
         return self.interface_names[interface_id]
 
+    def dynagen_interface_name(self, interface_id):
+        """ FastEthernet1/0 -> f1/0"""
+# remove any numbers
+        numbers = set("0123456789")
+        interface_name = "".join(itertools.takewhile(lambda x: x not in numbers, interface_id))
+        interface_number = interface_id.replace(interface_name, "")
+        retval = "%s%s" % (self.interface_mapping[interface_name], interface_number)
+        return retval
 
     def configure_dynagen(self):  
         """Generates dynagen specific configuration files."""
@@ -371,79 +382,62 @@ class dynagenCompiler:
         lab_template = lookup.get_template("dynagen/topology.mako")
 
         # Counter starting at 2000, eg 2000, 2001, 2002, etc
-        console_port = itertools.count(2000)
+        console_ports = itertools.count(2000)
 
         #NOTE this must be a full path!
-        working_dir = os.path.join(config.settings['Lab']['dynagen working dir'], config.dynagen_dir)
+        server_config_dir = os.path.join(config.settings['Lab']['dynagen working dir'], lab_dir())
+        working_dir ="/tmp"
 
         #TODO: need nice way to map ANK graph into feasible hardware graph
 
         chassis = config.settings['Lab']['dynagen model']
 
-        # Need more robust way to handle this
-        # Interface mapping
-
-        # Need to allocate Cisco interfaces
-
-    
-        # convenient alias
+        # ugly alias
+#TODO: remove this
         graph = self.network.graph
-
-        #TODO: basic layout if lat/long present
 
         all_router_info = {}
 
         #TODO: make this use dynagen tagged nodes
-        for node in self.network.get_nodes_by_property('platform', 'NETKIT'):
+        for router in self.network.routers():
             router_info = {}
 
-            data = graph.node[node]
-            hostname = ank.fqdn(self.network, node)
-            router_info['hostname'] = hostname
+            data = graph.node[router]
+            router_info['hostname'] = router.fqdn
 
-            if 'model' in data:
-                router_info['model'] = data['model'] 
-            else:
-                router_info['model'] = defaults['model'] 
-
-            router_info['console'] = console_port.next() 
+            rtr_console_port = console_ports.next()
+            router_info['console'] =  rtr_console_port
+            self.network.graph.node[router]['dynagen_console_port'] = rtr_console_port
             #TODO: tidy this up - want relative reference to config dir
-            rtr_conf_file = os.path.join("configs", "%s.cfg" % hostname)
+            rtr_conf_file = os.path.join("configs", "%s.cfg" % router.hostname)
             #router_info['cnfg'] = rtr_conf_file
             # Absolute configs for remote dynagen deployment
 #TODO: make this dependent on remote host - if localhost then don't use
 # and if do use, then 
-            rtr_conf_file_with_path = os.path.join(lab_dir(), rtr_conf_file)
-            router_info['cnfg'] = os.path.abspath(rtr_conf_file_with_path)
+            rtr_conf_file_with_path = os.path.join(server_config_dir, rtr_conf_file)
+            #router_info['cnfg'] = os.path.abspath(rtr_conf_file_with_path)
+            router_info['cnfg'] = rtr_conf_file_with_path
 
             # Max of 3 connections out
             # todo: check symmetric
             router_links = []
-
-            #if graph.out_degree(node) == 2:
-                # Add another card
-                #router_info['slot1'] = "NM-1FE-TX"
-            #TODO: use other modules
-            if graph.out_degree(node) > 4:
-                LOG.warning("Router %s has more than 4 interfaces, skipping" %
-                            hostname)
-            else:
-                router_info['slot1'] = "NM-4E"
-                for src, dst, data in graph.edges(node, data=True):
+            router_info['slot1'] = "NM-4E"
+            for src, dst, data in graph.edges(router, data=True):
+                if dst.is_router:
                     # Src is node, dst is router connected to. Link data in data
                     local_id = data['id']
                     remote_id = graph.edge[dst][src]['id']
-                    local_cisco_id = self.cisco_int_name(local_id)
-                    remote_cisco_id = self.cisco_int_name(remote_id)
+                    local_cisco_id = self.dynagen_interface_name(self.int_id(local_id))
+                    remote_cisco_id = self.dynagen_interface_name(self.int_id(remote_id))
                     remote_hostname = ank.fqdn(self.network, dst)
                     router_links.append( (local_cisco_id, remote_cisco_id,
-                                          remote_hostname))
+                                            remote_hostname))
 
             # Store links
             router_info['links'] = router_links
 
             # and store info
-            all_router_info[node] = router_info
+            all_router_info[router] = router_info
 
         #pprint.pprint(all_router_info)
         lab_file = os.path.join(lab_dir(), "lab.net")

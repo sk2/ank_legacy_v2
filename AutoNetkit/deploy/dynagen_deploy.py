@@ -253,7 +253,7 @@ class DynagenDeploy():
         LOG.info("Starting Dynagen lab")
         shell.sendline("dynagen lab.net")
 #TODO: capture bootup process similar to for Olives
-        ready_prompt = "Network successfully loaded"
+        ready_prompt = "=>"
 
         started_successfully = False
 
@@ -268,7 +268,8 @@ class DynagenDeploy():
                 ]) 
             if i == 0:
 # Matched, continue on
-                pass
+                LOG.info("Timeout starting Dynagen lab")
+                break
             elif i == 1:
                 LOG.info( "Dynagen: started lab")
                 started_successfully = True
@@ -278,10 +279,10 @@ class DynagenDeploy():
                 break
             elif i == 3:
                 # TODO: fix this split after "Warning:" --- as too complex to regex capture
-                error_message = shell.match.group(0).split(":")[1].strip()
+                error_message = shell.match.group(0).split("Warning:")[1].strip()
                 LOG.info("Problem starting Dynagen lab: %s" % error_message)
             elif i == 4:
-                error_message = shell.match.group(0).split(":")[1].strip()
+                error_message = shell.match.group(0).split("Error:")[1].strip()
                 LOG.info("Problem starting Dynagen lab: %s" % error_message)
             else:
                 # print the progress status me= ssage
