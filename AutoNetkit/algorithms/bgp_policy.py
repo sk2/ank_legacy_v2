@@ -239,38 +239,19 @@ class BgpPolicyParser:
         bgpSessionQuery = Forward()
         bgpSessionQuery << ( ifThenClause +
                 Optional( Suppress("else") + (elseActionClause | bgpSessionQuery))
-#+ ZeroOrMore(boolean_and + bgpAction) | bgpSessionQuery )).setResultsName("else_clause"))
                 ).setResultsName("bgpSessionQuery")
         bgpSessionQuery =  bgpSessionQuery | unconditionalAction
         self.bgpSessionQuery = bgpSessionQuery
 
 
-#todo: remove testing
-        self.stringQuery = stringQuery
-
         self.bgpApplicationQuery = self.edgeQuery + Suppress(":") + self.bgpSessionQuery
 
-# business relationship building
-        asn = "ASN"
-        asnAlias = (stringValues.setResultsName("network") + 
-                "is" + asn + integer_string.setResultsName("asn")).setResultsName("asnAlias")
-# eg AARNET is 213, sets asn of node AARNET
-#'GEANT is ASN 123',
-
-        serviceString = (stringValues.setResultsName("provider")
-                + "provides" + stringValues.setResultsName("service") 
-                + "to" + stringValues.setResultsName("client")).setResultsName("serviceString")
-
-        relationshipString = (stringValues.setResultsName("provider")
-                + "is a" + stringValues.setResultsName("relationship") 
-                + "of" + stringValues.setResultsName("client")).setResultsName("relationshipString")
-
-        self.br_query = asnAlias | serviceString | relationshipString
-
+# Library stuff
         self.set_definition = attribute.setResultsName("set_name") + Suppress("=") + Suppress("{") + delimitedList( attribute, delim=',').setResultsName("set_values") + Suppress("}")
 
 #gao_rexford ( me, custs , peers , upstream ):
         self.library_def = attribute.setResultsName("def_name") + Suppress("(") + delimitedList( attribute, delim=',').setResultsName("def_params") + Suppress(")")
+        self.library_entry  = ""
 
     def apply_bgp_policy(self, qstring):
         """Applies policy to network 
@@ -613,20 +594,23 @@ class BgpPolicyParser:
 
     def library_test(self):
         library_file = "library.txt"
-        library_data = []
         with open( library_file, 'r') as f_lib:
             library_data = f_lib.read()
-        print library_data
+
+        defined_functions = {}
         defined_sets = {}
         for line in library_data.splitlines():
             try:
-                print "trying to parse", line
                 results = self.set_definition.parseString(line)
                 defined_sets[results.set_name] = [a for a in results.set_values]
             except:
 # try as function def
-                results = self.library_def.parseString(line)
-                print results.dump()
+                try:
+                    results = self.library_def.parseString(line)
+                except:
+                    results = self.library_entry.parseString(line)
+                    print results.dump()
+
 
             print line
             pprint.pprint(defined_sets)
