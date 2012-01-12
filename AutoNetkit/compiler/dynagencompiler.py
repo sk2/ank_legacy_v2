@@ -108,6 +108,7 @@ class dynagenCompiler:
             'id':          'lo0',
             'ip':           str(lo_ip.ip),
             'netmask':      str(lo_ip.netmask),
+            'wildcard':      str(lo_ip.hostmask),
             'prefixlen':    str(lo_ip.prefixlen),
             'net_ent_title': ank.ip_to_net_ent_title(lo_ip),
             'description': 'Loopback',
@@ -125,6 +126,8 @@ class dynagenCompiler:
                 'id':          int_id,
                 'ip':           str(data['ip']),
                 'prefixlen':    str(subnet.prefixlen),
+                'netmask':    str(subnet.netmask),
+                'wildcard':      str(subnet.hostmask),
                 'broadcast':    str(subnet.broadcast),
                 'description':  description,
             })
@@ -135,19 +138,26 @@ class dynagenCompiler:
         """igp configuration"""
         LOG.debug("Configuring IGP for %s" % self.network.label(router))
         default_weight = 1
+#TODO: get area from router
+        default_area = 0
         igp_interfaces = []
         if igp_graph.degree(router) > 0:
             # Only start IGP process if IGP links
-            igp_interfaces.append({ 'id': 'lo0', 'passive': True})
+            igp_interfaces.append({ 'id': 'lo0', 'wildcard': "0.0.0.0", 'passive': True,
+                'area': default_area, 'weight': default_weight,
+                })
             for src, dst, data in igp_graph.edges(router, data=True):
                 int_id = ank.junos_logical_int_id_ge(self.int_id(data['id']))
+                subnet = self.network.graph[src][dst]['sn']
                 description = 'Interface %s -> %s' % (
                     ank.fqdn(self.network, src), 
                     ank.fqdn(self.network, dst))
                 igp_interfaces.append({
                     'id':       int_id,
                     'weight':   data.get('weight', default_weight),
+                    'area':   data.get('area', default_area),
                     'description': description,
+                    'wildcard':      str(subnet.hostmask),
                     })
 
 # Need to add eBGP edges as passive interfaces
@@ -155,14 +165,17 @@ class dynagenCompiler:
 # Get relevant edges from ebgp_graph, and edge data from physical graph
                 data = self.network.graph[src][dst]
                 int_id = ank.junos_logical_int_id_ge(self.int_id(data['id']))
+                subnet = self.network.graph[src][dst]['sn']
                 description = 'Interface %s -> %s' % (
                     ank.fqdn(self.network, src), 
                     ank.fqdn(self.network, dst))
                 igp_interfaces.append({
                     'id':       int_id,
                     'weight':   data.get('weight', default_weight),
+                    'area':   data.get('area', default_area),
                     'description': description,
                     'passive': True,
+                    'wildcard':      str(subnet.hostmask),
                     })
 
         return igp_interfaces
@@ -285,9 +298,9 @@ class dynagenCompiler:
         ibgp_graph = ank.get_ibgp_graph(self.network)
         ebgp_graph = ank.get_ebgp_graph(self.network)
 
-        #TODO: correct this router type selector
         for router in self.network.routers():
             #check interfaces feasible
+#TODO: make in_degree a property eg link_count
             if self.network.graph.in_degree(router) > self.interface_limit:
                 LOG.warn("%s exceeds interface count: %s (max %s)" % (self.network.label(router),
                     self.network.graph.in_degree(router), self.interface_limit))
@@ -312,8 +325,11 @@ class dynagenCompiler:
                     interfaces=interfaces,
                     igp_interfaces=igp_interfaces,
                     igp_protocol = self.igp,
+# explicit protocol
+                    use_isis = self.igp == 'isis',
                     asn = asn,
                     lo_ip=lo_ip,
+                    #TODO: make router have property "identifier" which maps to lo_ip
                     router_id = lo_ip.ip,
                     network_list = network_list,
                     bgp_groups = bgp_groups,

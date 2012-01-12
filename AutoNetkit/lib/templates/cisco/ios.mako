@@ -12,8 +12,10 @@ ip cef
 % for i in interfaces:
 interface ${i['id']}
  description ${i['description']}
- ip address ${i['ip']} ${i['prefixlen']}
- ip router isis
+ ip address ${i['ip']} ${i['netmask']} 
+ % if igp_protocol == 'isis':
+ ip router isis             
+ % endif
  no shutdown
  duplex auto
  speed auto
@@ -39,7 +41,7 @@ router ospf 1
  redistribute connected
  redistribute static
   % for i in igp_interfaces:
- network ${i['id']} 0.0.0.255 area 0
+ network ${i['id']} ${i['wildcard']} area ${i['area']}
     % if 'passive' in i:
  passive-interface ${i['id']}
     % endif
@@ -50,7 +52,7 @@ router ospf 1
 router bgp ${asn}
  no synchronization
 % for i in interfaces:
- network ${i['ip']} mask ${i['prefixlen']}
+ network ${i['ip']} mask ${i['wildcard']}
 % endfor
 % for groupname, group_data in bgp_groups.items():
  % if group_data['type'] == 'internal':
