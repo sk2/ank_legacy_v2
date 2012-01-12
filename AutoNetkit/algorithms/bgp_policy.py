@@ -671,9 +671,9 @@ class BgpPolicyParser:
                 except pyparsing.ParseException:
                     pass
 
-        processed_functions = {}
         for function_name, function_data in defined_functions.items():
             params = function_data['params']
+# Store indices so can lookup when applying functions
             param_indices = dict( (p, params.index(p)) for p in params)
             defined_functions[function_name]['param_indices'] = param_indices
 
