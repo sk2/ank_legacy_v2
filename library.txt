@@ -1,5 +1,5 @@
-test = {A, B, C} 
-test2 = {D, E, F}
+test = {A, B} 
+test2 = {D, AS1}
 test3 = {H, I, J}
 test4 = {K, L, M}
    

@@ -629,7 +629,12 @@ class BgpPolicyParser:
 #TODO: for efficiency, could save the already parsed query here
 #TODO: remove this dodgy hack! - as want to be overlay, so don't parse here???
                         bgp_query = line.split(":")[1]
-                        library_entry = [ (results.query_a, results.edgeType, results.query_b, bgp_query)]
+                        library_entry = {
+                                'query_a': results.query_a, 
+                                'edge_type': results.edgeType,
+                                'query_b': results.query_b,
+                                'bgp_query': bgp_query,
+                        }
                         defined_functions[current_function_def]['entries'].append(library_entry)
                         #print results.dump()
 # finished with this line
@@ -666,22 +671,14 @@ class BgpPolicyParser:
                 except pyparsing.ParseException:
                     pass
 
-        #pprint.pprint(defined_sets)
-
         processed_functions = {}
         for function_name, function_data in defined_functions.items():
             params = function_data['params']
             param_indices = dict( (p, params.index(p)) for p in params)
             defined_functions[function_name]['param_indices'] = param_indices
 
-
-            #print line
-            #pprint.pprint(defined_sets)
-        #pprint.pprint(defined_functions)
-# Now apply called functions
-        #pprint.pprint(function_applications)
         for name, params in function_applications:
-            LOG.info("Applying function %s(%s)" % (name, params))
+            LOG.info("Applying function %s(%s)" % (name, ", ".join(params)))
             try:
                 fn_def = defined_functions[name]
             except KeyError:
@@ -689,7 +686,38 @@ class BgpPolicyParser:
                 continue
 
             for function_line in fn_def['entries']:
-                print function_line
+                query_a = function_line['query_a']
+                query_b = function_line['query_b']
+                edge_type = function_line['edge_type']
+                bgp_query = function_line['bgp_query'].strip()
+                query_a_index = fn_def['param_indices'][query_a]
+                query_b_index = fn_def['param_indices'][query_b]
+# find the parameters that map to these
+                q_a_map = params[query_a_index]
+                q_b_map = params[query_b_index]
+                q_a_vals = sorted(defined_sets[q_a_map])
+                q_b_vals = sorted(defined_sets[q_b_map])
+                LOG.debug("Definition param %s maps to user parameter %s with values %s" % (query_a, 
+                    q_a_map, q_a_vals))
+                LOG.debug("Definition param %s maps to user parameter %s with values %s" % (query_b, 
+                    q_b_map, q_b_vals))
+                for (val_a, val_b) in itertools.product(q_a_vals, q_b_vals):
+                    LOG.debug("Applying %s %s %s" % (val_a, edge_type, val_b))
+
+                    # Test if "AS1"
+                    attribute_a = "Network"
+                    if val_a.startswith("AS"):
+                        attribute_a = "asn"
+                        val_a = int(val_a[2:])
+                    attribute_b = "Network"
+                    if val_b.startswith("AS"):
+                        attribute_b = "asn"
+                        val_b = int(val_b[2:])
+
+                    policy_line = "(%s = %s) %s (%s = %s): %s" % (attribute_a, val_a, edge_type, attribute_b, val_b, bgp_query)
+                    LOG.debug("Policy: %s" % policy_line)
+                    self.apply_bgp_policy(policy_line)
+
 
 
     def apply_policy_file(self, policy_in_file):
