@@ -194,35 +194,30 @@ class dynagenCompiler:
         # route maps
         bgp_groups = {}
         route_maps = []
-        route_map_call_groups = {}
-        if router in ibgp_graph:
-            internal_peers = []
-            for peer in ibgp_graph.neighbors(router):
-                route_maps_in = [route_map for route_map in 
-                        self.network.g_session[peer][router]['ingress']]
-                route_maps_out = [route_map for route_map in 
-                        self.network.g_session[router][peer]['egress']]
-                route_maps += route_maps_in
-                route_maps += route_maps_out   
-                internal_peers.append({
-                    'id': self.network.lo_ip(peer).ip,
-                    'route_maps_in': [r.name for r in route_maps_in],
-                    })
-            bgp_groups['internal_peers'] = {
-                    'type': 'internal',
-                    'neighbors': internal_peers
-                    }
-
         ibgp_neighbor_list = []
         ibgp_rr_client_list = []
+        route_map_call_groups = {}
+        
         if router in ibgp_graph:
             for src, neigh, data in ibgp_graph.edges(router, data=True):
                 route_maps_in = [route_map for route_map in 
                         self.network.g_session[neigh][router]['ingress']]
+                rm_call_group_name_in = None
+                if len(route_maps_in):
+                    rm_call_group_name_in = "rm_call_%s_in" % self.network.fqdn(neigh).replace(".", "_")
+                    route_map_call_groups[rm_call_group_name_in] = [r.name for r in route_maps_in]
+                    route_maps += route_maps_in
+
+                rm_call_group_name_out = "rm_call_%s_out" % self.network.fqdn(neigh).replace(".", "_")
                 route_maps_out = [route_map for route_map in 
                         self.network.g_session[router][neigh]['egress']]
-                route_maps += route_maps_in
-                route_maps += route_maps_out     
+                rm_call_group_name_out = None
+                if len(route_maps_out):
+                    rm_call_group_name_out = "rm_call_%s_out" % (
+                            self.network.fqdn(neigh).replace(".", "_"))
+                    route_map_call_groups[rm_call_group_name_out] = [r.name for r in route_maps_out]
+                    route_maps += route_maps_out
+
                 description = data.get("rr_dir") + " to " + ank.fqdn(self.network, neigh)
                 if data.get('rr_dir') == 'down':
                     ibgp_rr_client_list.append(
