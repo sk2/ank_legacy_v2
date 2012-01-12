@@ -111,6 +111,7 @@ class dynagenCompiler:
             'netmask':      str(lo_ip.netmask),
             'wildcard':      str(lo_ip.hostmask),
             'prefixlen':    str(lo_ip.prefixlen),
+            'network':       str(lo_ip.network),
             'net_ent_title': ank.ip_to_net_ent_title_ios(lo_ip),
             'description': 'Loopback',
         })
@@ -126,6 +127,7 @@ class dynagenCompiler:
             interfaces.append({
                 'id':          int_id,
                 'ip':           str(data['ip']),
+                'network':       str(subnet.network),
                 'prefixlen':    str(subnet.prefixlen),
                 'netmask':    str(subnet.netmask),
                 'wildcard':      str(subnet.hostmask),

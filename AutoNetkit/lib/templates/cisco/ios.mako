@@ -52,7 +52,7 @@ router ospf 1
 router bgp ${asn}
  no synchronization
 % for i in interfaces:
- network ${i['ip']} mask ${i['wildcard']}
+ network ${i['network']} mask ${i['wildcard']}
 % endfor
 % for groupname, group_data in bgp_groups.items():
  % if group_data['type'] == 'internal':
