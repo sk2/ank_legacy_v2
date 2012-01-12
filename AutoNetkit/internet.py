@@ -424,7 +424,6 @@ class Internet:
 
         return
 
-
     def collect_data(self):
         """ Collects data for hosts"""
         collected_data_dir = config.collected_data_dir
