@@ -147,7 +147,7 @@ def jsplot(network):
             label = node.label
         except KeyError:
             label = node
-        data = { 'label': "%s (%s)" % (label, dns_graph.node[node].get("level"))}
+        data = { 'label': "%s (%s)" % (label.fqdn, dns_graph.node[node].get("level"))}
         node_list.append( (node.id, data))
     dns_filename = os.path.join(jsplot_dir, "dns.js")
     edge_list = dns_graph.edges(data=True)
@@ -181,10 +181,14 @@ def jsplot(network):
     #TODO: add timestamps to plots
     # put html file in main plot directory
 #TODO: parameterised/variable the css location
+    plot_width = config.settings['Plotting']['jsplot width']
+    plot_height = config.settings['Plotting']['jsplot height']
     html_filename = os.path.join(plot_dir, "plot.html")
     with open( html_filename, 'w') as f_html:
             f_html.write( html_template.render( js_file = "main.js",
                 timestamp=timestamp,
+                plot_width = plot_width,
+                plot_height = plot_height,
                 title = "Physical Network",
                 css_filename = "./ank_style.css",))
 
@@ -192,6 +196,8 @@ def jsplot(network):
     with open( html_filename, 'w') as f_html:
             f_html.write( html_template.render( js_file = "ip.js",
                 timestamp=timestamp,
+                plot_width = plot_width,
+                plot_height = plot_height,
                 title = "IP",
                 css_filename = "./ank_style.css",))
 
@@ -199,6 +205,8 @@ def jsplot(network):
     with open( html_filename, 'w') as f_html:
             f_html.write( html_template.render( js_file = "ibgp.js",
                 timestamp=timestamp,
+                plot_width = plot_width,
+                plot_height = plot_height,
                 title = "iBGP",
                 css_filename = "./ank_style.css",))
 
@@ -206,6 +214,8 @@ def jsplot(network):
     with open( html_filename, 'w') as f_html:
             f_html.write( html_template.render( js_file = "ebgp.js",
                 timestamp=timestamp,
+                plot_width = plot_width,
+                plot_height = plot_height,
                 title = "eBGP",
                 css_filename = "./ank_style.css",))
 
@@ -213,6 +223,8 @@ def jsplot(network):
     with open( html_filename, 'w') as f_html:
             f_html.write( html_template.render( js_file = "dns.js",
                 timestamp=timestamp,
+                plot_width = plot_width,
+                plot_height = plot_height,
                 title = "DNS Hierarchy",
                 css_filename = "./ank_style.css",))
 
@@ -220,6 +232,8 @@ def jsplot(network):
     with open( html_filename, 'w') as f_html:
             f_html.write( html_template.render( js_file = "dns_auth.js",
                 timestamp=timestamp,
+                plot_width = plot_width,
+                plot_height = plot_height,
                 title = "DNS Authority",
                 css_filename = "./ank_style.css",))
 

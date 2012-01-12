@@ -405,30 +405,45 @@ Plotting can be enabled using the ``--plot`` switch::
 	INFO   Configuring DNS
 	INFO   Plotting
 
-We can see the plotting step has been completed.
-The plots are placed in the autonetkit/plots directory::
+We can see the plotting step has been completed. You can access the plots through the HTML summary page::
+  
+  ank_lab/plots/summary.html
 
-	sk:Desktop sk2$ ls autonetkit/plots/
-	AS1.pdf     AS1.png     AS3.pdf     AS3.png     eBGP.pdf    eBGP.png    iBGP.pdf    iBGP.png    network.pdf network.png
+Examples of plotting and summary:
 
-An example of these plots can be found below:
+Summary:
+==================
 
-The network topology network.png and network.pdf:
+.. image:: images/plots/summary.png
 
-.. image:: images/examples/network.*
+Physical:
+==================
+
+.. image:: images/plots/plot_physical.png
+
+IP Addresses:
+===============
+
+.. image:: images/plots/plot_ip.png
                      
-iBGP is automatically allocated ibgp.png and ibgp.pdf:
-             
-.. image:: images/examples/iBGP.*
+iBGP:
+==============================
 
-eBGP is defined in the input file, and is also plotted: 
+.. image:: images/plots/plot_ibgp.png
 
-.. image:: images/examples/eBGP.*       
+eBGP:
+==============================
 
+.. image:: images/plots/plot_ebgp.png
 
-The individual AS topologies are also plotted. Note that the single router AS2 has not been plotted. The green router is the DNS server:
-          
-.. image:: images/examples/AS1.*
-                              
-.. image:: images/examples/AS3.*
+DNS:
+==============================
+
+.. image:: images/plots/plot_dns.png
+
+DNS Authority (who advertises who)
+==============================
+
+.. image:: images/plots/plot_dns_auth.png
+
 
