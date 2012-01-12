@@ -254,11 +254,9 @@ class BgpPolicyParser:
         self.library_edge_query = (self.attribute.setResultsName("query_a")
                 + edgeType + self.attribute.setResultsName("query_b"))
         self.library_entry = self.library_edge_query + Suppress(":") + self.bgpSessionQuery
-        
 
     def apply_bgp_policy(self, qstring):
         """Applies policy to network 
-
 
         >>> pol_parser = ank.BgpPolicyParser(ank.network.Network(ank.load_example("multias")))
 
@@ -415,7 +413,7 @@ class BgpPolicyParser:
 
 
     def get_prefixes(self, nodes):
-        """Returns prefixes for given node set"""
+        """Return prefixes for given node set"""
         LOG.debug("Returning prefixes for nodes %s" % nodes)
         prefixes = set()
         for node in nodes:
@@ -622,7 +620,7 @@ class BgpPolicyParser:
                 except:
                     try:
                         results = self.library_entry.parseString(line)
-                        print results.dump()
+                        #print results.dump()
                     except:
                         print "unable to parse", line
 
