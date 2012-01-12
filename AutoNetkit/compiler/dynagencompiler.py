@@ -207,7 +207,6 @@ class dynagenCompiler:
                 internal_peers.append({
                     'id': self.network.lo_ip(peer).ip,
                     'route_maps_in': [r.name for r in route_maps_in],
-                    'route_maps_out': [r.name for r in route_maps_out],
                     })
             bgp_groups['internal_peers'] = {
                     'type': 'internal',
