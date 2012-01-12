@@ -251,7 +251,10 @@ class BgpPolicyParser:
 
 #gao_rexford ( me, custs , peers , upstream ):
         self.library_def = attribute.setResultsName("def_name") + Suppress("(") + delimitedList( attribute, delim=',').setResultsName("def_params") + Suppress(")")
-        self.library_entry  = ""
+        self.library_edge_query = (self.attribute.setResultsName("query_a")
+                + edgeType + self.attribute.setResultsName("query_b"))
+        self.library_entry = self.library_edge_query + Suppress(":") + self.bgpSessionQuery
+        
 
     def apply_bgp_policy(self, qstring):
         """Applies policy to network 
@@ -600,6 +603,13 @@ class BgpPolicyParser:
         defined_functions = {}
         defined_sets = {}
         for line in library_data.splitlines():
+            line = line.strip()
+            if line.startswith("#"):
+                LOG.debug("Skipping commented line %s", line)
+                continue
+            if line.strip() == "":
+# blank line
+                continue
             try:
                 results = self.set_definition.parseString(line)
                 defined_sets[results.set_name] = [a for a in results.set_values]
@@ -608,12 +618,17 @@ class BgpPolicyParser:
                 try:
                     results = self.library_def.parseString(line)
                 except:
-                    results = self.library_entry.parseString(line)
-                    print results.dump()
+                    try:
+                        results = self.library_entry.parseString(line)
+                        print results.dump()
+                    except:
+                        print "unable to parse", line
+
+            print
 
 
-            print line
-            pprint.pprint(defined_sets)
+            #print line
+            #pprint.pprint(defined_sets)
 
 
     def apply_policy_file(self, policy_in_file):

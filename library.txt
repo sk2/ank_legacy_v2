@@ -1,2 +1,9 @@
 test = {A, B, C}    
-gao_rexford ( me, custs , peers , upstream ):
+gao_rexford ( me, custs , peers , upstream ):   
+    custs ->ingress me: (addTag mytagcust)
+    peers ->ingress me: (addTag mytagpeers)
+    me egress-> peers: ( if Tag = mytagpeers then reject route)
+    me egress-> peers: ( if Tag = mytagpeers then reject route )
+    me egress-> upstream: ( if Tag = mytagup then reject route)
+    upstream ->ingress me: (addTag mytagup)
+    me egress -> upstreams: ( if Tag = mytag then reject route)   
