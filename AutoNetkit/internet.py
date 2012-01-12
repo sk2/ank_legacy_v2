@@ -308,9 +308,17 @@ class Internet:
             nk_comp.initialise()     
             nk_comp.configure()
 
+        auto_compile = any( data.get("active") 
+                for data in config.settings['Dynagen Hosts'].values())
+        if auto_compile:
+                LOG.info("Active Dynagen deployment target, automatically compiling")
+                self.compile_targets['dynagen'] = True
         if self.compile_targets['dynagen']:
-            dynagen_comp = ank.dynagenCompiler(self.network, self.services, 
-                    self.dynagen_image, self.dynagen_hypervisor)
+            dynagen_comp = ank.dynagenCompiler(self.network, services = self.services, 
+                    igp = self.igp,
+                    image = config.settings['Lab']['dynagen image'],
+                    hypervisor = config.settings['Lab']['dynagen hypervisor'],
+                    )
             dynagen_comp.initialise()     
             dynagen_comp.configure()
 

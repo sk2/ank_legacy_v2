@@ -4,6 +4,7 @@ Generate dynagen configuration files for a network
 from mako.lookup import TemplateLookup    
 
 from pkg_resources import resource_filename         
+import pkg_resources
 
 import os
 
@@ -55,49 +56,294 @@ def lab_dir():
     #TODO: make use config
     return config.dynagen_dir
 
-def router_config_dir():
+def router_conf_dir():
     #TODO: make use config
     #return config.lab_dir
     return os.path.join(lab_dir(), "configs")
 
+def router_conf_file(network, router):
+    """Returns filename for config file for router"""
+    return "%s.conf" % ank.rtr_folder_name(network, router)
+
+def router_conf_path(network, router):
+    """ Returns full path to router config file"""
+    r_file = router_conf_file(network, router)
+    return os.path.join(router_conf_dir(), r_file)
 
 
 class dynagenCompiler:  
     """Compiler main"""
 
-    def __init__(self, network, services, image, hypervisor):
+    def __init__(self, network, igp, services, image, hypervisor):
         self.network = network
         self.services = services
         self.image = image
         self.hypervisor = hypervisor
-        # Speed improvement: grab eBGP and iBGP  graphs
-        #TODO: fetch eBGP and iBGP graphs and cache them
+        self.igp = igp
+        self.interface_limit = 6
 
     def initialise(self):  
-
         """Creates lab folder structure"""
-        
-        # TODO: clean out netkitdir 
-        # Don't just remove the whole folder
-        # Note is ok to leave lab.conf as this will be over ridden
-        #TODO: make this go into one dir for each netkithost
         if not os.path.isdir(lab_dir()):
             os.mkdir(lab_dir())
         else:
-            # network dir exists, clean out all (based on glob of ASxry)    
-            #TODO: see if need * wildcard for standard glob
             for item in glob.iglob(os.path.join(lab_dir(), "*")):
                 if os.path.isdir(item):
                     shutil.rmtree(item)           
                 else:
                     os.unlink(item)
 
-        if not os.path.isdir(router_config_dir()):
-            os.mkdir(router_config_dir()) 
+        if not os.path.isdir(router_conf_dir()):
+            os.mkdir(router_conf_dir()) 
 
         return
 
-    def configure(self):  
+ 
+ 
+    def configure_interfaces(self, device):
+        LOG.debug("Configuring interfaces for %s" % self.network.fqdn(device))
+        """Interface configuration"""
+        lo_ip = self.network.lo_ip(device)
+        interfaces = []
+
+        interfaces.append({
+            'id':          'lo0',
+            'ip':           str(lo_ip.ip),
+            'netmask':      str(lo_ip.netmask),
+            'prefixlen':    str(lo_ip.prefixlen),
+            'net_ent_title': ank.ip_to_net_ent_title(lo_ip),
+            'description': 'Loopback',
+        })
+
+        for src, dst, data in self.network.graph.edges(device, data=True):
+            subnet = data['sn']
+            int_id = self.int_id(data['id'])
+            description = 'Interface %s -> %s' % (
+                    ank.fqdn(self.network, src), 
+                    ank.fqdn(self.network, dst))
+
+# Interface information for router config
+            interfaces.append({
+                'id':          int_id,
+                'ip':           str(data['ip']),
+                'prefixlen':    str(subnet.prefixlen),
+                'broadcast':    str(subnet.broadcast),
+                'description':  description,
+            })
+
+        return interfaces
+
+    def configure_igp(self, router, igp_graph, ebgp_graph):
+        """igp configuration"""
+        LOG.debug("Configuring IGP for %s" % self.network.label(router))
+        default_weight = 1
+        igp_interfaces = []
+        if igp_graph.degree(router) > 0:
+            # Only start IGP process if IGP links
+            igp_interfaces.append({ 'id': 'lo0', 'passive': True})
+            for src, dst, data in igp_graph.edges(router, data=True):
+                int_id = ank.junos_logical_int_id_ge(self.int_id(data['id']))
+                description = 'Interface %s -> %s' % (
+                    ank.fqdn(self.network, src), 
+                    ank.fqdn(self.network, dst))
+                igp_interfaces.append({
+                    'id':       int_id,
+                    'weight':   data.get('weight', default_weight),
+                    'description': description,
+                    })
+
+# Need to add eBGP edges as passive interfaces
+            for src, dst in ebgp_graph.edges(router):
+# Get relevant edges from ebgp_graph, and edge data from physical graph
+                data = self.network.graph[src][dst]
+                int_id = ank.junos_logical_int_id_ge(self.int_id(data['id']))
+                description = 'Interface %s -> %s' % (
+                    ank.fqdn(self.network, src), 
+                    ank.fqdn(self.network, dst))
+                igp_interfaces.append({
+                    'id':       int_id,
+                    'weight':   data.get('weight', default_weight),
+                    'description': description,
+                    'passive': True,
+                    })
+
+        return igp_interfaces
+
+    def configure_bgp(self, router, physical_graph, ibgp_graph, ebgp_graph):
+        LOG.debug("Configuring BGP for %s" % self.network.fqdn(router))
+        """ BGP configuration"""
+#TODO: Don't configure iBGP or eBGP if no eBGP edges
+# need to pass correct blank dicts to templates then...
+
+#TODO: put comments in for junos bgp peerings
+        # route maps
+        bgp_groups = {}
+        route_maps = []
+        if router in ibgp_graph:
+            internal_peers = []
+            for peer in ibgp_graph.neighbors(router):
+                route_maps_in = [route_map for route_map in 
+                        self.network.g_session[peer][router]['ingress']]
+                route_maps_out = [route_map for route_map in 
+                        self.network.g_session[router][peer]['egress']]
+                route_maps += route_maps_in
+                route_maps += route_maps_out   
+                internal_peers.append({
+                    'id': self.network.lo_ip(peer).ip,
+                    'route_maps_in': [r.name for r in route_maps_in],
+                    'route_maps_out': [r.name for r in route_maps_out],
+                    })
+            bgp_groups['internal_peers'] = {
+                    'type': 'internal',
+                    'neighbors': internal_peers
+                    }
+
+        ibgp_neighbor_list = []
+        ibgp_rr_client_list = []
+        if router in ibgp_graph:
+            for src, neigh, data in ibgp_graph.edges(router, data=True):
+                route_maps_in = [route_map for route_map in 
+                        self.network.g_session[neigh][router]['ingress']]
+                route_maps_out = [route_map for route_map in 
+                        self.network.g_session[router][neigh]['egress']]
+                route_maps += route_maps_in
+                route_maps += route_maps_out     
+                description = data.get("rr_dir") + " to " + ank.fqdn(self.network, neigh)
+                if data.get('rr_dir') == 'down':
+                    ibgp_rr_client_list.append(
+                            {
+                                'id':  self.network.lo_ip(neigh).ip,
+                                'description':      description,
+                                'route_maps_in': [r.name for r in route_maps_in],
+                                'route_maps_out': [r.name for r in route_maps_out],
+                                })
+                elif (data.get('rr_dir') in set(['up', 'over', 'peer'])
+                        or data.get('rr_dir') is None):
+                    ibgp_neighbor_list.append(
+                            {
+                                'id':  self.network.lo_ip(neigh).ip,
+                                'description':      description,
+                                'route_maps_in': [r.name for r in route_maps_in],
+                                'route_maps_out': [r.name for r in route_maps_out],
+                                })
+
+        bgp_groups['internal_peers'] = {
+            'type': 'internal',
+            'neighbors': ibgp_neighbor_list
+            }
+        if len(ibgp_rr_client_list):
+            bgp_groups['internal_rr'] = {
+                    'type': 'internal',
+                    'neighbors': ibgp_rr_client_list,
+                    'cluster': self.network.lo_ip(router).ip,
+                    }
+
+        if router in ebgp_graph:
+            external_peers = []
+            for peer in ebgp_graph.neighbors(router):
+                route_maps_in = [route_map for route_map in 
+                        self.network.g_session[peer][router]['ingress']]
+                route_maps_out = [route_map for route_map in 
+                        self.network.g_session[router][peer]['egress']]
+                route_maps += route_maps_in
+                route_maps += route_maps_out   
+                peer_ip = physical_graph[peer][router]['ip']
+                external_peers.append({
+                    'id': peer_ip, 
+                    'route_maps_in': [r.name for r in route_maps_in],
+                    'route_maps_out': [r.name for r in route_maps_out],
+                    'peer_as': self.network.asn(peer)})
+            bgp_groups['external_peers'] = {
+                    'type': 'external', 
+                    'neighbors': external_peers}
+
+# Ensure only one copy of each route map, can't use set due to list inside tuples (which won't hash)
+# Use dict indexed by name, and then extract the dict items, dict hashing ensures only one route map per name
+        route_maps = dict( (route_map.name, route_map) for route_map in route_maps).values()
+
+        community_lists = {}
+        prefix_lists = {}
+        node_bgp_data = self.network.g_session.node.get(router)
+        if node_bgp_data:
+            community_lists = node_bgp_data.get('tags')
+            prefix_lists = node_bgp_data.get('prefixes')
+        policy_options = {
+                'community_lists': community_lists,
+                'prefix_lists': prefix_lists,
+                'route_maps': route_maps,
+                }
+
+        return (bgp_groups, policy_options)
+
+    def configure_ios(self):
+        """ Configures Junos"""
+        LOG.info("Configuring IOS")
+        junos_template = lookup.get_template("cisco/ios.mako")
+        #junos_template = lookup.get_template("junos/junos.mako")
+        ank_version = pkg_resources.get_distribution("AutoNetkit").version
+        date = time.strftime("%Y-%m-%d %H:%M", time.localtime())
+
+        physical_graph = self.network.graph
+        igp_graph = ank.igp_graph(self.network)
+        ibgp_graph = ank.get_ibgp_graph(self.network)
+        ebgp_graph = ank.get_ebgp_graph(self.network)
+
+        #TODO: correct this router type selector
+        for router in self.network.routers():
+            #check interfaces feasible
+            if self.network.graph.in_degree(router) > self.interface_limit:
+                LOG.warn("%s exceeds interface count: %s (max %s)" % (self.network.label(router),
+                    self.network.graph.in_degree(router), self.interface_limit))
+            asn = self.network.asn(router)
+            network_list = []
+            lo_ip = self.network.lo_ip(router)
+
+            interfaces = self.configure_interfaces(router)
+            igp_interfaces = self.configure_igp(router, igp_graph,ebgp_graph)
+            (bgp_groups, policy_options) = self.configure_bgp(router, physical_graph, ibgp_graph, ebgp_graph)
+
+            # advertise AS subnet
+            adv_subnet = self.network.ip_as_allocs[asn]
+            if not adv_subnet in network_list:
+                network_list.append(adv_subnet)
+
+            juniper_filename = router_conf_path(self.network, router)
+            with open( juniper_filename, 'w') as f_jun:
+                f_jun.write( junos_template.render(
+                    hostname = router.rtr_folder_name,
+                    username = 'autonetkit',
+                    interfaces=interfaces,
+                    igp_interfaces=igp_interfaces,
+                    igp_protocol = self.igp,
+                    asn = asn,
+                    lo_ip=lo_ip,
+                    router_id = lo_ip.ip,
+                    network_list = network_list,
+                    bgp_groups = bgp_groups,
+                    policy_options = policy_options,
+                    ank_version = ank_version,
+                    date = date,
+                    ))
+
+    
+    def int_id(self, interface_id):
+        #TODO: split this out
+        return 'e1/%s' % interface_id
+        #TODO: also allocate fast ethernet
+        if interface_id == 0:
+            return 'f0/0'
+        if interface_id == 1:
+            return 'f0/1'
+        else:
+            return 'e1/%s' % (interface_id - 2)
+
+    def cisco_int_name_full(self, interface_id):
+        abbrev = self.int_id(interface_id)
+        abbrev =  abbrev.replace('f', 'FastEthernet ')
+        abbrev =  abbrev.replace('e', 'Ethernet ')
+        return abbrev
+
+    def configure_dynagen(self):  
         """Generates dynagen specific configuration files."""
         LOG.info("Configuring Dynagen")
 
@@ -126,22 +372,6 @@ class dynagenCompiler:
 
         # Need to allocate Cisco interfaces
 
-        def cisco_int_name(int_id):
-            #TODO: split this out
-            return 'e1/%s' % int_id
-            #TODO: also allocate fast ethernet
-            if int_id == 0:
-                return 'f0/0'
-            if int_id == 1:
-                return 'f0/1'
-            else:
-                return 'e1/%s' % (int_id - 2)
-
-        def cisco_int_name_full(int_id):
-            abbrev = cisco_int_name(int_id)
-            abbrev =  abbrev.replace('f', 'FastEthernet ')
-            abbrev =  abbrev.replace('e', 'Ethernet ')
-            return abbrev
     
         # convenient alias
         graph = self.network.graph
@@ -214,63 +444,17 @@ class dynagenCompiler:
                 working_dir = working_dir,
                 ))
 
-        # And configure the router
-        cisco_template = lookup.get_template("cisco/cisco.mako") 
-        self.network.set_default_edge_property('weight', 1)
+        return
 
-        as_graphs = ank.get_as_graphs(self.network)    
-        for my_as in as_graphs:  
-            for node in my_as:   
-                data = self.network.graph.node[node]
-            
-                hostname = ank.fqdn(self.network, node)
-                f_cisco = open( os.path.join(router_config_dir(), 
-                                            "%s.cfg" % hostname), 'w') 
-                interface_list = []  
-                asn = self.network.asn(node)
 
-                # Want to setup IP for both IGP and BGP links
-                for src, dst, data in graph.edges(node, data=True):
-                    local_id = data['id']
-                    remote_id = graph.edge[dst][src]['id']
-                    subnet_cidr = data['sn'].netmask
-                    local_cisco_id = cisco_int_name_full(local_id)
-                    remote_cisco_id = cisco_int_name_full(remote_id)
-                    remote_hostname = ank.hostname(self.network, dst)
-                    interface_list.append ({
-                        'id':  local_cisco_id,
-                        'ip': data['ip'],
-                        'sn': subnet_cidr,
-                        'weight': data['weight'],
-                        'remote_router': remote_hostname, 
-                    } )
-
-                igp_network_list = set() 
-                all_ones = netaddr.IPAddress("255.255.255.255")
-                for src, dst, data in my_as.edges(node, data=True):
-                    # IGP networks
-                    sn = data['sn']
-                    # Want to convert eg 255.255.255.252 to 0.0.0.3
-                    inv_netmask = sn.netmask ^ all_ones
-                    igp_network_list.add( (sn.ip, inv_netmask) )
-
-                
-                f_cisco.write(cisco_template.render
-                            (
-                                hostname = hostname,
-                                asn = asn,
-                                password = "z",
-                                image = self.image,
-                                interface_list = interface_list,
-                                igp_network_list = igp_network_list, 
-                                logfile = "/var/log/zebra/ospfd.log",
-                            ))
-
-        # create .tgz
+    def configure(self):
+        self.configure_dynagen()
+        self.configure_ios()
 # create .tgz
-        tar_filename = "dynagen_%s.tar.gz" % time.strftime("%Y%m%d_%H%M", time.localtime())
-        tar = tarfile.open(os.path.join(config.ank_main_dir, tar_filename), "w:gz")
-# arcname to flatten file structure
-        tar.add(lab_dir(), arcname="dynagen_lab")
+        tar_filename = "dynagen_%s.tar.gz" % time.strftime("%Y%m%d_%H%M",
+                time.localtime())
+        tar = tarfile.open(os.path.join(config.ank_main_dir,
+            tar_filename), "w:gz")
+        tar.add(lab_dir())
         self.network.compiled_labs['dynagen'] = tar_filename
         tar.close()
