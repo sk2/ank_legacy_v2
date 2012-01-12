@@ -249,9 +249,6 @@ class DynagenDeploy():
         # Now move into lab directory to create images
         shell.sendline("cd %s" % dynagen_lab_dir) 
         shell.prompt()
-        shell.sendline("pwd")
-        shell.prompt()
-        print shell.before
 #TODO: parameterise lab.net
         LOG.info("Starting Dynagen lab")
         shell.sendline("dynagen lab.net")
@@ -280,9 +277,12 @@ class DynagenDeploy():
                 LOG.info("Unable to start Dynagen lab")
                 break
             elif i == 3:
-                LOG.info("Problem starting Dynagen lab: %s" % shell.match.group(1))
+                # TODO: fix this split after "Warning:" --- as too complex to regex capture
+                error_message = shell.match.group(0).split(":")[1].strip()
+                LOG.info("Problem starting Dynagen lab: %s" % error_message)
             elif i == 4:
-                LOG.info("Problem starting Dynagen lab: %s" % shell.match.group(1))
+                error_message = shell.match.group(0).split(":")[1].strip()
+                LOG.info("Problem starting Dynagen lab: %s" % error_message)
             else:
                 # print the progress status me= ssage
                 progress_message = shell.match.group(0)
