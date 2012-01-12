@@ -18,4 +18,4 @@ def test(param1, param2):
     param1 egress-> param2: (addTag sometag & setLP200)        
     
 test(set1, set2)
-test(set2, set2)
+test(set2, set1)

@@ -23,3 +23,4 @@ doc/build/
 .tox/*
 *.pdf
 autonetkit.cfg
+library.txt
