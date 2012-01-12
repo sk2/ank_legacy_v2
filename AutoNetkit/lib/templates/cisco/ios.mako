@@ -86,9 +86,11 @@ no ip http server
 ip bgp-community new-format
 % for name, values in sorted(policy_options['community_lists'].items()):
  % if isinstance(values, str):   
-ip community-list standard ${name} permit ${values};
+ip community-list standard ${name} permit ${values}
  % else:
-ip community-list standard ${name} permit [${" ".join(val for val in values)}];
+  % for value in values:
+ip community-list standard ${name} permit ${value}
+  % endfor
  %endif
 % endfor    
 !
@@ -97,3 +99,43 @@ ip community-list standard ${name} permit [${" ".join(val for val in values)}];
 ip prefix-list ${name} seq 5 permit ${prefix}
  % endfor
 % endfor    
+!
+% for route_map in policy_options['route_maps']:
+  % for match_tuple in route_map.match_tuples:
+    % if match_tuple.reject:
+route-map ${route_map.name} deny ${match_tuple.seq_no * 10}
+    % else:
+route-map ${route_map.name} permit ${match_tuple.seq_no * 10}
+    % endif
+    % if len(match_tuple.match_clauses):
+      % for match_clause in match_tuple.match_clauses:
+        % if match_clause.type == "prefix_list":
+ match ip address prefix-list ${match_clause.value};
+        % elif match_clause.type == "tag":   
+          % if isinstance(match_clause.type, str):   
+ match community ${match_clause.value};
+          % elif isinstance(match_clause.type, dict):
+            % for match in match_clause.value: 
+ match community ${match}
+            % endfor
+          %endif
+        % endif      
+       % endfor
+     % endif
+    %if len(match_tuple.action_clauses) or match_tuple.reject:
+      %for action_clause in match_tuple.action_clauses:
+        % if action_clause.action == "addTag":
+ set community ${action_clause.value} additive
+	% elif action_clause.action == "setLP":
+ set local-preference ${action_clause.value}
+	% elif action_clause.action == "setMED":
+ set metric ${action_clause.value}
+	% elif action_clause.action == "setNextHop":
+ set ip next-hop ${action_clause.value}
+	% elif action_clause.action == "removeTag":
+ set comm-list ${action_clause.value} delete
+	% endif     
+      %endfor   
+    % endif
+ % endfor
+% endfor
