@@ -4,7 +4,7 @@ boot-start-marker
 boot-end-marker
 !
 !
-aaa new-model
+no aaa new-model
 !
 !
 ip cef
@@ -45,6 +45,55 @@ router ospf 1
     % endif
   % endfor
 % endif
+!
+!
+router bgp ${asn}
+ no synchronization
+% for i in interfaces:
+ network ${i['ip']} mask ${i['prefixlen']}
+% endfor
+% for groupname, group_data in bgp_groups.items():
+ % if group_data['type'] == 'internal':
+  % for neighbor in group_data['neighbors']:
+ neighbor ${neighbor['id']} remote-as ${asn}
+ neighbor ${neighbor['id']} update-source loopback 0
+ neighbor ${neighbor['id']} send-community
+   % if len(neighbor['route_maps_in']):
+ neighbor ${neighbor['id']} route-map ${neighbor['route_maps_in'].pop()} in
+   % elif len(neighbor['route_maps_out']):
+ neighbor ${neighbor['id']} route-map ${neighbor['route_maps_out'].pop()} out
+   % endif
+
+   % if 'internal_rr' in groupname:
+ neighbor ${neighbor['id']} route-reflector-client
+   % endif
+  % endfor
+ % elif group_data['type'] == 'external':
+  % for neighbor in group_data['neighbors']:
+ neighbor ${neighbor['id']} remote-as ${neighbor['peer_as']}
+ neighbor ${neighbor['id']} send-community
+  % endfor
+ % endif
+% endfor
+% if 'cluster' in group_data:
+ bgp cluster-id ${group_data['cluster']}
+% endif
+
 ip forward-protocol nd
 !
 no ip http server
+!
+ip bgp-community new-format
+% for name, values in sorted(policy_options['community_lists'].items()):
+ % if isinstance(values, str):   
+ip community-list standard ${name} permit ${values};
+ % else:
+ip community-list standard ${name} permit [${" ".join(val for val in values)}];
+ %endif
+% endfor    
+!
+% for name, values in sorted(policy_options['prefix_lists'].items()):
+ % for prefix in values: 
+ip prefix-list ${name} seq 5 permit ${prefix}
+ % endfor
+% endfor    
