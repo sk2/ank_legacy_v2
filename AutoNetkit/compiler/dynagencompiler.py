@@ -74,11 +74,12 @@ def router_conf_path(network, router):
 class dynagenCompiler:  
     """Compiler main"""
 
-    def __init__(self, network, igp, services, image, hypervisor):
+    def __init__(self, network, igp, services, image, hypervisor_server, hypervisor_port):
         self.network = network
         self.services = services
         self.image = image
-        self.hypervisor = hypervisor
+        self.hypervisor_server = hypervisor_server
+        self.hypervisor_port = hypervisor_port
         self.igp = igp
         self.interface_limit = 6
         self.interface_names = config.settings['Lab']['dynagen interfaces']
@@ -372,9 +373,8 @@ class dynagenCompiler:
         # Counter starting at 2000, eg 2000, 2001, 2002, etc
         console_port = itertools.count(2000)
 
-#TODO: what is this used for?
-        working_dir = "/tmp"
-
+        #NOTE this must be a full path!
+        working_dir = os.path.join(config.settings['Lab']['dynagen working dir'], config.dynagen_dir)
 
         #TODO: need nice way to map ANK graph into feasible hardware graph
 
@@ -450,7 +450,8 @@ class dynagenCompiler:
         with open( lab_file, 'w') as f_lab:
             f_lab.write( lab_template.render(
                 image = self.image,
-                hypervisor = self.hypervisor,
+                hypervisor_port = self.hypervisor_port,
+                hypervisor_server = self.hypervisor_server,
                 all_router_info = all_router_info,   
                 working_dir = working_dir,
                 chassis = chassis,

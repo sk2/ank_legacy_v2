@@ -228,7 +228,8 @@ class DynagenDeploy():
         tar_file = os.path.join(config.ank_main_dir, self.network.compiled_labs['dynagen'])
         self.transfer_file(tar_file)
 #TODO: make just the "junos_dir" accessible from the config directly (without the ank_lab part)
-        configset_directory = os.path.join(self.dynagen_dir, "dynagen_lab", "configset")
+        dynagen_lab_dir = os.path.join(self.dynagen_dir, "dynagen_lab")
+        configset_directory = os.path.join(dynagen_lab_dir, "configset")
         
 # Tar file copied across (if remote host) to local directory
         #shell.sendline("cd %s" % self.olive_dir) 
@@ -246,7 +247,54 @@ class DynagenDeploy():
         shell.prompt() 
 
         # Now move into lab directory to create images
-        shell.sendline("cd %s" % self.dynagen_dir) 
+        shell.sendline("cd %s" % dynagen_lab_dir) 
+        shell.prompt()
+        shell.sendline("pwd")
+        shell.prompt()
+        print shell.before
+#TODO: parameterise lab.net
+        LOG.info("Starting Dynagen lab")
+        shell.sendline("dynagen lab.net")
+#TODO: capture bootup process similar to for Olives
+        ready_prompt = "Network successfully loaded"
+
+        started_successfully = False
+
+#TODO: explain why 100 used here
+        for loop_count in range(0, 100):
+            i = shell.expect([
+                pexpect.TIMEOUT,
+                ready_prompt,
+                "Press ENTER to continue",
+                "\*\*\* Warning:\s*(\w*\s*)*",
+                "\*\*\* Error:\s*(\w*\s*)*",
+                ]) 
+            if i == 0:
+# Matched, continue on
+                pass
+            elif i == 1:
+                LOG.info( "Dynagen: started lab")
+                started_successfully = True
+                break
+            elif i == 2:
+                LOG.info("Unable to start Dynagen lab")
+                break
+            elif i == 3:
+                LOG.info("Problem starting Dynagen lab: %s" % shell.match.group(1))
+            elif i == 4:
+                LOG.info("Problem starting Dynagen lab: %s" % shell.match.group(1))
+            else:
+                # print the progress status me= ssage
+                progress_message = shell.match.group(0)
+                LOG.info("Startup progress: %s" % (progress_message))
+
+        if started_successfully:
+            LOG.info("Interacting with Dynagen lab, press '^]' (Control and right square bracket) "
+                    "to return to AutoNetkit")
+            sys.stdout.write (shell.after)
+            sys.stdout.flush()
+            shell.interact()
+
 
 #Now launch lab
 

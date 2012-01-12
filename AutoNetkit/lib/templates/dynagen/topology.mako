@@ -1,8 +1,8 @@
 autostart = True
-[${hypervisor}]
+[hypervisor_server]
     workingdir = ${working_dir}
     udp = 10000
-    [[${chassis}]]
+    [[${hypervisor_port}]]
         image = ${image}
         ghostios = True
         chassis = ${chassis}        
