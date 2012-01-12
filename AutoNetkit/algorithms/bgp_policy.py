@@ -603,137 +603,140 @@ class BgpPolicyParser:
         """Note you need a blank newline after a function definition"""
         library_file = "library.txt"
         f_library_debug = open( os.path.join(config.log_dir, "library_dump.txt"), "w")
-        with open( library_file, 'r') as f_lib:
-            library_data = f_lib.read()
+        try:
+            with open( library_file, 'r') as f_lib:
+                library_data = f_lib.read()
 
 #TODO: use named tuple for functions, and for library entries
-        defined_sets = {}
-        defined_functions = {}
-        function_applications = []
-        """TODO: make the function definition single grammar, use
-        http://pyparsing.wikispaces.com/file/view/indentedGrammarExample.py"""
-        current_function_def = None
-        for line in library_data.splitlines():
-            if line.startswith("#"):
-                LOG.debug("Skipping commented line %s", line)
-                continue
-
-            if current_function_def:
-                if line.strip() == "":
-                    current_function_def = None
-# blank line
+            defined_sets = {}
+            defined_functions = {}
+            function_applications = []
+            """TODO: make the function definition single grammar, use
+            http://pyparsing.wikispaces.com/file/view/indentedGrammarExample.py"""
+            current_function_def = None
+            for line in library_data.splitlines():
+                if line.startswith("#"):
+                    LOG.debug("Skipping commented line %s", line)
                     continue
-                if (line.startswith("\t") or line.startswith("  ")):
+
+                if current_function_def:
+                    if line.strip() == "":
+                        current_function_def = None
+# blank line
+                        continue
+                    if (line.startswith("\t") or line.startswith("  ")):
 # function has been started, and indented so try as a library entry
-                    try:
-                        results = self.library_entry.parseString(line)
+                        try:
+                            results = self.library_entry.parseString(line)
 #TODO: for efficiency, could save the already parsed query here
 #TODO: remove this dodgy hack! - as want to be overlay, so don't parse here???
-                        bgp_query = line.split(":")[1]
-                        library_entry = {
-                                'query_a': results.query_a, 
-                                'edge_type': results.edgeType,
-                                'query_b': results.query_b,
-                                'bgp_query': bgp_query,
-                        }
-                        defined_functions[current_function_def]['entries'].append(library_entry)
-                        #print results.dump()
+                            bgp_query = line.split(":")[1]
+                            library_entry = {
+                                    'query_a': results.query_a, 
+                                    'edge_type': results.edgeType,
+                                    'query_b': results.query_b,
+                                    'bgp_query': bgp_query,
+                            }
+                            defined_functions[current_function_def]['entries'].append(library_entry)
+                            #print results.dump()
 # finished with this line
+                            continue
+                        except pyparsing.ParseException:
+                            print "unable to parse indented line:", line
+                            current_function_def = None
+                else:
+                    #not inside a function def
+# strip to work with easier
+                    line = line.strip()
+                    try:
+                        results = self.set_definition.parseString(line)
+                        defined_sets[results.set_name] = set(a for a in results.set_values)
                         continue
                     except pyparsing.ParseException:
-                        print "unable to parse indented line:", line
-                        current_function_def = None
-            else:
-                 #not inside a function def
-# strip to work with easier
-                line = line.strip()
-                try:
-                    results = self.set_definition.parseString(line)
-                    defined_sets[results.set_name] = set(a for a in results.set_values)
-                    continue
-                except pyparsing.ParseException:
-                    pass
+                        pass
 # try as function def
-                try:
-                    results = self.library_def.parseString(line)
-                    current_function_def = results.def_name
-                    defined_functions[current_function_def] = {
-                            'params': [a for a in results.def_params],
-                            'entries': [],
-                            }
-                    continue
-                except pyparsing.ParseException:
-                    pass
+                    try:
+                        results = self.library_def.parseString(line)
+                        current_function_def = results.def_name
+                        defined_functions[current_function_def] = {
+                                'params': [a for a in results.def_params],
+                                'entries': [],
+                                }
+                        continue
+                    except pyparsing.ParseException:
+                        pass
 
-                try:
-                    results = self.library_call.parseString(line)
-                    function_applications.append( (results.def_name, [a for a in results.def_params]))
-                    continue
-                except pyparsing.ParseException:
-                    pass
+                    try:
+                        results = self.library_call.parseString(line)
+                        function_applications.append( (results.def_name, [a for a in results.def_params]))
+                        continue
+                    except pyparsing.ParseException:
+                        pass
 
-        for function_name, function_data in defined_functions.items():
-            params = function_data['params']
+            for function_name, function_data in defined_functions.items():
+                params = function_data['params']
 # Store indices so can lookup when applying functions
-            param_indices = dict( (p, params.index(p)) for p in params)
-            defined_functions[function_name]['param_indices'] = param_indices
+                param_indices = dict( (p, params.index(p)) for p in params)
+                defined_functions[function_name]['param_indices'] = param_indices
 
-        for name, params in function_applications:
-            f_library_debug.write("---\n%s (%s)\n" % (name, ", ".join(params)))
-            LOG.info("Applying function %s(%s)" % (name, ", ".join(params)))
-            try:
-                fn_def = defined_functions[name]
-            except KeyError:
-                LOG.info('No function definition found for "%s"' % name)
-                continue
+            for name, params in function_applications:
+                f_library_debug.write("---\n%s (%s)\n" % (name, ", ".join(params)))
+                LOG.info("Applying function %s(%s)" % (name, ", ".join(params)))
+                try:
+                    fn_def = defined_functions[name]
+                except KeyError:
+                    LOG.info('No function definition found for "%s"' % name)
+                    continue
 
 # check param length
-            param_indices = fn_def['param_indices']
-            if len(params) != len(param_indices):
-                LOG.info("Incorrect parameter count for function %s(%s)" % (name, ", ".join(params)))
-                continue
+                param_indices = fn_def['param_indices']
+                if len(params) != len(param_indices):
+                    LOG.info("Incorrect parameter count for function %s(%s)" % (name, ", ".join(params)))
+                    continue
 
-            for function_line in fn_def['entries']:
-                query_a = function_line['query_a']
-                query_b = function_line['query_b']
-                edge_type = function_line['edge_type']
-                bgp_query = function_line['bgp_query'].strip()
-                try:
-                    query_a_index = param_indices[query_a]
-                except KeyError:
-                    LOG.info("Parameter %s not found in function definition for %s" % (query_a, name))
-                    continue
-                try:
-                    query_b_index = param_indices[query_b]
-                except KeyError:
-                    LOG.info("Parameter %s not found in function definition for %s" % (query_b, name))
-                    continue
+                for function_line in fn_def['entries']:
+                    query_a = function_line['query_a']
+                    query_b = function_line['query_b']
+                    edge_type = function_line['edge_type']
+                    bgp_query = function_line['bgp_query'].strip()
+                    try:
+                        query_a_index = param_indices[query_a]
+                    except KeyError:
+                        LOG.info("Parameter %s not found in function definition for %s" % (query_a, name))
+                        continue
+                    try:
+                        query_b_index = param_indices[query_b]
+                    except KeyError:
+                        LOG.info("Parameter %s not found in function definition for %s" % (query_b, name))
+                        continue
 # find the parameters that map to these
-                q_a_map = params[query_a_index]
-                q_b_map = params[query_b_index]
-                q_a_vals = sorted(defined_sets[q_a_map])
-                q_b_vals = sorted(defined_sets[q_b_map])
-                LOG.debug("Definition param %s maps to user parameter %s with values %s" % (query_a, 
-                    q_a_map, q_a_vals))
-                LOG.debug("Definition param %s maps to user parameter %s with values %s" % (query_b, 
-                    q_b_map, q_b_vals))
-                for (val_a, val_b) in itertools.product(q_a_vals, q_b_vals):
-                    LOG.debug("Applying %s %s %s" % (val_a, edge_type, val_b))
+                    q_a_map = params[query_a_index]
+                    q_b_map = params[query_b_index]
+                    q_a_vals = sorted(defined_sets[q_a_map])
+                    q_b_vals = sorted(defined_sets[q_b_map])
+                    LOG.debug("Definition param %s maps to user parameter %s with values %s" % (query_a, 
+                        q_a_map, q_a_vals))
+                    LOG.debug("Definition param %s maps to user parameter %s with values %s" % (query_b, 
+                        q_b_map, q_b_vals))
+                    for (val_a, val_b) in itertools.product(q_a_vals, q_b_vals):
+                        LOG.debug("Applying %s %s %s" % (val_a, edge_type, val_b))
 
-                    # Test if "AS1"
-                    attribute_a = "Network"
-                    if val_a.startswith("AS"):
-                        attribute_a = "asn"
-                        val_a = int(val_a[2:])
-                    attribute_b = "Network"
-                    if val_b.startswith("AS"):
-                        attribute_b = "asn"
-                        val_b = int(val_b[2:])
+                        # Test if "AS1"
+                        attribute_a = "Network"
+                        if val_a.startswith("AS"):
+                            attribute_a = "asn"
+                            val_a = int(val_a[2:])
+                        attribute_b = "Network"
+                        if val_b.startswith("AS"):
+                            attribute_b = "asn"
+                            val_b = int(val_b[2:])
 
-                    policy_line = "(%s = %s) %s (%s = %s): %s" % (attribute_a, val_a, edge_type, attribute_b, val_b, bgp_query)
-                    LOG.debug("Policy: %s" % policy_line)
-                    f_library_debug.write(policy_line + "\n")
-                    self.apply_bgp_policy(policy_line)
+                        policy_line = "(%s = %s) %s (%s = %s): %s" % (attribute_a, val_a, edge_type, attribute_b, val_b, bgp_query)
+                        LOG.debug("Policy: %s" % policy_line)
+                        f_library_debug.write(policy_line + "\n")
+                        self.apply_bgp_policy(policy_line)
+        except IOError:
+            LOG.debug("Unable to open library file")
         f_library_debug.close()
 
 
