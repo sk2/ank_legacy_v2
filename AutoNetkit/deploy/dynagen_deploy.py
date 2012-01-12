@@ -311,12 +311,14 @@ class DynagenDeploy():
                     lab_info.append( "(%s %s %s)" % (name, state, console))
                 elif i == 2:
                     break
-            LOG.info( "Dynagen lab info (name, status, port): %s" % ", ".join(lab_info))
+            LOG.info( "Dynagen lab info (name status port): %s" % ", ".join(sorted(lab_info)))
+            """
             LOG.info("Interacting with Dynagen lab, press '^]' (Control and right square bracket) "
                     "to return to AutoNetkit")
             sys.stdout.write (shell.after)
             sys.stdout.flush()
             shell.interact()
+            """
 
 
 #Now launch lab
