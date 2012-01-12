@@ -30,7 +30,7 @@ def default_route(node):
 
 def debug_nodes(graph):
     import pprint
-    debug_data = dict( (node.network.fqdn(node), data) for node, data in graph.nodes(data=True))
+    debug_data = dict( (node.fqdn, data) for node, data in graph.nodes(data=True))
     return pprint.pformat(debug_data)
 
 def debug_edges(graph):

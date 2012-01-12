@@ -163,6 +163,9 @@ class Network(object):
         self._graphs['dns_authoritative'] = nx.DiGraph()
         self.compiled_labs = {} # Record compiled lab filenames, and configs
 
+    def __repr__(self):
+        return "AutoNetkit network: %s nodes, %s edges" % (self.graph.number_of_nodes(), self.graph.number_of_edges())
+
     @deprecated
     def update_node_type(self, default_type):
         """ Updates any node in graph that has no type set to be default_type"""
@@ -294,22 +297,6 @@ class Network(object):
             if prop not in data:
                 self.graph.node[node][prop] = value
 
-
-    @deprecated
-    def set_default_edge_property(self, prop, value):
-        #TODO: allow list of edges to be passed in
-        # sets property if not already set
-        for src, dst, data in self.graph.edges(data=True):
-            if prop not in data:
-                self.graph[src][dst][prop] = value
-
-    @deprecated
-    def set_edge_property(self, src, dst, prop, value):
-        self.graph[src][dst][prop] = value
-
-    @deprecated
-    def get_subgraph(self, nodes):
-        return self.graph.subgraph(nodes)
 
     def devices(self, asn=None):
         """return devices in a network"""

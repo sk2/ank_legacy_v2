@@ -755,6 +755,4 @@ class BgpPolicyParser:
         self.cl_and_pl_per_node()
         self.allocate_tags()
         self.store_tags_per_router()
-        with open( os.path.join(config.log_dir, "pol_dump.txt"), 'w') as f_pol_dump:
-            f_pol_dump.write(ank.debug_edges(self.network.g_session))
         #self.apply_gao_rexford()

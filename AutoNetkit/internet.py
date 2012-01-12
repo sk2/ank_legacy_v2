@@ -168,6 +168,21 @@ class Internet:
             ank.plot(self.network)        
         ank.jsplot(self.network)        
         ank.summarydoc(self.network)
+
+    def dump(self):
+        """Dumps overlay graphs to file"""
+        with open( os.path.join(config.log_dir, "physical.txt"), 'w') as f_pol_dump:
+            f_pol_dump.write(ank.debug_nodes(self.network.graph))
+            f_pol_dump.write(ank.debug_edges(self.network.graph))
+        with open( os.path.join(config.log_dir, "bgp.txt"), 'w') as f_pol_dump:
+            f_pol_dump.write(ank.debug_nodes(self.network.g_session))
+            f_pol_dump.write(ank.debug_edges(self.network.g_session))
+        with open( os.path.join(config.log_dir, "dns.txt"), 'w') as f_pol_dump:
+            f_pol_dump.write(ank.debug_nodes(self.network.g_dns))
+            f_pol_dump.write(ank.debug_edges(self.network.g_dns))
+        with open( os.path.join(config.log_dir, "dns_auth.txt"), 'w') as f_pol_dump:
+            f_pol_dump.write(ank.debug_nodes(self.network.g_dns_auth))
+            f_pol_dump.write(ank.debug_edges(self.network.g_dns_auth))
        
     def save(self, filename=None):  
         #TODO: save into ank_lab directory
@@ -179,9 +194,9 @@ class Internet:
         output = gzip.GzipFile(filename, 'wb')
 # workaround for pickle unable to store named-tuples
         mapping = dict( (n, n.id) for n in self.network.graph)
-        nx.relabel_nodes(self.network.graph, mapping, copy=False)
+        save_graph = nx.relabel_nodes(self.network.graph, mapping)
 
-        pickle.dump(self.network.graph, output, -1)
+        pickle.dump(save_graph, output, -1)
 
     def restore(self, filename=None):
         #TODO: load from ank_lab directory

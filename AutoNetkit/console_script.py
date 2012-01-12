@@ -93,6 +93,7 @@ def main():
 
     # finally, save the network
     inet.save()
+    inet.dump()
     #inet.restore()
 
 if __name__ == "__main__":
