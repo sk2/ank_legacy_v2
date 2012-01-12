@@ -41,7 +41,7 @@ router ospf 1
  redistribute connected
  redistribute static
   % for i in igp_interfaces:
- network ${i['id']} ${i['wildcard']} area ${i['area']}
+ network ${i['network']} ${i['wildcard']} area ${i['area']}
     % if 'passive' in i:
  passive-interface ${i['id']}
     % endif

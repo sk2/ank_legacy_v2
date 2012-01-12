@@ -476,7 +476,7 @@ class NetkitCompiler:
                                         'route_map_out': rm_call_group_name_out,
                                         })
 
-                # iBGP
+                # eBGP
                 ebgp_neighbor_list = []
                 if router in ebgp_graph:
                     for neigh in ebgp_graph.neighbors(router):

@@ -143,19 +143,22 @@ class dynagenCompiler:
         igp_interfaces = []
         if igp_graph.degree(router) > 0:
             # Only start IGP process if IGP links
+#TODO: make loopback a network mask so don't have to do "0.0.0.0"
             igp_interfaces.append({ 'id': 'lo0', 'wildcard': "0.0.0.0", 'passive': True,
+                'network': "255.255.255.255",
                 'area': default_area, 'weight': default_weight,
                 })
             for src, dst, data in igp_graph.edges(router, data=True):
                 int_id = ank.junos_logical_int_id_ge(self.int_id(data['id']))
                 subnet = self.network.graph[src][dst]['sn']
                 description = 'Interface %s -> %s' % (
-                    ank.fqdn(self.network, src), 
-                    ank.fqdn(self.network, dst))
+                        ank.fqdn(self.network, src), 
+                        ank.fqdn(self.network, dst))
                 igp_interfaces.append({
                     'id':       int_id,
                     'weight':   data.get('weight', default_weight),
                     'area':   data.get('area', default_area),
+                    'network': str(subnet.network),
                     'description': description,
                     'wildcard':      str(subnet.hostmask),
                     })
@@ -175,6 +178,7 @@ class dynagenCompiler:
                     'area':   data.get('area', default_area),
                     'description': description,
                     'passive': True,
+                    'network': str(subnet.network),
                     'wildcard':      str(subnet.hostmask),
                     })
 
@@ -190,6 +194,7 @@ class dynagenCompiler:
         # route maps
         bgp_groups = {}
         route_maps = []
+        route_map_call_groups = {}
         if router in ibgp_graph:
             internal_peers = []
             for peer in ibgp_graph.neighbors(router):
