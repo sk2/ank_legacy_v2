@@ -216,7 +216,7 @@ def ip_addr(network, src, dst):
 
 def ip_to_net_ent_title(ip):
     """ Converts an IP address into an OSI Network Entity Title
-    suitable for use in IS-IS.
+    suitable for use in IS-IS on Junos.
 
     >>> ip_to_net_ent_title(IPAddress("192.168.19.1"))
     '49.0001.1921.6801.9001.00'

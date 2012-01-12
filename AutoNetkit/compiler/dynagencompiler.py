@@ -81,6 +81,7 @@ class dynagenCompiler:
         self.hypervisor = hypervisor
         self.igp = igp
         self.interface_limit = 6
+        self.interface_names = config.settings['Lab']['dynagen interfaces']
 
     def initialise(self):  
         """Creates lab folder structure"""
@@ -339,21 +340,9 @@ class dynagenCompiler:
 
     
     def int_id(self, interface_id):
-        #TODO: split this out
-        return 'e1/%s' % interface_id
-        #TODO: also allocate fast ethernet
-        if interface_id == 0:
-            return 'f0/0'
-        if interface_id == 1:
-            return 'f0/1'
-        else:
-            return 'e1/%s' % (interface_id - 2)
+        #TODO: try/except in case index not found
+        return self.interface_names[interface_id]
 
-    def cisco_int_name_full(self, interface_id):
-        abbrev = self.int_id(interface_id)
-        abbrev =  abbrev.replace('f', 'FastEthernet ')
-        abbrev =  abbrev.replace('e', 'Ethernet ')
-        return abbrev
 
     def configure_dynagen(self):  
         """Generates dynagen specific configuration files."""
