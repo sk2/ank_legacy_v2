@@ -326,13 +326,6 @@ class Internet:
             cbgp_comp = ank.CbgpCompiler(self.network, self.services)
             cbgp_comp.configure()
 
-            """
-                'junosphere': junosphere,
-                'junosphere_olive': junosphere_olive,
-                'olive': olive,
-                'olive_qemu_patched': olive_qemu_patched,
-
-                """
         if self.compile_targets['junosphere']:
             junos_comp = ank.JunosCompiler(self.network, self.services, self.igp, target="junosphere")
             junos_comp.initialise()
