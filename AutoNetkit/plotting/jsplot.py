@@ -114,15 +114,25 @@ def jsplot(network):
                 ))
 
     ibgp_graph = ank.get_ibgp_graph(network)
-    labels = dict( (n, network.label(n)) for n in ibgp_graph)
-    nx.relabel_nodes(ibgp_graph, labels, copy=False)
+    node_list = []
+    for node in ibgp_graph.nodes():
+# Set label to be FQDN, so don't have multiple "Router A" nodes etc
+        try:
+            label = node.label
+        except KeyError:
+            label = node
+        data = { 'label': "%s (%s)" % (label, network.graph.node[node].get("ibgp_level"))}
+        node_list.append( (node.id, data))
+    edge_list = ibgp_graph.edges(data=True)
+    edge_list = list( (src.id, dst.id, data) for (src, dst, data) in edge_list)
+
     ibgp_filename = os.path.join(jsplot_dir, "ibgp.js")
     js_files.append("ibgp.js")
     with open( ibgp_filename, 'w') as f_js:
             f_js.write( js_template.render(
-                node_list = ibgp_graph.nodes(data=True),
-                edge_list = ibgp_graph.edges(data=True),
-                overlay_graph = True,
+                node_list = node_list,
+                edge_list = edge_list,
+                physical_graph = True,
                 ))
 
     #TODO: clarify difference of physical_graph and overlay_graph
