@@ -7,10 +7,11 @@ __author__ = "\n".join(['Simon Knight'])
 
 __all__ = ['get_ip_as_allocs', 'allocate_subnets', 'alloc_interfaces',
            'alloc_tap_hosts', 'get_tap_host', 'int_id', 'ip_addr',
+           'ip_to_net_ent_title_ios',
            'ip_to_net_ent_title']
 
 #toDo: add docstrings
-from netaddr import IPNetwork
+from netaddr import IPNetwork, IPAddress
 import AutoNetkit as ank
 import math
 import networkx as nx
@@ -222,6 +223,25 @@ def ip_to_net_ent_title(ip):
     """
     LOG.debug("Converting IP to OSI ENT format")
     area_id = "49.0001"
+    ip_octets = str(ip.ip).split(".")
+# Pad with leading zeros, eg 1->001, 12->012, 123->123
+    ip_octets = ["%03d" % int(octet) for octet in ip_octets]
+# Condense to single string
+    ip_octets = "".join(ip_octets)
+# and split into bytes
+    ip_octets = ip_octets[0:4] + "." + ip_octets[4:8] + "." + ip_octets[8:12]
+    return area_id + "." + ip_octets + "." + "00"
+
+
+def ip_to_net_ent_title_ios(ip):
+    """ Converts an IP address into an OSI Network Entity Title
+    suitable for use in IS-IS on IOS.
+
+    >>> ip_to_net_ent_title(IPAddress("192.168.19.1"))
+    '49.1921.6801.9001.00'
+    """
+    LOG.debug("Converting IP to OSI ENT format")
+    area_id = "49"
     ip_octets = str(ip.ip).split(".")
 # Pad with leading zeros, eg 1->001, 12->012, 123->123
     ip_octets = ["%03d" % int(octet) for octet in ip_octets]

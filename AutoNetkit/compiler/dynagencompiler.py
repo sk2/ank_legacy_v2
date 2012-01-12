@@ -110,7 +110,7 @@ class dynagenCompiler:
             'netmask':      str(lo_ip.netmask),
             'wildcard':      str(lo_ip.hostmask),
             'prefixlen':    str(lo_ip.prefixlen),
-            'net_ent_title': ank.ip_to_net_ent_title(lo_ip),
+            'net_ent_title': ank.ip_to_net_ent_title_ios(lo_ip),
             'description': 'Loopback',
         })
 
