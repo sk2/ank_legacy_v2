@@ -1,309 +1,254 @@
 # -*- coding: utf-8 -*-
 """
-Deploy a given Netkit lab to a Netkit server
+Deploy a given Olive lab to an Olive server
 """
 __author__ = "\n".join(['Simon Knight'])
-#    Copyright (C) 2009-2011 by Simon Knight, Hung Nguyen
+#    Copyright (C) 2009-2011 by Simon Knight, Hung Nguyen, Askar Jaboldinov 
 
 import logging
 LOG = logging.getLogger("ANK")
                                  
-import os     
+from collections import namedtuple
+                                 
+import os
 import time
 import AutoNetkit.config as config
+import re
+import datetime
+import pxssh
+import sys
+import AutoNetkit as ank
+import itertools
+import pprint
+import netaddr
+import threading
+
+import Queue
 
 # Used for EOF and TIMEOUT variables
 import pexpect
 
+LINUX_PROMPT = "~#"   
+
+#TODO: tidy up folder handling esp wrt config.lab_dir config.junos_dir etc
+
+from mako.lookup import TemplateLookup
+from pkg_resources import resource_filename
+
+template_cache_dir = config.template_cache_dir
+
+template_dir =  resource_filename("AutoNetkit","lib/templates")
+lookup = TemplateLookup(directories=[ template_dir ],
+        module_directory= template_cache_dir,
+        #cache_type='memory',
+        #cache_enabled=True,
+        )
+
 class DynagenDeploy():  
-    """ Deploy a given Netkit lab to a Netkit server"""
-    
-    def __init__(self):
+    """ Deploy a given Junos lab to an Olive Host"""
+
+    def __init__(self, host=None, username=None, network=None,
+            host_alias = None,
+            lab_dir="junos_config_dir"):
         self.server = None    
-        self.lab_dir = None
-        self.network = None
-        print "init dgd"
-    
-    def deploy(self, server, lab_dir, network): 
-        """ Deploys lab_dir to Netkit server""" 
-        # stops lab, copies new lab over, starts lab 
-       
-        self.server = server
         self.lab_dir = lab_dir
-        self.network = network
+        self.network = network 
+        self.host_alias = host_alias
+        self.host = host
+        self.username = username
+        self.shell = None
+# For use on local machine
+        self.shell_type = "bash"
+        self.logfile = open( os.path.join(config.log_dir, "pxssh.log"), 'w')
+        self.tap_name_base = "ank_tap_olive"
+        self.host_data_dir = None
+        self.dynagen_dir = config.ank_main_dir
         
-        shell = self.server.get_shell()   
-        #TODO: throw/catch exceptions instead of warning and errors  
 
-        if not shell:
-            # Problem has occured, end deployment
-            LOG.warn("Unable to connect to Netkit host. Ending deployment.")
-            return  
+        self.local_server = True
+        if self.host and self.username:
+            # Host and Username set, so ssh will be used
+            #TODO: make sure these are confirmed by the connect_server function
+            self.local_server = False       
 
-        if not server.check_nk_installed():
-            LOG.warn("Netkit environment variable not found. "
-                "Please check Netkit is correctly installed.")
-            return 
-        else:
-            LOG.debug("Netkit environment variable found, proceeding")
+    def get_cwd(self):
+        return self.get_command_output("pwd")
 
-        if not server.check_tunnel():
-            LOG.warn("Netkit TAP tunnel not setup. "
-                "Please manually configure.")
-            return 
-        else:                 
-            LOG.debug("Netkit TAP tunnel present, proceeding")
+    def get_whoami(self):
+        return self.get_command_output("whoami")
 
-        self.stop_lab()       
-        
-        if not server.local_server:
-            # Netkit on remote server, need to transfer lab over
-            self.archive_and_transfer_lab()
-        
-        self.start_lab()
+    def get_command_output(self, cmd):
+        """ get current working directory"""
+        # workaround for pexpect echoing the command back
+        shell = self.shell
+        shell.sendline(cmd)  # run a command
+        shell.prompt()
+        result = shell.before
+        result = [res.strip() for res in shell.before.split("\n")]
+        if result[0] == cmd:
+# First line is echo, return the next line
+            return result[1]
 
-    def stop_lab(self):  
-        return
-        """Halts running Netkit lab"""
+    def get_shell(self):
+        """Connects to Netkit server (if remote)"""   
+        # Connects to the Linux machine running the Netkit lab   
+        shell = None     
+        if self.host and self.username:  
+            # Connect to remote machine
 
-        LOG.info(  "Halting previous lab" )
-        server = self.server
-        shell = self.server.get_shell()   
-        lab_dir = self.lab_dir
+#Note the code that checks if link alredy exists and returns it ruins setting up threads (as all use same)
+#TODO: remove the shell_link bit from netkit deploy and make it use a self.shell variable instead
 
-        # See if lab folder exists (or if fresh installation)       
-        # check for remote directory
-        if not server.local_server:
-            # only applicable for remote (ie copied over) labs
-            shell.sendline("[ -d " + lab_dir + 
-                " ] && echo 'Present' || echo 'Absent'\n")
-            shell.prompt() 
-            result = shell.before 
-            # Examine result line by line 
-            # (as command itself is also often echoed back)  
-            for line in result.splitlines():
-                if line == "Absent":
-                    # Folder doesn't exist => no Lab to stop      
-                    LOG.debug("Lab directory doesn't exist, no lab to stop") 
-                    shell.sendline()
-                    shell.prompt() 
-                    return    
+            shell = pxssh.pxssh()    
+            shell.logfile = self.logfile
+            LOG.info(  "Connecting to {0}".format(self.host) ) 
 
-        #stop lab     
-        shell.sendline("cd " + lab_dir)
-        
-        # Use -q flag to shutdown hosts quickly     
-        shell.sendline("lhalt -q")
-        # Pattern: Halting "AS1r1"...
-        pattern = "Halting \"(\w+)\"..."   
-        finished = "Lab has been halted."
-        # Limit max lines to 1000
-        for dummy in range (0, 1000):
-            i = shell.expect ([pattern, finished, pexpect.EOF])
-            if i == 0:
-                LOG.debug(  "Halted host " + shell.match.group(1)    )  
-            elif i == 1: 
-                LOG.debug(  "Finished halting lab"    ) 
-                break
-            else:    
-                break # reached end
-        return  
-    
+            shell.login(self.host, self.username)
+            # with pass: shell.login(self.host, self.username, self.password)
 
-    def archive_and_transfer_lab(self):
-        """Archives lab, transfers to remote server, and extracts""" 
-        
-        LOG.info("Copying Lab over")    
-                                        
-        # Archive current lab
-        tar_file = os.path.join(config.ank_main_dir, self.network.compiled_labs['netkit'])
-        # Transfer to remote server  
-        self.server.transfer_file(tar_file)
-               
-        shell = self.server.get_shell()
-        # Remove previous lab if present on remote server   
-        shell.sendline("cd ")
-        shell.prompt() 
-        shell.sendline("rm -rf  " + self.lab_dir + "/*")
-        shell.prompt() 
-        LOG.debug(  "Removed previous lab directory" )
-
-#TODO: check why get " ar: Removing leading `/' from member names" on Linux
-
-        # Extract new lab
-        #_, tarfilename = os.path.split(tar_file)
-        #tar_filename, _ = os.path.splitext(filename)
-        tar_basename = os.path.basename(tar_file)
-        shell.sendline("tar -xzf  " + tar_basename)
-        shell.prompt() 
-        LOG.debug(  "Extracted new lab"  )
-        
-        return 
-          
-
-    def start_lab(self):   
-        """Starts Netkit lab.
-            Will also copy across lab if Netkit host is remote"""        
-        lab_dir = self.lab_dir
-        LOG.info(  "Starting lab" )
-        shell = self.server.get_shell()
-        shell.sendline("cd " + lab_dir)
-
-        machine_list = self.lab_host_list()
-
-        # Check virtual machines have been halted 
-        LOG.info("Checking all previous machines shutdown") 
-        self.confirm_hosts_shutdown(machine_list)  
-        LOG.debug("All required hosts shutdown, proceeding")
-
-        # Start lab   
-        LOG.info( "All previous machines shutdown, starting lab")
-        # Parameters: 5 machines at a time, no console
-        if self.xterm:
-            # Start with each VM console in Xterm (vstart/lstart default)
-            shell.sendline("lstart -p5")
-        else:
-            # Start with console disabled (access via SSH only)
-            shell.sendline("lstart -p5 -o --con0=none")
-
-        # Start infinite loop, as don't know how many lines to expect.
-        # Leave when receive correct output
-        current_machine_index = 1             
-        while 1:      
-            i = shell.expect([
-                "The lab has been started.",    # Completed
-                'Starting "(\w+)"...',
-                'vstart: Virtual machine "(\w+)" is already running.',
-                pexpect.TIMEOUT,
-                pexpect.EOF,
-                "Terminated",
-                "Error while configuring the tunnel.",
-                ])   
-
-            if i == 0:     
-                # Finished starting lab 
-                status =  ("Finished starting Lab, "
-                    "{0} machines started").format(len(machine_list)) 
-                LOG.info(  status  )  
-                # Leave infinite loop
-                break                                                    
-
-            elif i == 1:     
-                # Starting hosts             
-                status = "Starting {0} ({1}/{2})".format( 
-                    shell.match.group(1), current_machine_index,
-                    len(machine_list))
-                LOG.info(  status  )  
-                current_machine_index += 1 
-                   
-            elif i == 2:
-                # Some hosts still running. Should have been shutdown already.
-                vhost = shell.match.group(1)
-                LOG.warn(("Error starting lab, machine {0}"
-                    "is still running").format(vhost))
+            LOG.info(  "Connected to " + self.host )  
+            shell.setecho(False)  
+            #TODO: set state to Netkit
+        else:   
+            shell = pexpect.spawn (self.shell_type) 
+            shell.sendline("uname")
             
-            elif i == 3:       
-                #TODO: behaviour here?
-                LOG.debug( "timeout"  )  
-                
-            elif i == 4:              
-                #TODO: behaviour here?
-                LOG.debug( "EOF" )     
-                
-            elif i == 5:    
-                LOG.warn("An error has occurred, startup terminated.")   
-                return                                          
-                
-            elif i == 6:  
-                # Problem starting tunnel. Tunnel should already be
-                # present.                                                      
-                #TODO integrate this with the setup tap tunnel function   
+            shell.logfile = self.logfile    
+            shell.setecho(False)  
+            # Check Linux machine (Netkit won't run on other Unixes)   
+            i = shell.expect(["Linux", "Darwin", pexpect.EOF, LINUX_PROMPT]) 
+            if i == 0:
+                # Machine is running Linux. Send test command (ignore result)
+                shell.sendline("ls") 
+                shell.prompt()
+            elif i == 1:
+                LOG.warn("Specified Olive host is running Mac OS X, "
+                    "please specify a Linux Olive host.")
+                return None 
+            else:
+                LOG.warn("Provided Netkit host is not running Linux")
+
+        return shell
+
+    def connect_to_server(self):  
+# Wrapper to work with existing code
+        self.shell = self.get_shell()
+        self.working_directory = self.get_cwd()
+        self.linux_username = self.get_whoami()
+        return True
+    
+    def transfer_file(self, local_file, remote_folder=""):
+        """Transfers file to remote host using SCP"""
+        # Sanity check
+        if self.local_server:
+            LOG.warn("Can only SCP to remote Netkit server")
+            return
+
+        scp_command = "scp %s %s@%s:%s" % (local_file,
+            self.username, self.host, remote_folder)
+        LOG.debug(scp_command)
+        child = pexpect.spawn(scp_command)      
+        child.logfile = self.logfile
+
+        child.expect(pexpect.EOF) 
+        LOG.debug(  "SCP result %s"% child.before.strip())
+        return 
+
+    def run_collect_data_command(self, nodes_with_port, commands, shell):
+            node, router_name, telnet_port = nodes_with_port
+# Unique as includes ASN etc
+#TODO: check difference, if really need this...
+            full_routername = node.rtr_folder_name 
+
+# use format as % gets mixed up
+            LOG.info("Logging into %s" % router_name)
+            router_name_junos = router_name
+#workaround for gh-120
+            if "." in router_name:
+                router_name_junos = router_name.split(".")[0]
+            root_prompt = "root@{0}%".format(router_name_junos)
+            shell.sendline("telnet localhost %s" % telnet_port)
+            shell.expect("Escape character is ")
+            shell.sendline()
+
+            i = shell.expect(["login", root_prompt]) 
+            if i == 0:
+# Need to login
+                shell.sendline("root")
+                shell.expect("Password:")
+                shell.sendline("Clouds")
+                shell.expect(root_prompt)
+            elif i == 1:
+# logged in already
                 pass
 
-        #TODO check all machines are running, similar to checking they 
-        # were shutdown. Can then do fast (ie no checking) startup
+# Now load our ank config
+            for command in commands:
+                command_to_send = "echo %s |cli" % command
+                LOG.info("%s: running command %s" % (router_name, command))
+                shell.sendline(command_to_send)
+                shell.expect(root_prompt)
+                command_output = shell.before
+# from http://stackoverflow.com/q/295135/
+                command_filename_format = (re.sub('[^\w\s-]', '', command).strip().lower())
+                filename = "%s_%s_%s.txt" % (full_routername,
+                        command_filename_format,
+                        time.strftime("%Y%m%d_%H%M%S", time.localtime()))
+                filename = os.path.join(self.host_data_dir, filename)
+                
+                with open( filename, 'w') as f_out:
+                    f_out.write(command_output)
 
-        return 
+# logout, expect a new login prompt
+            shell.sendline("exit")
+            shell.expect("login:")
+# Now disconnect telnet
+            shell.sendcontrol("]")
+            shell.expect("telnet>")
+            shell.sendcontrol("D")
+            shell.expect("Connection closed")
+            shell.prompt()
+            return
 
-    def lab_host_list(self):
-        # reads Lab host list from file, as pxssh can have problems with large
-        # buffers, so large networks will hang on the lab read stage
-        lab_conf_file = open("{0}/{1}".format(self.lab_dir, "lab.conf"), 'r')
-        machine_list = []
-        for line in lab_conf_file:
-            # Faster to use string operations than regexps
-            if "[" in line:
-                # Host is part up to the [x] eg  1_Rome[0]=10.0.1.232.30
-                host_name = line[:line.find("[")]
-                machine_list.append(host_name)
-        # Make unique
-        return list(set(machine_list))
+    def collect_data(self, commands):
+        """Runs specified collect_data commands"""
+        LOG.info("Collecting data for %s" % self.host_alias)
+        LOG.warn("Data collection not yet implemented for Dynagen")
 
-    
-    def get_lab_host_list(self): 
-        """ Uses Netkit command to get list of hosts in lab"""
-        shell = self.server.get_shell()
-        shell.sendline("linfo")
-        machine_list = []
-        # Limit max lines to 500
-        for dummy in range (0, 1000):
-            i = shell.expect ([    
-                # Netkit output stating lab machine count
-                "of (\d+) virtual machines \( ((?:\w+ ?)+\w+)\)",
-                pexpect.EOF,
-                ])
-            if i == 0:
-                machine_list = shell.match.group(2)
-                machine_list = machine_list.split()
-                LOG.debug("hosts in lab are: " + ", ".join(machine_list) )  
-                break
-            else:    
-                # reached end of file
-                #TODO: double check what should be done if get to here
-                print "EOF"
-                break
-        return machine_list
+    def deploy(self):
+        if not self.connect_to_server():
+            LOG.warn("Unable to start shell for %s" % self.host_alias)
+# Problem starting ssh
+            return
+        shell = self.shell
+        LOG.info( "Starting Dynagen")
 
-    def confirm_hosts_shutdown(self, host_list):   
-        """ Shuts down any machines in host_list which are still running"""
-        shell = self.server.get_shell()
+# transfer over junos lab
+
+        tar_file = os.path.join(config.ank_main_dir, self.network.compiled_labs['dynagen'])
+        self.transfer_file(tar_file)
+#TODO: make just the "junos_dir" accessible from the config directly (without the ank_lab part)
+        configset_directory = os.path.join(self.dynagen_dir, "dynagen_lab", "configset")
         
-        #  sknight          taptunnelvm        1471      41632  
-        pattern = "\w+\s+(\w+)\s+\d+\s+\d+"    
-        # The last line of vlist output
-        last_line = "\nTotal virtual machines"
+# Tar file copied across (if remote host) to local directory
+        #shell.sendline("cd %s" % self.olive_dir) 
+        shell.sendline("cd")
+# Remove any previous lab
+        shell.sendline("rm -rf  " + configset_directory)
+        shell.prompt() 
 
-        can_proceed = True     
-        # Keep looping until all required hosts shutdown
-        while 1:
-            can_proceed = True      
-            # See which machines are currently running
-            shell.sendline("vlist ")    
-            
-            # Limit max lines to 1000 
-            # Loop to analyse output   
-            for dummy in range (0, 1000):  
-                i = shell.expect ([pattern, pexpect.EOF, last_line])   
-                if i == 0:
-                    vhost = shell.match.group(1)  
-                    if vhost in host_list:            
-                        LOG.debug( "Machine " + vhost + 
-                            " is in list of machines that should be shutdown" )
-                        can_proceed = False
-                        # Tell this machine to shutdown
-                        shell.sendline("vhalt -q {0}".format(vhost))  
-                else: 
-                    # Finished looking at active hosts     
-                    break
+        tar_basename = os.path.basename(tar_file)
+        
+        # Need to force directory to extract to (junosphere format for tar extracts to cwd)
+        LOG.debug( "Extracting Dynagen configurations")
+        shell.sendline("tar -xzf %s" % (tar_basename))
+#Need this tar check or all else breaks!
+        shell.prompt() 
 
-            # reached end, see if allowed to proceed - if not then retry    
-            if(can_proceed):   
-                # Break out of infinite loop, lab machines are shutdown
-                break
-            else:
-                # Some machines still running, delay
-                delay = 5        
-                LOG.info(("Some hosts still running, retrying in "
-                    "{0} seconds").format(delay))
-                time.sleep(delay)
-        return    
+        # Now move into lab directory to create images
+        shell.sendline("cd %s" % self.dynagen_dir) 
+
+#Now launch lab
+
+
+

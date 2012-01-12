@@ -98,8 +98,6 @@ class dynagenCompiler:
 
         return
 
- 
- 
     def configure_interfaces(self, device):
         LOG.debug("Configuring interfaces for %s" % self.network.fqdn(device))
         """Interface configuration"""
@@ -175,7 +173,7 @@ class dynagenCompiler:
 #TODO: Don't configure iBGP or eBGP if no eBGP edges
 # need to pass correct blank dicts to templates then...
 
-#TODO: put comments in for junos bgp peerings
+#TODO: put comments in for IOS bgp peerings
         # route maps
         bgp_groups = {}
         route_maps = []
@@ -276,10 +274,9 @@ class dynagenCompiler:
         return (bgp_groups, policy_options)
 
     def configure_ios(self):
-        """ Configures Junos"""
+        """ Configures IOS"""
         LOG.info("Configuring IOS")
-        junos_template = lookup.get_template("cisco/ios.mako")
-        #junos_template = lookup.get_template("junos/junos.mako")
+        ios_template = lookup.get_template("cisco/ios.mako")
         ank_version = pkg_resources.get_distribution("AutoNetkit").version
         date = time.strftime("%Y-%m-%d %H:%M", time.localtime())
 
@@ -309,7 +306,7 @@ class dynagenCompiler:
 
             juniper_filename = router_conf_path(self.network, router)
             with open( juniper_filename, 'w') as f_jun:
-                f_jun.write( junos_template.render(
+                f_jun.write( ios_template.render(
                     hostname = router.rtr_folder_name,
                     username = 'autonetkit',
                     interfaces=interfaces,
@@ -362,10 +359,7 @@ class dynagenCompiler:
 
         #TODO: need nice way to map ANK graph into feasible hardware graph
 
-        defaults = {
-            'model': 2621,
-
-        }
+        chassis = config.settings['Lab']['dynagen model']
 
         # Need more robust way to handle this
         # Interface mapping
@@ -432,8 +426,6 @@ class dynagenCompiler:
             # and store info
             all_router_info[node] = router_info
 
-        #TODO: Also setup chassis information
-
         #pprint.pprint(all_router_info)
         lab_file = os.path.join(lab_dir(), "lab.net")
         with open( lab_file, 'w') as f_lab:
@@ -442,6 +434,7 @@ class dynagenCompiler:
                 hypervisor = self.hypervisor,
                 all_router_info = all_router_info,   
                 working_dir = working_dir,
+                chassis = chassis,
                 ))
 
         return

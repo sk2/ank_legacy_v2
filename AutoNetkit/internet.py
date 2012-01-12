@@ -395,9 +395,6 @@ class Internet:
             if not data['active']:
                 LOG.debug("Not deploying inactive Olive host %s" % host_alias)
                 continue
-            if not self.compile_targets['olive']:
-                LOG.info("Olive not compiled, not deploying to host %s" % host_alias)
-                continue
 
             LOG.info("Deploying to Olive host %s" % host_alias)   
             olive_deploy = ank.deploy.olive_deploy.OliveDeploy(host = data['host'],
@@ -410,6 +407,20 @@ class Internet:
             olive_deploy.deploy()
             if data['verify']:
                 LOG.info("Verification not yet supported for Olive")
+
+        for host_alias, data in config.settings['Dynagen Hosts'].items():
+            if not data['active']:
+                LOG.debug("Not deploying inactive Dynagen host %s" % host_alias)
+                continue
+
+            LOG.info("Deploying to Dynagen host %s" % host_alias)   
+            dynagen_deploy = ank.deploy.dynagen_deploy.DynagenDeploy(host = data['host'],
+                    username = data['username'], 
+                    host_alias = host_alias,
+                    network = self.network)
+            dynagen_deploy.deploy()
+            if data['verify']:
+                LOG.info("Verification not yet supported for Dynagen")
 
         return
 

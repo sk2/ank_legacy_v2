@@ -2,10 +2,10 @@ autostart = True
 [${hypervisor}]
     workingdir = ${working_dir}
     udp = 10000
-    [[2621]]
+    [[${chassis}]]
         image = ${image}
         ghostios = True
-        chassis = 2621        
+        chassis = ${chassis}        
 % for id, data in (all_router_info.items()):           
       [[ROUTER ${data['hostname']}]]                                      
 			model  = ${data['model']}          
