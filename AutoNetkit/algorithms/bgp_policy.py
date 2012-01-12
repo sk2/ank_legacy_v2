@@ -448,6 +448,7 @@ class BgpPolicyParser:
 #TODO: handle case of multiple matches......
 # rather than getting first element, iterate over
 #TODO: need to handle origin different here to transit - diff policy
+        policy = None
         nodes = self.node_select_query(match_query)
         tag = self.query_to_tag(match_query)
         tag_pl = "%s_%s" % (match_type.lower(), tag_to_pl(tag))
@@ -460,7 +461,7 @@ class BgpPolicyParser:
 # efficiency: check if query has already been executed (ie if already prefixes for this tag)
 #TODO: see if need to have unique name for prefix list and comm val: eg pl_tag and 
             if tag_pl in self.prefix_lists:
-                LOG.debug( "already executed prefix lookup for", tag_pl)
+                LOG.debug( "already executed prefix lookup for %s" % tag_pl)
             else:
                 prefixes = self.get_prefixes(nodes)
                 self.prefix_lists[tag_pl] = prefixes
@@ -472,14 +473,15 @@ class BgpPolicyParser:
                 self.tags_to_allocate.update([tag])
 
 
-        # Parse the string into policy tuples
-        parsed = self.bgpSessionQuery.parseString(policy)
-        per_session_policy = self.process_if_then_else(parsed.bgpSessionQuery)
+        if policy:
+            # Parse the string into policy tuples
+            parsed = self.bgpSessionQuery.parseString(policy)
+            per_session_policy = self.process_if_then_else(parsed.bgpSessionQuery)
 
-        for node in nodes:
-            for u, v in self.network.g_session.out_edges(node):
-                LOG.debug("Applying %s policy to %s egress -> %s" % (match_type, u, v))
-                self.network.g_session[u][v]['egress'].append(per_session_policy)
+            for node in nodes:
+                for u, v in self.network.g_session.out_edges(node):
+                    LOG.debug("Applying %s policy to %s egress -> %s" % (match_type, u, v))
+                    self.network.g_session[u][v]['egress'].append(per_session_policy)
         return match_clause("tag", "=", tag_cl)
 
     def process_if_then_else(self, parsed_query):

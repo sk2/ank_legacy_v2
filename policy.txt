@@ -4,5 +4,4 @@
 #(asn =1 ) ->ingress (asn=2): (setLP 200)         
 (asn = 1) egress-> (asn = 3): (if Transit(asn = 2) then addTag t_test)
 (asn = 1) egress-> (asn = 3): (if Origin(asn = 2) then addTag o_test) 
-(asn = 1) egress-> (asn = 3): (if Origin(asn = 2) then reject route)
 
