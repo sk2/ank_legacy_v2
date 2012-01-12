@@ -250,7 +250,11 @@ class BgpPolicyParser:
         self.set_definition = attribute.setResultsName("set_name") + Suppress("=") + Suppress("{") + delimitedList( attribute, delim=',').setResultsName("set_values") + Suppress("}")
 
 #gao_rexford ( me, custs , peers , upstream ):
-        self.library_def = attribute.setResultsName("def_name") + Suppress("(") + delimitedList( attribute, delim=',').setResultsName("def_params") + Suppress(")")
+        library_function = attribute.setResultsName("def_name") + Suppress("(") + delimitedList( attribute, delim=',').setResultsName("def_params") + Suppress(")")
+# May want to distinguish better?
+        self.library_call = library_function
+
+        self.library_def = Suppress("def") + library_function
         self.library_edge_query = (self.attribute.setResultsName("query_a")
                 + edgeType + self.attribute.setResultsName("query_b"))
         self.library_entry = self.library_edge_query + Suppress(":") + self.bgpSessionQuery
@@ -596,39 +600,96 @@ class BgpPolicyParser:
             self.network.g_session.node[node]['prefixes'] = prefixes
 
     def library_test(self):
+        """Note you need a blank newline after a function definition"""
         library_file = "library.txt"
         with open( library_file, 'r') as f_lib:
             library_data = f_lib.read()
 
-        defined_functions = {}
+#TODO: use named tuple for functions, and for library entries
         defined_sets = {}
+        defined_functions = {}
+        function_applications = []
+        """TODO: make the function definition single grammar, use
+        http://pyparsing.wikispaces.com/file/view/indentedGrammarExample.py"""
+        current_function_def = None
         for line in library_data.splitlines():
-            line = line.strip()
             if line.startswith("#"):
                 LOG.debug("Skipping commented line %s", line)
                 continue
-            if line.strip() == "":
+
+            if current_function_def:
+                if line.strip() == "":
+                    current_function_def = None
 # blank line
-                continue
-            try:
-                results = self.set_definition.parseString(line)
-                defined_sets[results.set_name] = [a for a in results.set_values]
-            except:
+                    continue
+                if (line.startswith("\t") or line.startswith("  ")):
+# function has been started, and indented so try as a library entry
+                    try:
+                        results = self.library_entry.parseString(line)
+#TODO: for efficiency, could save the already parsed query here
+#TODO: remove this dodgy hack! - as want to be overlay, so don't parse here???
+                        bgp_query = line.split(":")[1]
+                        library_entry = [ (results.query_a, results.edgeType, results.query_b, bgp_query)]
+                        defined_functions[current_function_def]['entries'].append(library_entry)
+                        #print results.dump()
+# finished with this line
+                        continue
+                    except pyparsing.ParseException:
+                        print "unable to parse indented line:", line
+                        current_function_def = None
+            else:
+                 #not inside a function def
+# strip to work with easier
+                line = line.strip()
+                try:
+                    results = self.set_definition.parseString(line)
+                    defined_sets[results.set_name] = set(a for a in results.set_values)
+                    continue
+                except pyparsing.ParseException:
+                    pass
 # try as function def
                 try:
                     results = self.library_def.parseString(line)
-                except:
-                    try:
-                        results = self.library_entry.parseString(line)
-                        #print results.dump()
-                    except:
-                        print "unable to parse", line
+                    current_function_def = results.def_name
+                    defined_functions[current_function_def] = {
+                            'params': [a for a in results.def_params],
+                            'entries': [],
+                            }
+                    continue
+                except pyparsing.ParseException:
+                    pass
 
-            print
+                try:
+                    results = self.library_call.parseString(line)
+                    function_applications.append( (results.def_name, [a for a in results.def_params]))
+                    continue
+                except pyparsing.ParseException:
+                    pass
+
+        #pprint.pprint(defined_sets)
+
+        processed_functions = {}
+        for function_name, function_data in defined_functions.items():
+            params = function_data['params']
+            param_indices = dict( (p, params.index(p)) for p in params)
+            defined_functions[function_name]['param_indices'] = param_indices
 
 
             #print line
             #pprint.pprint(defined_sets)
+        #pprint.pprint(defined_functions)
+# Now apply called functions
+        #pprint.pprint(function_applications)
+        for name, params in function_applications:
+            LOG.info("Applying function %s(%s)" % (name, params))
+            try:
+                fn_def = defined_functions[name]
+            except KeyError:
+                LOG.info('No function definition found for "%s"' % name)
+                continue
+
+            for function_line in fn_def['entries']:
+                print function_line
 
 
     def apply_policy_file(self, policy_in_file):
