@@ -543,7 +543,7 @@ class OliveDeploy():
         """Runs specified collect_data commands"""
         LOG.info("Collecting data for %s" % self.host_alias)
 
-        nodes_with_ports = [(router, router.fqdn, router.olive_ports.get(self.host_alias))
+        nodes_with_ports = [(router, router.rtr_folder_name, router.olive_ports.get(self.host_alias))
             for router in self.network.routers()
             if router.olive_ports.get(self.host_alias)]
         if len(nodes_with_ports) == 0:
