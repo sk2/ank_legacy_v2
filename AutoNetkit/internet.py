@@ -170,19 +170,32 @@ class Internet:
         ank.summarydoc(self.network)
 
     def dump(self):
-        """Dumps overlay graphs to file"""
+        """Dumps overlay graphs to file 
+
+        .. note::
+            
+            Doesn't currently support saving graphs - NetworkX cannot save nodes/edges with dictionary attributes
+
+        """
         with open( os.path.join(config.log_dir, "physical.txt"), 'w') as f_pol_dump:
             f_pol_dump.write(ank.debug_nodes(self.network.graph))
             f_pol_dump.write(ank.debug_edges(self.network.graph))
+        #nx.write_graphml(self.network.graph, os.path.join(config.log_dir, "physical.graphml"))
+
         with open( os.path.join(config.log_dir, "bgp.txt"), 'w') as f_pol_dump:
             f_pol_dump.write(ank.debug_nodes(self.network.g_session))
             f_pol_dump.write(ank.debug_edges(self.network.g_session))
+        #nx.write_graphml(self.network.g_session, os.path.join(config.log_dir, "bgp.graphml"))
+
         with open( os.path.join(config.log_dir, "dns.txt"), 'w') as f_pol_dump:
             f_pol_dump.write(ank.debug_nodes(self.network.g_dns))
-            f_pol_dump.write(ank.debug_edges(self.network.g_dns))
+            f_pol_dump.write(ank.debug_edges(self.network.g_session))
+        #nx.write_graphml(self.network.g_session, os.path.join(config.log_dir, "dns.graphml"))
+
         with open( os.path.join(config.log_dir, "dns_auth.txt"), 'w') as f_pol_dump:
             f_pol_dump.write(ank.debug_nodes(self.network.g_dns_auth))
             f_pol_dump.write(ank.debug_edges(self.network.g_dns_auth))
+        #nx.write_graphml(self.network.g_dns_auth, os.path.join(config.log_dir))
        
     def save(self, filename=None):  
         #TODO: save into ank_lab directory
