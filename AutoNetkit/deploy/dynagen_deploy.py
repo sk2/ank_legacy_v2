@@ -249,11 +249,14 @@ class DynagenDeploy():
         # Now move into lab directory to create images
         shell.sendline("cd %s" % dynagen_lab_dir) 
         shell.prompt()
+# test server running
+        server_telnet_port = config.settings['Lab']['dynagen hypervisor port']
+        #shell.sendline("telnet localhost %s" % server_telnet_port)
 #TODO: parameterise lab.net
         LOG.info("Starting Dynagen lab")
         shell.sendline("dynagen lab.net")
 #TODO: capture bootup process similar to for Olives
-        ready_prompt = "=>"
+        dynagen_prompt = "=>"
 
         started_successfully = False
 
@@ -261,13 +264,13 @@ class DynagenDeploy():
         for loop_count in range(0, 100):
             i = shell.expect([
                 pexpect.TIMEOUT,
-                ready_prompt,
+                dynagen_prompt,
                 "Press ENTER to continue",
-                "\*\*\* Warning:\s*(\w*\s*)*",
-                "\*\*\* Error:\s*(\w*\s*)*",
+                #TODO: fix this ugly hacky regex!
+                "\*\*\* Warning:\s*(\w*\s*\:*\.*\-*)*",
+                "\*\*\* Error:\s*(\w*\s*\:*\.*\-*)*",
                 ]) 
             if i == 0:
-# Matched, continue on
                 LOG.info("Timeout starting Dynagen lab")
                 break
             elif i == 1:
@@ -290,6 +293,25 @@ class DynagenDeploy():
                 LOG.info("Startup progress: %s" % (progress_message))
 
         if started_successfully:
+# get status and ports
+            shell.sendline("list")
+            info_regex = "(\w*\.\w*)\s+(\d+)\s+(\w+)\s+(\d+\.\d+\.\d+\.\d)+(\:\d+)\s+(\d+)"
+            lab_info = []
+            for loop_count in range(0, 100):
+                i = shell.expect([
+                    pexpect.TIMEOUT,
+                    info_regex,
+                    dynagen_prompt,
+                    ]) 
+                if i == 0:
+                    LOG.info("Timeout starting Dynagen lab")
+                    break
+                elif i == 1:
+                    (name, model, state, server_ip, server_port, console) = shell.match.groups()
+                    lab_info.append( "(%s %s %s)" % (name, state, console))
+                elif i == 2:
+                    break
+            LOG.info( "Dynagen lab info (name, status, port): %s" % ", ".join(lab_info))
             LOG.info("Interacting with Dynagen lab, press '^]' (Control and right square bracket) "
                     "to return to AutoNetkit")
             sys.stdout.write (shell.after)
