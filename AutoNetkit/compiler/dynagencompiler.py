@@ -156,7 +156,7 @@ class dynagenCompiler:
                 'area': default_area, 'weight': default_weight,
                 })
             for src, dst, data in igp_graph.edges(router, data=True):
-                int_id = ank.int_id(self.int_id(data['id']))
+                int_id = self.int_id(data['id'])
                 subnet = self.network.graph[src][dst]['sn']
                 description = 'Interface %s -> %s' % (
                         ank.fqdn(self.network, src), 
@@ -174,7 +174,7 @@ class dynagenCompiler:
             for src, dst in ebgp_graph.edges(router):
 # Get relevant edges from ebgp_graph, and edge data from physical graph
                 data = self.network.graph[src][dst]
-                int_id = ank.int_id(self.int_id(data['id']))
+                int_id = self.int_id(data['id'])
                 subnet = self.network.graph[src][dst]['sn']
                 description = 'Interface %s -> %s' % (
                     ank.fqdn(self.network, src), 
