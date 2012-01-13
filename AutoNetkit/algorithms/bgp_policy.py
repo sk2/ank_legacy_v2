@@ -92,7 +92,9 @@ class BgpPolicyParser:
         self.g_business_relationship = nx.DiGraph()
 
         # Grammars
-        attribute = Word(alphanums+'_'+".").setResultsName("attribute")
+#TODO: tidy this up
+        attribute_unnamed = Word(alphanums+'_'+".")
+        attribute = attribute_unnamed.setResultsName("attribute")
         self.attribute = attribute
 
         lt = Literal("<").setResultsName("<")
@@ -131,8 +133,6 @@ class BgpPolicyParser:
                 '|': "or",
                 }
 
-
-
 # Both are of comparison to access in same manner when evaluating
         comparison = (lt | le | eq | ne | ge | gt).setResultsName("comparison")
         stringComparison = (eq | ne).setResultsName("comparison")
@@ -155,10 +155,7 @@ class BgpPolicyParser:
         numericQuery = Group(attribute + comparison + float_string).setResultsName( "numericQuery")
 
 
-    #TODO:  duplicate attribute, as want to supress the attribute name
-# solution: replace attribute.setResultsName() and put setResultsName on each use of attribute
-        string_value = Word(alphanums+'_'+".")
-        stringValues = (string_value | quotedString.setParseAction(removeQuotes)
+        stringValues = (attribute_unnamed | quotedString.setParseAction(removeQuotes)
                 ).setResultsName("value")
 
         stringQuery =  Group(attribute + stringComparison + stringValues).setResultsName( "stringQuery")
@@ -196,7 +193,15 @@ class BgpPolicyParser:
                 + comparison
                 + attribute.setResultsName("value"))
 
-        bgpMatchQuery = Group(matchPl | matchTag | originQuery | transitQuery ).setResultsName("bgpMatchQuery")
+
+        #tags contain -> tag = aaa
+        inTags = (                Literal("tags").setResultsName("attribute").setParseAction(lambda x: "tag")
+                + Literal("contain").setResultsName("comparison").setParseAction(lambda x: "=")
+                + attribute_unnamed.setResultsName("value")
+                )
+
+        bgpMatchQuery = Group(matchPl | matchTag | inTags | originQuery | transitQuery ).setResultsName("bgpMatchQuery")
+        self.bgpMatchQuery = bgpMatchQuery
 
         setLP = (Literal("setLP").setResultsName("attribute") 
                 + integer_string.setResultsName("value")).setResultsName("setLP")
@@ -271,14 +276,20 @@ class BgpPolicyParser:
         >>> attributestring = "2a.as1"
         >>> result = pol_parser.attribute.parseString(attributestring)
 
-        Node and edge queries:
+
+        These are equivalent::
+
+        >>> result = pol_parser.bgpMatchQuery.parseString("tag = test")
+        >>> result = pol_parser.bgpMatchQuery.parseString("tags contain test")
+
+        Node and edge queries::
 
         >>> nodestring = "node = '2ab.ab'"
         >>> result = pol_parser.nodeQuery.parseString(nodestring)
         >>> result = pol_parser.edgeQuery.parseString("(" + nodestring + ") egress-> (node = b)")
         >>> result = pol_parser.edgeQuery.parseString("(node = a.b) egress-> (node = b)")
 
-        Full policy queries:
+        Full policy queries::
 
         >>> pol_parser.apply_bgp_policy("(node = '2a.AS2') egress-> (*): (if prefix_list = pl_asn_eq_2 then addTag cl_asn_eq_2)")
         >>> pol_parser.apply_bgp_policy("(Network = AS1 ) ->ingress (Network = AS2): (if tag = deprefme then setLP 90) ")
@@ -286,6 +297,7 @@ class BgpPolicyParser:
         >>> pol_parser.apply_bgp_policy("(asn = 1) egress-> (asn = 1): (if Origin(asn=2) then addTag a100 )")
         >>> pol_parser.apply_bgp_policy("(asn = 1) egress-> (asn = 1): (if Transit(asn=2) then addTag a100 )")
         >>> pol_parser.apply_bgp_policy("(node = a_b ) ->ingress (Network = AS2): (addTag ABC & setLP 90) ")
+        >>> pol_parser.apply_bgp_policy("(node = a_b ) ->ingress (Network = AS2): (if tags contain abc then addTag ABC & setLP 90) ")
         """
         LOG.debug("Applying policy %s" % qstring)
         result = self.bgpApplicationQuery.parseString(qstring)
