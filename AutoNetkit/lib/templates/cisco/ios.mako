@@ -31,11 +31,7 @@ router isis ${i['net_ent_title']}
   % endfor
   % for i in igp_interfaces:
     % if 'passive' in i:
-      % if 'lo' in i['id']:
  passive-interface ${i['id']}
-      % else:
- passive-interface ${i['id'][:-2]}
-      % endif
     % endif
   % endfor
  redistribute connected
@@ -47,11 +43,7 @@ router ospf 1
   % for i in igp_interfaces:
  network ${i['network']} ${i['wildcard']} area ${i['area']}
     % if 'passive' in i:
-      % if 'lo' in i['id']:
  passive-interface ${i['id']}
-      % else:
- passive-interface ${i['id'][:-2]}
-      % endif
     % endif
   % endfor
 % endif
