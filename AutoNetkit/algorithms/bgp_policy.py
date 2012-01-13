@@ -54,6 +54,12 @@ def tag_to_cl(tag):
     """
     return "cl_%s" % tag
 
+def parse_fail_action(s,loc,expr,err):
+    #TODO: make this LOG.debug not info
+    LOG.info('Parse error at %s' % s[loc:])
+    raise pyparsing.ParseFatalException('Error at %s' % s[loc:])
+    return
+
 
 #TODO: see if can return in a data structure that pretty-print works nicely on
 class match_tuple (namedtuple('match_tuple', "match_clauses, action_clauses, reject")):
@@ -162,6 +168,7 @@ class BgpPolicyParser:
         wildcardQuery = wildcard.setResultsName("wildcardQuery")
 
         singleQuery = numericQuery | stringQuery | wildcardQuery
+        singleQuery.setFailAction(parse_fail_action)
         self.nodeQuery = singleQuery + ZeroOrMore(boolean + singleQuery)
 
 # edges
@@ -169,10 +176,12 @@ class BgpPolicyParser:
         self.v_ingress = Literal("->ingress").setResultsName("v_ingress")
         self.u_ingress = Literal("ingress<-").setResultsName("u_ingress")
         self.v_egress = Literal("<-egress").setResultsName("v_egress") 
-        edgeType = ( self.u_egress | self.u_ingress | self.v_egress | self.v_ingress).setResultsName("edgeType")
+        edgeType = ( self.u_egress | self.u_ingress | self.v_egress | self.v_ingress).setResultsName("edgeType").setFailAction(parse_fail_action)
         self.edgeQuery = ("(" + self.nodeQuery.setResultsName("query_a") + ")"
                 + edgeType
-                + "(" + self.nodeQuery.setResultsName("query_b") + ")")
+                + "(" + self.nodeQuery.setResultsName("query_b")
+                + ")").setFailAction(parse_fail_action)
+
 
 #start of BGP queries
         originQuery = (Literal("Origin").setResultsName("attribute") + 
@@ -200,7 +209,7 @@ class BgpPolicyParser:
                 + attribute_unnamed.setResultsName("value")
                 )
 
-        bgpMatchQuery = Group(matchPl | matchTag | inTags | originQuery | transitQuery ).setResultsName("bgpMatchQuery")
+        bgpMatchQuery = Group(matchPl | matchTag | inTags | originQuery | transitQuery ).setResultsName("bgpMatchQuery").setFailAction(parse_fail_action)
         self.bgpMatchQuery = bgpMatchQuery
 
         setLP = (Literal("setLP").setResultsName("attribute") 
@@ -228,17 +237,19 @@ class BgpPolicyParser:
 
         # The Clauses
         ifClause = Group(Suppress("if") + bgpMatchQuery 
-                + ZeroOrMore(Suppress(boolean_and) + bgpMatchQuery)).setResultsName("if_clause")
+                + ZeroOrMore(Suppress(boolean_and)
+                    + bgpMatchQuery)).setResultsName("if_clause").setFailAction(parse_fail_action)
+
         actionClause = bgpAction + ZeroOrMore(Suppress(boolean_and) + bgpAction)
-        thenClause = Group(Suppress("then") + actionClause).setResultsName("then_clause")
+        thenClause = Group(Suppress("then") + actionClause).setResultsName("then_clause").setFailAction(parse_fail_action)
         ifThenClause = Group(Suppress("(") + 
-                ifClause + thenClause + Suppress(")")).setResultsName("ifThenClause")
+                ifClause + thenClause + Suppress(")")).setResultsName("ifThenClause").setFailAction(parse_fail_action)
         elseActionClause = Group(Suppress("(") + actionClause 
-                + Suppress(")")).setResultsName("else_clause")
+                + Suppress(")")).setResultsName("else_clause").setFailAction(parse_fail_action)
 # Support actions without a condition (ie no "if")
         unconditionalAction =  Group(Suppress("(")
             + Group(actionClause).setResultsName("unconditionalActionClause")
-            + Suppress(")")).setResultsName("bgpSessionQuery")
+            + Suppress(")")).setResultsName("bgpSessionQuery").setFailAction(parse_fail_action)
 
 # Query may contain itself (nested)
         bgpSessionQuery = Forward()
@@ -768,13 +779,8 @@ class BgpPolicyParser:
                 try:
                     LOG.debug("Trying policy %s" % line)
                     self.apply_bgp_policy(line)
-                except:
-                    raise
-                    #try as business relationship query
-                    try:
-                        self.apply_bus_rel(line)
-                    except:
-                        LOG.warn("Unable to parse query line %s" % line)
+                except pyparsing.ParseFatalException as e:
+                    LOG.warn("Unable to parse query line %s" % line)
         self.cl_and_pl_per_node()
         self.allocate_tags()
         self.store_tags_per_router()
