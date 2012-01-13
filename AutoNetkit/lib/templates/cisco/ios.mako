@@ -31,7 +31,11 @@ router isis ${i['net_ent_title']}
   % endfor
   % for i in igp_interfaces:
     % if 'passive' in i:
+      % if 'lo' in i['id']:
  passive-interface ${i['id']}
+      % else:
+ passive-interface ${i['id'][:-2]}
+      % endif
     % endif
   % endfor
  redistribute connected
@@ -43,7 +47,11 @@ router ospf 1
   % for i in igp_interfaces:
  network ${i['network']} ${i['wildcard']} area ${i['area']}
     % if 'passive' in i:
+      % if 'lo' in i['id']:
  passive-interface ${i['id']}
+      % else:
+ passive-interface ${i['id'][:-2]}
+      % endif
     % endif
   % endfor
 % endif
@@ -52,7 +60,7 @@ router ospf 1
 router bgp ${asn}
  no synchronization
 % for i in interfaces:
- network ${i['network']} mask ${i['wildcard']}
+ network ${i['network']} mask ${i['netmask']}
 % endfor
 % for groupname, group_data in bgp_groups.items():
  % if group_data['type'] == 'internal':
