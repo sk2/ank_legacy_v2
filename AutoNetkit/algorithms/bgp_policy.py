@@ -741,7 +741,7 @@ class BgpPolicyParser:
                     q_a_map = params[query_a_index]
                     q_b_map = params[query_b_index]
                     q_a_vals = sorted(self.user_defined_sets[q_a_map])
-                    q_b_vals = sorted(self.user_defined_setsr[q_b_map])
+                    q_b_vals = sorted(self.user_defined_sets[q_b_map])
                     LOG.debug("Definition param %s maps to user parameter %s with values %s" % (query_a, 
                         q_a_map, q_a_vals))
                     LOG.debug("Definition param %s maps to user parameter %s with values %s" % (query_b, 
@@ -789,6 +789,6 @@ class BgpPolicyParser:
         self.allocate_tags()
         self.store_tags_per_router()
         #self.apply_gao_rexford()
-        #self.parse_user_def_functions()
-        #self.apply_user_library_calls()
+        self.parse_user_def_functions()
+        self.apply_user_library_calls()
 
