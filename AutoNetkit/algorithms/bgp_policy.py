@@ -96,6 +96,9 @@ class BgpPolicyParser:
     def __init__(self, network):
         self.network = network
         self.g_business_relationship = nx.DiGraph()
+        self.user_defined_sets = {}
+        self.user_library_calls = []
+        self.user_defined_functions = {}
 
         # Grammars
 #TODO: tidy this up
@@ -238,18 +241,18 @@ class BgpPolicyParser:
         # The Clauses
         ifClause = Group(Suppress("if") + bgpMatchQuery 
                 + ZeroOrMore(Suppress(boolean_and)
-                    + bgpMatchQuery)).setResultsName("if_clause").setFailAction(parse_fail_action)
+                    + bgpMatchQuery)).setResultsName("if_clause")
 
         actionClause = bgpAction + ZeroOrMore(Suppress(boolean_and) + bgpAction)
-        thenClause = Group(Suppress("then") + actionClause).setResultsName("then_clause").setFailAction(parse_fail_action)
+        thenClause = Group(Suppress("then") + actionClause).setResultsName("then_clause")
         ifThenClause = Group(Suppress("(") + 
-                ifClause + thenClause + Suppress(")")).setResultsName("ifThenClause").setFailAction(parse_fail_action)
+                ifClause + thenClause + Suppress(")")).setResultsName("ifThenClause")
         elseActionClause = Group(Suppress("(") + actionClause 
-                + Suppress(")")).setResultsName("else_clause").setFailAction(parse_fail_action)
+                + Suppress(")")).setResultsName("else_clause")
 # Support actions without a condition (ie no "if")
         unconditionalAction =  Group(Suppress("(")
             + Group(actionClause).setResultsName("unconditionalActionClause")
-            + Suppress(")")).setResultsName("bgpSessionQuery").setFailAction(parse_fail_action)
+            + Suppress(")")).setResultsName("bgpSessionQuery")
 
 # Query may contain itself (nested)
         bgpSessionQuery = Forward()
@@ -264,6 +267,7 @@ class BgpPolicyParser:
 
 # Library stuff
         self.set_definition = attribute.setResultsName("set_name") + Suppress("=") + Suppress("{") + delimitedList( attribute, delim=',').setResultsName("set_values") + Suppress("}")
+        self.set_definition
 
 #gao_rexford ( me, custs , peers , upstream ):
         library_function = attribute.setResultsName("def_name") + Suppress("(") + delimitedList( attribute, delim=',').setResultsName("def_params") + Suppress(")")
@@ -271,9 +275,18 @@ class BgpPolicyParser:
         self.library_call = library_function
 
         self.library_def = Suppress("def") + library_function
+        self.library_def.setFailAction(parse_fail_action)
         self.library_edge_query = (self.attribute.setResultsName("query_a")
                 + edgeType + self.attribute.setResultsName("query_b"))
+        self.library_edge_query.setFailAction(parse_fail_action)
         self.library_entry = self.library_edge_query + Suppress(":") + self.bgpSessionQuery
+        self.library_entry.setFailAction(parse_fail_action)
+
+        self.bgpPolicyLine = (
+                self.bgpApplicationQuery.setResultsName("bgpApplicationQuery")
+                | self.library_call.setResultsName("library_call")
+                | self.set_definition.setResultsName("set_definition")
+                )
 
     def apply_bgp_policy(self, qstring):
         """Applies policy to network 
@@ -311,7 +324,15 @@ class BgpPolicyParser:
         >>> pol_parser.apply_bgp_policy("(node = a_b ) ->ingress (Network = AS2): (if tags contain abc then addTag ABC & setLP 90) ")
         """
         LOG.debug("Applying policy %s" % qstring)
-        result = self.bgpApplicationQuery.parseString(qstring)
+        result = self.bgpPolicyLine.parseString(qstring)
+        if 'set_definition' in result:
+            LOG.debug("Storing set definition %s" % result.set_name)
+            self.user_defined_sets[result.set_name] = set(a for a in result.set_values)
+            return
+        if 'library_call' in result:
+            self.user_library_calls.append( (result.def_name, [a for a in result.def_params]))
+            return
+
         LOG.debug("Query string is %s " % qstring)
         set_a = self.node_select_query(result.query_a)
         LOG.debug("Set a is %s " % set_a)
@@ -622,18 +643,14 @@ class BgpPolicyParser:
             # store updated tags
             self.network.g_session.node[node]['prefixes'] = prefixes
 
-    def library_test(self):
+    def parse_user_def_functions(self):
         """Note you need a blank newline after a function definition"""
         library_file = "library.txt"
-        f_library_debug = open( os.path.join(config.log_dir, "library_dump.txt"), "w")
         try:
             with open( library_file, 'r') as f_lib:
                 library_data = f_lib.read()
 
 #TODO: use named tuple for functions, and for library entries
-            defined_sets = {}
-            defined_functions = {}
-            function_applications = []
             """TODO: make the function definition single grammar, use
             http://pyparsing.wikispaces.com/file/view/indentedGrammarExample.py"""
             current_function_def = None
@@ -660,53 +677,41 @@ class BgpPolicyParser:
                                     'query_b': results.query_b,
                                     'bgp_query': bgp_query,
                             }
-                            defined_functions[current_function_def]['entries'].append(library_entry)
+                            self.user_defined_functions[current_function_def]['entries'].append(library_entry)
                             #print results.dump()
 # finished with this line
                             continue
-                        except pyparsing.ParseException:
+                        except pyparsing.ParseFatalException:
                             print "unable to parse indented line:", line
                             current_function_def = None
                 else:
-                    #not inside a function def
-# strip to work with easier
-                    line = line.strip()
-                    try:
-                        results = self.set_definition.parseString(line)
-                        defined_sets[results.set_name] = set(a for a in results.set_values)
-                        continue
-                    except pyparsing.ParseException:
-                        pass
-# try as function def
                     try:
                         results = self.library_def.parseString(line)
                         current_function_def = results.def_name
-                        defined_functions[current_function_def] = {
+                        self.user_defined_functions[current_function_def] = {
                                 'params': [a for a in results.def_params],
                                 'entries': [],
                                 }
                         continue
-                    except pyparsing.ParseException:
+                    except pyparsing.ParseFatalException:
                         pass
 
-                    try:
-                        results = self.library_call.parseString(line)
-                        function_applications.append( (results.def_name, [a for a in results.def_params]))
-                        continue
-                    except pyparsing.ParseException:
-                        pass
-
-            for function_name, function_data in defined_functions.items():
+            for function_name, function_data in self.user_defined_functions.items():
                 params = function_data['params']
 # Store indices so can lookup when applying functions
                 param_indices = dict( (p, params.index(p)) for p in params)
-                defined_functions[function_name]['param_indices'] = param_indices
+                self.user_defined_functions[function_name]['param_indices'] = param_indices
+        except IOError:
+            LOG.debug("Unable to open library file")
 
-            for name, params in function_applications:
+
+    def apply_user_library_calls(self):
+            f_library_debug = open( os.path.join(config.log_dir, "library_dump.txt"), "w")
+            for name, params in self.user_library_calls:
                 f_library_debug.write("---\n%s (%s)\n" % (name, ", ".join(params)))
                 LOG.info("Applying function %s(%s)" % (name, ", ".join(params)))
                 try:
-                    fn_def = defined_functions[name]
+                    fn_def = self.user_defined_functions[name]
                 except KeyError:
                     LOG.info('No function definition found for "%s"' % name)
                     continue
@@ -735,8 +740,8 @@ class BgpPolicyParser:
 # find the parameters that map to these
                     q_a_map = params[query_a_index]
                     q_b_map = params[query_b_index]
-                    q_a_vals = sorted(defined_sets[q_a_map])
-                    q_b_vals = sorted(defined_sets[q_b_map])
+                    q_a_vals = sorted(self.user_defined_sets[q_a_map])
+                    q_b_vals = sorted(self.user_defined_setsr[q_b_map])
                     LOG.debug("Definition param %s maps to user parameter %s with values %s" % (query_a, 
                         q_a_map, q_a_vals))
                     LOG.debug("Definition param %s maps to user parameter %s with values %s" % (query_b, 
@@ -758,9 +763,8 @@ class BgpPolicyParser:
                         LOG.debug("Policy: %s" % policy_line)
                         f_library_debug.write(policy_line + "\n")
                         self.apply_bgp_policy(policy_line)
-        except IOError:
-            LOG.debug("Unable to open library file")
-        f_library_debug.close()
+            f_library_debug.close()
+
 
 
 
@@ -785,4 +789,6 @@ class BgpPolicyParser:
         self.allocate_tags()
         self.store_tags_per_router()
         #self.apply_gao_rexford()
-        self.library_test()
+        #self.parse_user_def_functions()
+        #self.apply_user_library_calls()
+
