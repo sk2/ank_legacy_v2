@@ -267,6 +267,7 @@ class DynagenDeploy():
                 dynagen_prompt,
                 "Press ENTER to continue",
                 #TODO: fix this ugly hacky regex!
+                #TODO: use Error:\s(.+)
                 "\*\*\* Warning:\s*(\w*\s*\:*\.*\-*)*",
                 "\*\*\* Error:\s*(\w*\s*\:*\.*\-*)*",
                 ]) 

@@ -74,10 +74,8 @@ class cBGPDeploy():
 #TODO: fix multiline error messages - or specify in lab the file to save cbgp logs to
         cbgp_file = os.path.join(self.cbgp_dir, "cbgp.cli")
         shell.sendline("cbgp -c %s; echo done" % cbgp_file)
-        error_line = "\+-- line  : (\d+)"
-        error_reason = " \+-- reason: ((\w+\s*\"*)+)"
         for loop_count in range(0, 100):
-            i = shell.expect([pexpect.EOF, "done", "Error:", error_line, error_reason])
+            i = shell.expect([pexpect.EOF, "done", "Error:\s(.+)"])
             if i == 0:
                 #TODO: see why not matching here
                 print "DONE"
@@ -85,11 +83,8 @@ class cBGPDeploy():
             elif i == 1:
                 break
             elif i == 2:
-                pass
-            elif i == 3:
-                pass
-            elif i == 4:
                 LOG.info("cBGP error: %s" % shell.match.group(1))
+                pass
 
 
 

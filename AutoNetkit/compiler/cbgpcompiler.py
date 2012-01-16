@@ -139,12 +139,10 @@ class CbgpCompiler:
         # bgp policy
         bgp_policy = {}
         for router in self.network.routers():
-            print router
             router_id = router.lo_ip.ip
             for peer in self.network.neighbors(router):
                 if not peer.is_router:
                     continue
-                print peer
                 peer_id = peer.lo_ip.ip
                 pol_egress = self.network.g_session[router][peer]['egress']
                 pol_ingress = self.network.g_session[peer][router]['ingress']
@@ -161,6 +159,10 @@ class CbgpCompiler:
                                 'egress': pol_egress,
                                 }
 
+        # tags dict for mapping from tag to community value, and for prefixes
+        tags = self.network.g_session.graph['tags']
+        prefixes = self.network.g_session.graph['prefixes']
+
         with open( cbgp_file(), 'w') as f_cbgp:
                 f_cbgp.write( template.render(
                    physical_topology = physical_topology,
@@ -171,4 +173,6 @@ class CbgpCompiler:
                    ebgp_prefixes = ebgp_prefixes,
                    bgp_routers = bgp_routers,
                    bgp_policy = bgp_policy,
+                   tags = tags,
+                   prefixes = prefixes,
                    ))

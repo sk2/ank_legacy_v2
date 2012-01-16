@@ -79,43 +79,39 @@ bgp router ${router}
 			% for route_map in route_maps:   
 				add-rule
 				% for match_tuple in route_map.match_tuples:  
-			    %if len(match_tuple.match_clauses):
+			    %if len(match_tuple.match_clauses):        
 			    %for match_clause in match_tuple.match_clauses:
 			        % if match_clause.type == "prefix_list":
-			        match prefix-list ${match_clause.value}
+					match "prefix in prefix-list ${prefixes[match_clause.value]}"
 			        % elif match_clause.type == "tag":   
-					 	% if isinstance(match_clause.type, str):   
-					match community ${match_clause.value}
-					 	% else:    
-					match community [${" ".join(val for val in match_clause.value)}];
-						%endif
+					match "community is ${tags[match_clause.value]}"
 			        % endif      
-			    %endfor     
+			    %endfor       
 				% else:
-					match any
+				match "any"
 			    % endif             
-			    %if len(match_tuple.action_clauses) or match_tuple.reject: 
+			    %if len(match_tuple.action_clauses) or match_tuple.reject:   
+				action "\
 			    %for action_clause in match_tuple.action_clauses:
 			        % if action_clause.action == "addTag":
-			        action community add ${action_clause.value}
+community add ${tags[action_clause.value]}, \
 			        % elif action_clause.action == "setLP":
-			        action local-preference ${action_clause.value}   
+local-pref ${action_clause.value}, \
 			        % elif action_clause.action == "setMED":
-			        action metric ${action_clause.value}   
+metric ${action_clause.value}, \  
 			        % elif action_clause.action == "setNextHop":
-			        action next-hop ${action_clause.value}  
+next-hop ${action_clause.value}, \ 
 			        % elif action_clause.action == "removeTag":
-			        action community delete ${action_clause.value}
+community delete ${action_clause.value}, \
 			        % endif     
 			    %endfor   
 			    % if match_tuple.reject:
-			        reject;
+deny \
 			    % else: 
-			        accept;
-			   % endif 
-				% else:
-					match any
-			    % endif
+accept \
+			   % endif
+			    % endif  
+"
 				% endfor
 				% endfor                
 			% endif

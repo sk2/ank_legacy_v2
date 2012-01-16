@@ -572,6 +572,9 @@ class BgpPolicyParser:
         """extract tags and prefixes used from sessions
         Also applies sequence numbers to match clauses"""
         LOG.debug("Extracting community lists and prefix lists per node, adding sequence numbers")
+# Store in g_session for future use
+        self.network.g_session.graph['tags'] = self.allocated_tags
+        self.network.g_session.graph['prefixes'] = self.prefix_lists
         for node in self.network.g_session:
             prefixes = set()
             tags = set()
