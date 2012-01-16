@@ -91,8 +91,28 @@ def jsplot(network):
 # Set label to be FQDN, so don't have multiple "Router A" nodes etc
         data = { 'label': "%s %s" % (ank.fqdn(network, node), network.lo_ip(node).ip)}
         node_list.append( (node.id, data))
-    edge_list = list( (src.id, dst.id, data) 
+    edge_list = list( (src.id, dst.id, data['sn']) 
             for (src, dst, data) in network.graph.edges(data=True))
+    with open( js_filename, 'w') as f_js:
+            f_js.write( js_template.render(
+                node_list = node_list,
+                edge_list = edge_list,
+                physical_graph = True,
+                ))
+
+    js_filename = os.path.join(jsplot_dir, "igp.js")
+    js_files.append("igp.js")
+    node_list = []
+    for node in network.graph.nodes():
+        if not node.igp_link_count:
+# no IGP links, don't add to plot
+            continue
+# Set label to be FQDN, so don't have multiple "Router A" nodes etc
+        data = { 'label': "%s" % node.fqdn}
+        node_list.append( (node.id, data))
+    edge_list = list( (src.id, dst.id, data.get('weight')) 
+            for (src, dst, data) in network.graph.edges(data=True)
+            if src.asn == dst.asn)
     with open( js_filename, 'w') as f_js:
             f_js.write( js_template.render(
                 node_list = node_list,
@@ -199,6 +219,15 @@ def jsplot(network):
                 plot_width = plot_width,
                 plot_height = plot_height,
                 title = "IP",
+                css_filename = "./ank_style.css",))
+
+    html_filename = os.path.join(plot_dir, "igp.html")
+    with open( html_filename, 'w') as f_html:
+            f_html.write( html_template.render( js_file = "igp.js",
+                timestamp=timestamp,
+                plot_width = plot_width,
+                plot_height = plot_height,
+                title = "IGP",
                 css_filename = "./ank_style.css",))
 
     html_filename = os.path.join(plot_dir, "ibgp.html")
