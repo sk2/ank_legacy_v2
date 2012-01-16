@@ -108,6 +108,10 @@ class node_namedtuple (namedtuple('node', "network, id")):
     def olive_ports(self):
         return self.network.graph.node[self].get("olive_ports")
 
+    @property
+    def igp_link_count(self):
+        return self.network.igp_link_count(self)
+
 
 class link_namedtuple (namedtuple('link', "network, src, dst")):
     __slots = ()
@@ -410,6 +414,12 @@ class Network(object):
     def link_count(self, node):
         # TODO: check in_degree == out_degree if not then WARN - or put into consistency check function
         return self.graph.in_degree(node)
+
+    def igp_link_count(self, node):
+        return len(list(self.igp_links(node)))
+
+    def igp_links(self, node):
+        return (link for link in self.links(node) if link.remote_host.asn == node.asn)
 
     def links(self, router=None, graph=None):
         if graph:
