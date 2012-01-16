@@ -233,7 +233,6 @@ class JunosCompiler:
         if router in ibgp_graph:
             internal_peers = []
             for peer in ibgp_graph.neighbors(router):
-                print "adding for", router, "to", peer
                 route_maps_in = [route_map for route_map in 
                         self.network.g_session[peer][router]['ingress']]
                 route_maps_out = [route_map for route_map in 

@@ -163,7 +163,6 @@ class CbgpCompiler:
                                 'egress': pol_egress,
                                 }
 
-        pprint.pprint(bgp_policy)
 
         # tags dict for mapping from tag to community value, and for prefixes
         tags = self.network.g_session.graph['tags']
