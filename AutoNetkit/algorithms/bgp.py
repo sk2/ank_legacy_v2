@@ -121,9 +121,6 @@ def configure_ibgp_rr(network):
 
     #TODO: make "asn" eg "asn_1" as could conflict if asn=1 and ibgp_l2_cluster = 1 elsewhere and match the same
     for my_as in ank.get_as_graphs(network):
-        print my_as.asn, "has", my_as.nodes()
-
-    for my_as in ank.get_as_graphs(network):
         #TODO: for neatness, look at redefining the above functions inside here setting my_as as network
         asn = my_as.name
         nodes_with_level_set = sum(1 for n in my_as if network.graph.node[n].get('ibgp_level'))
