@@ -267,9 +267,8 @@ class DynagenDeploy():
                 dynagen_prompt,
                 "Press ENTER to continue",
                 #TODO: fix this ugly hacky regex!
-                #TODO: use Error:\s(.+)
-                "\*\*\* Warning:\s*(\w*\s*\:*\.*\-*)*",
-                "\*\*\* Error:\s*(\w*\s*\:*\.*\-*)*",
+                "\*\*\* Warning:\s(.+)",
+                "\*\*\* Error:\s(.+)",
                 ]) 
             if i == 0:
                 LOG.info("Timeout starting Dynagen lab")
@@ -283,10 +282,10 @@ class DynagenDeploy():
                 break
             elif i == 3:
                 # TODO: fix this split after "Warning:" --- as too complex to regex capture
-                error_message = shell.match.group(0).split("Warning:")[1].strip()
+                error_message = shell.match.group(1)
                 LOG.info("Problem starting Dynagen lab: %s" % error_message)
             elif i == 4:
-                error_message = shell.match.group(0).split("Error:")[1].strip()
+                error_message = shell.match.group(1)
                 LOG.info("Problem starting Dynagen lab: %s" % error_message)
             else:
                 # print the progress status me= ssage
