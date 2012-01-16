@@ -117,9 +117,15 @@ class CbgpCompiler:
 #TODO: add support for non full-mesh (need to find documentation on this)
         for as_graph in as_graphs:
             asn = as_graph.name
-            ibgp_topology[asn] = {}
-            as_ibgp_graph = ibgp_graph.subgraph(as_graph.nodes())
-            ibgp_topology[asn]['routers'] = [loopback[n] for n in as_ibgp_graph]
+            for router in as_graph:
+                if not router.is_router:
+                    continue
+                if router not in ibgp_graph:
+# likely single node AS
+                    continue
+                ibgp_topology[router] = []
+                for peer in ibgp_graph.neighbors(router):
+                    ibgp_topology[router].append(peer)
             bgp_routers[asn] = [n.lo_ip.ip for n in ank.bgp_routers(self.network)
                     if n.asn == asn]
 

@@ -75,7 +75,7 @@ class cBGPDeploy():
         cbgp_file = os.path.join(self.cbgp_dir, "cbgp.cli")
         shell.sendline("cbgp -c %s; echo done" % cbgp_file)
         for loop_count in range(0, 100):
-            i = shell.expect([pexpect.EOF, "done", "Error:\s(.+)"])
+            i = shell.expect([pexpect.EOF, "done", "Error:(.+)"])
             if i == 0:
                 #TODO: see why not matching here
                 print "DONE"
@@ -83,7 +83,7 @@ class cBGPDeploy():
             elif i == 1:
                 break
             elif i == 2:
-                LOG.info("cBGP error: %s" % shell.match.group(1))
+                LOG.info("cBGP error: %s" % shell.match.group(1).strip())
                 pass
 
 

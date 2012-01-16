@@ -33,13 +33,15 @@ net domain ${asn} compute
    bgp add router ${asn} ${n}
 % endfor
 % endfor             
-
-% for asn, topology in sorted(ibgp_topology.items()):   
-% if len(topology['routers']):
-# Full mesh of iBGP sessions in AS${asn}          
-bgp domain ${asn} full-mesh
-% endif
-
+       
+# Setup iBGP sessions
+% for router, peers in sorted(ibgp_topology.items()):  
+bgp router ${router.lo_ip.ip}
+	% for peer in peers:
+	add peer ${peer.asn} ${peer.lo_ip.ip} 
+	peer ${peer.lo_ip.ip} up
+	% endfor      
+	
 %endfor        
 
 # eBGP static routes
