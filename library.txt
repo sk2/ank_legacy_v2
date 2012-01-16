@@ -7,5 +7,6 @@ def gao_rexford ( me, custs , peers , upstream ):
    upstream ->ingress me: (addTag mytagup)
    me egress-> upstream: ( if tag = mytag then reject route)
 
-def test(param1, param2):
-   param1 egress-> param2: (if tag = aaa then addTag sometag & setLP200)
+def test(param1, param2):    
+   global tags = {aaa, bb}
+   param1 egress-> param2: (if tag = aaa then addTag sometag & addTag bbb & setLP200)

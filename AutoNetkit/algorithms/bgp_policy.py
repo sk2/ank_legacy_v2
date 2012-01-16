@@ -32,6 +32,7 @@ import pyparsing
 import operator
 import pprint
 import itertools
+import re
 from collections import namedtuple
 
 LOG = logging.getLogger("ANK")
@@ -279,7 +280,9 @@ class BgpPolicyParser:
         self.library_edge_query = (self.attribute.setResultsName("query_a")
                 + edgeType + self.attribute.setResultsName("query_b"))
         self.library_edge_query.setFailAction(parse_fail_action)
-        self.library_entry = self.library_edge_query + Suppress(":") + self.bgpSessionQuery
+        library_edge_definition = self.library_edge_query + Suppress(":") + self.bgpSessionQuery
+        library_global_definition = "global tags = {" + delimitedList( attribute, delim=',').setResultsName("tags") + "}"
+        self.library_entry = library_global_definition.setResultsName("global_tags") | library_edge_definition.setResultsName("library_edge")
         self.library_entry.setFailAction(parse_fail_action)
 
         self.bgpPolicyLine = (
@@ -647,6 +650,28 @@ class BgpPolicyParser:
             # store updated tags
             self.network.g_session.node[node]['prefixes'] = prefixes
 
+    def rewrite_bgp_query_local_tags(self, query, function_name):
+# rewrites any tags not defined  as globals
+#TODO: make cleaner - ie not regex - pass parameter to parser/query and do rewrite as user defined function??
+        query_processed = query
+
+# default to empty set if no globals defined
+        function_globals = self.user_defined_functions[function_name].get('global_tags') or set()
+        captures = ["(tag = (\w+\.*\_*)*)", "(addTag (\w+\.*\_*)*)", "(tags contain (\w+\.*\_*)*)"]
+        for capture in captures:
+            results = re.findall(capture, query)
+            for result in results:
+                search_string = result[0]
+                tag = result[1]
+                if tag not in function_globals:
+                    new_tag = "%s_%s" % (function_name, tag)
+                    replace_string = search_string.replace(tag, new_tag)
+                    LOG.debug("Replacing non-global tag %s with %s in %s" % (tag, new_tag, function_name))
+# Now replace in query  
+                    query_processed = query_processed.replace(search_string, replace_string)
+
+        return query_processed 
+
     def parse_user_def_functions(self):
         """Note you need a blank newline after a function definition"""
         library_file = "library.txt"
@@ -672,17 +697,22 @@ class BgpPolicyParser:
 # function has been started, and indented so try as a library entry
                         try:
                             results = self.library_entry.parseString(line)
+                            if results.global_tags:
+                                global_tags = [tag for tag in results.global_tags.tags]
+                                self.user_defined_functions[current_function_def]['global_tags'] = global_tags
+                                continue
+                            else:
 #TODO: for efficiency, could save the already parsed query here
 #TODO: remove this dodgy hack! - as want to be overlay, so don't parse here???
-                            bgp_query = line.split(":")[1]
-                            library_entry = {
-                                    'query_a': results.query_a, 
-                                    'edge_type': results.edgeType,
-                                    'query_b': results.query_b,
-                                    'bgp_query': bgp_query,
-                            }
-                            self.user_defined_functions[current_function_def]['entries'].append(library_entry)
-                            #print results.dump()
+                                bgp_query = line.split(":")[1]
+                                bgp_query = self.rewrite_bgp_query_local_tags(bgp_query, current_function_def)
+                                library_entry = {
+                                        'query_a': results.query_a, 
+                                        'edge_type': results.edgeType,
+                                        'query_b': results.query_b,
+                                        'bgp_query': bgp_query,
+                                }
+                                self.user_defined_functions[current_function_def]['entries'].append(library_entry)
 # finished with this line
                             continue
                         except pyparsing.ParseFatalException:
@@ -705,6 +735,8 @@ class BgpPolicyParser:
 # Store indices so can lookup when applying functions
                 param_indices = dict( (p, params.index(p)) for p in params)
                 self.user_defined_functions[function_name]['param_indices'] = param_indices
+            # and remap tags
+
         except IOError:
             LOG.debug("Unable to open library file")
 
