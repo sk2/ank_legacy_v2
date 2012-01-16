@@ -381,6 +381,7 @@ class BgpPolicyParser:
             LOG.debug("Applying policy %s to %s of %s->%s" % ( per_session_policy, ingress_or_egress, 
                 self.network.fqdn(u), self.network.fqdn(v)))
             self.network.g_session[u][v][ingress_or_egress].append(per_session_policy)
+
     def evaluate_node_stack(self, stack):
         """Evaluates a stack of nodes with join queries"""
         LOG.debug("Evaluating node stack %s" % stack)
@@ -768,9 +769,6 @@ class BgpPolicyParser:
                         self.apply_bgp_policy(policy_line)
             f_library_debug.close()
 
-
-
-
     def apply_policy_file(self, policy_in_file):
         """Applies a BGP policy file to the network"""
         LOG.debug("Applying policy file %s" % policy_in_file)
@@ -788,10 +786,10 @@ class BgpPolicyParser:
                     self.apply_bgp_policy(line)
                 except pyparsing.ParseFatalException as e:
                     LOG.warn("Unable to parse query line %s" % line)
+
+        self.parse_user_def_functions()
+        self.apply_user_library_calls()
         self.cl_and_pl_per_node()
         self.allocate_tags()
         self.store_tags_per_router()
-        #self.apply_gao_rexford()
-        self.parse_user_def_functions()
-        self.apply_user_library_calls()
 
