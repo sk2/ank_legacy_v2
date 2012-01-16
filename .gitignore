@@ -24,3 +24,4 @@ doc/build/
 *.pdf
 autonetkit.cfg
 library.txt
+AutoNetkit/lib/examples/topologies/example.graphml

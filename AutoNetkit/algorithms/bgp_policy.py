@@ -357,7 +357,7 @@ class BgpPolicyParser:
         node_set = set_a | set_b
 
         edges = self.network.g_session.edges(node_set)
-        LOG.debug("Edges are %s " % edges)
+        #LOG.debug("Edges are %s " % edges)
 # 1 ->, 2 <-, 3 <->
 
         def select_fn_u_to_v( (u, v), src_set, dst_set):
@@ -677,6 +677,8 @@ class BgpPolicyParser:
                     LOG.debug("Replacing non-global tag %s with %s in %s" % (tag, new_tag, function_name))
 # Now replace in query  
                     query_processed = query_processed.replace(search_string, replace_string)
+                else:
+                    LOG.debug("Keeping global tag %s in %s" % (tag, function_name))
 
         return query_processed 
 
