@@ -145,9 +145,7 @@ class CbgpCompiler:
         # bgp policy
         bgp_policy = {}
         for router in self.network.routers():
-            for peer in self.network.neighbors(router):
-                if not peer.is_router:
-                    continue
+            for peer in self.network.g_session.neighbors(router):
                 pol_egress = self.network.g_session[router][peer]['egress']
                 pol_ingress = self.network.g_session[peer][router]['ingress']
                 if len(pol_ingress) or len(pol_egress):
