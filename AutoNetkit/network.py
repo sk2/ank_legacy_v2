@@ -299,6 +299,9 @@ class Network(object):
             if prop not in data:
                 self.graph.node[node][prop] = value
 
+    def neighbors(self, node):
+        return self.graph.neighbors(node)
+
 
     def devices(self, asn=None):
         """return devices in a network"""
