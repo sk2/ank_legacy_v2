@@ -66,9 +66,13 @@ bgp router ${router}
 % endfor     
 
 % for router, policy_data in sorted(bgp_policy.items()):    
-bgp router ${router} 
+bgp router ${router.lo_ip.ip} 
 	% for peer, peer_policy in sorted(policy_data.items()):
-	peer ${peer}
+	  % if peer.asn == router.asn:
+	peer ${peer.asn} ${peer.lo_ip.ip}
+	  % else:
+	peer ${peer.lo_ip.ip}
+	% endif
 		% for direction, route_maps in peer_policy.items(): 
 		% if len(route_maps): 
 			% if direction == 'ingress':
@@ -88,34 +92,32 @@ bgp router ${router}
 			        % endif      
 			    %endfor       
 				% else:
-				match "any"
+				match any
 			    % endif             
 			    %if len(match_tuple.action_clauses) or match_tuple.reject:   
-				action "\
-			    %for action_clause in match_tuple.action_clauses:
-			        % if action_clause.action == "addTag":
-community add ${tags[action_clause.value]}, \
-			        % elif action_clause.action == "setLP":
-local-pref ${action_clause.value}, \
-			        % elif action_clause.action == "setMED":
-metric ${action_clause.value}, \  
-			        % elif action_clause.action == "setNextHop":
-next-hop ${action_clause.value}, \ 
-			        % elif action_clause.action == "removeTag":
-community delete ${action_clause.value}, \
-			        % endif     
-			    %endfor   
-			    % if match_tuple.reject:
-deny \
-			    % else: 
-accept \
-			   % endif
+					<%                                 
+					actions = []
+					for action_clause in match_tuple.action_clauses:  
+						if action_clause.action == "addTag":
+							actions.append("community add %s" % tags[action_clause.value])
+						elif action_clause.action == "setLP":
+							actions.append("local-pref %s" % action_clause.value)
+						elif action_clause.action == "setMED":
+							actions.append("metric %s" % action_clause.value)
+						elif action_clause.action == "setNextHop":
+							actions.append("next-hop %s" % action_clause.value)
+						elif action_clause.action == "removeTag":
+							actions.append("community delete %s"  % action_clause.value)
+					%>  \
+				action "${", ".join(actions)}" 
+				exit
 			    % endif  
-"
 				% endfor
 				% endfor                
 			% endif
-			% endfor        
+			% endfor 
+			exit 
+			      
 	% endfor
 % endfor
 
