@@ -80,6 +80,8 @@ def allocate_dns_servers(network):
     """
     dns_graph = nx.DiGraph()
     dns_advertise_graph = nx.DiGraph()
+    LOG.debug("DNS currently disabled")
+    return
 
     def nodes_by_eccentricity(graph):
         if len(graph) == 1:
@@ -276,7 +278,11 @@ def add_dns_auth_child(parent, child):
     parent.network.g_dns_auth.add_edge(child, parent)
   
 def dns_auth_parents(node):
-    return node.network.g_dns_auth.successors(node)
+    """Handles case of no parents having been allocated"""
+    try:
+        return node.network.g_dns_auth.successors(node)
+    except nx.exception.NetworkXError:
+        return []
 
 def dns_auth_children(node):
     return node.network.g_dns_auth.predecessors(node)
