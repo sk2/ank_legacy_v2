@@ -112,7 +112,7 @@ bgp router ${router.lo_ip.ip}
 							actions.append("community delete %s"  % action_clause.value)
 					%>\
 action "${", ".join(actions)}" 
-				exit
+					exit
 			    % endif  
 				% endfor
 				% endfor                
