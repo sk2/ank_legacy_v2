@@ -25,14 +25,20 @@ net add domain ${asn} igp
 % endfor                 
 net domain ${asn} compute                
                 
-% endfor                        
-
-% for asn, topology in sorted(ibgp_topology.items()):
-# Full mesh of iBGP sessions in AS${asn}
-% for n in sorted(topology['routers']):
+% endfor          
+                 
+# BGP Routers
+% for asn, routers in sorted(bgp_routers.items()):
+% for n in sorted(routers):
    bgp add router ${asn} ${n}
-% endfor                     
+% endfor
+% endfor             
+
+% for asn, topology in sorted(ibgp_topology.items()):   
+% if len(topology['routers']):
+# Full mesh of iBGP sessions in AS${asn}          
 bgp domain ${asn} full-mesh
+% endif
 
 %endfor        
 

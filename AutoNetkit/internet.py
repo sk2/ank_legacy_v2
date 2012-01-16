@@ -323,10 +323,6 @@ class Internet:
             dynagen_comp.initialise()     
             dynagen_comp.configure()
 
-        if self.compile_targets['cbgp']:
-            cbgp_comp = ank.CbgpCompiler(self.network, self.services)
-            cbgp_comp.configure()
-
         if self.compile_targets['junosphere']:
             junos_comp = ank.JunosCompiler(self.network, self.services, self.igp, target="junosphere")
             junos_comp.initialise()
@@ -350,6 +346,16 @@ class Internet:
                     olive_qemu_patched = olive_qemu_patched)
             junos_comp.initialise()
             junos_comp.configure()
+
+        if self.will_deploy and not self.compile_targets['cbgp']:
+            auto_compile = any( data.get("active") 
+                    for data in config.settings['cBGP Hosts'].values())
+            if auto_compile:
+                self.compile_targets['cbgp'] = True
+                LOG.info("Active cBGP deployment target, automatically compiling")
+        if self.compile_targets['cbgp']:
+            cbgp_comp = ank.CbgpCompiler(self.network, self.services)
+            cbgp_comp.configure()
 
 
     def deploy(self):  
@@ -423,6 +429,17 @@ class Internet:
             if data['verify']:
                 LOG.info("Verification not yet supported for Dynagen")
 
+        for host_alias, data in config.settings['cBGP Hosts'].items():
+            if not data['active']:
+                LOG.debug("Not deploying inactive cBGP host %s" % host_alias)
+                continue
+
+            LOG.info("Deploying to cBGP host %s" % host_alias)   
+            cbgp_deploy = ank.deploy.cbgp_deploy.cBGPDeploy( network = self.network )
+            cbgp_deploy.deploy()
+            if data['verify']:
+                LOG.info("Verification not yet supported for cBGP")
+
         return
 
     def collect_data(self):
@@ -469,4 +486,15 @@ class Internet:
                     network = self.network )
             #TODO: get commands from config file
             olive_deploy.collect_data(data['collect data commands'])
+
+        for host_alias, data in config.settings['cBGP Hosts'].items():
+            if not data['collect data']:
+                LOG.debug("Data collection disabled for cBGP host %s" % host_alias)
+                continue
+
+            LOG.info("Collecting data from cBGP host %s" % host_alias)   
+            cbgp_deploy = ank.deploy.cbgp_deploy.cBGPDeploy( network = self.network )
+            #TODO: get commands from config file
+            cbgp_deploy.collect_data(data['collect data commands'])
+
 

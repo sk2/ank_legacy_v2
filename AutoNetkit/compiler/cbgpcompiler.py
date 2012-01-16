@@ -69,6 +69,7 @@ class CbgpCompiler:
         """Configure C-BGP"""
         LOG.info("Configuring C-BGP")
         self.initialise()
+        default_weight = 1
         template = lookup.get_template("cbgp/cbgp.mako")
         physical_graph = self.network.graph
         igp_graph = ank.igp_graph(self.network)
@@ -82,6 +83,7 @@ class CbgpCompiler:
         igp_topology = {} 
         ebgp_topology = {}
         ebgp_prefixes = {}
+        bgp_routers = {}
 
 # Fast lookup of loopbacks - the unique router ID for cBGP
         loopback = dict( (n, self.network.lo_ip(n).ip) for n in physical_graph)
@@ -104,7 +106,7 @@ class CbgpCompiler:
 # Subgraph of IGP graph for this AS
             as_igp_graph = igp_graph.subgraph(as_graph.nodes())
             igp_topology[asn]['nodes'] = [loopback[n] for n in as_igp_graph]
-            igp_topology[asn]['links'] = [ (loopback[s], loopback[t], data.get('weight')) 
+            igp_topology[asn]['links'] = [ (loopback[s], loopback[t], data.get('weight', default_weight)) 
                     for (s,t,data) in (as_graph.edges(data=True))]
 
 # iBGP configuration
@@ -118,6 +120,8 @@ class CbgpCompiler:
             ibgp_topology[asn] = {}
             as_ibgp_graph = ibgp_graph.subgraph(as_graph.nodes())
             ibgp_topology[asn]['routers'] = [loopback[n] for n in as_ibgp_graph]
+            bgp_routers[asn] = [n.lo_ip.ip for n in ank.bgp_routers(self.network)
+                    if n.asn == asn]
 
 # eBGP configuration
         for node in ebgp_graph.nodes():
@@ -131,7 +135,7 @@ class CbgpCompiler:
             ebgp_prefixes[node_id] = adv_subnet
 
             #TODO: see if can just do for node in ebgp_graph ie without the .nodes() on end
-           
+
         with open( cbgp_file(), 'w') as f_cbgp:
                 f_cbgp.write( template.render(
                    physical_topology = physical_topology,
@@ -140,4 +144,5 @@ class CbgpCompiler:
                    ibgp_topology = ibgp_topology,
                    ebgp_topology = ebgp_topology,
                    ebgp_prefixes = ebgp_prefixes,
+                   bgp_routers = bgp_routers,
                    ))

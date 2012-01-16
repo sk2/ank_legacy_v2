@@ -9,6 +9,11 @@ except:
     pass 
 
 try:
+    import AutoNetkit.deploy.cbgp_deploy
+except:
+    pass 
+
+try:
     import AutoNetkit.deploy.olive_deploy
 except:
     pass 

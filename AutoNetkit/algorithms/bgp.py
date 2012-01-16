@@ -70,6 +70,7 @@ __author__ = "\n".join(['Simon Knight'])
 
 __all__ = ['ebgp_routers', 'get_ebgp_graph',
            'ibgp_routers', 'get_ibgp_graph',
+           'bgp_routers',
            'initialise_bgp']
 
 import networkx as nx
@@ -233,6 +234,9 @@ def initialise_bgp(network):
     initialise_ibgp(network)
     initialise_bgp_sessions(network)
     initialise_bgp_attributes(network)
+
+def bgp_routers(network):
+    return (n for n in network.g_session)
 
 def ebgp_routers(network):
     """List of all routers with an eBGP link
