@@ -84,19 +84,18 @@ def ebgp_edges(network):
     Returns eBGP edges once configured from initialise_ebgp
 
     """
-    return ( (s,t) for s,t in network.g_session.edges()
-            if network.asn(s) != network.asn(t))
+    return ( (s,t) for s,t in network.g_session.edges() if s.asn != t.asn)
 
 def ibgp_edges(network):
     """ iBGP edges in network 
+#TODO: use sets here
 
     >>> network = ank.example_single_as()
     >>> initialise_ibgp(network)
     >>> list(sorted(ibgp_edges(network)))
     [('1a', '1b'), ('1a', '1c'), ('1a', '1d'), ('1b', '1a'), ('1b', '1c'), ('1b', '1d'), ('1c', '1a'), ('1c', '1b'), ('1c', '1d'), ('1d', '1a'), ('1d', '1b'), ('1d', '1c')]
     """
-    return ( (s,t) for s,t in network.g_session.edges()
-            if network.asn(s) == network.asn(t))
+    return ( (s,t) for s,t in network.g_session.edges() if s.asn == t.asn)
 
 def configure_ibgp_rr(network):
     """Configures route-reflection properties based on work in (NEED CITE).
@@ -118,8 +117,11 @@ def configure_ibgp_rr(network):
         so set asn_1 so 1 != asn_1"""
         return "asn_%s" % asn
 
+    default_ibgp_level = 1
 
     #TODO: make "asn" eg "asn_1" as could conflict if asn=1 and ibgp_l2_cluster = 1 elsewhere and match the same
+    for my_as in ank.get_as_graphs(network):
+        print my_as.asn, "has", my_as.nodes()
 
     for my_as in ank.get_as_graphs(network):
         #TODO: for neatness, look at redefining the above functions inside here setting my_as as network
@@ -129,13 +131,14 @@ def configure_ibgp_rr(network):
             if nodes_with_level_set != 0:
                 LOG.info("Only %s/%s nodes in AS%s have ibgp_level set" % (nodes_with_level_set,
                     len(my_as), asn))
-                LOG.info("Setting ibgp_level to 1 for nodes in AS%s" % asn)
+                LOG.info("Setting ibgp_level to default of 1 for nodes in AS%s" % asn)
             # none set, user probably doesn't care for this AS, do full-mesh
-            LOG.debug("Setting ibgp_level to 1 for nodes in AS%s" % asn)
+            LOG.debug("Setting ibgp_level to %s for nodes in AS%s" % (default_ibgp_level, asn))
             for node in my_as:
-                network.graph.node[node]['ibgp_level'] = 1
+                network.graph.node[node]['ibgp_level'] = default_ibgp_level
 
         max_ibgp_level = max(level(n) for n in my_as)
+        LOG.debug("Max ibgp level for %s is %s" % (my_as.asn, max_ibgp_level))
         if max_ibgp_level >= 2:
             for node, data in my_as.nodes(data=True):
                 if not data.get("ibgp_l2_cluster"):
@@ -166,7 +169,7 @@ def configure_ibgp_rr(network):
                     if level(s) == 2 and level(t) == 1]
 
         if max_ibgp_level == 2:
-            edges_to_add += [(s, t, 'peer') for (s,t) in same_l2_cluster_edges 
+            edges_to_add += [(s, t, 'peer') for (s,t) in as_edges 
                     if level(s) == level(t) == 2]
         elif max_ibgp_level == 3:
             edges_to_add += [(s,t, 'peer') for (s,t) in same_l2_cluster_edges
@@ -179,7 +182,8 @@ def configure_ibgp_rr(network):
                     if level(s) == level(t) == 3]
 
         # format into networkx format
-        edges_to_add = ( (s,t, {'rr_dir': rr_dir}) for (s, t, rr_dir) in edges_to_add)
+        edges_to_add = [ (s,t, {'rr_dir': rr_dir}) for (s, t, rr_dir) in edges_to_add]
+        LOG.debug("iBGP edges %s" % sorted(edges_to_add))
         network.g_session.add_edges_from(edges_to_add)
 
     for node, data in network.graph.nodes(data=True):
