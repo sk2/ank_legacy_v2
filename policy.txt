@@ -11,6 +11,6 @@
 set1 = {AS1}
 set2 = {AS2}
 
-test(set1, set2)
+test({AS1,b}, set2)
 #test(set2, set1)
 

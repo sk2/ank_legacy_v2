@@ -267,11 +267,12 @@ class BgpPolicyParser:
         self.bgpApplicationQuery = self.edgeQuery + Suppress(":") + self.bgpSessionQuery
 
 # Library stuff
-        self.set_definition = attribute.setResultsName("set_name") + Suppress("=") + Suppress("{") + delimitedList( attribute, delim=',').setResultsName("set_values") + Suppress("}")
+        set_values = Suppress("{") + delimitedList( attribute, delim=',').setResultsName("set_values") + Suppress("}")
+        self.set_definition = attribute.setResultsName("set_name") + Suppress("=") + set_values
         self.set_definition
 
-#gao_rexford ( me, custs , peers , upstream ):
-        library_function = attribute.setResultsName("def_name") + Suppress("(") + delimitedList( attribute, delim=',').setResultsName("def_params") + Suppress(")")
+        library_params = attribute | Group(set_values)
+        library_function = attribute.setResultsName("def_name") + Suppress("(") + delimitedList( library_params, delim=',').setResultsName("def_params") + Suppress(")")
 # May want to distinguish better?
         self.library_call = library_function
 
@@ -333,7 +334,15 @@ class BgpPolicyParser:
             self.user_defined_sets[result.set_name] = set(a for a in result.set_values)
             return
         if 'library_call' in result:
-            self.user_library_calls.append( (result.def_name, [a for a in result.def_params]))
+            def_params = []
+            for param in result.def_params:
+                if isinstance(param, basestring):
+                    def_params.append(param)
+                else:
+# is a sequence, extract value
+                    def_params.append([p for p in param])
+
+            self.user_library_calls.append( (result.def_name, def_params))
             return
 
         LOG.debug("Query string is %s " % qstring)
@@ -522,7 +531,6 @@ class BgpPolicyParser:
 # store tag
                 self.tags_to_allocate.update([tag])
 
-
         if policy:
             # Parse the string into policy tuples
             parsed = self.bgpSessionQuery.parseString(policy)
@@ -664,7 +672,7 @@ class BgpPolicyParser:
                 search_string = result[0]
                 tag = result[1]
                 if tag not in function_globals:
-                    new_tag = "%s_%s" % (function_name, tag)
+                    new_tag = "fn_%s_%s" % (function_name, tag)
                     replace_string = search_string.replace(tag, new_tag)
                     LOG.debug("Replacing non-global tag %s with %s in %s" % (tag, new_tag, function_name))
 # Now replace in query  
@@ -744,8 +752,12 @@ class BgpPolicyParser:
     def apply_user_library_calls(self):
             f_library_debug = open( os.path.join(config.log_dir, "library_dump.txt"), "w")
             for name, params in self.user_library_calls:
-                f_library_debug.write("---\n%s (%s)\n" % (name, ", ".join(params)))
-                LOG.info("Applying function %s(%s)" % (name, ", ".join(params)))
+# Format params nicely for printing - need to handle nested lists as {}
+                param_string = (", ".join(p if isinstance(p, basestring) else
+                    "{%s}" % ", ".join(p_elem for p_elem in p)
+                    for p in params))
+                f_library_debug.write("---\n%s (%s)\n" % (name, param_string))
+                LOG.info("Applying function %s(%s)" % (name, param_string))
                 try:
                     fn_def = self.user_defined_functions[name]
                 except KeyError:
@@ -776,8 +788,16 @@ class BgpPolicyParser:
 # find the parameters that map to these
                     q_a_map = params[query_a_index]
                     q_b_map = params[query_b_index]
-                    q_a_vals = sorted(self.user_defined_sets[q_a_map])
-                    q_b_vals = sorted(self.user_defined_sets[q_b_map])
+                    try:
+                        q_a_vals = sorted(self.user_defined_sets[q_a_map])
+                    except TypeError:
+# user defined list
+                        q_a_vals = q_a_map
+                    try:
+                        q_b_vals = sorted(self.user_defined_sets[q_b_map])
+                    except TypeError:
+                        q_b_vals = q_b_map
+
                     LOG.debug("Definition param %s maps to user parameter %s with values %s" % (query_a, 
                         q_a_map, q_a_vals))
                     LOG.debug("Definition param %s maps to user parameter %s with values %s" % (query_b, 
