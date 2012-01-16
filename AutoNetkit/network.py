@@ -163,6 +163,8 @@ class Network(object):
         if physical_graph:
             self._graphs['physical'] = physical_graph
         self._graphs['bgp_session'] = nx.DiGraph()
+        self._graphs['bgp_session'].graph['tags'] = {}
+        self._graphs['bgp_session'].graph['prefixes'] = {}
         self._graphs['dns'] = nx.DiGraph()
         self._graphs['dns_authoritative'] = nx.DiGraph()
         self.compiled_labs = {} # Record compiled lab filenames, and configs
