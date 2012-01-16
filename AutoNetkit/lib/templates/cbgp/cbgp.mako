@@ -92,7 +92,7 @@ bgp router ${router.lo_ip.ip}
 			        % endif      
 			    %endfor       
 				% else:
-				match any
+					match any
 			    % endif             
 			    %if len(match_tuple.action_clauses) or match_tuple.reject:   
 					<%                                 
@@ -108,8 +108,8 @@ bgp router ${router.lo_ip.ip}
 							actions.append("next-hop %s" % action_clause.value)
 						elif action_clause.action == "removeTag":
 							actions.append("community delete %s"  % action_clause.value)
-					%>  \
-				action "${", ".join(actions)}" 
+					%>\
+action "${", ".join(actions)}" 
 				exit
 			    % endif  
 				% endfor
