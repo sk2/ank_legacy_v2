@@ -22,6 +22,8 @@ def main():
             "Additional documentation at http://packages.python.org/AutoNetkit/")
     opt = optparse.OptionParser(usage, version="%prog " + str(version))
     opt.add_option('--debug',  action="store_true", default=False, help="Debugging output")
+    opt.add_option('--count',  type="int", default=1, help="Number of times to run collect")
+    opt.add_option('--delay',  type="int", default=0, help="Delay between each iteration")
 
     options, arguments = opt.parse_args()
     config.add_logging(console_debug = options.debug)
@@ -31,7 +33,7 @@ def main():
     inet = Internet()
 
     inet.restore()
-    inet.collect_data()
+    inet.collect_data(count=options.count, delay=options.delay)
 
 if __name__ == "__main__":
     try:

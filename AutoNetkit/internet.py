@@ -442,59 +442,65 @@ class Internet:
 
         return
 
-    def collect_data(self):
+    def collect_data(self, count=1, delay=0):
         """ Collects data for hosts"""
-        collected_data_dir = config.collected_data_dir
-        if not os.path.isdir(collected_data_dir):
-            os.mkdir(collected_data_dir)
+        LOG.info("Running collect data %s times, %s seconds between each iteration" % (count, delay))
+        for collect_index in range(count):
+            LOG.info("Collect iteration %s/%s" % (collect_index, count))
+            collected_data_dir = config.collected_data_dir
+            if not os.path.isdir(collected_data_dir):
+                os.mkdir(collected_data_dir)
 
-        for host_alias, data in config.settings['Netkit Hosts'].items():
-            if not data['collect data']:
-                LOG.debug("Data collection disabled for Netkit host %s" % host_alias)
-                continue
+            for host_alias, data in config.settings['Netkit Hosts'].items():
+                if not data['collect data']:
+                    LOG.debug("Data collection disabled for Netkit host %s" % host_alias)
+                    continue
 
-            if not data['active']:
-                LOG.debug("Skipping data collection for inactvie Netkit host %s" % host_alias)
-                continue
+                if not data['active']:
+                    LOG.debug("Skipping data collection for inactvie Netkit host %s" % host_alias)
+                    continue
 
-            #TODO: merge netkit server and netkit deploy
-            try:
-                import netkit
-            except ImportError:
-                LOG.warn("Unable to import Netkit, ending deployment")
-                return
+                #TODO: merge netkit server and netkit deploy
+                try:
+                    import netkit
+                except ImportError:
+                    LOG.warn("Unable to import Netkit, ending deployment")
+                    return
 
-            netkit_server = netkit.Netkit(data['host'], data['username'],
-                    tapsn=self.tapsn)
+                netkit_server = netkit.Netkit(data['host'], data['username'],
+                        tapsn=self.tapsn)
 
-            # Get the deployment plugin
-            netkit_dir = config.lab_dir
-            nkd = ank.deploy.netkit_deploy.NetkitDeploy(netkit_server, netkit_dir, self.network, data['xterm'], host_alias=host_alias)
-            # Need to tell deploy plugin where the netkit files are
-            nkd.collect_data(data['collect data commands'])
+                # Get the deployment plugin
+                netkit_dir = config.lab_dir
+                nkd = ank.deploy.netkit_deploy.NetkitDeploy(netkit_server, netkit_dir, self.network, data['xterm'], host_alias=host_alias)
+                # Need to tell deploy plugin where the netkit files are
+                nkd.collect_data(data['collect data commands'])
 
-        for host_alias, data in config.settings['Olive Hosts'].items():
-            if not data['collect data']:
-                LOG.debug("Data collection disabled for Olive host %s" % host_alias)
-                continue
+            for host_alias, data in config.settings['Olive Hosts'].items():
+                if not data['collect data']:
+                    LOG.debug("Data collection disabled for Olive host %s" % host_alias)
+                    continue
 
-            LOG.info("Collecting data from Olive host %s" % host_alias)   
-            olive_deploy = ank.deploy.olive_deploy.OliveDeploy(host = data['host'],
-                    username = data['username'], 
-                    parallel = data['parallel'],
-                    host_alias = host_alias,
-                    network = self.network )
-            #TODO: get commands from config file
-            olive_deploy.collect_data(data['collect data commands'])
+                LOG.info("Collecting data from Olive host %s" % host_alias)   
+                olive_deploy = ank.deploy.olive_deploy.OliveDeploy(host = data['host'],
+                        username = data['username'], 
+                        parallel = data['parallel'],
+                        host_alias = host_alias,
+                        network = self.network )
+                #TODO: get commands from config file
+                olive_deploy.collect_data(data['collect data commands'])
 
-        for host_alias, data in config.settings['cBGP Hosts'].items():
-            if not data['collect data']:
-                LOG.debug("Data collection disabled for cBGP host %s" % host_alias)
-                continue
+            for host_alias, data in config.settings['cBGP Hosts'].items():
+                if not data['collect data']:
+                    LOG.debug("Data collection disabled for cBGP host %s" % host_alias)
+                    continue
 
-            LOG.info("Collecting data from cBGP host %s" % host_alias)   
-            cbgp_deploy = ank.deploy.cbgp_deploy.cBGPDeploy( network = self.network )
-            #TODO: get commands from config file
-            cbgp_deploy.collect_data(data['collect data commands'])
+                LOG.info("Collecting data from cBGP host %s" % host_alias)   
+                cbgp_deploy = ank.deploy.cbgp_deploy.cBGPDeploy( network = self.network )
+                #TODO: get commands from config file
+                cbgp_deploy.collect_data(data['collect data commands'])
+
+            LOG.info("Starting collect delay of %s seconds" % delay)
+            time.sleep(delay)
 
 
