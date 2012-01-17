@@ -50,6 +50,8 @@ LOG = logging.getLogger("ANK")
 
 __all__ = ['graph_product']
 
+def graph_product():
+    pass
 
 def node_list(G, H_graphs):
     # TODO: work out how to retain node properties
@@ -77,4 +79,3 @@ def inter_pop_links(G, H_graphs):
                     if H1.node[v1].get("root") == H2.node[v2].get("root") == True ]
 
     return edges
-
