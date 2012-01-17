@@ -15,9 +15,23 @@ Each node u in the graph G has a property "H" which specifies the H graph to use
 The 'H' attribute of a node in G refers to the key in the 'H_graphs' dictionary:
 
 >>> H_graphs = {}
+
 >>> H_graphs['style_a'] = nx.trivial_graph()
+>>> H_graphs['style_a'].nodes()
+[0]
+
 >>> H_graphs['style_b'] = nx.cycle_graph(2)
+>>> H_graphs['style_b'].edges()
+[(0, 1)]
+
 >>> H_graphs['style_c'] = nx.cycle_graph(3)
+>>> H_graphs['style_c'].edges()
+[(0, 1), (0, 2), (1, 2)]
+
+>>> H_graphs['style_d'] = nx.Graph( [(0,1), (1,2)])
+>>> H_graphs['style_d'].add_nodes_from( [(0, dict(root=True))])
+>>> H_graphs['style_d'].edges()
+[(0, 1), (1, 2)]
 
 Edges in the graph G specify edges between pops, and have an operator which specifies the interconnection method (covered below). 
 
@@ -30,12 +44,33 @@ Nodes in output graph are the tuple (u,v) for u in G for v in G[u]['H']
 >>> sorted(node_list(G, H_graphs))
 [('a', 0), ('b', 0), ('b', 1), ('c', 0), ('c', 1), ('c', 2)]
 
-Intra PoP links are from the relevant H graph
-
+Intra PoP links are from the relevant H graph:
 >>> sorted(intra_pop_links(G, H_graphs))
 [(('b', 0), ('b', 1)), (('c', 0), ('c', 1)), (('c', 0), ('c', 2)), (('c', 1), ('c', 2))]
 
->>> sorted(inter_pop_links(G, H_graphs))
+Using smaller case study for operator examples:
+
+>>> G.clear()
+>>> G.add_nodes_from([ ('a', dict(H='style_d')), ('b', dict(H='style_d'))])
+>>> G.add_edge( 'a', 'b')
+
+>>> G['a']['b']['operator'] = 'cartesian'
+>>> inter_pop_links(G, H_graphs)
+[(('a', 0), ('b', 0)), (('a', 1), ('b', 1)), (('a', 2), ('b', 2))]
+
+
+>>> G['a']['b']['operator'] = 'rooted'
+>>> inter_pop_links(G, H_graphs)
+[]
+
+>>> G['a']['b']['operator'] = 'tensor'
+>>> inter_pop_links(G, H_graphs)
+[(('a', 0), ('b', 1)), (('a', 1), ('b', 2)), (('a', 0), ('b', 0))]
+
+>>> G['a']['b']['operator'] = 'strong'
+>>> inter_pop_links(G, H_graphs)
+[(('a', 0), ('b', 0)), (('a', 1), ('b', 1)), (('a', 2), ('b', 2)), (('a', 0), ('b', 1)), (('a', 1), ('b', 2)), (('a', 0), ('b', 0))]
+
 
 
 """
