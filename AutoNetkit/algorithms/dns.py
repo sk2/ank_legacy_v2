@@ -84,6 +84,14 @@ def allocate_dns_servers(network):
     dns_advertise_graph = nx.DiGraph()
     LOG.debug("DNS currently disabled")
 
+    dns_levels = config.settings['DNS']['levels']
+    if not dns_levels:
+        LOG.debug("DNS level 0, disabling DNS for network")
+        return
+
+    LOG.info("DNS level set to %s" % dns_levels)
+    dns_levels = 4
+
     def nodes_by_eccentricity(graph):
         if len(graph) == 1:
             return graph.nodes()
