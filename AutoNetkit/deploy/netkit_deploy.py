@@ -319,6 +319,9 @@ class NetkitDeploy():
         host_data_dir = os.path.join(netkit_data_dir, self.host_alias)
         if not os.path.isdir(host_data_dir):
                 os.mkdir(host_data_dir)
+        collect_timestamp_dir = os.path.join(host_data_dir, time.strftime("%Y%m%d_%H%M%S", time.localtime()))
+        if not os.path.isdir(collect_timestamp_dir):
+            os.mkdir(collect_timestamp_dir)
 
         servers = set(self.network.servers())
 
@@ -376,7 +379,7 @@ class NetkitDeploy():
                 filename = "%s_%s_%s.txt" % (full_routername,
                         command_filename_format,
                         time.strftime("%Y%m%d_%H%M%S", time.localtime()))
-                filename = os.path.join(host_data_dir, filename)
+                filename = os.path.join(collect_timestamp_dir, filename)
                 
                 with open( filename, 'w') as f_out:
                     f_out.write(command_output)

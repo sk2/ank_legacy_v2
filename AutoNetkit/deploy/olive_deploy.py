@@ -74,7 +74,6 @@ class OliveDeploy():
         self.base_image = base_image
         self.olive_dir = config.ank_main_dir
         self.telnet_start_port = telnet_start_port
-        self.host_data_dir = None
 
         self.local_server = True
         if self.host and self.username:
@@ -483,7 +482,7 @@ class OliveDeploy():
 
         return
 
-    def run_collect_data_command(self, nodes_with_port, commands, shell):
+    def run_collect_data_command(self, nodes_with_port, commands, shell, collect_timestamp_dir):
             node, router_name, telnet_port = nodes_with_port
 # Unique as includes ASN etc
 #TODO: check difference, if really need this...
@@ -523,7 +522,7 @@ class OliveDeploy():
                 filename = "%s_%s_%s.txt" % (full_routername,
                         command_filename_format,
                         time.strftime("%Y%m%d_%H%M%S", time.localtime()))
-                filename = os.path.join(self.host_data_dir, filename)
+                filename = os.path.join(collect_timestamp_dir, filename)
                 
                 with open( filename, 'w') as f_out:
                     f_out.write(command_output)
@@ -557,9 +556,11 @@ class OliveDeploy():
         host_data_dir = os.path.join(olive_data_dir, self.host_alias)
         if not os.path.isdir(host_data_dir):
                 os.mkdir(host_data_dir)
-        self.host_data_dir = host_data_dir
+        collect_timestamp_dir = os.path.join(host_data_dir, time.strftime("%Y%m%d_%H%M%S", time.localtime()))
+        if not os.path.isdir(collect_timestamp_dir):
+            os.mkdir(collect_timestamp_dir)
 
-        LOG.info("Saving collected data to %s" % host_data_dir)
+        LOG.info("Saving collected data to %s" % collect_timestamp_dir)
 
         num_worker_threads= self.parallel
         if num_worker_threads > 1:
@@ -571,7 +572,7 @@ class OliveDeploy():
                 shell = self.get_shell()
                 while True:
                     nodes_with_port, commands = q.get()
-                    self.run_collect_data_command(nodes_with_port, commands, shell)
+                    self.run_collect_data_command(nodes_with_port, commands, shell, collect_timestamp_dir)
                     q.task_done()
                     node = nodes_with_ports[0]
                     collected_hosts.append(node)
