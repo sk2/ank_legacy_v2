@@ -144,7 +144,7 @@ def jsplot(network):
         data = { 'label': "%s (%s)" % (label, network.graph.node[node].get("ibgp_level"))}
         node_list.append( (node.id, data))
     edge_list = ibgp_graph.edges(data=True)
-    edge_list = list( (src.id, dst.id, data) for (src, dst, data) in edge_list)
+    edge_list = list( (src.id, dst.id, data.get("rr_dir")) for (src, dst, data) in edge_list)
 
     ibgp_filename = os.path.join(jsplot_dir, "ibgp.js")
     js_files.append("ibgp.js")
