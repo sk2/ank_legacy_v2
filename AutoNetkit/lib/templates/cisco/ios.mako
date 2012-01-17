@@ -60,9 +60,9 @@ router bgp ${asn}
  neighbor ${neighbor['id']} remote-as ${asn}
  neighbor ${neighbor['id']} update-source loopback 0
  neighbor ${neighbor['id']} send-community
-   % if len(neighbor['route_maps_in']):
+   % if neighbor['route_maps_in']:
  neighbor ${neighbor['id']} route-map ${neighbor['route_maps_in'].pop()} in
-   % elif len(neighbor['route_maps_out']):
+   % elif neighbor['route_maps_out']:
  neighbor ${neighbor['id']} route-map ${neighbor['route_maps_out'].pop()} out
    % endif
 
