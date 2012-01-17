@@ -171,7 +171,8 @@ def jsplot(network):
         node_list.append( (node.id, data))
     dns_filename = os.path.join(jsplot_dir, "dns.js")
     edge_list = dns_graph.edges(data=True)
-    edge_list = list( (src.id, dst.id, data) for (src, dst, data) in edge_list)
+    #edge_list = list( (src.id, dst.id, data.get('dns_dir')) for (src, dst, data) in edge_list)
+    edge_list = list( (src.id, dst.id, '') for (src, dst, data) in edge_list)
     js_files.append("dns.js")
     with open( dns_filename, 'w') as f_js:
             f_js.write( js_template.render(

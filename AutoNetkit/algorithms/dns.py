@@ -65,6 +65,8 @@ import networkx as nx
 from netaddr import IPAddress, IPNetwork
 import pprint
 import itertools
+import AutoNetkit.config as config
+
 
 import logging
 LOG = logging.getLogger("ANK")
@@ -81,7 +83,6 @@ def allocate_dns_servers(network):
     dns_graph = nx.DiGraph()
     dns_advertise_graph = nx.DiGraph()
     LOG.debug("DNS currently disabled")
-    return
 
     def nodes_by_eccentricity(graph):
         if len(graph) == 1:
@@ -108,9 +109,9 @@ def allocate_dns_servers(network):
     def level(u):
         return int(dns_graph.node[u]['level'])
 
-    servers_per_l2_cluster = 1
-    servers_per_l3_cluster = 1
-    root_dns_servers = 1
+    servers_per_l2_cluster = config.settings['DNS']['Server Count']['l2 cluster'] 
+    servers_per_l3_cluster = config.settings['DNS']['Server Count']['l3 cluster'] 
+    root_dns_servers = config.settings['DNS']['Server Count']['root'] 
     global_eccentricities = nodes_by_eccentricity(network.graph)
 
 

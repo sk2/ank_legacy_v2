@@ -46,18 +46,15 @@ settings.merge(ConfigObj("autonetkit.cfg"))
 validator = validate.Validator()
 results = settings.validate(validator)
 if results != True:
-    print "Error loading configuration file:"
     for (section_list, key, _) in flatten_errors(settings, results):
         if key is not None:
+            print "Error loading configuration file:"
             print 'Invalid key "%s" in section "%s"' % (key, ', '.join(section_list))
+            sys.exit(0)
         else:
-            print 'The following section was missing:%s ' % ', '.join(section_list)
-
-    sys.exit(0)
-
-#pprint.pprint(settings)
-#pprint.pprint(settings['Netkit Hosts'])
-#pprint.pprint(settings['Olive Hosts'])
+# ignore missing sections - use defaults
+            #print 'The following section was missing:%s ' % ', '.join(section_list)
+            pass
 
 ank_main_dir = settings['Lab']['autonetkit_dir']
 
