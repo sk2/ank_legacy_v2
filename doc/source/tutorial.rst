@@ -412,37 +412,30 @@ We can see the plotting step has been completed. You can access the plots throug
 Examples of plotting and summary:
 
 Summary:
-==================
 
 .. image:: images/plots/summary.png
 
 Physical:
-==================
 
 .. image:: images/plots/plot_physical.png
 
 IP Addresses:
-===============
 
 .. image:: images/plots/plot_ip.png
                      
 iBGP:
-==============================
 
 .. image:: images/plots/plot_ibgp.png
 
 eBGP:
-==============================
 
 .. image:: images/plots/plot_ebgp.png
 
 DNS:
-==============================
 
 .. image:: images/plots/plot_dns.png
 
 DNS Authority (who advertises who)
-==============================
 
 .. image:: images/plots/plot_dns_auth.png
 
