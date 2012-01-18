@@ -6,7 +6,10 @@ Introduction
 ==============
 
 Disable plotting of examples in doctests:
->>> plot = lambda x,y: None
+plot = lambda x,y: None
+
+Note: add_nodes_from will update the property of a node if it already exists
+TODO: add example of this
 
 G graph is the undirected base graph
 
@@ -14,7 +17,7 @@ G graph is the undirected base graph
 
 H graph is the "pop design" graph
 
-Each node u in the graph G has a property "H" which specifies the H graph to use
+Each node u in the graph G has a attribute "H" which specifies the H graph to use
 
 >>> G.add_nodes_from([ ('a', dict(H='style_a')), ('b', dict(H='style_b')), ('c', dict(H='style_c'))])
 
@@ -138,15 +141,35 @@ Strong Product
 
 .. figure::  ../../images/graph_products/strong.*
 
+Combined
+-----------
+Intra and Inter pop links can be combined:
+
+>>> G['a']['b']['operator'] = 'cartesian'
+>>> edge_list = intra_pop_links(G, H_graphs) + inter_pop_links(G, H_graphs)
+>>> plot(nx.Graph(edge_list), "combined")
+
+.. figure::  ../../images/graph_products/combined.*
+
+Attributes
+===========
+
+The above code generates the list of nodes and the list of edges in the new graph. They do not contain attributes.
+The node and edge attributes are copied from the relevant G and H graphs using the rules defined in the following sections.
 
 Node Attributes
 =========================
 Nodes in AutoNetkit can have attributes. A number of attributes carry special meaning, such as *pop* and *asn*, but the user is free to add their own attributes.
 These attributes are preserved from the G and H graphs.
 
+For attributes that exist in both the H graph and the G graph, the attribute in the H graph is used. This is the idea of inheritance - the H graph is more specific.
 
+Attributes associated with the graph products, such as *H* and *root* are not propagated to the output graph, as they are used in the generation process, but are not relevant to AutoNetkit. If the user wishes for a specific attribute to be in the output graph, they should add that to the relevant node.
 
-Add some extra properties to the G graph defined above:
+Example
+---------
+
+Add some extra attributes to the G graph defined above:
 
 >>> G.add_nodes_from([ ('a', dict(color='red')), ('b', dict(color='blue'))])
 >>> G.nodes(data=True)
@@ -154,20 +177,52 @@ Add some extra properties to the G graph defined above:
 >>> propagate_node_attributes(G, H_graphs, node_list(G, H_graphs))
 [('a', 0, {'color': 'red'}), ('a', 1, {'color': 'red'}), ('a', 2, {'color': 'red'}), ('b', 0, {'color': 'blue'}), ('b', 1, {'color': 'blue'}), ('b', 2, {'color': 'blue'})]
 
-
 >>> G.add_nodes_from([ ('a', dict(color='red', H='style_e')), ('b', dict(color='blue', H='style_e'))])
 >>> G.nodes(data=True)
 [('a', {'color': 'red', 'H': 'style_e'}), ('b', {'color': 'blue', 'H': 'style_e'})]
 
+Define a new H graph with some attributes. This shows the *color* attribute from the H graph over-writing that of the G graph. It can be seen that node ('a', 1) and ('b', 1) both have the color *green* from the H graph.
 
-Define a new H graph with some properties:
 >>> H_graphs['style_e'] = H_graphs['style_d'].copy()
 >>> H_graphs['style_e'].add_nodes_from( [(1, dict(color='green'))])
 >>> H_graphs['style_e'].nodes(data=True)
 [(0, {'root': True}), (1, {'color': 'green'}), (2, {})]
+
 >>> propagate_node_attributes(G, H_graphs, node_list(G, H_graphs))
 [('a', 0, {'color': 'red'}), ('a', 1, {'color': 'green'}), ('a', 2, {'color': 'red'}), ('b', 0, {'color': 'blue'}), ('b', 1, {'color': 'green'}), ('b', 2, {'color': 'blue'})]
 
+
+Edge Attributes
+=========================
+Edge attributes are simpler. Inter-Pop links obtain their data from the G graph.
+Intra-Pop links obtain their data from their H graph.
+
+Example
+--------
+For clarity, use the cartesian operator:
+
+>>> G['a']['b']['operator'] = 'cartesian'
+
+Add a new attribute to the edge in the G graph:
+
+>>> G.add_edges_from( [('a', 'b', dict(speed=10))])
+>>> G.edges(data=True)
+[('a', 'b', {'operator': 'cartesian', 'speed': 10})]
+>>> edge_list = intra_pop_links(G, H_graphs) + inter_pop_links(G, H_graphs)
+
+>>> H_graphs['style_f'] = H_graphs['style_d'].copy()
+>>> H_graphs['style_f'].add_edges_from([ (0, 1, dict(speed=100)), (1, 2, dict(speed=150))])
+>>> H_graphs['style_f'].edges(data=True)
+[(0, 1, {'speed': 100}), (1, 2, {'speed': 150})]
+
+And use the new H style:
+
+>>> G.add_nodes_from([ ('a', dict(H='style_f')), ('b', dict(H='style_f'))])
+>>> propagate_edge_attributes(G, H_graphs, edge_list)
+[(('a', 0), ('a', 1), {'speed': 100}), (('a', 1), ('a', 2), {'speed': 150}), (('b', 0), ('b', 1), {'speed': 100}), (('b', 1), ('b', 2), {'speed': 150}), (('a', 0), ('b', 0), {'speed': 10}), (('a', 1), ('b', 1), {'speed': 10}), (('a', 2), ('b', 2), {'speed': 10})]
+>>> plot(nx.Graph(propagate_edge_attributes(G, H_graphs, edge_list)), "edge_attributes")
+
+.. figure::  ../../images/graph_products/edge_attributes.*
 
 """
 __author__ = "\n".join(['Simon Knight'])
@@ -185,7 +240,7 @@ def graph_product():
     pass
 
 def node_list(G, H_graphs):
-    # TODO: work out how to retain node properties
+    # TODO: work out how to retain node attributes
     return [ (u,v) for u in G for v in H_graphs[G.node[u]['H']] ]
 
 def intra_pop_links(G, H_graphs):
@@ -223,13 +278,33 @@ def propagate_node_attributes(G, H_graphs, node_list):
         v_data = dict(H_graphs[u_v_data['H']].node[v])
         u_v_data.update(v_data)
 # Remove "root" which was used in graph construction - no need to send to AutoNetkit
+        del u_v_data['H']
         try:
-            del u_v_data['H']
             del u_v_data['root']
         except KeyError:
             pass
         retval.append( (u, v, u_v_data))
     return retval
+
+def propagate_edge_attributes(G, H_graphs, edge_list):
+    retval = []
+    for s, t in edge_list:
+        (u1, v1) = s
+        (u2, v2) = t
+        if u1 == u2:
+# intra-pop
+            edge_data = H_graphs[G.node[u2]['H']].get_edge_data(v1, v2)
+            retval.append( (s, t, edge_data))
+        else:
+# inter-pop
+            edge_data = G.get_edge_data(u1, u2)
+            try:
+                del edge_data['operator']
+            except KeyError:
+                pass
+            retval.append( (s, t, edge_data))
+    return retval
+
 
 def plot(G, label="plot"):
     try:
@@ -252,6 +327,14 @@ def plot(G, label="plot"):
                 pos = nx.spring_layout(G)
 
         nx.draw(G, pos, node_color='#A0CBE2', node_size=500, width=1)
+
+        edge_labels = {}
+        for s, t, data in G.edges(data=True):
+            if len(data):
+                data = ", ".join( "%s: %s" % (key, val) for (key, val) in data.items())
+                edge_labels[(s,t)] = data
+
+        nx.draw_networkx_edge_labels(G, pos, edge_labels =edge_labels)
         fig = plt.gcf()
         fig.set_size_inches(4,4)
         plt.savefig("%s.pdf" % label)
