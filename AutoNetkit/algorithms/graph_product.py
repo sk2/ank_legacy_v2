@@ -322,7 +322,10 @@ def propagate_node_attributes(G, H_graphs, node_list):
         u_v_data.update(v_data)
         try:
 # append to current label to ensure unique
-            u_v_data['label'] = "%s%s_%s" % (u, v, u_v_data['label'])
+            if u_v_data['label'] != v:
+                u_v_data['label'] = "%s%s_%s" % (u, v, u_v_data['label'])
+            else:
+                u_v_data['label'] = "%s%s" % (u, v)
         except KeyError:
             u_v_data['label'] = "%s%s" % (u, v)
 
