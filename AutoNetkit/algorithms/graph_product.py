@@ -5,7 +5,7 @@ Implementation of graph products
 Introduction
 ==============
 
->>> graph_product("../lib/examples/topologies/gptest.graphml")
+>>> G_out = graph_product("../lib/examples/topologies/gptest.graphml")
 
 Implementation
 ==============
@@ -251,6 +251,7 @@ def remove_yed_edge_id(G):
     return G
 
 def graph_product(G_file):
+    LOG.info("Applying graph product to %s" % G_file)
     H_graphs = {}
     try:
         G = nx.read_graphml(G_file).to_undirected()
@@ -272,21 +273,14 @@ def graph_product(G_file):
             print "Unable to read H_graph %s" % H_file
             return
 
-
-
     G_out = nx.Graph()
     G_out.add_nodes_from(node_list(G, H_graphs))
     G_out.add_nodes_from(propagate_node_attributes(G, H_graphs, G_out.nodes()))
     G_out.add_edges_from(intra_pop_links(G, H_graphs))
     G_out.add_edges_from(inter_pop_links(G, H_graphs))
     G_out.add_edges_from(propagate_edge_attributes(G, H_graphs, G_out.edges()))
-    import pprint
-    pprint.pprint(G_out.nodes(data=True))
-    pprint.pprint(G_out.edges(data=True))
-    plot(G_out, "output")
-
-
-    pass
+#TODO: need to set default ASN, etc?
+    return G_out
 
 def node_list(G, H_graphs):
     # TODO: work out how to retain node attributes
@@ -329,6 +323,12 @@ def propagate_node_attributes(G, H_graphs, node_list):
         u_v_data = dict(G.node[u])
         v_data = dict(H_graphs[u_v_data['H']].node[v])
         u_v_data.update(v_data)
+        try:
+            label = "%s%s" % (G.node[u]["label"], v_data["label"])
+            u_v_data['label'] = label
+        except KeyError:
+            pass
+
 # Remove "root" which was used in graph construction - no need to send to AutoNetkit
         del u_v_data['H']
         try:
