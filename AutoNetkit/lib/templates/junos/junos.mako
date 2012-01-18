@@ -76,11 +76,16 @@ protocols {
 	ospf {
 	        area 0.0.0.0 {
 			% for i in igp_interfaces:
-				  % if 'passive' in i:   
+			  % if 'passive' or 'weight' in i:   
 				interface ${i['id']}  {
-						passive;   
+			    % if 'passive' in i:   
+						passive;
+			    % endif
+			    % if 'weight' in i:
+						metric ${i['weight']};
+                            % endif
 					}
-				% else:
+		 	  % else:
 				interface ${i['id']};
 			  % endif                
 			%endfor

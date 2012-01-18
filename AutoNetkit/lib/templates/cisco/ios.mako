@@ -14,7 +14,14 @@ interface ${i['id']}
  description ${i['description']}
  ip address ${i['ip']} ${i['netmask']} 
  % if igp_protocol == 'isis':
- ip router isis             
+ ip router isis
+   % if 'weight' in i:
+ isis metric ${i['weight']}
+   % endif
+ % else:
+   % if 'weight' in i:
+ ip ospf cost ${i['weight']}
+   % endif
  % endif
  no shutdown
  duplex auto
