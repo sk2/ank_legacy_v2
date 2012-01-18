@@ -62,7 +62,6 @@ Nodes in output graph are the tuple (u,v) for u in G for v in G[u]['H']
 >>> sorted(node_list(G, H_graphs))
 [('a', 0), ('b', 0), ('b', 1), ('c', 0), ('c', 1), ('c', 2)]
 
-
 Examples
 ===========
 
@@ -76,7 +75,6 @@ Using smaller case study for the following examples:
 
 .. figure::  ../../images/graph_products/G.*
 
-
 Intra-PoP links
 =========================
 
@@ -88,7 +86,6 @@ Intra PoP links are from the relevant H graph:
 >>> plot(nx.Graph(intra_pop_links(G, H_graphs)), "intra_pop_links")
 
 .. figure::  ../../images/graph_products/intra_pop_links.*
-
 
 Inter-PoP links
 =========================
@@ -324,12 +321,15 @@ def propagate_node_attributes(G, H_graphs, node_list):
         v_data = dict(H_graphs[u_v_data['H']].node[v])
         u_v_data.update(v_data)
         try:
-            label = "%s%s" % (G.node[u]["label"], v_data["label"])
-            u_v_data['label'] = label
+# append to current label to ensure unique
+            u_v_data['label'] = "%s%s_%s" % (u, v, u_v_data['label'])
         except KeyError:
-            pass
+            u_v_data['label'] = "%s%s" % (u, v)
 
-# Remove "root" which was used in graph construction - no need to send to AutoNetkit
+# set pop to be u, used in ibgp, dns, etc as the layer 2 group
+        u_v_data['pop'] = u
+
+# Remove H and root (if set) which was used in graph construction - no need to send to AutoNetkit
         del u_v_data['H']
         try:
             del u_v_data['root']
