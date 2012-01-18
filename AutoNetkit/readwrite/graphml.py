@@ -47,9 +47,8 @@ def load_graphml(net_file, default_asn = 1):
     nodes_with_H_set = sum(1 for n in input_graph if input_graph.node[n].get('H'))
     if nodes_with_H_set == len(input_graph):
 #all nodes have H set, apply graph products
-        LOG.info("All nodes in %s have H graph set, applying graph product" % net_name)
+        LOG.info("All nodes in graph %s have H attribute set, applying graph product" % net_name)
         input_graph = ank.graph_product(net_file)
-        print input_graph.nodes()
 # remap ('a', 2) -> 'a2'
         nx.relabel_nodes(input_graph, 
                 dict( (n, "%s_%s" % (n[0], n[1])) for n in input_graph), copy=False)
