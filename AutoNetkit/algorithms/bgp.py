@@ -177,9 +177,9 @@ def configure_ibgp_rr(network):
         elif max_ibgp_level == 3:
             edges_to_add += [(s,t, 'peer') for (s,t) in same_l2_cluster_edges
                     if level(s) == level(t) == 2]
-            edges_to_add += [(s,t, 'up') for (s,t) in same_l2_cluster_edges
+            edges_to_add += [(s,t, 'up') for (s,t) in same_l3_cluster_edges
                     if level(s) == 2 and level(t) == 3]
-            edges_to_add += [(s,t, 'down') for (s,t) in same_l2_cluster_edges
+            edges_to_add += [(s,t, 'down') for (s,t) in same_l3_cluster_edges
                     if level(s) == 3 and level(t) == 2]
             edges_to_add += [(s, t, 'peer') for (s,t) in same_l3_cluster_edges 
                     if level(s) == level(t) == 3]
