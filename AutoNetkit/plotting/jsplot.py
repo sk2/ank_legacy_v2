@@ -67,8 +67,8 @@ def jsplot(network):
     ank_css_template = lookup.get_template("autonetkit/style_css.mako")
 #TODO: tidy these up with the embedded network in node name
 
-    node_list = ( (node.id, {'label': network.fqdn(node)}) for node in network.graph.nodes())
-    edge_list = list( (src.id, dst.id, {}) 
+    node_list = ( (node.fqdn, {'label': network.fqdn(node)}) for node in network.graph.nodes())
+    edge_list = list( (src.fqdn, dst.fqdn, {}) 
             for (src, dst, data) in network.graph.edges(data=True))
 
 
@@ -90,8 +90,8 @@ def jsplot(network):
     for node in network.graph.nodes():
 # Set label to be FQDN, so don't have multiple "Router A" nodes etc
         data = { 'label': "%s %s" % (ank.fqdn(network, node), network.lo_ip(node).ip)}
-        node_list.append( (node.id, data))
-    edge_list = list( (src.id, dst.id, data['sn']) 
+        node_list.append( (node.fqdn, data))
+    edge_list = list( (src.fqdn, dst.fqdn, data['sn']) 
             for (src, dst, data) in network.graph.edges(data=True))
     with open( js_filename, 'w') as f_js:
             f_js.write( js_template.render(
@@ -109,8 +109,8 @@ def jsplot(network):
             continue
 # Set label to be FQDN, so don't have multiple "Router A" nodes etc
         data = { 'label': "%s" % node.fqdn}
-        node_list.append( (node.id, data))
-    edge_list = list( (src.id, dst.id, data.get('weight')) 
+        node_list.append( (node.fqdn, data))
+    edge_list = list( (src.fqdn, dst.fqdn, data.get('weight')) 
             for (src, dst, data) in network.graph.edges(data=True)
             if src.asn == dst.asn)
     with open( js_filename, 'w') as f_js:
@@ -137,14 +137,10 @@ def jsplot(network):
     node_list = []
     for node in ibgp_graph.nodes():
 # Set label to be FQDN, so don't have multiple "Router A" nodes etc
-        try:
-            label = node.label
-        except KeyError:
-            label = node
-        data = { 'label': "%s (%s)" % (label, network.graph.node[node].get("ibgp_level"))}
-        node_list.append( (node.id, data))
+        data = { 'label': "%s (%s)" % (node.fqdn, network.graph.node[node].get("ibgp_level"))}
+        node_list.append( (node.fqdn, data))
     edge_list = ibgp_graph.edges(data=True)
-    edge_list = list( (src.id, dst.id, data.get("rr_dir")) for (src, dst, data) in edge_list)
+    edge_list = list( (src.fqdn, dst.fqdn, data.get("rr_dir")) for (src, dst, data) in edge_list)
 
     ibgp_filename = os.path.join(jsplot_dir, "ibgp.js")
     js_files.append("ibgp.js")
@@ -163,16 +159,12 @@ def jsplot(network):
     node_list = []
     for node in dns_graph.nodes():
 # Set label to be FQDN, so don't have multiple "Router A" nodes etc
-        try:
-            label = node.label
-        except KeyError:
-            label = node
         data = { 'label': "%s (%s)" % (node.fqdn, dns_graph.node[node].get("level"))}
-        node_list.append( (node.id, data))
+        node_list.append( (node.fqdn, data))
     dns_filename = os.path.join(jsplot_dir, "dns.js")
     edge_list = dns_graph.edges(data=True)
-    #edge_list = list( (src.id, dst.id, data.get('dns_dir')) for (src, dst, data) in edge_list)
-    edge_list = list( (src.id, dst.id, '') for (src, dst, data) in edge_list)
+    #edge_list = list( (src.fqdn, dst.fqdn, data.get('dns_dir')) for (src, dst, data) in edge_list)
+    edge_list = list( (src.fqdn, dst.fqdn, '') for (src, dst, data) in edge_list)
     js_files.append("dns.js")
     with open( dns_filename, 'w') as f_js:
             f_js.write( js_template.render(
@@ -187,10 +179,10 @@ def jsplot(network):
     for node in dns_auth_graph.nodes():
 # Set label to be FQDN, so don't have multiple "Router A" nodes etc
         data = { 'label': "%s" % node.label}
-        node_list.append( (node.id, data))
+        node_list.append( (node.fqdn, data))
     dns_filename = os.path.join(jsplot_dir, "dns_auth.js")
     edge_list = dns_auth_graph.edges(data=True)
-    edge_list = list( (src.id, dst.id, data) for (src, dst, data) in edge_list)
+    edge_list = list( (src.fqdn, dst.fqdn, data) for (src, dst, data) in edge_list)
     js_files.append("dns_auth.js")
     with open( dns_filename, 'w') as f_js:
             f_js.write( js_template.render(
