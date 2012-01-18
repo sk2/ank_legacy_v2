@@ -133,6 +133,12 @@ def configure_ibgp_rr(network):
             LOG.debug("Setting ibgp_level to %s for nodes in AS%s" % (default_ibgp_level, asn))
             for node in my_as:
                 network.graph.node[node]['ibgp_level'] = default_ibgp_level
+        nodes_without_level_set = [n for n in my_as if not network.graph.node[n].get('ibgp_level')]
+        if len(nodes_without_level_set):
+                LOG.info("Setting default ibgp_level of %s for nodes %s" % (default_ibgp_level,
+                    ", ".join(str(n) for n in nodes_without_level_set)))
+                for node in nodes_without_level_set:
+                    network.graph.node[node]['ibgp_level'] = default_ibgp_level
 
         max_ibgp_level = max(level(n) for n in my_as)
         LOG.debug("Max ibgp level for %s is %s" % (my_as.asn, max_ibgp_level))
