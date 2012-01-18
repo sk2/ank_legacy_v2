@@ -186,7 +186,6 @@ class BgpPolicyParser:
                 + "(" + self.nodeQuery.setResultsName("query_b")
                 + ")").setFailAction(parse_fail_action)
 
-
 #start of BGP queries
         originQuery = (Literal("Origin").setResultsName("attribute") + 
                 #this is a workaround for the match, comparison, value 3-tuple in processing
@@ -268,10 +267,11 @@ class BgpPolicyParser:
 
 # Library stuff
         set_values = Suppress("{") + delimitedList( attribute, delim=',').setResultsName("set_values") + Suppress("}")
-        self.set_definition = attribute.setResultsName("set_name") + Suppress("=") + set_values
-        self.set_definition
+#Set to empty set, rather than empty list as empty list is processed differently somewhere in parser
+        empty_set = Literal("{}").setResultsName("set_values").setParseAction(lambda x: set())
+        self.set_definition = attribute.setResultsName("set_name") + Suppress("=") + (empty_set | set_values)
 
-        library_params = attribute | Group(set_values)
+        library_params = attribute | Group(set_values) | empty_set
         library_function = attribute.setResultsName("def_name") + Suppress("(") + delimitedList( library_params, delim=',').setResultsName("def_params") + Suppress(")")
 # May want to distinguish better?
         self.library_call = library_function
