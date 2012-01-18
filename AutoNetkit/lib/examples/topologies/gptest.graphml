@@ -11,27 +11,24 @@
   <key attr.name="color" attr.type="string" for="node" id="d5">
     <default/>
   </key>
-  <key attr.name="area" attr.type="int" for="node" id="d6">
-    <default>0</default>
-  </key>
-  <key attr.name="H" attr.type="string" for="node" id="d7">
+  <key attr.name="H" attr.type="string" for="node" id="d6">
     <default/>
   </key>
-  <key attr.name="url" attr.type="string" for="node" id="d8"/>
-  <key attr.name="description" attr.type="string" for="node" id="d9"/>
-  <key for="node" id="d10" yfiles.type="nodegraphics"/>
-  <key attr.name="Description" attr.type="string" for="graph" id="d11"/>
-  <key attr.name="ipaddress" attr.type="string" for="edge" id="d12">
+  <key attr.name="url" attr.type="string" for="node" id="d7"/>
+  <key attr.name="description" attr.type="string" for="node" id="d8"/>
+  <key for="node" id="d9" yfiles.type="nodegraphics"/>
+  <key attr.name="Description" attr.type="string" for="graph" id="d10"/>
+  <key attr.name="operator" attr.type="string" for="edge" id="d11">
     <default/>
   </key>
-  <key attr.name="url" attr.type="string" for="edge" id="d13"/>
-  <key attr.name="description" attr.type="string" for="edge" id="d14"/>
-  <key for="edge" id="d15" yfiles.type="edgegraphics"/>
+  <key attr.name="url" attr.type="string" for="edge" id="d12"/>
+  <key attr.name="description" attr.type="string" for="edge" id="d13"/>
+  <key for="edge" id="d14" yfiles.type="edgegraphics"/>
   <graph edgedefault="directed" id="G">
-    <data key="d11"/>
+    <data key="d10"/>
     <node id="n0">
-      <data key="d7"><![CDATA[H_graphs/H1]]></data>
-      <data key="d10">
+      <data key="d6"><![CDATA[H_graphs/H1]]></data>
+      <data key="d9">
         <y:ShapeNode>
           <y:Geometry height="30.0" width="30.0" x="250.5" y="191.0"/>
           <y:Fill color="#FFCC00" transparent="false"/>
@@ -42,8 +39,8 @@
       </data>
     </node>
     <node id="n1">
-      <data key="d7"><![CDATA[H_graphs/H2]]></data>
-      <data key="d10">
+      <data key="d6"><![CDATA[H_graphs/H2]]></data>
+      <data key="d9">
         <y:ShapeNode>
           <y:Geometry height="30.0" width="30.0" x="357.5" y="191.0"/>
           <y:Fill color="#FFCC00" transparent="false"/>
@@ -54,7 +51,7 @@
       </data>
     </node>
     <edge id="e0" source="n0" target="n1">
-      <data key="d15">
+      <data key="d14">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
