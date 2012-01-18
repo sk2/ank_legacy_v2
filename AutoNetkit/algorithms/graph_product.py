@@ -5,8 +5,13 @@ Implementation of graph products
 Introduction
 ==============
 
+>>> graph_product("../lib/examples/topologies/gptest.graphml")
+
+Implementation
+==============
+
 Disable plotting of examples in doctests:
-plot = lambda x,y: None
+>>> plot = lambda x,y: None
 
 Note: add_nodes_from will update the property of a node if it already exists
 TODO: add example of this
@@ -175,7 +180,7 @@ Add some extra attributes to the G graph defined above:
 >>> G.nodes(data=True)
 [('a', {'color': 'red', 'H': 'style_d'}), ('b', {'color': 'blue', 'H': 'style_d'})]
 >>> propagate_node_attributes(G, H_graphs, node_list(G, H_graphs))
-[('a', 0, {'color': 'red'}), ('a', 1, {'color': 'red'}), ('a', 2, {'color': 'red'}), ('b', 0, {'color': 'blue'}), ('b', 1, {'color': 'blue'}), ('b', 2, {'color': 'blue'})]
+[(('a', 0), {'color': 'red'}), (('a', 1), {'color': 'red'}), (('a', 2), {'color': 'red'}), (('b', 0), {'color': 'blue'}), (('b', 1), {'color': 'blue'}), (('b', 2), {'color': 'blue'})]
 
 >>> G.add_nodes_from([ ('a', dict(color='red', H='style_e')), ('b', dict(color='blue', H='style_e'))])
 >>> G.nodes(data=True)
@@ -189,8 +194,7 @@ Define a new H graph with some attributes. This shows the *color* attribute from
 [(0, {'root': True}), (1, {'color': 'green'}), (2, {})]
 
 >>> propagate_node_attributes(G, H_graphs, node_list(G, H_graphs))
-[('a', 0, {'color': 'red'}), ('a', 1, {'color': 'green'}), ('a', 2, {'color': 'red'}), ('b', 0, {'color': 'blue'}), ('b', 1, {'color': 'green'}), ('b', 2, {'color': 'blue'})]
-
+[(('a', 0), {'color': 'red'}), (('a', 1), {'color': 'green'}), (('a', 2), {'color': 'red'}), (('b', 0), {'color': 'blue'}), (('b', 1), {'color': 'green'}), (('b', 2), {'color': 'blue'})]
 
 Edge Attributes
 =========================
@@ -231,12 +235,57 @@ __author__ = "\n".join(['Simon Knight'])
 import networkx as nx
 import logging
 import itertools
+import os
 
 LOG = logging.getLogger("ANK")
 
 __all__ = ['graph_product']
 
-def graph_product():
+def remove_yed_edge_id(G):
+    for s, t, data in G.edges(data=True):
+        try:
+            del data['id']
+        except KeyError:
+            continue
+        G[s][t] = data
+    return G
+
+def graph_product(G_file):
+    H_graphs = {}
+    try:
+        G = nx.read_graphml(G_file).to_undirected()
+        G = remove_yed_edge_id(G)
+        nx.relabel_nodes(G, dict((n, data.get('label', n)) for n, data in G.nodes(data=True)), copy=False)
+    except IOError:
+        print "Unable to read %s" % G_file
+        return
+    G_path = os.path.split(G_file)[0]
+    H_labels = set(data.get("H") for n, data in G.nodes(data=True))
+    for label in H_labels:
+        H_file = os.path.join(G_path, "%s.graphml" % label)
+        try:
+            H = nx.read_graphml(H_file).to_undirected()
+            H = remove_yed_edge_id(H)
+            nx.relabel_nodes(H, dict((n, data.get('label', n)) for n, data in H.nodes(data=True)), copy=False)
+            H_graphs[label] = H
+        except IOError:
+            print "Unable to read H_graph %s" % H_file
+            return
+
+
+
+    G_out = nx.Graph()
+    G_out.add_nodes_from(node_list(G, H_graphs))
+    G_out.add_nodes_from(propagate_node_attributes(G, H_graphs, G_out.nodes()))
+    G_out.add_edges_from(intra_pop_links(G, H_graphs))
+    G_out.add_edges_from(inter_pop_links(G, H_graphs))
+    G_out.add_edges_from(propagate_edge_attributes(G, H_graphs, G_out.edges()))
+    import pprint
+    pprint.pprint(G_out.nodes(data=True))
+    pprint.pprint(G_out.edges(data=True))
+    plot(G_out, "output")
+
+
     pass
 
 def node_list(G, H_graphs):
@@ -246,13 +295,16 @@ def node_list(G, H_graphs):
 def intra_pop_links(G, H_graphs):
     return [ ((u,v1), (u,v2)) for u in G for (v1, v2) in H_graphs[G.node[u]['H']].edges() ]
 
-def inter_pop_links(G, H_graphs):
+def inter_pop_links(G, H_graphs, default_operator='cartesian'):
     #TODO:: list any edges without operator marked on them
     edges = []
     cartesian_operators = set(["cartesian", "strong"])
     tensor_operators = set(["tensor", "strong"])
     for (u1, u2) in G.edges():
-        operator = G[u1][u2]['operator']
+        try:
+            operator = G[u1][u2]['operator']
+        except KeyError:
+            operator =  default_operator
         H1 = H_graphs[G.node[u1]['H']]
         H2 = H_graphs[G.node[u2]['H']]
         if operator == 'rooted':
@@ -283,7 +335,7 @@ def propagate_node_attributes(G, H_graphs, node_list):
             del u_v_data['root']
         except KeyError:
             pass
-        retval.append( (u, v, u_v_data))
+        retval.append( ((u, v), u_v_data))
     return retval
 
 def propagate_edge_attributes(G, H_graphs, edge_list):
@@ -294,15 +346,16 @@ def propagate_edge_attributes(G, H_graphs, edge_list):
         if u1 == u2:
 # intra-pop
             edge_data = H_graphs[G.node[u2]['H']].get_edge_data(v1, v2)
-            retval.append( (s, t, edge_data))
         else:
 # inter-pop
+#TODO: why do we need {}?
             edge_data = G.get_edge_data(u1, u2)
             try:
                 del edge_data['operator']
             except KeyError:
                 pass
-            retval.append( (s, t, edge_data))
+
+        retval.append( (s, t, edge_data))
     return retval
 
 
@@ -322,6 +375,10 @@ def plot(G, label="plot"):
                     ('b1'): (1,1),
                     ('b2'): (1,0),
                     }
+# check each element is in graph
+            if len(pos) != len(G):
+# use spring layout, as different to built in graph examples
+                pos = nx.spring_layout(G)
         except (IndexError, TypeError):
 # Use spring layout - can't do in a row or won't show cycles (due to overlap)
                 pos = nx.spring_layout(G)
