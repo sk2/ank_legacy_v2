@@ -26,8 +26,4 @@ autonetkit.cfg
 library.txt
 example.graphml
 AutoNetkit/algorithms/output.png
-<<<<<<< HEAD
 AutoNetkit/lib/examples/topologies/example.graphml
-=======
-AutoNetkit/lib/examples/topologies/example.graphml
->>>>>>> 2fb3c8428946a0f59f0824ac40f501c33e57b0af
