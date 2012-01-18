@@ -274,9 +274,9 @@ class BgpPolicyParser:
         library_params = attribute | Group(set_values) | empty_set
         library_function = attribute.setResultsName("def_name") + Suppress("(") + delimitedList( library_params, delim=',').setResultsName("def_params") + Suppress(")")
 # May want to distinguish better?
-        self.library_call = library_function
+        self.library_def = Suppress("apply") + library_function
 
-        self.library_def = Suppress("def") + library_function
+        self.library_def = Suppress("define") + library_function
         self.library_def.setFailAction(parse_fail_action)
         self.library_edge_query = (self.attribute.setResultsName("query_a")
                 + edgeType + self.attribute.setResultsName("query_b"))
