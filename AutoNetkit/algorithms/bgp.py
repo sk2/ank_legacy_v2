@@ -123,16 +123,6 @@ def configure_ibgp_rr(network):
     for my_as in ank.get_as_graphs(network):
         #TODO: for neatness, look at redefining the above functions inside here setting my_as as network
         asn = my_as.name
-        nodes_with_level_set = sum(1 for n in my_as if network.graph.node[n].get('ibgp_level'))
-        if nodes_with_level_set != len(my_as):
-            if nodes_with_level_set != 0:
-                LOG.info("Only %s/%s nodes in AS%s have ibgp_level set" % (nodes_with_level_set,
-                    len(my_as), asn))
-                LOG.info("Setting ibgp_level to default of 1 for nodes in AS%s" % asn)
-            # none set, user probably doesn't care for this AS, do full-mesh
-            LOG.debug("Setting ibgp_level to %s for nodes in AS%s" % (default_ibgp_level, asn))
-            for node in my_as:
-                network.graph.node[node]['ibgp_level'] = default_ibgp_level
         nodes_without_level_set = [n for n in my_as if not network.graph.node[n].get('ibgp_level')]
         if len(nodes_without_level_set):
                 LOG.info("Setting default ibgp_level of %s for nodes %s" % (default_ibgp_level,
