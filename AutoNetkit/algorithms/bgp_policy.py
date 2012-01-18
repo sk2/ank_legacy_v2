@@ -262,7 +262,6 @@ class BgpPolicyParser:
         bgpSessionQuery =  bgpSessionQuery | unconditionalAction
         self.bgpSessionQuery = bgpSessionQuery
 
-
         self.bgpApplicationQuery = self.edgeQuery + Suppress(":") + self.bgpSessionQuery
 
 # Library stuff
