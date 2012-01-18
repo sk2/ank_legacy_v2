@@ -23,16 +23,13 @@ def main():
             "Additional documentation at http://packages.python.org/AutoNetkit/")
     opt = optparse.OptionParser(usage, version="%prog " + str(version))
 
-    opt.add_option('--plot', '-p', action="store_true", dest="plot", 
-                    default=False, help="Plot lab")
+    opt.add_option('--plot', '-p', action="store_true", dest="plot", default=False, help="Plot lab")
     opt.add_option('--deploy', action="store_true", default=False, help="Deploy lab to hosts")
     opt.add_option('--verify', action="store_true", default=False, help="Verify lab on hosts")
     opt.add_option('--save', action="store_true", default=False, 
             help="Save the network for future use (eg verification")
-    opt.add_option('--file', '-f', default= None, 
-                    help="Load configuration from FILE")        
-    opt.add_option('--bgp_policy', '-b', default= None, 
-                    help="Load BGP policy statements from FILE")     
+    opt.add_option('--file', '-f', default= None, help="Load configuration from FILE")        
+    opt.add_option('--bgp_policy', '-b', default= None, help="Load BGP policy statements from FILE")     
 
     opt.add_option('--debug',  action="store_true", default=False, help="Debugging output")
 
