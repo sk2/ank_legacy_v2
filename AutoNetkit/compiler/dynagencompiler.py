@@ -144,11 +144,11 @@ class dynagenCompiler:
 
         interfaces.append({
             'id':          'lo0',
-            'ip':           str(lo_ip.ip),
-            'netmask':      str(lo_ip.netmask),
-            'wildcard':      str(lo_ip.hostmask),
-            'prefixlen':    str(lo_ip.prefixlen),
-            'network':       str(lo_ip.network),
+            'ip':           lo_ip.ip,
+            'netmask':      lo_ip.netmask,
+            'wildcard':      lo_ip.hostmask,
+            'prefixlen':    lo_ip.prefixlen,
+            'network':       lo_ip.network,
             'net_ent_title': ank.ip_to_net_ent_title_ios(lo_ip),
             'description': 'Loopback',
         })
@@ -163,12 +163,12 @@ class dynagenCompiler:
 # Interface information for router config
             interfaces.append({
                 'id':          int_id,
-                'ip':           str(data['ip']),
-                'network':       str(subnet.network),
-                'prefixlen':    str(subnet.prefixlen),
-                'netmask':    str(subnet.netmask),
-                'wildcard':      str(subnet.hostmask),
-                'broadcast':    str(subnet.broadcast),
+                'ip':           data['ip'],
+                'network':       subnet.network,
+                'prefixlen':    subnet.prefixlen,
+                'netmask':    subnet.netmask,
+                'wildcard':      subnet.hostmask,
+                'broadcast':    subnet.broadcast,
                 'description':  description,
             })
 
@@ -184,8 +184,9 @@ class dynagenCompiler:
         if igp_graph.degree(router) > 0:
             # Only start IGP process if IGP links
 #TODO: make loopback a network mask so don't have to do "0.0.0.0"
-            igp_interfaces.append({ 'id': 'lo0', 'wildcard': "0.0.0.0", 'passive': True,
-                'network': "255.255.255.255",
+            igp_interfaces.append({ 'id': 'lo0', 'wildcard': router.lo_ip.hostmask,
+                'passive': True,
+                'network': router.lo_ip.network,
                 'area': default_area, 'weight': default_weight,
                 })
             for src, dst, data in igp_graph.edges(router, data=True):
