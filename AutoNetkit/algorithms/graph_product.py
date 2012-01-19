@@ -252,23 +252,27 @@ def graph_product(G_file):
     H_graphs = {}
     try:
         G = nx.read_graphml(G_file).to_undirected()
-        G = remove_yed_edge_id(G)
-        nx.relabel_nodes(G, dict((n, data.get('label', n)) for n, data in G.nodes(data=True)), copy=False)
     except IOError:
-        print "Unable to read %s" % G_file
+        G = nx.read_gml(G_file).to_undirected()
         return
+    G = remove_yed_edge_id(G)
+    nx.relabel_nodes(G, dict((n, data.get('label', n)) for n, data in G.nodes(data=True)), copy=False)
     G_path = os.path.split(G_file)[0]
     H_labels = set(data.get("H") for n, data in G.nodes(data=True))
     for label in H_labels:
-        H_file = os.path.join(G_path, "%s.graphml" % label)
         try:
+            H_file = os.path.join(G_path, "%s.graphml" % label)
             H = nx.read_graphml(H_file).to_undirected()
-            H = remove_yed_edge_id(H)
-            nx.relabel_nodes(H, dict((n, data.get('label', n)) for n, data in H.nodes(data=True)), copy=False)
-            H_graphs[label] = H
         except IOError:
-            print "Unable to read H_graph %s" % H_file
-            return
+            try:
+                H_file = os.path.join(G_path, "%s.gml" % label)
+                H = nx.read_gml(H_file).to_undirected()
+            except IOError:
+                print "Unable to read H_graph %s" % H_file
+                return
+        H = remove_yed_edge_id(H)
+        nx.relabel_nodes(H, dict((n, data.get('label', n)) for n, data in H.nodes(data=True)), copy=False)
+        H_graphs[label] = H
 
     G_out = nx.Graph()
     G_out.add_nodes_from(node_list(G, H_graphs))
