@@ -1,5 +1,41 @@
 """
 Generate dynagen configuration files for a network 
+
+Config options
+===============
+
+autonetkit.cfg::
+
+    [Dynagen]
+        image = /dev/null
+        working dir = /home/autonetkit/
+        model = 7200
+        interfaces = "FastEthernet0/0", "FastEthernet0/1", "FastEthernet1/0", "FastEthernet1/1", "FastEthernet2/0", "FastEthernet2/1"
+        [[Slots]]
+            slot1 = PA-2FE-TX
+            slot2 = PA-2FE-TX
+        [[Options]]
+            idlepc = 0x6085af60
+            ram = 128
+        [[Hypervisor]]
+            server = 127.0.0.1
+            port = 7202
+
+lab.net::
+
+    [[7202]]
+        image = /dev/null
+        ghostios = True
+        chassis = 7200   
+		idlepc = 0x6085af60
+		ram = 128
+		slot1 = PA-2FE-TX
+		slot2 = PA-2FE-TX  
+
+can put any ``key = val`` line into the *options* section of the config file.
+Same for slots, so ``S0/0 = r2 s0/0`` is also valid.
+
+
 """
 from mako.lookup import TemplateLookup    
 
