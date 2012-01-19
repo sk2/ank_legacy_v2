@@ -6,12 +6,13 @@ graph
 	node
 	[
 		id	0
-		label	"AAA"
-		]
+		label	"AAA" 
+		ibgp_level	2   
+	 ]
 	node
 	[
 		id	1
-		label	"2"
+		label	"2"  
 	]
 	node
 	[

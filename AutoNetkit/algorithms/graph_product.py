@@ -233,6 +233,7 @@ import networkx as nx
 import logging
 import itertools
 import os
+import pprint
 
 LOG = logging.getLogger("ANK")
 
@@ -241,13 +242,22 @@ __all__ = ['graph_product']
 def remove_yed_edge_id(G):
     for s, t, data in G.edges(data=True):
         try:
-            del data['id']
+            del G[s][t]['id']
         except KeyError:
             continue
-        G[s][t] = data
+    return G
+
+def remove_gml_node_id(G):
+    for n in G:
+        try:
+            del G.node[n]['id']
+        except KeyError:
+            continue
     return G
 
 def graph_product(G_file):
+    
+    #TODO: take in a graph (eg when called from graphml) rather than re-reading the graph again
     LOG.info("Applying graph product to %s" % G_file)
     H_graphs = {}
     try:
@@ -256,6 +266,7 @@ def graph_product(G_file):
         G = nx.read_gml(G_file).to_undirected()
         return
     G = remove_yed_edge_id(G)
+    G = remove_gml_node_id(G)
     nx.relabel_nodes(G, dict((n, data.get('label', n)) for n, data in G.nodes(data=True)), copy=False)
     G_path = os.path.split(G_file)[0]
     H_labels = set(data.get("H") for n, data in G.nodes(data=True))
@@ -270,7 +281,13 @@ def graph_product(G_file):
             except IOError:
                 print "Unable to read H_graph %s" % H_file
                 return
+        root_nodes = [n for n in H if H.node[n].get("root")]
+        if len(root_nodes):
+# some nodes have root set
+            non_root_nodes = set(H.nodes()) - set(root_nodes)
+            H.add_nodes_from( (n, dict(root=False)) for n in non_root_nodes)
         H = remove_yed_edge_id(H)
+        H = remove_gml_node_id(H)
         nx.relabel_nodes(H, dict((n, data.get('label', n)) for n, data in H.nodes(data=True)), copy=False)
         H_graphs[label] = H
 
@@ -281,6 +298,7 @@ def graph_product(G_file):
     G_out.add_edges_from(inter_pop_links(G, H_graphs))
     G_out.add_edges_from(propagate_edge_attributes(G, H_graphs, G_out.edges()))
 #TODO: need to set default ASN, etc?
+    pprint.pprint( G_out.nodes(data=True))
     return G_out
 
 def node_list(G, H_graphs):
@@ -302,17 +320,28 @@ def inter_pop_links(G, H_graphs, default_operator='cartesian'):
             operator =  default_operator
         H1 = H_graphs[G.node[u1]['H']]
         H2 = H_graphs[G.node[u2]['H']]
+# Node lists - if 'root' set then only use root nodes
+        try:
+            N1 = [n for n in H1 if H1.node[n]['root']]
+        except KeyError:
+            N1 = [n for n in H1]
+        try:
+            N2 = [n for n in H2 if H2.node[n]['root']]
+        except KeyError:
+            N2 = [n for n in H2]
+# 'root' not set
+#TODO: fold rooted back into special case of cartesian - just do the same for now
         if operator == 'rooted':
-            edges += [((u1, v1), (u2, v2)) for v1 in H1 for v2 in H2
+            edges += [((u1, v1), (u2, v2)) for v1 in N1 for v2 in N2
                     if H1.node[v1].get("root") == H2.node[v2].get("root") == True ]
 
         if operator == 'lexical':
-            edges += [((u1, v1), (u2, v2)) for v1 in H1 for v2 in H2]
+            edges += [((u1, v1), (u2, v2)) for v1 in N1 for v2 in N2]
 
         if operator in cartesian_operators:
-            edges += [((u1, v1), (u2, v2)) for v1 in H1 for v2 in H2 if v1 == v2]
+            edges += [((u1, v1), (u2, v2)) for v1 in N1 for v2 in N2 if v1 == v2]
         if operator in tensor_operators:
-            edges += [((u1, v1), (u2, v2)) for v1 in H1 for v2 in H2
+            edges += [((u1, v1), (u2, v2)) for v1 in N1 for v2 in N2
                     if  H1.has_edge(v1, v2) or H2.has_edge(v1,v2)]
 
     return edges

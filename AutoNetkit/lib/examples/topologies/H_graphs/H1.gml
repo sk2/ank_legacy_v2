@@ -7,11 +7,14 @@ graph
 	[
 		id	0
 		label	"rr1"
+		ibgp_level	2  
+		root True
 	]
 	node
 	[
 		id	1
-		label	"2"
+		label	"2" 
+		root True
 	]
 	node
 	[
