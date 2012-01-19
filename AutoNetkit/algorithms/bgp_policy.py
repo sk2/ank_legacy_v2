@@ -5,12 +5,21 @@ Parse BGP policy from a file.
 
 Example Policies::
 
-        (asn = 1) egress-> (node = a.b): (if Origin(asn=2) then addTag a100)
-        (asn = 1) egress-> (asn = 2): (if tag = abc then setMED 200)
-        (asn = 1) egress-> (asn = 2): (if tag = cde then addTag a300)     
-        (asn = 1) ->ingress (asn=2): (setLP 200)         
-        (asn = 1) egress-> (asn = 3): (if Transit(asn = 2) then addTag t_test)
-        (asn = 1) egress-> (asn = 3): (if Origin(asn = 2) then addTag o_test)
+    (asn = 1) egress-> (node = a.b): (if Origin(asn=2) then addTag a100)
+    (asn = 1) egress-> (asn = 2): (if tags contain abc then setMED 200)
+    (asn = 1) egress-> (asn = 2): (if tag = cde then addTag a300) else (if tag = def then setMED 200) 
+    (asn = 1) egress-> (asn = 2): (if tag = ghi then addTag a300)           
+    (asn = 2) ->ingress (asn = 1): (if tag = xyz then setLP 100)          
+    (asn = 2) ->ingress (asn = 1): (if tag = zzz then setLP 150 & reject route)    
+
+    importLibrary library.txt
+
+    includePolicy somefile.txt 
+
+    (asn =1 ) ->ingress (asn=2): (setLP 200)         
+    (asn = 1) egress-> (asn = 3): (if Transit(asn = 2) then addTag t_test)
+    (asn = 1) egress-> (asn = 3): (if Origin(asn = 2) then addTag o_test)             
+    (asn = 1) egress-> (asn = 2): (if tag = abc then reject route)       
 
 .. warning::
 
@@ -855,7 +864,6 @@ class BgpPolicyParser:
                 else:
                     policy_lines.append(line)
 
-        print policy_lines
 #Now parse the combined files
 
         for line in policy_lines:
