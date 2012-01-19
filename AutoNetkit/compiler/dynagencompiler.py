@@ -13,9 +13,7 @@ LOG = logging.getLogger("ANK")
 
 import shutil      
 import glob
-import netaddr
 import time
-import string
 import itertools
 import tarfile
 
@@ -386,6 +384,8 @@ class dynagenCompiler:
         #TODO: need nice way to map ANK graph into feasible hardware graph
 
         chassis = config.settings['Dynagen']['model']
+        slots = config.settings['Dynagen']['Slots']
+        options = config.settings['Dynagen']['Options']
 
         # ugly alias
 #TODO: remove this
@@ -444,6 +444,8 @@ class dynagenCompiler:
                 all_router_info = all_router_info,   
                 working_dir = working_dir,
                 chassis = chassis,
+                slots = slots,
+                options = options,
                 ))
 
         return

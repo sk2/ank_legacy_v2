@@ -5,7 +5,13 @@ autostart = True
     [[${hypervisor_port}]]
         image = ${image}
         ghostios = True
-        chassis = ${chassis}        
+        chassis = ${chassis}   
+		%for option, value in options.items():
+		${option} = ${value}
+		%endfor  
+   		%for slot, wic in slots.items():
+		${slot} = ${wic}
+		%endfor           
 % for id, data in sorted(all_router_info.items()):           
       [[ROUTER ${data['hostname']}]]     
 			console = ${data['console']}           
