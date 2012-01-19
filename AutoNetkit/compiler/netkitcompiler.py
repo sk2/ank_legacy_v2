@@ -181,7 +181,7 @@ class NetkitCompiler:
         # Need to chown root dir for ssh keys
 # refer http://list.dia.uniroma3.it/pipermail/netkit.users/2010-February/000552.html
         use_ssh_key = False
-        if config.settings['Lab']['netkit ssh key']:
+        if config.settings['Netkit']['ssh key']:
             #chown root:root /root
             use_ssh_key = True
 

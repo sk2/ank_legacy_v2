@@ -83,7 +83,7 @@ class dynagenCompiler:
         self.hypervisor_port = hypervisor_port
         self.igp = igp
         self.interface_limit = 6
-        self.interface_names = config.settings['Lab']['dynagen interfaces']
+        self.interface_names = config.settings['Dynagen']['interfaces']
         self.interface_mapping = {"FastEthernet": "f"}
 
     def initialise(self):  
@@ -384,12 +384,12 @@ class dynagenCompiler:
         console_ports = itertools.count(2000)
 
         #NOTE this must be a full path!
-        server_config_dir = os.path.join(config.settings['Lab']['dynagen working dir'], lab_dir())
+        server_config_dir = os.path.join(config.settings['Dynagen']['working dir'], lab_dir())
         working_dir ="/tmp"
 
         #TODO: need nice way to map ANK graph into feasible hardware graph
 
-        chassis = config.settings['Lab']['dynagen model']
+        chassis = config.settings['Dynagen']['model']
 
         # ugly alias
 #TODO: remove this

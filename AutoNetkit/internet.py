@@ -318,9 +318,9 @@ class Internet:
         if self.compile_targets['dynagen']:
             dynagen_comp = ank.dynagenCompiler(self.network, services = self.services, 
                     igp = self.igp,
-                    image = config.settings['Lab']['dynagen image'],
-                    hypervisor_server = config.settings['Lab']['dynagen hypervisor server'],
-                    hypervisor_port = config.settings['Lab']['dynagen hypervisor port'],
+                    image = config.settings['Dynagen']['image'],
+                    hypervisor_server = config.settings['Dynagen']['Hypervisor']['server'],
+                    hypervisor_port = config.settings['Dynagen']['Hypervisor']['port'],
                     )
             dynagen_comp.initialise()     
             dynagen_comp.configure()
