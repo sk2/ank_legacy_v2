@@ -119,6 +119,7 @@ class dynagenCompiler:
         self.interface_limit = 6
         self.interface_names = config.settings['Dynagen']['interfaces']
         self.interface_mapping = {"FastEthernet": "f"}
+        self.default_weight = 1
 
     def initialise(self):  
         """Creates lab folder structure"""
@@ -170,6 +171,7 @@ class dynagenCompiler:
                 'wildcard':      subnet.hostmask,
                 'broadcast':    subnet.broadcast,
                 'description':  description,
+                'weight':   data.get('weight', self.default_weight),
             })
 
         return interfaces
@@ -177,7 +179,6 @@ class dynagenCompiler:
     def configure_igp(self, router, igp_graph, ebgp_graph):
         """igp configuration"""
         LOG.debug("Configuring IGP for %s" % self.network.label(router))
-        default_weight = 1
 #TODO: get area from router
         default_area = 0
         igp_interfaces = []
@@ -187,7 +188,7 @@ class dynagenCompiler:
             igp_interfaces.append({ 'id': 'lo0', 'wildcard': router.lo_ip.hostmask,
                 'passive': True,
                 'network': router.lo_ip.network,
-                'area': default_area, 'weight': default_weight,
+                'area': default_area, 'weight': self.default_weight,
                 })
             for src, dst, data in igp_graph.edges(router, data=True):
                 int_id = self.int_id(data['id'])
@@ -197,7 +198,7 @@ class dynagenCompiler:
                         ank.fqdn(self.network, dst))
                 igp_interfaces.append({
                     'id':       int_id,
-                    'weight':   data.get('weight', default_weight),
+                    'weight':   data.get('weight', self.default_weight),
                     'area':   data.get('area', default_area),
                     'network': str(subnet.network),
                     'description': description,
@@ -215,7 +216,7 @@ class dynagenCompiler:
                     ank.fqdn(self.network, dst))
                 igp_interfaces.append({
                     'id':       int_id,
-                    'weight':   data.get('weight', default_weight),
+                    'weight':   data.get('weight', self.default_weight),
                     'area':   data.get('area', default_area),
                     'description': description,
                     'passive': True,
