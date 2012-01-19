@@ -44,7 +44,6 @@ lookup = TemplateLookup(directories=[ template_dir ],
                        )
                 
 import os    
-import itertools
 
 #TODO: add more detailed exception handling to catch writing errors
 # eg for each subdir of templates
@@ -65,7 +64,7 @@ def router_conf_dir():
 
 def router_conf_file(network, router):
     """Returns filename for config file for router"""
-    return "%s.conf" % ank.rtr_folder_name(network, router)
+    return "%s.conf" % router.folder_name
 
 def router_conf_path(network, router):
     """ Returns full path to router config file"""
@@ -409,7 +408,7 @@ class dynagenCompiler:
             router_info['console'] =  rtr_console_port
             self.network.graph.node[router]['dynagen_console_port'] = rtr_console_port
             #TODO: tidy this up - want relative reference to config dir
-            rtr_conf_file = os.path.join("configs", "%s.cfg" % router.hostname)
+            rtr_conf_file = os.path.join("configs", "%s.conf" % router.folder_name)
             #router_info['cnfg'] = rtr_conf_file
             # Absolute configs for remote dynagen deployment
 #TODO: make this dependent on remote host - if localhost then don't use
