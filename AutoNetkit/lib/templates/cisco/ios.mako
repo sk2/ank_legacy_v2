@@ -61,19 +61,18 @@ router bgp ${asn}
 % for i in interfaces:
  network ${i['network']} mask ${i['netmask']}
 % endfor
-% for groupname, group_data in bgp_groups.items():         
- % if group_data['type'] == 'internal' or group_data['type'] == 'external':
+% for groupname, group_data in bgp_groups.items():     
+ % if group_data['type'] == 'internal' or group_data['type'] == 'external':   
   % for neighbor in group_data['neighbors']:         
  neighbor ${neighbor['id']} remote-as ${asn}
  neighbor ${neighbor['id']} update-source loopback 0
  neighbor ${neighbor['id']} send-community
-   % for route_map in neighbor['route_maps_in']:
- neighbor ${neighbor['id']} route-map ${route_map} in 
-	%endfor
-   % for route_map in neighbor['route_maps_out']:
- neighbor ${neighbor['id']} route-map ${route_map} out 
-	%endfor
-
+   % if neighbor['route_maps_in']:
+ neighbor ${neighbor['id']} route-map ${neighbor['route_maps_in']} in   
+   % endif
+   % if neighbor['route_maps_out']:
+ neighbor ${neighbor['id']} route-map ${neighbor['route_maps_out']} out
+   % endif
    % if 'internal_rr' in groupname:
  neighbor ${neighbor['id']} route-reflector-client
    % endif
@@ -105,12 +104,12 @@ ip prefix-list ${name} seq 5 permit ${prefix}
  % endfor
 % endfor 
 !       
-% for route_map in sorted(policy_options['route_maps']):
-  % for match_tuple in route_map.match_tuples:
+% for rm_name, match_tuples in sorted(policy_options['route_maps'].items()):
+  % for index, match_tuple in enumerate(match_tuples, start=1):
     % if match_tuple.reject:
-route-map ${route_map.name} deny ${match_tuple.seq_no * 10}
+route-map ${rm_name} deny ${index * 10}
     % else:
-route-map ${route_map.name} permit ${match_tuple.seq_no * 10}
+route-map ${rm_name} permit ${index * 10}
     % endif
     % if len(match_tuple.match_clauses):
       % for match_clause in match_tuple.match_clauses:
@@ -141,7 +140,10 @@ route-map ${route_map.name} permit ${match_tuple.seq_no * 10}
  set comm-list ${action_clause.value} delete
 	% endif     
       %endfor   
-    % endif
+    % endif         
+	% if index < len(match_tuples):
+ continue
+	% endif
  % endfor
 !
 % endfor
