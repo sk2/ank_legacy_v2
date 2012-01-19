@@ -71,6 +71,8 @@ class Internet:
                 'olive': olive,
                 'olive_qemu_patched': olive_qemu_patched,
                 }
+        if not igp:
+            igp = config.settings['Lab']['igp']
         self.igp = igp
         if filename:
             self.load(filename)

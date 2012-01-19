@@ -56,11 +56,10 @@ def router_conf_path(network, router):
     r_file = router_conf_file(network, router)
     return os.path.join(router_conf_dir(), r_file)
 
-
 class JunosCompiler:
     """Compiler main"""
 
-    def __init__(self, network, services, igp, target, olive_qemu_patched=False):
+    def __init__(self, network, services, igp="ospf", target=None, olive_qemu_patched=False):
         self.network = network
         self.services = services
         self.igp = igp
