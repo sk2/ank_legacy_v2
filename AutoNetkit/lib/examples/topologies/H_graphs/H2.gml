@@ -7,12 +7,14 @@ graph
 	[
 		id	0
 		label	"AAA" 
-		ibgp_level	2   
+		ibgp_level	2  
+		root True
 	 ]
 	node
 	[
 		id	1
 		label	"2"  
+		root True
 	]
 	node
 	[

@@ -51,6 +51,7 @@
       </data>
     </node>
     <edge id="e0" source="n0" target="n1">
+      <data key="d11"><![CDATA[strong]]></data>
       <data key="d14">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>

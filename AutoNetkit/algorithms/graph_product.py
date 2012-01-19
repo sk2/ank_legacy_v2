@@ -298,7 +298,6 @@ def graph_product(G_file):
     G_out.add_edges_from(inter_pop_links(G, H_graphs))
     G_out.add_edges_from(propagate_edge_attributes(G, H_graphs, G_out.edges()))
 #TODO: need to set default ASN, etc?
-    pprint.pprint( G_out.nodes(data=True))
     return G_out
 
 def node_list(G, H_graphs):
