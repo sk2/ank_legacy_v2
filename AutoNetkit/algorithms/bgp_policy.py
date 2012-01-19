@@ -682,9 +682,8 @@ class BgpPolicyParser:
 
         return query_processed 
 
-    def parse_user_def_functions(self):
+    def parse_user_def_functions(self, library_file):
         """Note you need a blank newline after a function definition"""
-        library_file = "library.txt"
         try:
             with open( library_file, 'r') as f_lib:
                 library_data = f_lib.read()
@@ -748,8 +747,7 @@ class BgpPolicyParser:
             # and remap tags
 
         except IOError:
-            LOG.debug("Unable to open library file")
-
+            LOG.warn("Unable to open library file: %s" % library_file)
 
     def apply_user_library_calls(self):
             f_library_debug = open( os.path.join(config.log_dir, "library_dump.txt"), "w")
@@ -823,25 +821,56 @@ class BgpPolicyParser:
                         self.apply_bgp_policy(policy_line)
             f_library_debug.close()
 
+    def load_include_file(self, include_file):
+        retval = []
+        try:
+            with open( include_file, 'r') as f_include:
+                for line in f_include.readlines():
+                    retval.append(line.strip())
+        except IOError:
+            LOG.warn("Unable to load include file: %s" % include_file)
+        return retval
+
     def apply_policy_file(self, policy_in_file):
         """Applies a BGP policy file to the network"""
         LOG.debug("Applying policy file %s" % policy_in_file)
+        policy_lines = []
+        import_library = "importLibrary"
+        include = "includePolicy"
         with open( policy_in_file, 'r') as f_pol:
             for line in f_pol.readlines():
                 line = line.strip()
                 if line.startswith("#"):
                     LOG.debug("Skipping commented line %s", line)
                     continue
-                if line.strip() == "":
-# blank line
+                if line == "":
                     continue
-                try:
-                    LOG.debug("Trying policy %s" % line)
-                    self.apply_bgp_policy(line)
-                except pyparsing.ParseFatalException as e:
-                    LOG.warn("Unable to parse query line %s" % line)
+                if line.startswith(import_library):
+                    library_file = line.replace(import_library, "").strip()
+                    self.parse_user_def_functions(library_file)
+                elif line.startswith(include):
+                    include_file = line.replace(include, "").strip()
+                    file_contents = self.load_include_file(include_file)
+                    policy_lines += file_contents
+                else:
+                    policy_lines.append(line)
 
-        self.parse_user_def_functions()
+        print policy_lines
+#Now parse the combined files
+
+        for line in policy_lines:
+            line = line.strip()
+            if line.startswith("#"):
+                LOG.debug("Skipping commented line %s", line)
+                continue
+            if line == "":
+                continue
+            try:
+                LOG.debug("Trying policy %s" % line)
+                self.apply_bgp_policy(line)
+            except pyparsing.ParseFatalException as e:
+                LOG.warn("Unable to parse query line %s" % line)
+
         self.apply_user_library_calls()
         self.cl_and_pl_per_node()
         self.allocate_tags()

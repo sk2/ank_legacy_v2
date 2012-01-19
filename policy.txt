@@ -3,7 +3,11 @@
 (asn = 1) egress-> (asn = 2): (if tag = cde then addTag a300) else (if tag = def then setMED 200) 
 (asn = 1) egress-> (asn = 2): (if tag = ghi then addTag a300)           
 (asn = 2) ->ingress (asn = 1): (if tag = xyz then setLP 100)          
-(asn = 2) ->ingress (asn = 1): (if tag = zzz then setLP 150 & reject route)     
+(asn = 2) ->ingress (asn = 1): (if tag = zzz then setLP 150 & reject route)    
+
+importLibrary library.txt
+
+includePolicy somefile.txt 
 
 
 (asn =1 ) ->ingress (asn=2): (setLP 200)         
@@ -12,8 +16,5 @@
 #(asn = 1) egress-> (asn = 2): (if tag = abc then reject route)
 
                                            
-set1 = {AS1}
-set2 = {AS2}        
-set3 = {} 
-apply test(set1, set3)
+
 
