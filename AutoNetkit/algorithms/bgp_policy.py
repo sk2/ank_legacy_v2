@@ -327,7 +327,7 @@ class BgpPolicyParser:
         >>> pol_parser.apply_bgp_policy("(node = a_b ) ->ingress (Network = AS2): (addTag ABC & setLP 90) ")
         >>> pol_parser.apply_bgp_policy("(node = a_b ) ->ingress (Network = AS2): (if tags contain abc then addTag ABC & setLP 90) ")
         """
-        LOG.debug("Applying policy %s" % qstring)
+        LOG.debug("Applying BGP policy %s" % qstring)
         result = self.bgpPolicyLine.parseString(qstring)
         if 'set_definition' in result:
             LOG.debug("Storing set definition %s" % result.set_name)
