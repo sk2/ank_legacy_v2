@@ -84,13 +84,17 @@ def allocate_dns_servers(network):
     dns_advertise_graph = nx.DiGraph()
     LOG.debug("DNS currently disabled")
 
-    dns_levels = config.settings['DNS']['levels']
-    if not dns_levels:
-        LOG.debug("DNS level 0, disabling DNS for network")
+    hierarchical_dns = config.settings['DNS']['hierarchical']
+    if hierarchical_dns:
+        LOG.info("Configuring hierarchical DNS")
+        dns_levels = 4
+    else:
+        dns_levels = 1
+        LOG.debug("Non-hierarchical DNS not yet implemented")
+#TODO: do "flat" dns - one root server, add all other devices as children for both resolving and authoritative
+
         return
 
-    LOG.info("DNS level set to %s" % dns_levels)
-    dns_levels = 4
 
     def nodes_by_eccentricity(graph):
         if len(graph) == 1:
@@ -134,13 +138,11 @@ def allocate_dns_servers(network):
         if not data.get("dns_l3_cluster"):
             dns_graph.node[node]['dns_l3_cluster'] = format_asn(network.asn(node))
 
-
     for my_as in ank.get_as_graphs(network):
         asn = my_as.asn
         if not nx.is_strongly_connected(my_as):
             LOG.info("AS%s not fully connected, skipping DNS configuration" % asn)
             continue
-
 
         l2_clusters = list(set(dns_graph.node[n].get("dns_l2_cluster") for n in my_as))
         for l2_cluster in l2_clusters:
