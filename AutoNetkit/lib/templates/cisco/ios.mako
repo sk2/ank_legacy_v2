@@ -61,26 +61,22 @@ router bgp ${asn}
 % for i in interfaces:
  network ${i['network']} mask ${i['netmask']}
 % endfor
-% for groupname, group_data in bgp_groups.items():
- % if group_data['type'] == 'internal':
-  % for neighbor in group_data['neighbors']:
+% for groupname, group_data in bgp_groups.items():         
+ % if group_data['type'] == 'internal' or group_data['type'] == 'external':
+  % for neighbor in group_data['neighbors']:         
  neighbor ${neighbor['id']} remote-as ${asn}
  neighbor ${neighbor['id']} update-source loopback 0
  neighbor ${neighbor['id']} send-community
-   % if neighbor['route_maps_in']:
- neighbor ${neighbor['id']} route-map ${neighbor['route_maps_in'].pop()} in
-   % elif neighbor['route_maps_out']:
- neighbor ${neighbor['id']} route-map ${neighbor['route_maps_out'].pop()} out
-   % endif
+   % for route_map in neighbor['route_maps_in']:
+ neighbor ${neighbor['id']} route-map ${route_map} in 
+	%endfor
+   % for route_map in neighbor['route_maps_out']:
+ neighbor ${neighbor['id']} route-map ${route_map} out 
+	%endfor
 
    % if 'internal_rr' in groupname:
  neighbor ${neighbor['id']} route-reflector-client
    % endif
-  % endfor
- % elif group_data['type'] == 'external':
-  % for neighbor in group_data['neighbors']:
- neighbor ${neighbor['id']} remote-as ${neighbor['peer_as']}
- neighbor ${neighbor['id']} send-community
   % endfor
  % endif
 % endfor
@@ -109,15 +105,6 @@ ip prefix-list ${name} seq 5 permit ${prefix}
  % endfor
 % endfor 
 !       
-! Route-map call-groups 
-% for name, members in sorted(policy_options['route_map_call_groups'].items()):    
-route-map ${name} permit 10
-	% for member in members:
-	call ${member}
-	on-match next
-	%endfor 
-!            
-%endfor 
 % for route_map in sorted(policy_options['route_maps']):
   % for match_tuple in route_map.match_tuples:
     % if match_tuple.reject:

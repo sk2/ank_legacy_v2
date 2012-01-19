@@ -208,21 +208,9 @@ class dynagenCompiler:
             for src, neigh, data in ibgp_graph.edges(router, data=True):
                 route_maps_in = [route_map for route_map in 
                         self.network.g_session[neigh][router]['ingress']]
-                rm_call_group_name_in = None
-                if len(route_maps_in):
-                    rm_call_group_name_in = "rm_call_%s_in" % self.network.fqdn(neigh).replace(".", "_")
-                    route_map_call_groups[rm_call_group_name_in] = [r.name for r in route_maps_in]
-                    route_maps += route_maps_in
 
-                rm_call_group_name_out = "rm_call_%s_out" % self.network.fqdn(neigh).replace(".", "_")
                 route_maps_out = [route_map for route_map in 
                         self.network.g_session[router][neigh]['egress']]
-                rm_call_group_name_out = None
-                if len(route_maps_out):
-                    rm_call_group_name_out = "rm_call_%s_out" % (
-                            self.network.fqdn(neigh).replace(".", "_"))
-                    route_map_call_groups[rm_call_group_name_out] = [r.name for r in route_maps_out]
-                    route_maps += route_maps_out
 
                 description = data.get("rr_dir") + " to " + ank.fqdn(self.network, neigh)
                 if data.get('rr_dir') == 'down':
@@ -230,8 +218,8 @@ class dynagenCompiler:
                             {
                                 'id':  self.network.lo_ip(neigh).ip,
                                 'description':      description,
-                                'route_maps_in': rm_call_group_name_in,
-                                'route_maps_out': rm_call_group_name_out,
+                                'route_maps_in': route_maps_in,
+                                'route_maps_out': route_maps_out,
                                 })
                 elif (data.get('rr_dir') in set(['up', 'over', 'peer'])
                         or data.get('rr_dir') is None):
@@ -259,28 +247,16 @@ class dynagenCompiler:
             for peer in ebgp_graph.neighbors(router):
                 route_maps_in = [route_map for route_map in 
                                 self.network.g_session[peer][router]['ingress']]
-                rm_call_group_name_in = None
-                if len(route_maps_in):
-                    rm_call_group_name_in = "rm_call_%s_in" % self.network.fqdn(peer).replace(".", "_")
-                    route_map_call_groups[rm_call_group_name_in] = [r.name for r in route_maps_in]
-                route_maps += route_maps_in
 
-                rm_call_group_name_out = "rm_call_%s_out" % self.network.fqdn(peer).replace(".", "_")
                 route_maps_out = [route_map for route_map in 
                         self.network.g_session[router][peer]['egress']]
-                rm_call_group_name_out = None
-                if len(route_maps_out):
-                    rm_call_group_name_out = "rm_call_%s_out" % (
-                            self.network.fqdn(peer).replace(".", "_"))
-                    route_map_call_groups[rm_call_group_name_out] = [r.name for r in route_maps_out]
-                    route_maps += route_maps_out
 
                 peer_ip = physical_graph[peer][router]['ip'] 
 
             external_peers.append({
                 'id': peer_ip, 
-                'route_maps_in': rm_call_group_name_in,
-                'route_maps_out': rm_call_group_name_out,
+                'route_maps_in': route_maps_in,
+                'route_maps_out': route_maps_out,
                 'peer_as': self.network.asn(peer)})
             bgp_groups['external_peers'] = {
                     'type': 'external', 
@@ -300,7 +276,6 @@ class dynagenCompiler:
                 'community_lists': community_lists,
                 'prefix_lists': prefix_lists,
                 'route_maps': route_maps,
-                'route_map_call_groups': route_map_call_groups,
                 }
 
         return (bgp_groups, policy_options)
