@@ -42,8 +42,7 @@ def allocate_subnets(network, address_block=IPNetwork("10.0.0.0/8")):
     # allocates subnets to the edges and loopback in network graph
     # Put into dictionary, indexed by ASN (the name attribute of each as graph)
     # for easy appending of eBGP links
-    asgraphs = dict((my_as.asn, my_as) for my_as in
-                     ank.get_as_graphs(network))
+    asgraphs = dict((my_as.asn, my_as) for my_as in ank.get_as_graphs(network))
 
     # Simple method: break address_block into a /16 for each network
     #TODO: check this is feasible - ie against required host count
@@ -59,7 +58,8 @@ def allocate_subnets(network, address_block=IPNetwork("10.0.0.0/8")):
         ank.dns_advertise_link(src, dst)
 
     #reverse so that allocate subnets in ascending order
-    for my_as in sorted(asgraphs.values()):
+    for my_as in sorted(asgraphs.values(), key = lambda x: x.asn):
+        print "alloc for asn", my_as.asn
         asn = my_as.asn
         as_subnet =  subnet_list.next()
 
