@@ -47,9 +47,10 @@ router isis ${i['net_ent_title']}
 router ospf 1
  redistribute connected
  redistribute static
-  % for i in igp_interfaces:
+  % for i in igp_interfaces:    
+${i}
  network ${i['network']} ${i['wildcard']} area ${i['area']}
-    % if 'passive' in i:
+    % if i.get('passive'):
  passive-interface ${i['id']}
     % endif
   % endfor
