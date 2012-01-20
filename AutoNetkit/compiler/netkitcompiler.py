@@ -165,6 +165,9 @@ class NetkitCompiler:
         # Sets up netkit related files
         tap_host = ank.get_tap_host(self.network)
 
+        ank_version = pkg_resources.get_distribution("AutoNetkit").version
+        date = time.strftime("%Y-%m-%d %H:%M", time.localtime())
+
         lab_template = lookup.get_template("netkit/lab.mako")
         startup_template = lookup.get_template("netkit/startup.mako")
         zebra_daemons_template = lookup.get_template(
@@ -264,8 +267,7 @@ class NetkitCompiler:
 # MOTD
             f_zmotd = open( os.path.join(zebra_dir(self.network, node),
                                             "motd.txt"), 'w')
-            ank_version = pkg_resources.get_distribution("AutoNetkit").version
-            date = time.strftime("%Y-%m-%d %H:%M", time.localtime())
+
             f_zmotd.write(motd_template.render(
                 date = date,
                 version = ank_version,
@@ -276,7 +278,7 @@ class NetkitCompiler:
             f_z = open( os.path.join(zebra_dir(self.network, node),
                                      "zebra.conf"), 'w')
             f_z.write( zebra_template.render(
-                hostname = node.dns_hostname,
+                hostname = node.device_hostname,
                 password = self.zebra_password,
                 enable_password = self.zebra_password,
                 use_snmp = True,
@@ -334,6 +336,10 @@ class NetkitCompiler:
             conf = lab_conf,
             tapHost = tap_host,
             tapList = tap_list_strings,
+            lab_description = "AutoNetkit generated lab",
+            lab_version = date,
+            lab_author = "AutoNetkit %s" % ank_version,
+            lab_web =  "packages.python.org/AutoNetkit/",
         ))
 
     def configure_igp(self):
@@ -389,7 +395,7 @@ class NetkitCompiler:
 
                 f_handle.write(template.render
                                (
-                                   hostname = router.dns_hostname,
+                                   hostname = router.device_hostname,
                                    password = self.zebra_password,
                                    enable_password = self.zebra_password,
                                    interface_list = interface_list,
@@ -536,7 +542,7 @@ class NetkitCompiler:
                                              "bgpd.conf"),'w')
 
                 f_handle.write(template.render(
-                        hostname = router.dns_hostname,
+                        hostname = router.device_hostname,
                         asn = self.network.asn(router),
                         password = self.zebra_password,
                         enable_password = self.zebra_password,

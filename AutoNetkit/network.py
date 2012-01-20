@@ -97,6 +97,11 @@ class device (namedtuple('node', "network, id")):
         return ank.hostname(self)
 
     @property
+    def device_hostname(self):
+        """ Replaces . with _ to make safe for router configs"""
+        return ank.rtr_folder_name(self.network, self)
+
+    @property
     def is_router(self):
         return self.device_type == "router"
 

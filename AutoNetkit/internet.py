@@ -141,7 +141,7 @@ class Internet:
             ank.load_pickle(self.network, filename)
         elif ext == ".yaml":
             # Legacy ANK file format
-            LOG.warn("AutoNetkit no longer supports yaml file format")
+            LOG.warn("AutoNetkit no longer supports YAML file format, please use GraphML")
         else:
             LOG.warn("AutoNetkit does not support file format %s" % ext)
 
