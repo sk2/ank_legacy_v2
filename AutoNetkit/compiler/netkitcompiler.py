@@ -240,9 +240,9 @@ class NetkitCompiler:
                 #TODO: remove key, val and make it just key: val
                 lab_conf[rtr_folder_name].append( ('mem', dns_memory))
 
-            if config.settings['Lab']['netkit ssh key']:
+            if config.settings['Netkit']['ssh key']:
                 f_auth_keys = open(os.path.join(dot_ssh_dir(self.network, node), "authorized_keys"), "w")
-                f_auth_keys.write(config.settings['Lab']['netkit ssh key'])
+                f_auth_keys.write(config.settings['Netkit']['ssh key'])
                 f_auth_keys.close()
 
             # Zebra Daemons
