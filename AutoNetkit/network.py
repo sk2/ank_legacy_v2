@@ -359,12 +359,7 @@ class Network(object):
 
     def network(self, node):
         """ syntactic sugar for accessing network of a node """
-        retval = self.graph.node[node].get('network')
-        if retval:
-            return retval
-        else:
-# try "Network"
-            return self.graph.node[node].get('Network')
+        return self.graph.node[node].get('network') or self.graph.node[node].get('Network')
 
     def ibgp_cluster(self, node):
         """ syntactic sugar for accessing ibgp_cluster of a node """
@@ -382,10 +377,7 @@ class Network(object):
     def label(self, node):
         """ syntactic sugar for accessing label of a node """
         if node in self.graph:
-            label = self.graph.node[node].get('label')
-            if label:
-                return label
-            return str(node.id)
+            return self.graph.node[node].get('label') or str(node.id)
         else:
             return [self.label(n) for n in node]
 
