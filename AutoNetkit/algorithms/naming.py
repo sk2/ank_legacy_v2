@@ -7,12 +7,14 @@ __author__ = "\n".join(['Simon Knight'])
 
 import logging
 LOG = logging.getLogger("ANK")
+import networkx as nx
+import pprint
 
 __all__ = ['domain', 'fqdn', 'rtr_folder_name', 'hostname',
         'interface_id', 'tap_interface_id',
         'junos_logical_int_id_ge', 'junos_int_id_em',
         #move these to seperate module
-        'asn', 'label', 'default_route',
+        'asn', 'label', 'default_route', 'dump_graph',
         'debug_nodes', 'debug_edges',
         ]
 
@@ -38,6 +40,36 @@ def debug_edges(graph):
     debug_data = dict( ((src.fqdn, dst.fqdn), data) 
             for src, dst, data in graph.edges(data=True))
     return pprint.pformat(debug_data)
+
+def dump_graph(input_graph, filename):
+    LOG.debug("Dumping to graphml %s" % filename)
+    try:
+        del input_graph.graph['node_default']
+    except KeyError:
+        pass
+    try:
+        del input_graph.graph['edge_default']
+    except KeyError:
+        pass
+    try:
+        nx.write_graphml(input_graph, "%s.graphml" % filename)
+    except nx.exception.NetworkXError:
+        # NetworkX can't save dicts to graphml: use string representation
+        graph = input_graph.copy()
+        for key, item in graph.graph.items():
+            graph.graph[key] = str(item)
+
+        for n in graph:
+            if 'label' not in graph.node[n]:
+                graph.node[n]['label'] = n.fqdn
+            for key, item in graph.node[n].items():
+                graph.node[n][key] = str(item)
+
+        for s,t in graph.edges():
+            for key, item in graph[s][t].items():
+                graph[s][t][key] = str(item)
+
+        nx.write_graphml(graph, "%s.graphml" % filename)
 
 
 #TODO: remove these

@@ -168,6 +168,14 @@ class Internet:
             ank.plot(self.network)        
         ank.jsplot(self.network)        
         ank.summarydoc(self.network)
+        ank.dump_graph(self.network.graph, os.path.join(config.log_dir, "physical"))
+        ibgp_graph = ank.get_ibgp_graph(self.network)
+        ebgp_graph = ank.get_ebgp_graph(self.network)
+        ank.dump_graph(ibgp_graph, os.path.join(config.log_dir, "ibgp"))
+        ank.dump_graph(ebgp_graph, os.path.join(config.log_dir, "ebgp"))
+        ank.dump_graph(self.network.g_dns, os.path.join(config.log_dir, "dns"))
+        ank.dump_graph(self.network.g_dns_auth, os.path.join(config.log_dir, "dns_auth"))
+
 
     def dump(self):
         """Dumps overlay graphs to file 
