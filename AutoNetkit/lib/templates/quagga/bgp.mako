@@ -86,7 +86,7 @@ router bgp ${asn}
     %endfor  
     %for action_clause in match_tuple.action_clauses:
         % if action_clause.action == "addTag":
-        set community ${action_clause.value}
+        set community ${community_lists[action_clause.value]}
         % elif action_clause.action == "setLP":
         set local-preference ${action_clause.value} 
         % elif action_clause.action == "setMED":
