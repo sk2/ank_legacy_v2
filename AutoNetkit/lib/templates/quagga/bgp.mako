@@ -90,12 +90,12 @@ router bgp ${asn}
         % elif action_clause.action == "setLP":
         set local-preference ${action_clause.value} 
         % elif action_clause.action == "setMED":
-        set metric ${action_clause.value};      
+        set metric ${action_clause.value}      
         % elif action_clause.action == "setNextHop":
         set ip next-hop ${action_clause.value}       
         % elif action_clause.action == "removeTag":  
         ! Note: this needs to be a community list (created) not the commvalue
-        set comm-list ${action_clause.value} delete;
+        set comm-list ${action_clause.value} delete
         % endif      
     %endfor    
 	!
