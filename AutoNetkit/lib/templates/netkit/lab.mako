@@ -1,7 +1,8 @@
-LAB_DESCRIPTION =  ${lab_description}
-LAB_VERSION = ${lab_version}
-LAB_AUTHOR = ${lab_author}
-LAB_WEB = ${lab_web}
+LAB_DESCRIPTION="${lab_description}"
+LAB_VERSION="${lab_version}"
+LAB_AUTHOR="${lab_author}"  
+LAB_EMAIL="${lab_email}"
+LAB_WEB="${lab_web}"
 
 % for router, dataList in sorted(conf.items()):   
 

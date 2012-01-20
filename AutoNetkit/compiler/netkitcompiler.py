@@ -338,7 +338,10 @@ class NetkitCompiler:
             tapList = tap_list_strings,
             lab_description = "AutoNetkit generated lab",
             lab_version = date,
+            #TODO: get this from config file
+            lab_email = "autonetkit@googlegroups.com",
             lab_author = "AutoNetkit %s" % ank_version,
+            #TODO: get this from config file
             lab_web =  "packages.python.org/AutoNetkit/",
         ))
 
