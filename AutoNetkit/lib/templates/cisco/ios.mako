@@ -41,12 +41,8 @@ router isis ${i['net_ent_title']}
  passive-interface ${i['id']}
     % endif
   % endfor
- redistribute connected
- redistribute static ip
 % elif igp_protocol == 'ospf':
 router ospf 1
- redistribute connected
- redistribute static
   % for i in igp_interfaces:
  network ${i['network']} ${i['wildcard']} area ${i['area']}
     % if 'passive' in i:
