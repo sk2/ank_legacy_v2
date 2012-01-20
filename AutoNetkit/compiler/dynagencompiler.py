@@ -186,7 +186,7 @@ class dynagenCompiler:
             # Only start IGP process if IGP links
 #TODO: make loopback a network mask so don't have to do "0.0.0.0"
             igp_interfaces.append({ 'id': 'lo0', 'wildcard': router.lo_ip.hostmask,
-                'passive': True,
+                'passive': False,
                 'network': router.lo_ip.network,
                 'area': default_area, 'weight': self.default_weight,
                 })
