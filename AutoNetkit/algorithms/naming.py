@@ -9,15 +9,27 @@ import logging
 LOG = logging.getLogger("ANK")
 import networkx as nx
 import pprint
+import AutoNetkit as ank
 
 __all__ = ['domain', 'fqdn', 'rtr_folder_name', 'hostname',
         'interface_id', 'tap_interface_id',
         'junos_logical_int_id_ge', 'junos_int_id_em',
         #move these to seperate module
         'asn', 'label', 'default_route', 'dump_graph',
+        'dump_identifiers', 
         'debug_nodes', 'debug_edges',
+        'server_ip', 'server_interface_id',
         ]
 
+def server_ip(node):
+    """Servers don't have a loopback IP"""
+    host_links = node.network.links(node)
+    return host_links.next().ip
+
+def server_interface_id(node):
+    """Servers don't have a loopback interface"""
+    host_links = node.network.links(node)
+    return host_links.next().id
 
 def default_route(node):
     """Returns default router for a server"""
@@ -40,6 +52,16 @@ def debug_edges(graph):
     debug_data = dict( ((src.fqdn, dst.fqdn), data) 
             for src, dst, data in graph.edges(data=True))
     return pprint.pformat(debug_data)
+
+def dump_identifiers(network, filename):
+    with open( filename, 'w') as f_dump:
+# writes out lo_ip for routers, and identifying IP for servers
+        for my_as in ank.get_as_graphs(network):
+            for router in sorted(network.routers(my_as.asn), key = lambda x: x.fqdn):
+                f_dump.write( "%s\t%s\n" % (router, router.lo_ip.ip))
+            for server in sorted(network.servers(my_as.asn), key = lambda x: x.fqdn):
+                    f_dump.write( "%s\t%s\n" % (server, server_ip(server)))
+            f_dump.write("\n")
 
 def dump_graph(input_graph, filename):
     LOG.debug("Dumping to graphml %s" % filename)

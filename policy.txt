@@ -6,7 +6,6 @@
 (asn = 2) ->ingress (asn = 1): (if tag = zzz then setLP 150 & reject route)    
 
 importLibrary library.txt
-includePolicy somefile.txt 
         
 (asn =1 ) ->ingress (asn=2): (setLP 200)         
 #(asn = 1) egress-> (asn = 3): (if Transit(asn = 2) then addTag t_test)

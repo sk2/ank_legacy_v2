@@ -175,7 +175,7 @@ class Internet:
         ank.dump_graph(ebgp_graph, os.path.join(config.log_dir, "ebgp"))
         ank.dump_graph(self.network.g_dns, os.path.join(config.log_dir, "dns"))
         ank.dump_graph(self.network.g_dns_auth, os.path.join(config.log_dir, "dns_auth"))
-
+        ank.dump_identifiers(self.network, os.path.join(config.log_dir, "identifiers.txt"))
 
     def dump(self):
         """Dumps overlay graphs to file 

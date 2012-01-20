@@ -59,7 +59,6 @@ def allocate_subnets(network, address_block=IPNetwork("10.0.0.0/8")):
 
     #reverse so that allocate subnets in ascending order
     for my_as in sorted(asgraphs.values(), key = lambda x: x.asn):
-        print "alloc for asn", my_as.asn
         asn = my_as.asn
         as_subnet =  subnet_list.next()
 

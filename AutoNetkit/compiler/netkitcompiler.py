@@ -585,16 +585,6 @@ class NetkitCompiler:
             bash-3.2$ named-checkconf ank_lab/netkit_lab/AS3_l3_3_dns_1/etc/bind/named.conf 
         
         """
-        def server_ip(node):
-            """Servers don't have a loopback IP"""
-            host_links = self.network.links(node)
-            return host_links.next().ip
-
-        def server_interface(node):
-            """Servers don't have a loopback interface"""
-            host_links = self.network.links(node)
-            return self.interface_id(host_links.next().id)
-
         import netaddr
         ip_localhost = netaddr.IPAddress("127.0.0.1")
         linux_bind_dir = "/etc/bind"
@@ -625,7 +615,7 @@ class NetkitCompiler:
             for child in children:
                 advertise_block = ip_as_allocs[child.asn]
                 reverse_identifier = ank.rev_dns_identifier(advertise_block)
-                child_servers.append( (child.domain, reverse_identifier, server_ip(child)))
+                child_servers.append( (child.domain, reverse_identifier, ank.server_ip(child)))
             f_root_db = open(os.path.join(bind_dir(self.network, server), "db.root"), 'w') 
             f_root_db.write( root_dns_template.render(
                 dns_servers = child_servers,
@@ -638,7 +628,7 @@ class NetkitCompiler:
             ))
 
         for server in caching_servers:
-            root_db_hint = ( (n.dns_hostname, server_ip(n)) for n in ank.dns_hiearchy_parents(server))
+            root_db_hint = ( (n.dns_hostname, ank.server_ip(n)) for n in ank.dns_hiearchy_parents(server))
 #TODO: make caching use parent rather than global root
             f_root = open( os.path.join(bind_dir(self.network, server), "db.root"), 'w')
             f_root.write( root_template.render( root_servers = root_db_hint))
@@ -700,7 +690,8 @@ class NetkitCompiler:
                     cname = "%s.%s" % (self.lo_interface(), host.dns_hostname)
                 else:
 # choose an interface - arbitrary choice, choose first host link
-                    cname = "%s.%s" % (server_interface(host), host.dns_hostname)
+                    interface = self.interface_id(ank.server_interface_id(host))
+                    cname = "%s.%s" % (interface, host.dns_hostname)
             
                 host_cname_list.append( (host.dns_hostname, cname))
 
@@ -715,7 +706,7 @@ class NetkitCompiler:
                         entry_list = for_entry_list,
                         host_cname_list =  host_cname_list,
                         dns_server = server.dns_hostname,
-                        dns_server_ip = server_ip(server),
+                        dns_server_ip = ank.server_ip(server),
                 ))
 
             f_reverse = open(os.path.join(bind_dir(self.network, server), "db.%s" % reverse_identifier), 'w')
@@ -728,7 +719,7 @@ class NetkitCompiler:
                 ))
 
             #TODO: make l2 use l3 for caching
-            root_db_hint = ( (n.dns_hostname, server_ip(n)) for n in ank.dns_hiearchy_parents(server))
+            root_db_hint = ( (n.dns_hostname, ank.server_ip(n)) for n in ank.dns_hiearchy_parents(server))
             f_root = open( os.path.join(bind_dir(self.network, server), "db.root"), 'w')
             f_root.write( root_template.render( root_servers = root_db_hint))
 
@@ -741,7 +732,7 @@ class NetkitCompiler:
 
 # Configure clients
         for client in clients:
-            server_ips = (server_ip(server) for server in ank.dns_hiearchy_parents(client))
+            server_ips = (ank.server_ip(server) for server in ank.dns_hiearchy_parents(client))
             f_resolv = open( os.path.join(etc_dir(self.network, client), "resolv.conf"), 'w')
             f_resolv.write ( resolve_template.render(
                 nameservers = server_ips,
