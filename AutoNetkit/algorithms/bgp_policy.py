@@ -787,12 +787,12 @@ class BgpPolicyParser:
                     try:
                         query_a_index = param_indices[query_a]
                     except KeyError:
-                        LOG.info("Parameter %s not found in function definition for %s" % (query_a, name))
+                        LOG.warn("Parameter %s not found in function definition for %s" % (query_a, name))
                         continue
                     try:
                         query_b_index = param_indices[query_b]
                     except KeyError:
-                        LOG.info("Parameter %s not found in function definition for %s" % (query_b, name))
+                        LOG.warn("Parameter %s not found in function definition for %s" % (query_b, name))
                         continue
 # find the parameters that map to these
                     q_a_map = params[query_a_index]
