@@ -739,7 +739,6 @@ class NetkitCompiler:
                 nameservers = [ank.server_ip(server)],
                 domain = server.domain))
 
-
 # Configure clients
         for client in clients:
             server_ips = (ank.server_ip(server) for server in ank.dns_hiearchy_parents(client))
@@ -749,9 +748,6 @@ class NetkitCompiler:
                 domain = client.domain))
 
         return
-
-
-
 
     def configure(self):
         """Configure Netkit"""
