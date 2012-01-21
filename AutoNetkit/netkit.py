@@ -207,7 +207,8 @@ class Netkit:
             LOG.info("Starting tap tunnel: please enter sudo password and type '^]' (Control and right square bracket)"
                     "to return to AutoNetkit")
             shell.sendline("vstart %s --con0=none --eth0=tap,%s,%s" % ( self.tap_hostname, self.tap_host, self.tap_ip))
-            sys.stdout.write (shell.after)
+            shell.expect("Running ==>")
+            LOG.info(shell.after)
             sys.stdout.flush()
             shell.interact()
 # Sendline in case user didn't have to sudo, and so didn't do anything

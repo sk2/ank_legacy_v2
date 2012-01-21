@@ -638,6 +638,7 @@ class NetkitCompiler:
 
         for server in caching_servers:
             root_db_hint = ( (n.dns_hostname, ank.server_ip(n)) for n in ank.dns_hiearchy_parents(server))
+            root_db_hint = list(root_db_hint)
 #TODO: make caching use parent rather than global root
             f_root = open( os.path.join(bind_dir(self.network, server), "db.root"), 'w')
             f_root.write( root_template.render( root_servers = root_db_hint))
@@ -735,7 +736,7 @@ class NetkitCompiler:
         for server in dns_servers:
             f_resolv = open( os.path.join(etc_dir(self.network, server), "resolv.conf"), 'w')
             f_resolv.write ( resolve_template.render(
-                nameservers = [ip_localhost],
+                nameservers = [ank.server_ip(server)],
                 domain = server.domain))
 
 
