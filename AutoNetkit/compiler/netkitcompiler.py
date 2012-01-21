@@ -683,7 +683,7 @@ class NetkitCompiler:
                     for host in advertise_hosts if host.is_router and host.asn == server.asn)
             
             rev_entry_list = list( 
-                    (ank.reverse_subnet(link, advertise_block.prefixlen), self.interface_id(link.id), link.local_host.dns_host_portion_only) 
+                    (ank.reverse_subnet(link, advertise_block.prefixlen), self.interface_id(link.id), link.local_host.dns_hostname) 
                     for link in advertise_links)
             # Add loopbacks for routers
             rev_entry_list += ( (ank.reverse_subnet(host.lo_ip, advertise_block.prefixlen), self.lo_interface(0), host.dns_host_portion_only)
