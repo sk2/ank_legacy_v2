@@ -4,7 +4,7 @@ options {
 
 % if domain:       
 //zone for each AS    
-zone "${domain}." IN {
+zone "${domain}" IN {
 	type master;
 	file "/etc/bind/db.${domain}";  
 	allow-query { "any"; };

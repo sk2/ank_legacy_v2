@@ -675,18 +675,18 @@ class NetkitCompiler:
             ))
             f_named.close()
 
-            for_entry_list = list( (self.interface_id(link.id), link.local_host.dns_hostname, link.ip) 
+            for_entry_list = list( (self.interface_id(link.id), link.local_host.dns_host_portion_only, link.ip) 
                     for link in advertise_links)
 # Add loopbacks for routers
-            for_entry_list += ( (self.lo_interface(0), host.dns_hostname, host.lo_ip.ip)
+            for_entry_list += ( (self.lo_interface(0), host.dns_host_portion_only, host.lo_ip.ip)
                     #TODO: make thise check l3 group rather than asn (generalise)
                     for host in advertise_hosts if host.is_router and host.asn == server.asn)
             
             rev_entry_list = list( 
-                    (ank.reverse_subnet(link, advertise_block.prefixlen), self.interface_id(link.id), link.local_host.dns_hostname) 
+                    (ank.reverse_subnet(link, advertise_block.prefixlen), self.interface_id(link.id), link.local_host.dns_host_portion_only) 
                     for link in advertise_links)
             # Add loopbacks for routers
-            rev_entry_list += ( (ank.reverse_subnet(host.lo_ip, advertise_block.prefixlen), self.lo_interface(0), host.dns_hostname)
+            rev_entry_list += ( (ank.reverse_subnet(host.lo_ip, advertise_block.prefixlen), self.lo_interface(0), host.dns_host_portion_only)
                     #TODO: make thise check l3 group rather than asn (generalise)
                     for host in advertise_hosts if host.is_router and host.asn == server.asn)
 
@@ -701,13 +701,13 @@ class NetkitCompiler:
 
                 if host.is_router:
 # has lo_ip
-                    cname = "%s.%s" % (self.lo_interface(), host.dns_hostname)
+                    cname = "%s.%s" % (self.lo_interface(), host.dns_host_portion_only)
                 else:
 # choose an interface - arbitrary choice, choose first host link
                     interface = self.interface_id(ank.server_interface_id(host))
-                    cname = "%s.%s" % (interface, host.dns_hostname)
+                    cname = "%s.%s" % (interface, host.dns_host_portion_only)
             
-                host_cname_list.append( (host.dns_hostname, cname))
+                host_cname_list.append( (host.dns_host_portion_only, cname))
 
             #Sort to make format nicer
             host_cname_list = sorted(host_cname_list, key = lambda x: x[1])
@@ -733,6 +733,8 @@ class NetkitCompiler:
                 ))
 
             #TODO: make l2 use l3 for caching
+#TODO: ROOT-SERVER can't be part of a domain...  - need to correctly handle case of multiple root servers
+# and also need to handle this for case of single root server (ie no hiearchy) probably ok as /etc/resolv.conf points to server itself, not through dns hints
             root_db_hint = ( ("ROOT-SERVER", ank.server_ip(n)) for n in ank.dns_hiearchy_parents(server))
             f_root = open( os.path.join(bind_dir(self.network, server), "db.root"), 'w')
             f_root.write( root_template.render( root_servers = root_db_hint))

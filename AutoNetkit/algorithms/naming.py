@@ -18,6 +18,7 @@ __all__ = ['domain', 'fqdn', 'rtr_folder_name', 'hostname',
         'asn', 'label', 'default_route', 'dump_graph',
         'dump_identifiers', 
         'debug_nodes', 'debug_edges',
+        'dns_host_portion_only',
         'server_ip', 'server_interface_id',
         ]
 
@@ -158,6 +159,16 @@ def junos_logical_int_id_ge(int_id):
     """ For routing protocols, refer to logical int id:
     ge-0/0/1 becomes ge-0/0/1.0"""
     return int_id + ".0"
+
+def dns_host_portion_only(device):
+# for 1a.pop1.as1 only returns 1a.pop1
+#TODO: clean up all these naming functions to be used with same base part
+    if device.pop:
+        name = "%s.%s" % (device.label, device.pop)
+    name = device.label
+    for illegal_char in [" ", "/", "_", ",", "&amp;", "-"]:
+        name = name.replace(illegal_char, "")
+    return name
 
 def domain(device):
     """ Returns domain for device"""

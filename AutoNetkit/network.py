@@ -83,6 +83,10 @@ class device (namedtuple('node', "network, id")):
     @property
     def domain(self):
         return ank.domain(self)
+
+    @property
+    def dns_host_portion_only(self):
+        return ank.dns_host_portion_only(self)
     
     @property
     def pop(self):
