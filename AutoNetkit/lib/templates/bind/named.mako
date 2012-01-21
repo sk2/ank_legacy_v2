@@ -29,7 +29,7 @@ zone "." {
 logging{
  channel example_log{
 	  file "/tmp/named.log" versions 3 size 2m;
-	  severity debug 5;
+	  severity debug 9;
 	  print-severity yes;
 	  print-time yes;
 	  print-category yes;

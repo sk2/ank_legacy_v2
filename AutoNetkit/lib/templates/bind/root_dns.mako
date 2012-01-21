@@ -1,6 +1,6 @@
 $ORIGIN .
 $TTL 1D
-@       IN      SOA     DNSRoot.  none.nowhere (
+@       IN      SOA     ROOT-SERVER.  none.nowhere (
                 2008080101      ;serial
                 8H              ;refresh
                 4H              ;retry
@@ -8,8 +8,8 @@ $TTL 1D
                 1D              ;negative cache TTL
                 )
                  
-@			IN	NS	DNSroot.
-DNSroot.		IN	A	${server.lo_ip.ip}    
+@			IN	NS	ROOT-SERVER.
+ROOT-SERVER.		IN	A	${server.lo_ip.ip}    
 
 % for (domain, reverse, ip) in dns_servers:
 ${domain}.				IN	NS	NS.${domain}.

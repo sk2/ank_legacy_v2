@@ -733,7 +733,7 @@ class NetkitCompiler:
                 ))
 
             #TODO: make l2 use l3 for caching
-            root_db_hint = ( (n.dns_hostname, ank.server_ip(n)) for n in ank.dns_hiearchy_parents(server))
+            root_db_hint = ( ("ROOT-SERVER", ank.server_ip(n)) for n in ank.dns_hiearchy_parents(server))
             f_root = open( os.path.join(bind_dir(self.network, server), "db.root"), 'w')
             f_root.write( root_template.render( root_servers = root_db_hint))
 

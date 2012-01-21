@@ -1,14 +1,14 @@
-##Can check using named-checkzone -d nap db.nap
+##Can check using named-checkzone -d AS1 db.AS1
 $ORIGIN ${domain}.
 $TTL 1D
-@	IN	SOA	${domain}.	info.${domain} (
+@	IN	SOA	ns.${domain}.	info.${domain} (
 		2008080101      ;serial
 		8H           	;refresh
 		4H           	;retry
 		4W         		;expire
 		1D          	;negative cache TTL
 		)
-@       IN      NS       ns.
+@       IN      NS       ns.${domain}.
         
 
 ## Entries               
