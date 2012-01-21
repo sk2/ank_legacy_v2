@@ -29,4 +29,8 @@ chown -R root:root /root
 chmod 755 /root
 chmod 755 /root/.ssh
 chmod 644 /root/.ssh/authorized_keys
-% endif 
+% endif                    
+% if chown_bind:
+chown root:root /etc/bind/rndc.key
+chmod 755 /etc/bind/rndc.key
+% endif

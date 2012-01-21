@@ -316,6 +316,9 @@ class NetkitCompiler:
                 default_route = ank.default_route(node)
 # add default_route for server to router
 
+            chown_bind = False
+            if node in ank.dns_servers(self.network):
+                chown_bind = True
 
             #Write startup file for this router
             f_startup = open( os.path.join(netkit_dir(self.network, node),
@@ -328,6 +331,7 @@ class NetkitCompiler:
                 del_default_route=True,
                 default_route = default_route,
                 daemons=startup_daemon_list,
+                chown_bind = chown_bind,
                 ))
             f_startup.close()
 
