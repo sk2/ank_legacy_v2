@@ -641,7 +641,8 @@ class NetkitCompiler:
             ))
 
         for server in caching_servers:
-            root_db_hint = ( (n.dns_hostname, ank.server_ip(n)) for n in ank.dns_hiearchy_parents(server))
+            #root_db_hint = ( ("ns.AS%s" % n.asn, ank.server_ip(n)) for n in ank.dns_hiearchy_parents(server))
+            root_db_hint = ( (n.dns_host_portion_only, ank.server_ip(n)) for n in root_servers)
             root_db_hint = list(root_db_hint)
 #TODO: make caching use parent rather than global root
             f_root = open( os.path.join(bind_dir(self.network, server), "db.root"), 'w')
@@ -735,7 +736,7 @@ class NetkitCompiler:
             #TODO: make l2 use l3 for caching
 #TODO: ROOT-SERVER can't be part of a domain...  - need to correctly handle case of multiple root servers
 # and also need to handle this for case of single root server (ie no hiearchy) probably ok as /etc/resolv.conf points to server itself, not through dns hints
-            root_db_hint = ( ("ROOT-SERVER", ank.server_ip(n)) for n in ank.dns_hiearchy_parents(server))
+            root_db_hint = ( (n.dns_host_portion_only, ank.server_ip(n)) for n in ank.dns_hiearchy_parents(server))
             f_root = open( os.path.join(bind_dir(self.network, server), "db.root"), 'w')
             f_root.write( root_template.render( root_servers = root_db_hint))
 
