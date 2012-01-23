@@ -169,6 +169,8 @@ class Internet:
         ank.jsplot(self.network)        
         ank.summarydoc(self.network)
         ank.dump_graph(self.network.graph, os.path.join(config.log_dir, "physical"))
+        physical_single_edge = nx.Graph(self.network.graph)
+        ank.dump_graph(physical_single_edge, os.path.join(config.log_dir, "physical_single_edge"))
         ibgp_graph = ank.get_ibgp_graph(self.network)
         ebgp_graph = ank.get_ebgp_graph(self.network)
         ank.dump_graph(ibgp_graph, os.path.join(config.log_dir, "ibgp"))
