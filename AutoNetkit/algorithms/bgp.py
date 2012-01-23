@@ -176,7 +176,7 @@ def configure_ibgp_rr(network):
 
         # format into networkx format
         edges_to_add = [ (s,t, {'rr_dir': rr_dir}) for (s, t, rr_dir) in edges_to_add]
-        LOG.debug("iBGP edges %s" % sorted(edges_to_add))
+        LOG.debug("iBGP edges %s" % pprint.pformat(edges_to_add))
         network.g_session.add_edges_from(edges_to_add)
 
     for node, data in network.graph.nodes(data=True):
