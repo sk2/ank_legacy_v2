@@ -391,7 +391,14 @@ class dynagenCompiler:
     
     def int_id(self, interface_id):
         #TODO: try/except in case index not found
-        return self.interface_names[interface_id]
+        try:
+            return self.interface_names[interface_id]
+        except IndexError:
+            LOG.warn("Unable to allocate interface_id %s, defined"
+                    " interfaces: %s. Using first interface of %s" % ( interface_id, 
+                        ", ".join("%s: %s" % (index, id) for index, id in enumerate(self.interface_names)),
+                        self.interface_names[0]))
+            return self.interface_names[0]
 
     def dynagen_interface_name(self, interface_id):
         """ FastEthernet1/0 -> f1/0"""
