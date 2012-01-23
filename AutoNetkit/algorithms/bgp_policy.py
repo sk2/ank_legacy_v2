@@ -874,7 +874,6 @@ class BgpPolicyParser:
             if line == "":
                 continue
             try:
-                LOG.debug("Trying policy %s" % line)
                 self.apply_bgp_policy(line)
             except pyparsing.ParseFatalException as e:
                 LOG.warn("Unable to parse query line %s" % line)
