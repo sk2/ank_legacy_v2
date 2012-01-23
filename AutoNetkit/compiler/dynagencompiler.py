@@ -245,7 +245,7 @@ class dynagenCompiler:
                 route_maps_in = self.network.g_session[neigh][router]['ingress']
                 rm_group_name_in = None
                 if len(route_maps_in):
-                    rm_group_name_in = "rm_%s_in" % router.folder_name
+                    rm_group_name_in = "rm_%s_in" % neigh.folder_name
                     route_map_groups[rm_group_name_in] = [match_tuple 
                             for route_map in route_maps_in
                             for match_tuple in route_map.match_tuples]
@@ -253,7 +253,7 @@ class dynagenCompiler:
                 route_maps_out = self.network.g_session[router][neigh]['egress']
                 rm_group_name_out = None
                 if len(route_maps_out):
-                    rm_group_name_out = "rm_%s_out" % ( self.network.fqdn(neigh).replace(".", "_"))
+                    rm_group_name_in = "rm_%s_out" % neigh.folder_name
                     route_map_groups[rm_group_name_out] = [match_tuple 
                             for route_map in route_maps_out
                             for match_tuple in route_map.match_tuples]
@@ -294,7 +294,7 @@ class dynagenCompiler:
                 route_maps_in = self.network.g_session[peer][router]['ingress']
                 rm_group_name_in = None
                 if len(route_maps_in):
-                    rm_group_name_in = "rm_%s_in" % router.folder_name
+                    rm_group_name_in = "rm_%s_in" % peer.folder_name
                     route_map_groups[rm_group_name_in] = [match_tuple 
                             for route_map in route_maps_in
                             for match_tuple in route_map.match_tuples]
@@ -304,7 +304,7 @@ class dynagenCompiler:
                 route_maps_out = self.network.g_session[router][peer]['egress']
                 rm_group_name_out = None
                 if len(route_maps_out):
-                    rm_group_name_out = "rm_%s_out" % router.folder_name
+                    rm_group_name_out = "rm_%s_out" % peer.folder_name
                     route_map_groups[rm_group_name_out] = [match_tuple 
                             for route_map in route_maps_out
                             for match_tuple in route_map.match_tuples]
@@ -322,7 +322,6 @@ class dynagenCompiler:
 
 # Ensure only one copy of each route map, can't use set due to list inside tuples (which won't hash)
 # Use dict indexed by name, and then extract the dict items, dict hashing ensures only one route map per name
-        route_maps = dict( (route_map.name, route_map) for route_map in route_maps).values()
         community_lists = {}
         prefix_lists = {}
         node_bgp_data = self.network.g_session.node.get(router)
