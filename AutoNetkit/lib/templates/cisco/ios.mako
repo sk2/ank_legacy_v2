@@ -13,15 +13,13 @@ ip cef
 interface ${i['id']}
  description ${i['description']}
  ip address ${i['ip']} ${i['netmask']} 
- % if igp_protocol == 'isis':
+ % if igp_protocol == 'isis' and len(igp_interfaces) > 0:
  ip router isis
    % if 'weight' in i:
  isis metric ${i['weight']}
    % endif
- % else:
-   % if 'weight' in i:
+ % elif 'weight' in i and len(igp_interfaces) > 0:
  ip ospf cost ${i['weight']}
-   % endif
  % endif
  no shutdown
  duplex auto
@@ -30,25 +28,27 @@ interface ${i['id']}
 !
 %endfor
 !
-% if igp_protocol == 'isis':
-  % for i in interfaces:
-    % if 'net_ent_title' in i:
+% if len(igp_interfaces) > 0:
+ % if igp_protocol == 'isis':
+   % for i in interfaces:
+     % if 'net_ent_title' in i:
 router isis ${i['net_ent_title']}
-    % endif
-  % endfor
-  % for i in igp_interfaces:
-    % if i.get('passive'):
+     % endif
+   % endfor
+   % for i in igp_interfaces:
+     % if i.get('passive'):
  passive-interface ${i['id']}
-    % endif
-  % endfor
-% elif igp_protocol == 'ospf':
+     % endif
+   % endfor
+ % elif igp_protocol == 'ospf':
 router ospf 1
-  % for i in igp_interfaces:
+   % for i in igp_interfaces:
  network ${i['network']} ${i['wildcard']} area ${i['area']}
-    % if i.get('passive'):
+     % if i.get('passive'):
  passive-interface ${i['id']}
-    % endif
-  % endfor
+     % endif
+   % endfor
+ % endif
 % endif
 !
 !
