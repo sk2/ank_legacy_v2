@@ -59,9 +59,13 @@ router bgp ${asn}
 % endfor
 % for groupname, group_data in bgp_groups.items():     
  % if group_data['type'] == 'internal' or group_data['type'] == 'external':   
-  % for neighbor in group_data['neighbors']:         
+  % for neighbor in group_data['neighbors']:
+   % if group_data['type'] == 'internal':
  neighbor ${neighbor['id']} remote-as ${asn}
  neighbor ${neighbor['id']} update-source loopback 0
+   % elif:
+ neighbor ${neighbor['id']} remote-as ${neighbor['peer_as']} 
+   % endif
  neighbor ${neighbor['id']} send-community
    % if neighbor['route_maps_in']:
  neighbor ${neighbor['id']} route-map ${neighbor['route_maps_in']} in   
