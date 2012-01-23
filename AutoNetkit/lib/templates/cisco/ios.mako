@@ -144,6 +144,7 @@ route-map ${rm_name} permit ${index * 10}
 	% if index < len(match_tuples):
  continue
 	% endif
- % endfor
+ % endfor   
+add route-map ${rm_name} permit ${(index+1)*10}
 !
 % endfor
