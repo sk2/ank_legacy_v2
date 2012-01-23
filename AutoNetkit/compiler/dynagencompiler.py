@@ -178,7 +178,7 @@ class dynagenCompiler:
 
     def configure_igp(self, router, igp_graph, ebgp_graph):
         """igp configuration"""
-        LOG.debug("Configurin IGP for %s" % self.network.label(router))
+        LOG.debug("Configuring IGP for %s" % self.network.label(router))
 #TODO: get area from router
         default_area = 0
         igp_interfaces = []
