@@ -145,6 +145,6 @@ route-map ${rm_name} permit ${index * 10}
  continue
 	% endif
  % endfor   
-add route-map ${rm_name} permit ${(index+1)*10}
+route-map ${rm_name} permit ${(index+1)*10}
 !
 % endfor
