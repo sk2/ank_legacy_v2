@@ -250,7 +250,7 @@ class DynagenDeploy():
         shell.sendline("cd %s" % dynagen_lab_dir) 
         shell.prompt()
 # test server running
-        server_telnet_port = config.settings['Lab']['dynagen hypervisor port']
+        #server_telnet_port = config.settings['Lab']['dynagen hypervisor port']
         #shell.sendline("telnet localhost %s" % server_telnet_port)
 #TODO: parameterise lab.net
         LOG.info("Starting Dynagen lab")
