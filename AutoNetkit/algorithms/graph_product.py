@@ -332,20 +332,33 @@ def inter_pop_links(G, H_graphs, default_operator='cartesian'):
             N2 = [n for n in H2 if H2.node[n]['root']]
         except KeyError:
             N2 = [n for n in H2]
+        
+        LOG.debug("Adding edges for (%s,%s) with operator %s" % (u1, u2, operator))
+
+        LOG.debug("H nodes for u1 %s: %s" % ( G.node[u1]['H'], ", ".join(N1)))
+        LOG.debug("H nodes for u2 %s: %s" % ( G.node[u2]['H'], ", ".join(N2)))
 # 'root' not set
 #TODO: fold rooted back into special case of cartesian - just do the same for now
         if operator == 'rooted':
-            edges += [((u1, v1), (u2, v2)) for v1 in N1 for v2 in N2
+            product_edges = [((u1, v1), (u2, v2)) for v1 in N1 for v2 in N2
                     if H1.node[v1].get("root") == H2.node[v2].get("root") == True ]
+            LOG.debug("Rooted product edges for (%s,%s): %s" % (u1, u2, product_edges))
+            edges += product_edges
 
         if operator == 'lexical':
-            edges += [((u1, v1), (u2, v2)) for v1 in N1 for v2 in N2]
+            product_edges = [((u1, v1), (u2, v2)) for v1 in N1 for v2 in N2]
+            LOG.debug("Lexical product edges for (%s,%s): %s" % (u1, u2, product_edges))
+            edges += product_edges
 
         if operator in cartesian_operators:
-            edges += [((u1, v1), (u2, v2)) for v1 in N1 for v2 in N2 if v1 == v2]
+            product_edges = [((u1, v1), (u2, v2)) for v1 in N1 for v2 in N2 if v1 == v2]
+            LOG.debug("Cartesian product edges for (%s,%s): %s" % (u1, u2, product_edges))
+            edges += product_edges
         if operator in tensor_operators:
-            edges += [((u1, v1), (u2, v2)) for v1 in N1 for v2 in N2
+            product_edges = [((u1, v1), (u2, v2)) for v1 in N1 for v2 in N2
                     if  H1.has_edge(v1, v2) or H2.has_edge(v1,v2)]
+            LOG.debug("Tensor product edges for (%s,%s): %s" % (u1, u2, product_edges))
+            edges += product_edges
 
     return edges
 
