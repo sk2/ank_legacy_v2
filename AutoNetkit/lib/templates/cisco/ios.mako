@@ -63,7 +63,7 @@ router bgp ${asn}
    % if group_data['type'] == 'internal':
  neighbor ${neighbor['id']} remote-as ${asn}
  neighbor ${neighbor['id']} update-source loopback 0
-   % elif:
+   % else:
  neighbor ${neighbor['id']} remote-as ${neighbor['peer_as']} 
    % endif
  neighbor ${neighbor['id']} send-community
