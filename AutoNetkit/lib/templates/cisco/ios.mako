@@ -117,7 +117,7 @@ route-map ${rm_name} permit ${index * 10}
  match ip address prefix-list ${match_clause.value};
         % elif match_clause.type == "tag":   
           % if isinstance(match_clause.type, str):   
- match community ${match_clause.value};
+ match community ${match_clause.value}
           % elif isinstance(match_clause.type, dict):
             % for match in match_clause.value: 
  match community ${match}
