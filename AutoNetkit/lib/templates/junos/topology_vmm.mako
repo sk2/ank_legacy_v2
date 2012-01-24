@@ -1,10 +1,20 @@
 // description - global definitions.
 //
-#include "/vmm/bin/common.defs"
+#include "/vmm/bin/common.defs"     
+
+% if private_bridges:
+#define LOCAL_BRIDGES \   
+## "NOTE: When defining bridges, the last line should not end with a \"  
+% for bridge in private_bridges[:-1]:
+	bridge "${bridge}" {}; \\
+	
+% endfor               
+	bridge "${private_bridges[-1]}" {};   
+%endif
+
 config "config" {
-display "NULL";                            
-
-
+display "NULL";  
+                   
 % for hostname, host_data in sorted(topology_data.items()):   
 vm "${hostname}" {
   // description - hostname of set on VM

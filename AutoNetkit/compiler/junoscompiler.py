@@ -108,9 +108,17 @@ class JunosCompiler:
         vmm_template = lookup.get_template("junos/topology_vmm.mako")
         topology_data = {}
         # Generator for private0, private1, etc
-        #TODO: replace count with xrange up to limit of interfaces, eg 64 in Junosphere
-        bridge_id_generator = ('private%s'%i for i in itertools.count(0))
         collision_to_bridge_mapping = {}
+        private_bridges = []
+        junosphere_predefined_bridge_count = 124
+
+        bridge_id_generator = (i for i in itertools.count(0))
+        def next_bridge_id():
+            bridge_id = bridge_id_generator.next()
+            retval = "private%s" % bridge_id
+            if bridge_id > junosphere_predefined_bridge_count:
+                private_bridges.append(retval)
+            return retval
 
         for device in self.network.devices():
             hostname = device.hostname
@@ -130,7 +138,7 @@ class JunosCompiler:
                     bridge_id = collision_to_bridge_mapping[subnet]
                 else:
 # Allocate a bridge for this subnet
-                    bridge_id = bridge_id_generator.next()
+                    bridge_id = next_bridge_id()
                     collision_to_bridge_mapping[subnet] = bridge_id
 
                 topology_data[hostname]['interfaces'].append({
@@ -139,15 +147,11 @@ class JunosCompiler:
                     'id_ge':  self.int_id(data['id']),
                     'bridge_id': bridge_id,
                     })
-
-        if len(collision_to_bridge_mapping) > 64:
-            LOG.warn("AutoNetkit does not currently support more"
-                    " than 63 network links for Junosphere")
-
         vmm_file = os.path.join(lab_dir(), "topology.vmm")
         with open( vmm_file, 'w') as f_vmm:
             f_vmm.write( vmm_template.render(
                 topology_data = topology_data,
+                private_bridges = private_bridges,
                 ))
 
     def configure_interfaces(self, device):
