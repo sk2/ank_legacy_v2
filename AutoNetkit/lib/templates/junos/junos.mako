@@ -176,9 +176,9 @@ policy-options {
 		        prefix-list ${match_clause.value};
 		        % elif match_clause.type == "tag":   
 				 	% if isinstance(match_clause.type, str):   
-				community ${match_clause.value};
+			community ${match_clause.value};
 				 	% else:    
-				community [${" ".join(val for val in match_clause.value)}];
+			community [${" ".join(val for val in match_clause.value)}];
 					%endif
 		        % endif      
 		    %endfor
@@ -199,6 +199,7 @@ policy-options {
 		        community delete ${action_clause.value};
 		        % endif     
 		    %endfor   
+			next policy;
 		    % if match_tuple.reject:
 		        reject;
 		    % else: 
