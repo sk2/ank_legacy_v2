@@ -432,7 +432,7 @@ class NetkitCompiler:
 
         for src, dst, data in self.network.graph.edges(device, data=True):
             subnet = data['sn']
-            int_id = self.int_id(data['id'])
+            int_id = self.interface_id(data['id'])
             description = 'Interface %s -> %s' % (
                     ank.fqdn(self.network, src), 
                     ank.fqdn(self.network, dst))
