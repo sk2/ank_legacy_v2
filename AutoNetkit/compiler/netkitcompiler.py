@@ -413,6 +413,45 @@ class NetkitCompiler:
                                    use_debug = False,
                                ))
 
+    def configure_interfaces(self, device):
+        LOG.debug("Configuring interfaces for %s" % self.network.fqdn(device))
+        """Interface configuration"""
+        lo_ip = self.network.lo_ip(device)
+        interfaces = []
+
+        interfaces.append({
+            'id':          'lo0',
+            'ip':           lo_ip.ip,
+            'netmask':      lo_ip.netmask,
+            'wildcard':      lo_ip.hostmask,
+            'prefixlen':    lo_ip.prefixlen,
+            'network':       lo_ip.network,
+            'net_ent_title': ank.ip_to_net_ent_title_ios(lo_ip),
+            'description': 'Loopback',
+        })
+
+        for src, dst, data in self.network.graph.edges(device, data=True):
+            subnet = data['sn']
+            int_id = self.int_id(data['id'])
+            description = 'Interface %s -> %s' % (
+                    ank.fqdn(self.network, src), 
+                    ank.fqdn(self.network, dst))
+
+# Interface information for router config
+            interfaces.append({
+                'id':          int_id,
+                'ip':           data['ip'],
+                'network':       subnet.network,
+                'prefixlen':    subnet.prefixlen,
+                'netmask':    subnet.netmask,
+                'wildcard':      subnet.hostmask,
+                'broadcast':    subnet.broadcast,
+                'description':  description,
+                'weight':   data.get('weight', self.default_weight),
+            })
+
+        return interfaces
+
     def configure_bgp(self):
         """Generates BGP specific configuration files"""
 
@@ -570,6 +609,7 @@ class NetkitCompiler:
                         use_debug=True,
                         dump=False,
                         snmp=False,
+                        interfaces = self.configure_interfaces(router)
                 ))
 
     def configure_dns(self):
