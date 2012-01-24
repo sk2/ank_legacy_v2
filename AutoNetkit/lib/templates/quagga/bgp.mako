@@ -6,14 +6,18 @@ banner motd file /etc/quagga/motd.txt
 ! 
 router bgp ${asn}
 	bgp router-id ${router_id}     
-	redistribute kernel
-    redistribute connected
+##	redistribute kernel
+##    redistribute connected
+	!
+	% for i in interfaces:
+    network ${i['network']} mask ${i['netmask']}
+        % endfor
    	!
-	! Networks
-	% for n in network_list:  
-	network ${n}
-        aggregate-address ${n} summary-only
-	%endfor
+##	! Networks
+##	% for n in network_list:  
+##	network ${n}
+##       aggregate-address ${n} summary-only
+##	%endfor
 	!      
 	% if route_reflector:       
 	! Route-Reflector
