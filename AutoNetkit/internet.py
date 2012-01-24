@@ -227,6 +227,9 @@ class Internet:
 # Look in pickle directory
             snapshots = glob.glob(config.pickle_dir + os.sep + "*.pickle")
 # Most recent file from http://stackoverflow.com/q/2014554/
+            if not snapshots:
+                LOG.warn("No network snapshots found")
+                return
             filename = max(snapshots, key=os.path.getmtime)
             filename_only = os.path.splitext(os.path.split(filename)[1])[0]
             LOG.info("Loading most recent snapshot: %s" % filename_only)
