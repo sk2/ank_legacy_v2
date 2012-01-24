@@ -81,10 +81,10 @@ class JunosCompiler:
             self.olive = True
 
         if self.olive:
-            self.interface_limit = 5
+            self.interface_limit = 7
         if self.olive_qemu_patched:
 # Patch allows 6 interfaces
-            self.interface_limit = 6
+            self.interface_limit = 8
 
     def initialise(self):
         """Creates lab folder structure"""
