@@ -116,9 +116,11 @@ class dynagenCompiler:
         self.hypervisor_server = hypervisor_server
         self.hypervisor_port = hypervisor_port
         self.igp = igp
-        self.interface_limit = 6
         self.interface_names = config.settings['Dynagen']['interfaces']
-        self.interface_mapping = {"FastEthernet": "f"}
+#TODO: allow user to specify these in config
+        self.interface_mapping = {"FastEthernet": "f",
+                'Ethernet': 'e',
+                }
         self.default_weight = 1
 
     def initialise(self):  
@@ -351,9 +353,6 @@ class dynagenCompiler:
         for router in self.network.routers():
             #check interfaces feasible
 #TODO: make in_degree a property eg link_count
-            if self.network.graph.in_degree(router) > self.interface_limit:
-                LOG.warn("%s exceeds interface count: %s (max %s)" % (self.network.label(router),
-                    self.network.graph.in_degree(router), self.interface_limit))
             asn = self.network.asn(router)
             network_list = []
             lo_ip = self.network.lo_ip(router)
@@ -406,7 +405,10 @@ class dynagenCompiler:
         numbers = set("0123456789")
         interface_name = "".join(itertools.takewhile(lambda x: x not in numbers, interface_id))
         interface_number = interface_id.replace(interface_name, "")
-        retval = "%s%s" % (self.interface_mapping[interface_name], interface_number)
+        try:
+            retval = "%s%s" % (self.interface_mapping[interface_name], interface_number)
+        except KeyError:
+            LOG.warn("No Dynagen lab.net interface mapping defined for interface type %s" % interface_name)
         return retval
 
     def configure_dynagen(self):  
