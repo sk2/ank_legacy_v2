@@ -8,6 +8,10 @@ router bgp ${asn}
 	bgp router-id ${router_id}     
 	redistribute kernel
     redistribute connected
+	!
+	% for i in interfaces:
+    network ${i['network']} mask ${i['netmask']}
+        % endfor
    	!
 	! Networks
 	% for n in network_list:  
