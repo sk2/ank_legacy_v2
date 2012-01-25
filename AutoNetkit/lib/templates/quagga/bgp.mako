@@ -14,7 +14,7 @@ router bgp ${asn}
   % for neighbor in group_data['neighbors']:
    % if group_data['type'] == 'internal':
  neighbor ${neighbor['id']} remote-as ${asn}
- neighbor ${neighbor['id']} update-source loopback 0
+ neighbor ${neighbor['id']} update-source ${identifying_loopback.ip}
    % else:
  neighbor ${neighbor['id']} remote-as ${neighbor['peer_as']} 
    % endif
@@ -34,11 +34,6 @@ router bgp ${asn}
  bgp cluster-id ${group_data['cluster']}
 % endif
 !
-ip forward-protocol nd
-!
-no ip http server
-!
-ip bgp-community new-format
 % for name, values in sorted(policy_options['community_lists'].items()):
  % if isinstance(values, str):   
 ip community-list standard ${name} permit ${values}
@@ -50,8 +45,8 @@ ip community-list standard ${name} permit ${value}
 % endfor    
 !
 % for name, values in sorted(policy_options['prefix_lists'].items()):
- % for prefix in values: 
-ip prefix-list ${name} seq 5 permit ${prefix}
+ % for (index, prefix) in enumerate(values, start=1):
+ip prefix-list ${name} seq ${index * 5} permit ${prefix}
  % endfor
 % endfor 
 !       

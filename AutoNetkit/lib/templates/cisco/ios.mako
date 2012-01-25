@@ -99,8 +99,8 @@ ip community-list standard ${name} permit ${value}
 % endfor    
 !
 % for name, values in sorted(policy_options['prefix_lists'].items()):
- % for prefix in values: 
-ip prefix-list ${name} seq 5 permit ${prefix}
+ % for (index, prefix) in enumerate(values, start=1): 
+ip prefix-list ${name} seq ${index * 5} permit ${prefix}
  % endfor
 % endfor 
 !       
