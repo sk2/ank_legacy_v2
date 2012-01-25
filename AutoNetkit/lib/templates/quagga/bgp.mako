@@ -5,122 +5,100 @@ banner motd file /etc/quagga/motd.txt
 !enable password ${enable_password}
 ! 
 router bgp ${asn}
-	bgp router-id ${router_id}     
-##	redistribute kernel
-##    redistribute connected
-	!
-	% for i in interfaces:
-    network ${i['network']} mask ${i['netmask']}
-        % endfor
-   	!
-##	! Networks
-##	% for n in network_list:  
-##	network ${n}
-##       aggregate-address ${n} summary-only
-##	%endfor
-	!      
-	% if route_reflector:       
-	! Route-Reflector
-	bgp cluster-id ${router_id}       
-	!
-	% endif
-	% if len(ibgp_neighbor_list) > 0:
-	% endif               
-	% if len(ibgp_rr_client_list):       
-	! Route-Reflector clients
-	% endif      
-	% for n in ibgp_rr_client_list:
-	neighbor ${n['remote_ip']} route-reflector-client    
-	neighbor ${n['remote_ip']} remote-as ${asn}
-	neighbor ${n['remote_ip']} update-source ${router_id}  
-	neighbor ${n['remote_ip']} description ${n['description']} (iBGP) 
-	% endfor
-	!           
-	! iBGP neighbors  
-	% for n in ibgp_neighbor_list:
-	neighbor ${n['remote_ip']} remote-as ${asn}
-	neighbor ${n['remote_ip']} update-source ${router_id}  
-	neighbor ${n['remote_ip']} description ${n['description']} (iBGP)   
-	% if n.get('route_map_in'):
-	neighbor ${n['remote_ip']} route-map ${n['route_map_in']} in     
-	% endif   
-	% if n.get('route_map_out'):
-	neighbor ${n['remote_ip']} route-map ${n['route_map_out']} out  
-	% endif
-	% endfor
-	!
-	% if len(ebgp_neighbor_list) > 0:
-	#eBGP neighbors   
-	% endif            
-	% for n in ebgp_neighbor_list:
-	neighbor ${n['remote_ip']} remote-as ${n['remote_as']} 
-	neighbor ${n['remote_ip']} description ${n['description']} (eBGP)   
-	% if n.get('route_map_in'):
-	neighbor ${n['remote_ip']} route-map ${n['route_map_in']} in     
-	% endif   
-	% if n.get('route_map_out'):
-	neighbor ${n['remote_ip']} route-map ${n['route_map_out']} out  
-	% endif        
-	!
-	% endfor
-	! Route-map call-groups 
-	% for name, members in route_map_call_groups.items():    
-	route-map ${name} permit 10
-		% for member in members:
-		call ${member}
-		on-match next
-		%endfor 
-	!	
-	%endfor    
-	! Route-maps
-%for route_map in route_maps:    
-%for match_tuple in route_map.match_tuples:        
-% if match_tuple.reject:
-    route-map ${route_map.name} deny ${match_tuple.seq_no}             
-	!TODO: rejected, need to continue to next seqno
-%else:
-    route-map ${route_map.name} permit ${match_tuple.seq_no} 
+ no synchronization
+% for i in interfaces:
+ network ${i['network']} mask ${i['netmask']}
+% endfor
+% for groupname, group_data in bgp_groups.items():     
+ % if group_data['type'] == 'internal' or group_data['type'] == 'external':   
+  % for neighbor in group_data['neighbors']:
+   % if group_data['type'] == 'internal':
+ neighbor ${neighbor['id']} remote-as ${asn}
+ neighbor ${neighbor['id']} update-source loopback 0
+   % else:
+ neighbor ${neighbor['id']} remote-as ${neighbor['peer_as']} 
+   % endif
+   % if neighbor['route_maps_in']:
+ neighbor ${neighbor['id']} route-map ${neighbor['route_maps_in']} in   
+   % endif
+   % if neighbor['route_maps_out']:
+ neighbor ${neighbor['id']} route-map ${neighbor['route_maps_out']} out
+   % endif
+   % if 'internal_rr' in groupname:
+ neighbor ${neighbor['id']} route-reflector-client
+   % endif
+  % endfor
+ % endif
+% endfor
+% if 'cluster' in group_data:
+ bgp cluster-id ${group_data['cluster']}
 % endif
-    %for match_clause in match_tuple.match_clauses:
+!
+ip forward-protocol nd
+!
+no ip http server
+!
+ip bgp-community new-format
+% for name, values in sorted(policy_options['community_lists'].items()):
+ % if isinstance(values, str):   
+ip community-list standard ${name} permit ${values}
+ % else:
+  % for value in values:
+ip community-list standard ${name} permit ${value}
+  % endfor
+ %endif
+% endfor    
+!
+% for name, values in sorted(policy_options['prefix_lists'].items()):
+ % for prefix in values: 
+ip prefix-list ${name} seq 5 permit ${prefix}
+ % endfor
+% endfor 
+!       
+% for rm_name, match_tuples in sorted(policy_options['route_maps'].items()):
+  % for index, match_tuple in enumerate(match_tuples, start=1):
+    % if match_tuple.reject:
+route-map ${rm_name} deny ${index * 10}
+    % else:
+route-map ${rm_name} permit ${index * 10}
+    % endif
+    % if len(match_tuple.match_clauses):
+      % for match_clause in match_tuple.match_clauses:
         % if match_clause.type == "prefix_list":
-        match ip address ${match_clause.value}
-        % elif match_clause.type == "tag":
-        match community ${match_clause.value}
+ match ip address prefix-list ${match_clause.value};
+        % elif match_clause.type == "tag":   
+          % if isinstance(match_clause.type, str):   
+ match community ${match_clause.value}
+          % elif isinstance(match_clause.type, dict):
+            % for match in match_clause.value: 
+ match community ${match}
+            % endfor
+          %endif
         % endif      
-    %endfor  
-    %for action_clause in match_tuple.action_clauses:
+       % endfor
+     % endif
+    %if len(match_tuple.action_clauses) or match_tuple.reject:
+      %for action_clause in match_tuple.action_clauses:
         % if action_clause.action == "addTag":
-        set community ${community_lists[action_clause.value]}
-        % elif action_clause.action == "setLP":
-        set local-preference ${action_clause.value} 
-        % elif action_clause.action == "setMED":
-        set metric ${action_clause.value}      
-        % elif action_clause.action == "setNextHop":
-        set ip next-hop ${action_clause.value}       
-        % elif action_clause.action == "removeTag":  
-        ! Note: this needs to be a community list (created) not the commvalue
-        set comm-list ${action_clause.value} delete
-        % endif      
-    %endfor    
-	!
-%endfor            
-%endfor  
-	! Community lists  
-	% for name, communities in sorted(community_lists.items()):  
-	% if isinstance(communities, str):      
-	ip community-list standard ${name} permit ${communities}   
-	 % else:
-		% for community in communities:
-	ip community-list standard ${name} permit ${community}   
-		% endfor	
-		%endif      
-	%endfor                     
-	! Prefix lists  
-	% for name, prefixes in sorted(prefix_lists.items()):     
-		% for prefix in prefixes:
-	ip prefix-list standard ${name} permit ${prefix}   
-		% endfor
-	%endfor
+ set community ${policy_options['community_lists'][action_clause.value]} additive
+	% elif action_clause.action == "setLP":
+ set local-preference ${action_clause.value}
+	% elif action_clause.action == "setMED":
+ set metric ${action_clause.value}
+	% elif action_clause.action == "setNextHop":
+ set ip next-hop ${action_clause.value}
+	% elif action_clause.action == "removeTag":
+ set comm-list ${action_clause.value} delete
+	% endif     
+      %endfor   
+    % endif         
+	% if index < len(match_tuples):
+ on-match goto ${(index*10)+1}
+	% endif
+ % endfor   
+route-map ${rm_name} permit ${(index+1)*10}
+!
+% endfor
 %if use_debug:
 !
 debug bgp events
