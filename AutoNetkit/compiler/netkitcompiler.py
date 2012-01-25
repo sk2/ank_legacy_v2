@@ -476,104 +476,94 @@ class NetkitCompiler:
 
             for router in self.network.routers(asn):
                 #TODO: look at making this a set for greater comparison efficiency
-                network_list = []
-                route_map_call_groups = {}
+                bgp_groups = {}
                 route_maps = []
-
-                # iBGP
                 ibgp_neighbor_list = []
                 ibgp_rr_client_list = []
-                route_reflector = False
+                route_map_groups = {}
+
                 if router in ibgp_graph:
-                    #TODO: look at replacing this with a check to len of ibgp_rr_client_list
-#TODO: set cluster id explicitly from python, not auto in mako (decisions/logic in python)
-                    if self.network.route_reflector(router):
-                        route_reflector = True
-                    for src, neigh, data in ibgp_graph.edges(router, data=True):
-                        route_maps_in = [route_map for route_map in 
-                                self.network.g_session[neigh][router]['ingress']]
-                        rm_call_group_name_in = None
-                        if len(route_maps_in):
-                            rm_call_group_name_in = "rm_call_%s_in" % self.network.fqdn(neigh).replace(".", "_")
-                            route_map_call_groups[rm_call_group_name_in] = [r.name for r in route_maps_in]
-                            route_maps += route_maps_in
+                        for src, neigh, data in ibgp_graph.edges(router, data=True):
+                            route_maps_in = self.network.g_session[neigh][router]['ingress']
+                            rm_group_name_in = None
+                            if len(route_maps_in):
+                                rm_group_name_in = "rm_%s_in" % neigh.folder_name
+                                route_map_groups[rm_group_name_in] = [match_tuple 
+                                        for route_map in route_maps_in
+                                        for match_tuple in route_map.match_tuples]
 
-                        rm_call_group_name_out = "rm_call_%s_out" % self.network.fqdn(neigh).replace(".", "_")
-                        route_maps_out = [route_map for route_map in 
-                                self.network.g_session[router][neigh]['egress']]
-                        rm_call_group_name_out = None
-                        if len(route_maps_out):
-                            rm_call_group_name_out = "rm_call_%s_out" % (
-                                    self.network.fqdn(neigh).replace(".", "_"))
-                            route_map_call_groups[rm_call_group_name_out] = [r.name for r in route_maps_out]
-                            route_maps += route_maps_out
+                            route_maps_out = self.network.g_session[router][neigh]['egress']
+                            rm_group_name_out = None
+                            if len(route_maps_out):
+                                rm_group_name_in = "rm_%s_out" % neigh.folder_name
+                                route_map_groups[rm_group_name_out] = [match_tuple 
+                                        for route_map in route_maps_out
+                                        for match_tuple in route_map.match_tuples]
 
-                        description = data.get("rr_dir") + " to " + ank.fqdn(self.network, neigh)
-                        if data.get('rr_dir') == 'down':
-                            ibgp_rr_client_list.append(
-                                    {
-                                        'remote_ip':  self.network.lo_ip(neigh).ip,
-                                        'remote_router':    neigh,
-                                        'description':      description,
-                                        'route_map_in': rm_call_group_name_in,
-                                        'route_map_out': rm_call_group_name_out,
-                            })
-                        elif (data.get('rr_dir') in set(['up', 'over', 'peer'])
-                                or data.get('rr_dir') is None):
-                            ibgp_neighbor_list.append(
-                                    {
-                                        'remote_ip':  self.network.lo_ip(neigh).ip,
-                                        'remote_router':    neigh,
-                                        'description':      description,
-                                        'route_map_in': rm_call_group_name_in,
-                                        'route_map_out': rm_call_group_name_out,
-                                        })
+                            description = data.get("rr_dir") + " to " + ank.fqdn(self.network, neigh)
+                            if data.get('rr_dir') == 'down':
+                                ibgp_rr_client_list.append(
+                                        {
+                                            'id':  self.network.lo_ip(neigh).ip,
+                                            'description':      description,
+                                            'route_maps_in': rm_group_name_in,
+                                            'route_maps_out': rm_group_name_out,
+                                            })
+                            elif (data.get('rr_dir') in set(['up', 'over', 'peer'])
+                                    or data.get('rr_dir') is None):
+                                ibgp_neighbor_list.append(
+                                        {
+                                            'id':  self.network.lo_ip(neigh).ip,
+                                            'description':      description,
+                                            'route_maps_in': rm_group_name_in,
+                                            'route_maps_out': rm_group_name_out,
+                                            })
 
-                # eBGP
-                ebgp_neighbor_list = []
+                        bgp_groups['internal_peers'] = {
+                            'type': 'internal',
+                            'neighbors': ibgp_neighbor_list
+                            }
+                        if len(ibgp_rr_client_list):
+                            bgp_groups['internal_rr'] = {
+                                    'type': 'internal',
+                                    'neighbors': ibgp_rr_client_list,
+                                    'cluster': self.network.lo_ip(router).ip,
+                                    }
+
                 if router in ebgp_graph:
-                    for neigh in ebgp_graph.neighbors(router):
-                        route_maps_in = [route_map for route_map in 
-                                self.network.g_session[neigh][router]['ingress']]
-                        rm_call_group_name_in = None
+                    external_peers = []
+                    for peer in ebgp_graph.neighbors(router):
+                        route_maps_in = self.network.g_session[peer][router]['ingress']
+                        rm_group_name_in = None
                         if len(route_maps_in):
-                            rm_call_group_name_in = "rm_call_%s_in" % self.network.fqdn(neigh).replace(".", "_")
-                            route_map_call_groups[rm_call_group_name_in] = [r.name for r in route_maps_in]
-                        route_maps += route_maps_in
+                            rm_group_name_in = "rm_%s_in" % peer.folder_name
+                            route_map_groups[rm_group_name_in] = [match_tuple 
+                                    for route_map in route_maps_in
+                                    for match_tuple in route_map.match_tuples]
 
-                        rm_call_group_name_out = "rm_call_%s_out" % self.network.fqdn(neigh).replace(".", "_")
-                        route_maps_out = [route_map for route_map in 
-                                self.network.g_session[router][neigh]['egress']]
-                        rm_call_group_name_out = None
+# Now need to update the sequence numbers for the flattened route maps
+
+                        route_maps_out = self.network.g_session[router][peer]['egress']
+                        rm_group_name_out = None
                         if len(route_maps_out):
-                            rm_call_group_name_out = "rm_call_%s_out" % (
-                                    self.network.fqdn(neigh).replace(".", "_"))
-                            route_map_call_groups[rm_call_group_name_out] = [r.name for r in route_maps_out]
-                            route_maps += route_maps_out
+                            rm_group_name_out = "rm_%s_out" % peer.folder_name
+                            route_map_groups[rm_group_name_out] = [match_tuple 
+                                    for route_map in route_maps_out
+                                    for match_tuple in route_map.match_tuples]
 
-                        description = ank.fqdn(self.network, neigh)
-                        peer_ip = physical_graph[neigh][router]['ip']
-                        ebgp_neighbor_list.append(
-                            {
-                                #'remote_ip':        neigh.lo_ip.ip  ,
-                                'remote_ip': peer_ip,
-                                'remote_as':        self.network.asn(neigh),
-                                'remote_router':    neigh,
-                                'description':      description,
-                                'neigh_lo_ip':  self.network.lo_ip(neigh).ip,
-                                #TODO: write function to return neighbor type
-                                'neighbor_type':    "NA",
-                                #TODO: write function to implement route maps
-                                'route_map_in': rm_call_group_name_in,
-                                'route_map_out': rm_call_group_name_out,
-                            })
+                        peer_ip = physical_graph[peer][router]['ip'] 
 
+                        external_peers.append({
+                            'id': peer_ip, 
+                            'route_maps_in': rm_group_name_in,
+                            'route_maps_out': rm_group_name_out,
+                            'peer_as': self.network.asn(peer)})
+                    bgp_groups['external_peers'] = {
+                            'type': 'external', 
+                            'neighbors': external_peers}
 
-                adv_subnet = ip_as_allocs[self.network.asn(router)]
-
-                # Ensure only one copy of each route map, can't use set due to list inside tuples (which won't hash)
+# Ensure only one copy of each route map, can't use set due to list inside tuples (which won't hash)
 # Use dict indexed by name, and then extract the dict items, dict hashing ensures only one route map per name
-                route_maps = dict( (route_map.name, route_map) for route_map in route_maps).values()
                 community_lists = {}
                 prefix_lists = {}
                 node_bgp_data = self.network.g_session.node.get(router)
@@ -581,12 +571,10 @@ class NetkitCompiler:
                     community_lists = node_bgp_data.get('tags')
                     prefix_lists = node_bgp_data.get('prefixes')
 
-                # advertise this subnet
-                if not adv_subnet in network_list:
-# Not already listed to be advertised, advertise
-                    network_list.append(adv_subnet)
+
+            
                 f_handle = open(os.path.join(zebra_dir(self.network, router),
-                                             "bgpd.conf"),'w')
+                                                "bgpd.conf"),'w')
 
                 f_handle.write(template.render(
                         hostname = router.device_hostname,
@@ -594,17 +582,13 @@ class NetkitCompiler:
                         password = self.zebra_password,
                         enable_password = self.zebra_password,
                         router_id = self.network.lo_ip(router).ip,
-                        network_list = network_list,
                         community_lists = community_lists,
                         prefix_lists = prefix_lists,
                         #TODO: see how this differs to router_id
                         identifying_loopback = self.network.lo_ip(router),
                         ibgp_neighbor_list = ibgp_neighbor_list,
-                        ebgp_neighbor_list = ebgp_neighbor_list,
-                        route_reflector = route_reflector,
                         ibgp_rr_client_list = ibgp_rr_client_list,
                         route_maps = route_maps,
-                        route_map_call_groups = route_map_call_groups,
                         logfile = "/var/log/zebra/bgpd.log",
                         debug=True,
                         use_debug=True,
