@@ -570,6 +570,11 @@ class NetkitCompiler:
                 if node_bgp_data:
                     community_lists = node_bgp_data.get('tags')
                     prefix_lists = node_bgp_data.get('prefixes')
+                policy_options = {
+                'community_lists': community_lists,
+                'prefix_lists': prefix_lists,
+                'route_maps': route_map_groups,
+                }
 
             
                 f_handle = open(os.path.join(zebra_dir(self.network, router),
@@ -582,6 +587,7 @@ class NetkitCompiler:
                         enable_password = self.zebra_password,
                         router_id = self.network.lo_ip(router).ip,
                         community_lists = community_lists,
+                        policy_options = policy_options,
                         prefix_lists = prefix_lists,
                         #TODO: see how this differs to router_id
                         identifying_loopback = self.network.lo_ip(router),
