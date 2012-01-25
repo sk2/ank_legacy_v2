@@ -34,10 +34,6 @@ router bgp ${asn}
  bgp cluster-id ${group_data['cluster']}
 % endif
 !
-ip forward-protocol nd
-!
-no ip http server
-!
 ip bgp-community new-format
 % for name, values in sorted(policy_options['community_lists'].items()):
  % if isinstance(values, str):   
