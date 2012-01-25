@@ -580,6 +580,7 @@ class NetkitCompiler:
                 f_handle = open(os.path.join(zebra_dir(self.network, router),
                                                 "bgpd.conf"),'w')
 
+                #TODO: remove community_lists and prefix_lists as they are put into policy_options
                 f_handle.write(template.render(
                         hostname = router.device_hostname,
                         asn = self.network.asn(router),
