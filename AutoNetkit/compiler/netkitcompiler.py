@@ -571,7 +571,6 @@ class NetkitCompiler:
                     community_lists = node_bgp_data.get('tags')
                     prefix_lists = node_bgp_data.get('prefixes')
 
-
             
                 f_handle = open(os.path.join(zebra_dir(self.network, router),
                                                 "bgpd.conf"),'w')
@@ -586,6 +585,7 @@ class NetkitCompiler:
                         prefix_lists = prefix_lists,
                         #TODO: see how this differs to router_id
                         identifying_loopback = self.network.lo_ip(router),
+                        bgp_groups = bgp_groups,
                         ibgp_neighbor_list = ibgp_neighbor_list,
                         ibgp_rr_client_list = ibgp_rr_client_list,
                         route_maps = route_maps,
