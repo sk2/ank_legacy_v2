@@ -34,7 +34,6 @@ router bgp ${asn}
  bgp cluster-id ${group_data['cluster']}
 % endif
 !
-ip bgp-community new-format
 % for name, values in sorted(policy_options['community_lists'].items()):
  % if isinstance(values, str):   
 ip community-list standard ${name} permit ${values}
