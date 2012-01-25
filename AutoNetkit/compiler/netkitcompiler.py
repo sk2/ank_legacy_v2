@@ -575,7 +575,6 @@ class NetkitCompiler:
                 'prefix_lists': prefix_lists,
                 'route_maps': route_map_groups,
                 }
-
             
                 f_handle = open(os.path.join(zebra_dir(self.network, router),
                                                 "bgpd.conf"),'w')
