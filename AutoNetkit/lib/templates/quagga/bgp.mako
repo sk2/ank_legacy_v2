@@ -14,7 +14,7 @@ router bgp ${asn}
   % for neighbor in group_data['neighbors']:
    % if group_data['type'] == 'internal':
  neighbor ${neighbor['id']} remote-as ${asn}
- neighbor ${neighbor['id']} update-source loopback 0
+ neighbor ${neighbor['id']} update-source ${identifying_loopback.ip}
    % else:
  neighbor ${neighbor['id']} remote-as ${neighbor['peer_as']} 
    % endif
