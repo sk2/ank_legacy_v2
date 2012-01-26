@@ -389,7 +389,7 @@ def propagate_node_attributes(G, H_graphs, node_list):
 # Manually configure positions
             G_nodes = sorted(G.nodes())
             grid_size = int(math.ceil(math.sqrt(len(G_nodes))))
-            scaling =3
+            scaling = 3
             co_ords = [ (x*scaling, y*scaling) for x in range(grid_size) for y in range(grid_size)]
             G_index = G_nodes.index(u)
             (u_x, u_y) = co_ords[G_index]
@@ -397,7 +397,7 @@ def propagate_node_attributes(G, H_graphs, node_list):
 # Now need to map index of v in H to a grid
         H_nodes = sorted(H_graphs[u_v_data['H']].nodes())
         grid_size = int(math.ceil(math.sqrt(len(H_nodes))))
-        co_ords = [ (x,y) for x in range(grid_size) for y in range(grid_size)]
+        co_ords = [ (x,y) for y in range(grid_size) for x in range(grid_size)]
         H_index = H_nodes.index(v)
         scaling = 100
         (v_x, v_y) = co_ords[H_index]
