@@ -94,6 +94,26 @@ def dump_graph(input_graph, filename):
 
         nx.write_graphml(graph, "%s.graphml" % filename)
 
+    mat_fh = open(filename + "_mat.txt", "w")
+    sparse_matrix = nx.to_numpy_matrix(input_graph)
+    # Write out manually (numpy.tofile() writes as all on one line)
+    for line in sparse_matrix.tolist():
+        # Convert list to a string format numbers as integers not floats
+        line = [ str(int(x)) for x in line]
+        mat_fh.write( " ".join(line) )
+        mat_fh.write("\n")
+    mat_fh.close()
+
+    nodelist_fh = open(filename + "_nodelist.txt", "w")
+    line = [ str(n) for n in input_graph]
+    nodelist_fh.write( ", ".join(line) + "\n")
+    nodelist_fh.close()
+
+    poplist_fh = open(filename + "_poplist.txt", "w")
+    line = [ str(n.pop) for n in input_graph]
+    poplist_fh.write( ", ".join(line) + "\n")
+    poplist_fh.close()
+
 
 #TODO: remove these
 def asn(node):
