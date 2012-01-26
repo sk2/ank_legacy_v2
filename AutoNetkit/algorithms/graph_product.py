@@ -234,6 +234,7 @@ import logging
 import itertools
 import os
 import pprint
+import math
 from collections import defaultdict
 
 LOG = logging.getLogger("ANK")
@@ -268,7 +269,8 @@ def graph_product(G_file):
         return
     G = remove_yed_edge_id(G)
     G = remove_gml_node_id(G)
-    nx.relabel_nodes(G, dict((n, data.get('label', n)) for n, data in G.nodes(data=True)), copy=False)
+#Note: copy=True causes problems if relabelling with same node name -> loses node data
+    G = nx.relabel_nodes(G, dict((n, data.get('label', n)) for n, data in G.nodes(data=True)))
     G_path = os.path.split(G_file)[0]
     H_labels  = defaultdict(list)
     for n, data in G.nodes(data=True):
@@ -380,6 +382,28 @@ def propagate_node_attributes(G, H_graphs, node_list):
 
 # set pop to be u, used in ibgp, dns, etc as the layer 2 group
         u_v_data['pop'] = u
+        try:
+            u_x = float(G.node[u]['x_pos'])
+            u_y = float(G.node[u]['y_pos'])
+        except KeyError:
+# Manually configure positions
+            G_nodes = sorted(G.nodes())
+            grid_size = int(math.ceil(math.sqrt(len(G_nodes))))
+            scaling =3
+            co_ords = [ (x*scaling, y*scaling) for x in range(grid_size) for y in range(grid_size)]
+            G_index = G_nodes.index(u)
+            (u_x, u_y) = co_ords[G_index]
+
+# Now need to map index of v in H to a grid
+        H_nodes = sorted(H_graphs[u_v_data['H']].nodes())
+        grid_size = int(math.ceil(math.sqrt(len(H_nodes))))
+        co_ords = [ (x,y) for x in range(grid_size) for y in range(grid_size)]
+        H_index = H_nodes.index(v)
+        scaling = 100
+        (v_x, v_y) = co_ords[H_index]
+        u_v_data['x_pos'] = (u_x + v_x) * scaling
+        u_v_data['y_pos'] = (u_y + v_y) * scaling
+
 
 # Remove H and root (if set) which was used in graph construction - no need to send to AutoNetkit
         del u_v_data['H']
