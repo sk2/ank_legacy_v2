@@ -111,10 +111,13 @@ def dump_graph(input_graph, filename):
     nodelist_fh.write( ", ".join(line) + "\n")
     nodelist_fh.close()
 
-    poplist_fh = open(filename + "_poplist.txt", "w")
-    line = [ str(n.pop) for n in input_graph]
-    poplist_fh.write( ", ".join(line) + "\n")
-    poplist_fh.close()
+    try:
+        poplist_fh = open(filename + "_poplist.txt", "w")
+        line = [ str(n.pop) for n in input_graph]
+        poplist_fh.write( ", ".join(line) + "\n")
+        poplist_fh.close()
+    except AttributeError:
+        pass
 
 
 #TODO: remove these
