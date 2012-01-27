@@ -179,6 +179,7 @@ class Internet:
         ank.dump_graph(ebgp_graph, os.path.join(config.log_dir, "ebgp"))
         g_dns = nx.Graph(self.network.g_dns)
         g_dns.add_nodes_from((n, {'x_pos': self.network.graph.node[n].get('x_pos', 0),
+            'label': n,
             'y_pos': self.network.graph.node[n].get('y_pos', 0)}) for n in g_dns)
         pprint.pprint(g_dns.nodes(data=True))
         ank.dump_graph(g_dns, os.path.join(config.log_dir, "dns"))
