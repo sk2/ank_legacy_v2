@@ -383,8 +383,8 @@ def propagate_node_attributes(G, H_graphs, node_list):
 # set pop to be u, used in ibgp, dns, etc as the layer 2 group
         u_v_data['pop'] = u
         try:
-            u_x = float(G.node[u]['x_pos'])
-            u_y = float(G.node[u]['y_pos'])
+            u_x = float(G.node[u]['x_pos']) * 3
+            u_y = float(G.node[u]['y_pos']) * 3
         except KeyError:
 # Manually configure positions
             G_nodes = sorted(G.nodes())
@@ -401,8 +401,8 @@ def propagate_node_attributes(G, H_graphs, node_list):
         H_index = H_nodes.index(v)
         scaling = 100
         (v_x, v_y) = co_ords[H_index]
-        u_v_data['x_pos'] = (u_x + v_x) * scaling
-        u_v_data['y_pos'] = (u_y + v_y) * scaling
+        u_v_data['x_pos'] = u_x + v_x * scaling
+        u_v_data['y_pos'] = u_y + v_y * scaling
 
 
 # Remove H and root (if set) which was used in graph construction - no need to send to AutoNetkit

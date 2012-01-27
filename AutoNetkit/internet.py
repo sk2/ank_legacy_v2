@@ -172,10 +172,16 @@ class Internet:
         physical_single_edge = nx.Graph(self.network.graph)
         ank.dump_graph(physical_single_edge, os.path.join(config.log_dir, "physical_single_edge"))
         ibgp_graph = ank.get_ibgp_graph(self.network)
+        ibgp_graph.add_nodes_from((n, {'x_pos': self.network.graph.node[n]['x_pos'],
+            'y_pos': self.network.graph.node[n]['y_pos']}) for n in ibgp_graph)
         ebgp_graph = ank.get_ebgp_graph(self.network)
         ank.dump_graph(ibgp_graph, os.path.join(config.log_dir, "ibgp"))
         ank.dump_graph(ebgp_graph, os.path.join(config.log_dir, "ebgp"))
-        ank.dump_graph(self.network.g_dns, os.path.join(config.log_dir, "dns"))
+        g_dns = nx.Graph(self.network.g_dns)
+        g_dns.add_nodes_from((n, {'x_pos': self.network.graph.node[n].get('x_pos', 0),
+            'y_pos': self.network.graph.node[n].get('y_pos', 0)}) for n in g_dns)
+        pprint.pprint(g_dns.nodes(data=True))
+        ank.dump_graph(g_dns, os.path.join(config.log_dir, "dns"))
         ank.dump_graph(self.network.g_dns_auth, os.path.join(config.log_dir, "dns_auth"))
         ank.dump_identifiers(self.network, os.path.join(config.log_dir, "identifiers.txt"))
 

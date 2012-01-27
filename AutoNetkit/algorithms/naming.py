@@ -74,6 +74,8 @@ def dump_graph(input_graph, filename):
         del input_graph.graph['edge_default']
     except KeyError:
         pass
+
+# map x_pos and y_pos into graph
     try:
         nx.write_graphml(input_graph, "%s.graphml" % filename)
     except nx.exception.NetworkXError:
