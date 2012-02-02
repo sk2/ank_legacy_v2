@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup (
      name = "AutoNetkit",
-     version = "0.5.65",
+     version = "0.6.0",
      description = 'Automated configuration generator for cBGP, Netkit and Junosphere',
      long_description = 'Automated configuration generator for cBGP, Netkit and Junosphere',
 
