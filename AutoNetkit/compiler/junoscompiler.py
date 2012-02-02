@@ -20,7 +20,6 @@ import glob
 import itertools
 from collections import namedtuple
 
-
 import AutoNetkit as ank
 from AutoNetkit import config
 
@@ -82,6 +81,7 @@ class JunosCompiler:
                 self.junosphere_olive = True
                 self.target = "junosphere_olive"
                 self.olive_qemu_patched = config.settings['Junosphere']['olive_qemu_patched']
+                self.int_id_em = ank.interface_id(self.target, olive_qemu_patched=olive_qemu_patched)
 
         self.int_id = ank.interface_id(self.target, olive_qemu_patched=olive_qemu_patched)
 
@@ -157,18 +157,31 @@ class JunosCompiler:
                     bridge_id = next_bridge_id()
                     collision_to_bridge_mapping[subnet] = bridge_id
 
+                if not self.junosphere_olive:
+                    description += "(%s)" % self.int_id(data['id']) 
+
                 topology_data[hostname]['interfaces'].append({
                     'description': description,
                     'id': self.int_id_em(data['id']),
                     'id_ge':  self.int_id(data['id']),
                     'bridge_id': bridge_id,
                     })
+
+            if self.junosphere_olive:
+# em2 is dead on Olive Junosphere platform
+                topology_data[hostname]['interfaces'].append({
+                    'description': "dead interface",
+                    'id': "em2",
+                    'bridge_id': "dead",
+                    })
+            
         vmm_file = os.path.join(lab_dir(), "topology.vmm")
         with open( vmm_file, 'w') as f_vmm:
             f_vmm.write( vmm_template.render(
                 topology_data = topology_data,
                 private_bridges = private_bridges,
                 image = image,
+                olive_based = self.junosphere_olive,
                 ))
 
     def configure_interfaces(self, device):

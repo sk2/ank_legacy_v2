@@ -25,11 +25,15 @@ config "config" {
 	  hostname "${hostname}";
 	  // description Operating system image to load
 	  ${host_data['image']}
-	  // description - ge 0/0/0 management interface
+	  // description management interface
+          % if olive_based:
+	  interface "em0" { bridge "external"; };
+          % else:
 	  interface "em0" { EXTERNAL;};                         
-	   % for i in host_data['interfaces']:
+          % endif
+          % for i in sorted(host_data['interfaces'], key = lambda x: x['id']):
 	  //description ${i['description']}  
-	  interface "${i['id']}" { bridge "${i['bridge_id']}";};     /* ${i['id_ge']} */
+	  interface "${i['id']}" { bridge "${i['bridge_id']}";};
 	   % endfor
 	  // description - configuration file to load on the router
 	  install "ENV(HOME)/active/configset/${host_data['config']}" "/root/junos.conf";

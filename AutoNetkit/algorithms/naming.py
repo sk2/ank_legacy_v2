@@ -140,7 +140,9 @@ def interface_id(platform, olive_qemu_patched=False):
         return netkit_interface_id
     if platform in ['junosphere']:
             return junos_int_id_ge
-    if platform in ['olive', 'junosphere_olive']:
+    if platform in ['junosphere_olive']:
+        return junos_int_id_junosphere_olive
+    if platform in ['olive']:
         if olive_qemu_patched:
             return junos_int_id_olive_patched
         return junos_int_id_olive
@@ -167,6 +169,11 @@ def junos_int_id_em(numeric_id):
 def junos_int_id_olive_patched(numeric_id):
     return 'em%s' % numeric_id
 
+def junos_int_id_junosphere_olive(numeric_id):
+    """em0 is used for management in Olive-based Junosphere"""
+    return junos_int_id_olive(numeric_id + 1)
+
+
 def junos_int_id_olive(numeric_id):
     """remaps to em0, em1, em3, em4, em5
     >>> junos_int_id_olive(1)
@@ -179,8 +186,6 @@ def junos_int_id_olive(numeric_id):
     'em5'
     >>> junos_int_id_olive(5)
     'em6'
-    
-    
     """
     if numeric_id > 1:
         numeric_id = numeric_id +1
