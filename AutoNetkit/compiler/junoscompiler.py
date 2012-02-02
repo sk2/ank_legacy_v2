@@ -8,6 +8,7 @@ from pkg_resources import resource_filename
 import pkg_resources
 
 import os
+import networkx as nx
 
 #import network as network
 
@@ -17,6 +18,8 @@ LOG = logging.getLogger("ANK")
 import shutil
 import glob
 import itertools
+from collections import namedtuple
+
 
 import AutoNetkit as ank
 from AutoNetkit import config
@@ -65,26 +68,31 @@ class JunosCompiler:
         self.igp = igp
         self.target = target
         self.olive_qemu_patched = olive_qemu_patched
-# easy reference to junosphere or olive
-
-# Function mapping to get int_id, set depending on target platform
-        self.int_id = ank.interface_id(target, olive_qemu_patched=olive_qemu_patched)
         self.interface_limit = 0
 
+#TODO: tidy up platform: Olive/Junosphere between the vmm and the device configs
+
         self.junosphere = False
+        self.junosphere_olive = False
         if target in ['junosphere', 'junosphere_olive']:
             self.junosphere = True
-            self.interface_limit = 32
             self.int_id_em = ank.naming.junos_int_id_em
+            self.junosphere_platform = config.settings['Junosphere']['platform']
+            if self.junosphere_platform == "Olive":
+                self.junosphere_olive = True
+                self.target = "junosphere_olive"
+                self.olive_qemu_patched = config.settings['Junosphere']['olive_qemu_patched']
+
+        self.int_id = ank.interface_id(self.target, olive_qemu_patched=olive_qemu_patched)
+
         self.olive = False
-        if target in ['olive', 'junosphere_olive']:
+        if self.target in ['olive', 'junosphere_olive']:
             self.olive = True
 
         if self.olive:
             self.interface_limit = 7
         if self.olive_qemu_patched:
-# Patch allows 6 interfaces
-            self.interface_limit = 8
+            self.interface_limit = 8 # Patch allows 8 interfaces
 
     def initialise(self):
         """Creates lab folder structure"""
@@ -110,7 +118,15 @@ class JunosCompiler:
         # Generator for private0, private1, etc
         collision_to_bridge_mapping = {}
         private_bridges = []
-        junosphere_predefined_bridge_count = 124
+        junosphere_predefined_bridge_count = 124 # have to explicitly create bridges past 124
+
+        image_tuple = namedtuple('image', "alias, basedisk")
+
+        if self.junosphere_olive:
+            image = image_tuple("MY_DISK", config.settings['Junosphere']['basedisk'])
+        else:
+            image = image_tuple("VJX1000_LATEST", None)
+
 
         bridge_id_generator = (i for i in itertools.count(0))
         def next_bridge_id():
@@ -123,7 +139,7 @@ class JunosCompiler:
         for device in self.network.devices():
             hostname = device.hostname
             topology_data[hostname] = {
-                    'image': 'VJX1000_LATEST',
+                    'image': image.alias,
                     'config': router_conf_file(self.network, device),
                     'interfaces': [],
                     }
@@ -152,6 +168,7 @@ class JunosCompiler:
             f_vmm.write( vmm_template.render(
                 topology_data = topology_data,
                 private_bridges = private_bridges,
+                image = image,
                 ))
 
     def configure_interfaces(self, device):
@@ -196,7 +213,7 @@ class JunosCompiler:
             # Only start IGP process if IGP links
             igp_interfaces.append({ 'id': 'lo0', 'passive': True})
             for src, dst, data in igp_graph.edges(router, data=True):
-                int_id = ank.junos_logical_int_id_ge(self.int_id(data['id']))
+                int_id = ank.junos_logical_int_id(self.int_id(data['id']))
                 description = 'Interface %s -> %s' % (
                     ank.fqdn(self.network, src), 
                     ank.fqdn(self.network, dst))
@@ -210,7 +227,7 @@ class JunosCompiler:
             for src, dst in ebgp_graph.edges(router):
 # Get relevant edges from ebgp_graph, and edge data from physical graph
                 data = self.network.graph[src][dst]
-                int_id = ank.junos_logical_int_id_ge(self.int_id(data['id']))
+                int_id = ank.junos_logical_int_id(self.int_id(data['id']))
                 description = 'Interface %s -> %s' % (
                     ank.fqdn(self.network, src), 
                     ank.fqdn(self.network, dst))

@@ -13,7 +13,7 @@ import AutoNetkit as ank
 
 __all__ = ['domain', 'fqdn', 'rtr_folder_name', 'hostname',
         'interface_id', 'tap_interface_id',
-        'junos_logical_int_id_ge', 'junos_int_id_em',
+        'junos_logical_int_id', 'junos_int_id_em',
         #move these to seperate module
         'asn', 'label', 'default_route', 'dump_graph',
         'dump_identifiers', 
@@ -138,8 +138,8 @@ def interface_id(platform, olive_qemu_patched=False):
     """
     if platform == 'netkit':
         return netkit_interface_id
-    if platform in ['junosphere', 'junosphere_olive']:
-            return junos_int_id_junos
+    if platform in ['junosphere']:
+            return junos_int_id_ge
     if platform in ['olive', 'junosphere_olive']:
         if olive_qemu_patched:
             return junos_int_id_olive_patched
@@ -168,21 +168,38 @@ def junos_int_id_olive_patched(numeric_id):
     return 'em%s' % numeric_id
 
 def junos_int_id_olive(numeric_id):
-    """remaps to em0, em1, em3, em4, em5"""
+    """remaps to em0, em1, em3, em4, em5
+    >>> junos_int_id_olive(1)
+    'em1'
+    >>> junos_int_id_olive(2)
+    'em3'
+    >>> junos_int_id_olive(3)
+    'em4'
+    >>> junos_int_id_olive(4)
+    'em5'
+    >>> junos_int_id_olive(5)
+    'em6'
+    
+    
+    """
     if numeric_id > 1:
         numeric_id = numeric_id +1
     return 'em%s' % numeric_id
 
-def junos_int_id_junos(numeric_id):
+def junos_int_id_ge(numeric_id):
     """Returns Junos format interface ID for an AutoNetkit interface ID
     eg ge-0/0/1"""
 # Junosphere uses ge/0/0/0 for external link
     numeric_id += 1
     return 'ge-0/0/%s' % numeric_id
 
-def junos_logical_int_id_ge(int_id):
+def junos_logical_int_id(int_id):
     """ For routing protocols, refer to logical int id:
-    ge-0/0/1 becomes ge-0/0/1.0"""
+    >>> junos_logical_int_id("ge-0/0/1")
+    'ge-0/0/1.0'
+    >>> junos_logical_int_id("em0")
+    'em0.0'
+    """
     return int_id + ".0"
 
 def dns_host_portion_only(device):
