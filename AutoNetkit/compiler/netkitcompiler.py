@@ -36,6 +36,8 @@ lookup = TemplateLookup(directories=[ template_dir ],
                         #cache_enabled=True,
                        )
 
+#TODO: make a check_dir function that tries to create directory, if unable then recursively try/except to create parent directories
+
 #TODO: add more detailed exception handling to catch writing errors
 # eg for each subdir of templates
 
@@ -668,7 +670,7 @@ class NetkitCompiler:
 
             f_named = open( os.path.join(bind_dir(self.network, server), "named.conf"), 'w')
             f_named.write(root_dns_named_template.render(
-                logging = True,
+                logging = False,
             ))
 
         for server in caching_servers:
@@ -682,7 +684,7 @@ class NetkitCompiler:
             f_named.write(named_template.render(
                 entry_list = [],
                 bind_dir = linux_bind_dir,
-                logging = True,
+                logging = False,
             ))
             f_named.close()
 
@@ -703,7 +705,7 @@ class NetkitCompiler:
                 domain = server.domain,
                 entry_list = named_list,
                 bind_dir = linux_bind_dir,
-                logging = True,
+                logging = False,
             ))
             f_named.close()
 
