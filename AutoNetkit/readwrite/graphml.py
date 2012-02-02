@@ -55,6 +55,17 @@ def load_graphml(net_file, default_asn = 1):
 # remap ('a', 2) -> 'a2'
         nx.relabel_nodes(input_graph, 
                 dict( (n, "%s_%s" % (n[0], n[1])) for n in input_graph), copy=False)
+    
+    if 'ASN' in input_graph.graph.get("node_default"):
+        LOG.warn("Graph has ASN attribute set: did you mean 'asn'?")
+
+    try:
+        default_asn = int(input_graph.graph['node_default']['asn'])
+    except KeyError:
+        pass    # not set
+    except ValueError:
+        LOG.warn("Unable to use default asn '%s' specified in graphml file. Using %s instead." % (
+            input_graph.graph['node_default']['asn'], default_asn))
 
 # a->z for renaming
 # try intially for a, b, c, d
@@ -68,6 +79,8 @@ def load_graphml(net_file, default_asn = 1):
         letters = ("%s%s" % (a, b) for a in single_letters for b in single_letters)
     mapping = dict( (n, letters.next()) for n in empty_label_nodes)
     input_graph = nx.relabel_nodes(input_graph, mapping)
+
+
    
     # set label if unset
     for node, data in input_graph.nodes(data=True):
