@@ -200,6 +200,7 @@ def junos_int_id_ge(numeric_id):
 
 def junos_logical_int_id(int_id):
     """ For routing protocols, refer to logical int id:
+
     >>> junos_logical_int_id("ge-0/0/1")
     'ge-0/0/1.0'
     >>> junos_logical_int_id("em0")
