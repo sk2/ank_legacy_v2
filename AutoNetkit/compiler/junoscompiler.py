@@ -82,6 +82,8 @@ class JunosCompiler:
                 self.target = "junosphere_olive"
                 self.olive_qemu_patched = config.settings['Junosphere']['olive_qemu_patched']
                 self.int_id_em = ank.interface_id(self.target, olive_qemu_patched=olive_qemu_patched)
+            else:
+                self.interface_limit = 256 # TODO: check upper bound for VJX
 
         self.int_id = ank.interface_id(self.target, olive_qemu_patched=olive_qemu_patched)
 
