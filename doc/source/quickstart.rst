@@ -64,6 +64,31 @@ The ``--ospf`` option will create an IGP configuration for OSPF where as ``--isi
 
 The script will place all of the files it creates in a directory called ank_lab. It generate a .gz file which can be uploaded into the Junosphere 'Library' where it will be unpacked ready for use. A subdirectory will be created called ``junos_lab``. This will contain the resulting ``Topology.vmm`` and ``configset`` directory, in which you will find the per-router configuration files. Previous configuration files are stored in the ``ank_lab/archive`` directory.
 
+Olive-Based Junosphere
+------------------------
+If you have a custom Olive-based Junosphere install, you will need to tell AutoNetkit to create the relevant configuration files.
+You will need to create a configuration file ``autonetkit.cfg`` in the same directory that you run the ``autonetkit -f...`` command in.
+This file follows the same format as a .ini file. For Olive-based Junosphere, you will need the following entries::
+
+  [Junosphere]
+  platform = Olive
+  basedisk =  /path/to/image/junos.img
+
+(the basedisk parameter is optional).
+
+You should then see the following confirmation in the console output::
+
+  INFO   Configuring Junos: junosphere_olive
+
+Standard Junosphere has the following console output::
+
+  INFO   Configuring Junos: junosphere
+
+You can switch back to standard Junosphere by removing the platform line (as VJX is the default), or by explicitly setting::
+
+  [Junosphere]
+  platform = VJX
+  
 
 Generating AutoNetkit Configuration Files
 ------------------------------------------
