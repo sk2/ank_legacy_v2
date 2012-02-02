@@ -80,8 +80,19 @@ def load_graphml(net_file, default_asn = 1):
     mapping = dict( (n, letters.next()) for n in empty_label_nodes)
     input_graph = nx.relabel_nodes(input_graph, mapping)
 
+    # set node and edge defaults
+    for node, data in input_graph.nodes(data=True):
+        for key, val in input_graph.graph["node_default"].items():
+            if key not in data and val != 'None':
+                data[key] = val
+        input_graph.node[node] = data
 
-   
+    for s, t, data in input_graph.edges(data=True):
+        for key, val in input_graph.graph["edge_default"].items():
+            if key not in data and val != 'None':
+                data[key] = val
+        input_graph[s][t] = data
+
     # set label if unset
     for node, data in input_graph.nodes(data=True):
         if 'label' not in data:
