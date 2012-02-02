@@ -142,8 +142,8 @@ def interface_id(platform, olive_qemu_patched=False):
             return junos_int_id_junos
     if platform in ['olive', 'junosphere_olive']:
         if olive_qemu_patched:
-            return junos_int_id_olive
-        return junos_int_id_olive_patched
+            return junos_int_id_olive_patched
+        return junos_int_id_olive
 
     LOG.warn("Unable to map interface id for platform %s" % platform)
 #TODO: throw exception
