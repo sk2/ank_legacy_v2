@@ -24,8 +24,8 @@ A wide range of network topologies are available from http://www.topology-zoo.or
 
 .. image:: images/quickstart/nodeslabelled.*
 
-* Add the ASN numbers by adding 'Edit/Manage Custom Properties', create a node property called 'ASN'. and press close
-Now will see 'ASN' present under Data field.
+* Add the asn numbers by adding 'Edit/Manage Custom Properties', create a node property called 'asn'. and press close
+Now will see 'asn' present under Data field.
 
   * .. image:: images/quickstart/setasn1.*
 
@@ -35,7 +35,7 @@ Now will see 'ASN' present under Data field.
 
   * .. image:: images/quickstart/setasn4.*
 
-If the ASN numbers are different between connected nodes, you will get an eBGP peering. If the ASN number is the same, the result will be iBGP peering.
+If the asn numbers are different between connected nodes, you will get an eBGP peering. If the asn number is the same, the result will be iBGP peering.
 
 * Save your file in GraphML format when you're done.
 
@@ -60,7 +60,7 @@ cd into the directory where you have the graphml file and then::
 
 -----
 
-The ``--ospf`` option will create an IGP configuration for OSPF where as ``--isis`` will create an IGP configuration for ISIS. BGP configuration will be created automatically if the ASN properties field is present for a node (as described above).
+The ``--ospf`` option will create an IGP configuration for OSPF where as ``--isis`` will create an IGP configuration for ISIS. BGP configuration will be created automatically if the asn properties field is present for a node (as described above).
 
 The script will place all of the files it creates in a directory called ank_lab. It generate a .gz file which can be uploaded into the Junosphere 'Library' where it will be unpacked ready for use. A subdirectory will be created called ``junos_lab``. This will contain the resulting ``Topology.vmm`` and ``configset`` directory, in which you will find the per-router configuration files. Previous configuration files are stored in the ``ank_lab/archive`` directory.
 
