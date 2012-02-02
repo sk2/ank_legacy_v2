@@ -1,3 +1,9 @@
+"""
+AutoNetkit
+========
+
+http://packages.python.org/AutoNetkit/
+"""
 import AutoNetkit.algorithms
 from AutoNetkit.algorithms import *
 
