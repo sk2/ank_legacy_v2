@@ -60,7 +60,8 @@ def load_graphml(net_file, default_asn = 1):
         LOG.warn("Graph has ASN attribute set: did you mean 'asn'?")
 
     try:
-        default_asn = int(input_graph.graph['node_default']['asn'])
+        if input_graph.graph['node_default']['asn'] != "None":
+            default_asn = int(input_graph.graph['node_default']['asn'])
     except KeyError:
         pass    # not set
     except ValueError:
