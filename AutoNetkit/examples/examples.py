@@ -40,6 +40,7 @@ def example_single_as():
             ('1c', '1d'), ('1d', '1b')])
 
     network.graph = graph.to_directed()
+    network.instantiate_nodes()
 
     return network
 
@@ -73,6 +74,7 @@ def example_multi_as():
             ('2d', '3a'), ('3a', '1b')])
 
     network.graph = graph.to_directed()
+    network.instantiate_nodes()
 
     return network
 
