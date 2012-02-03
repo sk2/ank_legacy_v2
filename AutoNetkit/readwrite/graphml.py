@@ -82,17 +82,23 @@ def load_graphml(net_file, default_asn = 1):
     input_graph = nx.relabel_nodes(input_graph, mapping)
 
     # set node and edge defaults
-    for node, data in input_graph.nodes(data=True):
-        for key, val in input_graph.graph["node_default"].items():
-            if key not in data and val != 'None':
-                data[key] = val
-        input_graph.node[node] = data
+    try:
+        for node, data in input_graph.nodes(data=True):
+            for key, val in input_graph.graph["node_default"].items():
+                if key not in data and val != 'None':
+                    data[key] = val
+            input_graph.node[node] = data
+    except KeyError:
+        pass
 
-    for s, t, data in input_graph.edges(data=True):
-        for key, val in input_graph.graph["edge_default"].items():
-            if key not in data and val != 'None':
-                data[key] = val
-        input_graph[s][t] = data
+    try:
+        for s, t, data in input_graph.edges(data=True):
+            for key, val in input_graph.graph["edge_default"].items():
+                if key not in data and val != 'None':
+                    data[key] = val
+            input_graph[s][t] = data
+    except KeyError:
+        pass
 
     # set label if unset
     for node, data in input_graph.nodes(data=True):
