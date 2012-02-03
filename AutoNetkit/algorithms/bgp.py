@@ -93,7 +93,8 @@ def ibgp_edges(network):
     >>> network = ank.example_single_as()
     >>> initialise_ibgp(network)
     >>> list(sorted(ibgp_edges(network)))
-    [('1a', '1b'), ('1a', '1c'), ('1a', '1d'), ('1b', '1a'), ('1b', '1c'), ('1b', '1d'), ('1c', '1a'), ('1c', '1b'), ('1c', '1d'), ('1d', '1a'), ('1d', '1b'), ('1d', '1c')]
+    [(1a.AS1, 1b.AS1), (1a.AS1, 1c.AS1), (1a.AS1, 1d.AS1), (1b.AS1, 1a.AS1), (1b.AS1, 1c.AS1), (1b.AS1, 1d.AS1), (1c.AS1, 1a.AS1), (1c.AS1, 1b.AS1), (1c.AS1, 1d.AS1), (1d.AS1, 1a.AS1), (1d.AS1, 1b.AS1), (1d.AS1, 1c.AS1)]
+
     """
     return ( (s,t) for s,t in network.g_session.edges() if s.asn == t.asn)
 
@@ -188,8 +189,9 @@ def initialise_ebgp(network):
 
     >>> network = ank.example_multi_as()
     >>> initialise_ebgp(network)
-    >>> network.g_session.edges()
-    [('2d', '3a'), ('3a', '2d'), ('3a', '1b'), ('1b', '3a'), ('1c', '2a'), ('2a', '1c')]
+    >>> sorted(network.g_session.edges())
+    [(1b.AS1, 3a.AS3), (1c.AS1, 2a.AS2), (2a.AS2, 1c.AS1), (2d.AS2, 3a.AS3), (3a.AS3, 1b.AS1), (3a.AS3, 2d.AS2)]
+
     """
     LOG.debug("Initialising eBGP")
     edges_to_add = ( (src, dst) for src, dst in network.graph.edges()
@@ -240,8 +242,9 @@ def ebgp_routers(network):
 
     >>> network = ank.example_multi_as()
     >>> initialise_ebgp(network)
-    >>> ebgp_routers(network)
-    ['2d', '3a', '1b', '1c', '2a']
+    >>> sorted(ebgp_routers(network))
+    [1b.AS1, 1c.AS1, 2a.AS2, 2d.AS2, 3a.AS3]
+
     """
     return list(set(item for pair in ebgp_edges(network) for item in pair))
 
