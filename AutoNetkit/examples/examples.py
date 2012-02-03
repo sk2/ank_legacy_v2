@@ -21,11 +21,11 @@ def example_single_as():
 
     >>> network = example_single_as()
 
-    >>> network.graph.nodes()
-    ['1a', '1c', '1b', '1d']
+    >>> sorted(network.graph.nodes())
+    [1a.AS1, 1b.AS1, 1c.AS1, 1d.AS1]
 
-    >>> network.graph.edges()
-    [('1a', '1b'), ('1c', '1b'), ('1c', '1d'), ('1b', '1a'), ('1b', '1c'), ('1b', '1d'), ('1d', '1c'), ('1d', '1b')]
+    >>> sorted(network.graph.edges())
+    [(1a.AS1, 1b.AS1), (1b.AS1, 1a.AS1), (1b.AS1, 1c.AS1), (1b.AS1, 1d.AS1), (1c.AS1, 1b.AS1), (1c.AS1, 1d.AS1), (1d.AS1, 1b.AS1), (1d.AS1, 1c.AS1)]
     
 
     """
@@ -51,11 +51,12 @@ def example_multi_as():
 
     >>> network = example_multi_as()
 
-    >>> network.graph.nodes()
-    ['1a', '2d', '1c', '1b', '2a', '2b', '2c', '3a']
+    >>> sorted(network.graph.nodes())
+    [1a.AS1, 1b.AS1, 1c.AS1, 2a.AS2, 2b.AS2, 2c.AS2, 2d.AS2, 3a.AS3]
 
-    >>> network.graph.edges()
-    [('1a', '1c'), ('1a', '1b'), ('2d', '3a'), ('2d', '2a'), ('2d', '2c'), ('1c', '1a'), ('1c', '1b'), ('1c', '2a'), ('1b', '1a'), ('1b', '1c'), ('1b', '3a'), ('2a', '2d'), ('2a', '1c'), ('2a', '2b'), ('2b', '2a'), ('2b', '2c'), ('2c', '2d'), ('2c', '2b'), ('3a', '2d'), ('3a', '1b')]
+    >>> sorted(network.graph.edges())
+    [(1a.AS1, 1b.AS1), (1a.AS1, 1c.AS1), (1b.AS1, 1a.AS1), (1b.AS1, 1c.AS1), (1b.AS1, 3a.AS3), (1c.AS1, 1a.AS1), (1c.AS1, 1b.AS1), (1c.AS1, 2a.AS2), (2a.AS2, 1c.AS1), (2a.AS2, 2b.AS2), (2a.AS2, 2d.AS2), (2b.AS2, 2a.AS2), (2b.AS2, 2c.AS2), (2c.AS2, 2b.AS2), (2c.AS2, 2d.AS2), (2d.AS2, 2a.AS2), (2d.AS2, 2c.AS2), (2d.AS2, 3a.AS3), (3a.AS3, 1b.AS1), (3a.AS3, 2d.AS2)]
+
        
     """
     network = AutoNetkit.network.Network()
