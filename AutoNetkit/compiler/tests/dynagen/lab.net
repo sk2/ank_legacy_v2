@@ -1,0 +1,58 @@
+autostart = True
+[127.0.0.1]
+    workingdir = /tmp
+    udp = 10000
+    [[7202]]
+        image = /space/c7200-is-mz.124-19.image
+        ghostios = True
+        chassis = 7200   
+		idlepc = 0x6085af60
+		ram = 128
+		slot1 = PA-2FE-TX
+		slot2 = PA-2FE-TX
+      [[ROUTER 1b.AS1]]     
+			console = 2000           
+			cnfg = /home/autonetkit/ank_lab/dynagen_lab/configs/1b_AS1.conf           
+			e0/0 = 1a.AS1 e0/0          
+			e0/1 = 3a.AS3 e0/1          
+			e1/0 = 1c.AS1 e1/0          
+      [[ROUTER 1a.AS1]]     
+			console = 2001           
+			cnfg = /home/autonetkit/ank_lab/dynagen_lab/configs/1a_AS1.conf           
+			e0/0 = 1b.AS1 e0/0          
+			e0/1 = 1c.AS1 e0/0          
+      [[ROUTER 2d.AS2]]     
+			console = 2002           
+			cnfg = /home/autonetkit/ank_lab/dynagen_lab/configs/2d_AS2.conf           
+			e0/0 = 2a.AS2 e0/1          
+			e0/1 = 2c.AS2 e0/1          
+			e1/0 = 3a.AS3 e0/0          
+      [[ROUTER 1c.AS1]]     
+			console = 2003           
+			cnfg = /home/autonetkit/ank_lab/dynagen_lab/configs/1c_AS1.conf           
+			e0/0 = 1a.AS1 e0/1          
+			e0/1 = 2a.AS2 e1/0          
+			e1/0 = 1b.AS1 e1/0          
+      [[ROUTER 2a.AS2]]     
+			console = 2004           
+			cnfg = /home/autonetkit/ank_lab/dynagen_lab/configs/2a_AS2.conf           
+			e0/0 = 2b.AS2 e0/0          
+			e0/1 = 2d.AS2 e0/0          
+			e1/0 = 1c.AS1 e0/1          
+      [[ROUTER 3a.AS3]]     
+			console = 2005           
+			cnfg = /home/autonetkit/ank_lab/dynagen_lab/configs/3a_AS3.conf           
+			e0/0 = 2d.AS2 e1/0          
+			e0/1 = 1b.AS1 e0/1          
+      [[ROUTER 2b.AS2]]     
+			console = 2006           
+			cnfg = /home/autonetkit/ank_lab/dynagen_lab/configs/2b_AS2.conf           
+			e0/0 = 2a.AS2 e0/0          
+			e0/1 = 2c.AS2 e0/0          
+      [[ROUTER 2c.AS2]]     
+			console = 2007           
+			cnfg = /home/autonetkit/ank_lab/dynagen_lab/configs/2c_AS2.conf           
+			e0/0 = 2b.AS2 e0/1          
+			e0/1 = 2d.AS2 e0/1          
+[GNS3-DATA]
+    configs = configs
