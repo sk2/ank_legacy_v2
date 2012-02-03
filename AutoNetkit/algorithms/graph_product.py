@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
+import pkg_resources
 """
 Implementation of graph products
 
 Introduction
 ==============
 
->>> G_out = graph_product("../lib/examples/topologies/gptest.graphml")
+>>> gptest_file = pkg_resources.resource_filename(__name__,"lib/examples/topologies/gptest.graphml")
+>>> G_out = graph_product("gptest_file")
 
 Implementation
 ==============
