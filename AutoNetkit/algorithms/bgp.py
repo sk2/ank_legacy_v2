@@ -189,7 +189,7 @@ def initialise_ebgp(network):
     >>> network = ank.example_multi_as()
     >>> initialise_ebgp(network)
     >>> network.g_session.edges()
-    [('2d', '3a'), ('3a', '1b'), ('1c', '2a')]
+    [('2d', '3a'), ('3a', '2d'), ('3a', '1b'), ('1b', '3a'), ('1c', '2a'), ('2a', '1c')]
     """
     LOG.debug("Initialising eBGP")
     edges_to_add = ( (src, dst) for src, dst in network.graph.edges()

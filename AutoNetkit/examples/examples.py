@@ -25,7 +25,8 @@ def example_single_as():
     ['1a', '1c', '1b', '1d']
 
     >>> network.graph.edges()
-    [('1a', '1b'), ('1c', '1d'), ('1b', '1c'), ('1d', '1b')]
+    [('1a', '1b'), ('1c', '1b'), ('1c', '1d'), ('1b', '1a'), ('1b', '1c'), ('1b', '1d'), ('1d', '1c'), ('1d', '1b')]
+    
 
     """
     network = AutoNetkit.network.Network()
@@ -50,10 +51,10 @@ def example_multi_as():
     >>> network = example_multi_as()
 
     >>> network.graph.nodes()
-    ['2d', '1a', '1c', '1b', '2a', '2b', '2c', '3a']
+    ['1a', '2d', '1c', '1b', '2a', '2b', '2c', '3a']
 
     >>> network.graph.edges()
-    [('2d', '3a'), ('2d', '2a'), ('1a', '1c'), ('1a', '1b'), ('1c', '2a'), ('1b', '1c'), ('2a', '2b'), ('2b', '2c'), ('2c', '2d'), ('3a', '1b')]
+    [('1a', '1c'), ('1a', '1b'), ('2d', '3a'), ('2d', '2a'), ('2d', '2c'), ('1c', '1a'), ('1c', '1b'), ('1c', '2a'), ('1b', '1a'), ('1b', '1c'), ('1b', '3a'), ('2a', '2d'), ('2a', '1c'), ('2a', '2b'), ('2b', '2a'), ('2b', '2c'), ('2c', '2d'), ('2c', '2b'), ('3a', '2d'), ('3a', '1b')]
        
     """
     network = AutoNetkit.network.Network()

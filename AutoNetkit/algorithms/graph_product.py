@@ -177,7 +177,7 @@ Add some extra attributes to the G graph defined above:
 >>> G.nodes(data=True)
 [('a', {'color': 'red', 'H': 'style_d'}), ('b', {'color': 'blue', 'H': 'style_d'})]
 >>> propagate_node_attributes(G, H_graphs, node_list(G, H_graphs))
-[(('a', 0), {'color': 'red'}), (('a', 1), {'color': 'red'}), (('a', 2), {'color': 'red'}), (('b', 0), {'color': 'blue'}), (('b', 1), {'color': 'blue'}), (('b', 2), {'color': 'blue'})]
+[(('a', 0), {'x_pos': 0, 'color': 'red', 'pop': 'a', 'label': 'a0', 'y_pos': 0}), (('a', 1), {'x_pos': 100, 'color': 'red', 'pop': 'a', 'label': 'a1', 'y_pos': 0}), (('a', 2), {'x_pos': 0, 'color': 'red', 'pop': 'a', 'label': 'a2', 'y_pos': 100}), (('b', 0), {'x_pos': 0, 'color': 'blue', 'pop': 'b', 'label': 'b0', 'y_pos': 3}), (('b', 1), {'x_pos': 100, 'color': 'blue', 'pop': 'b', 'label': 'b1', 'y_pos': 3}), (('b', 2), {'x_pos': 0, 'color': 'blue', 'pop': 'b', 'label': 'b2', 'y_pos': 103})]
 
 >>> G.add_nodes_from([ ('a', dict(color='red', H='style_e')), ('b', dict(color='blue', H='style_e'))])
 >>> G.nodes(data=True)
@@ -191,7 +191,7 @@ Define a new H graph with some attributes. This shows the *color* attribute from
 [(0, {'root': True}), (1, {'color': 'green'}), (2, {})]
 
 >>> propagate_node_attributes(G, H_graphs, node_list(G, H_graphs))
-[(('a', 0), {'color': 'red'}), (('a', 1), {'color': 'green'}), (('a', 2), {'color': 'red'}), (('b', 0), {'color': 'blue'}), (('b', 1), {'color': 'green'}), (('b', 2), {'color': 'blue'})]
+[(('a', 0), {'x_pos': 0, 'color': 'red', 'pop': 'a', 'label': 'a0', 'y_pos': 0}), (('a', 1), {'x_pos': 100, 'color': 'green', 'pop': 'a', 'label': 'a1', 'y_pos': 0}), (('a', 2), {'x_pos': 0, 'color': 'red', 'pop': 'a', 'label': 'a2', 'y_pos': 100}), (('b', 0), {'x_pos': 0, 'color': 'blue', 'pop': 'b', 'label': 'b0', 'y_pos': 3}), (('b', 1), {'x_pos': 100, 'color': 'green', 'pop': 'b', 'label': 'b1', 'y_pos': 3}), (('b', 2), {'x_pos': 0, 'color': 'blue', 'pop': 'b', 'label': 'b2', 'y_pos': 103})]
 
 Edge Attributes
 =========================
@@ -337,8 +337,8 @@ def inter_pop_links(G, H_graphs, default_operator='cartesian'):
         
         LOG.debug("Adding edges for (%s,%s) with operator %s" % (u1, u2, operator))
 
-        LOG.debug("H nodes for u1 %s: %s" % ( G.node[u1]['H'], ", ".join(N1)))
-        LOG.debug("H nodes for u2 %s: %s" % ( G.node[u2]['H'], ", ".join(N2)))
+        LOG.debug("H nodes for u1 %s: %s" % ( G.node[u1]['H'], ", ".join(str(N1))))
+        LOG.debug("H nodes for u2 %s: %s" % ( G.node[u2]['H'], ", ".join(str(N2))))
 # 'root' not set
 #TODO: fold rooted back into special case of cartesian - just do the same for now
         if operator == 'rooted':

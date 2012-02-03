@@ -197,7 +197,7 @@ class JunosCompiler:
             'ip':           str(lo_ip.ip),
             'netmask':      str(lo_ip.netmask),
             'prefixlen':    str(lo_ip.prefixlen),
-            'net_ent_title': ank.ip_to_net_ent_title(lo_ip),
+            'net_ent_title': ank.ip_to_net_ent_title(lo_ip.ip),
             'description': 'Loopback',
         })
 

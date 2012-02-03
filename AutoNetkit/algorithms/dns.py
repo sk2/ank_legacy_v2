@@ -344,7 +344,7 @@ def get_dns_graph(network):
 def get_dns_auth_graph(network):
     return network.g_dns_auth
 
-def reverse_subnet(link, prefixlen):
+def reverse_subnet(ip, prefixlen):
     """Returns reverse address for given IP Address
 
     * w.x.y.z/prefixlen
@@ -369,20 +369,20 @@ def reverse_subnet(link, prefixlen):
     '4'
     
     """
-    octets = link.ip.words
+    octets = ip.words
     return ".".join(str(octets[x]) for x in range(3, prefixlen/8-1, -1))
    
 def rev_dns_identifier(subnet):
     """ Returns Identifier part of subnet for use in reverse dns identification.
 
     >>> rev_dns_identifier(IPNetwork("10.1.2.3/8"))
-    '10'
+    '0.0.10.in-addr.arpa.'
 
     >>> rev_dns_identifier(IPNetwork("172.16.1.2/16"))
-    '16.172'
+    '16.172.in-addr.arpa.'
 
     >>> rev_dns_identifier(IPNetwork("192.168.0.1/24"))
-    '0.168.192'
+    '0.0.168.192.in-addr.arpa.'
 
     Can only handle classful addreses, expect nothing if prefixlen is not divisible by 8
     >>> rev_dns_identifier(IPNetwork("192.168.0.1/22"))

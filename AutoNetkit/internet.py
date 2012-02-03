@@ -44,7 +44,7 @@ class Internet:
 
     Example usage:
 
-    >>> inet = Internet("lib/examples/topologies/simple.graphml") 
+    >>> inet = Internet("multias") 
 
     """
     
@@ -109,19 +109,19 @@ class Internet:
         Example usage:
 
         >>> inet = ank.internet.Internet()
-        >>> inet.load("lib/examples/topologies/simple.graphml")
-        >>> inet.network.graph.nodes()
-        ['n0', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7']
+        >>> inet.load("simple")
+        >>> sorted(inet.network.graph.nodes())
+        [RouterB.AS1, RouterA.AS1, RouterD.AS2, RouterC.AS1, RouterA.AS2, RouterA.AS3, RouterB.AS2, RouterC.AS2]
 
         >>> inet = ank.internet.Internet()
         >>> inet.load("singleas")
-        >>> inet.network.graph.nodes()
-        ['1a', '1c', '1b', '1d']
+        >>> sorted(inet.network.graph.nodes())
+        [1a.AS1, 1b.AS1, 1d.AS1, 1c.AS1]
 
         >>> inet = ank.internet.Internet()
         >>> inet.load("multias")
-        >>> inet.network.graph.nodes()
-        ['2d', '1a', '1c', '1b', '2a', '2b', '2c', '3a']
+        >>> sorted(inet.network.graph.nodes())
+        [1b.AS1, 1a.AS1, 2d.AS2, 1c.AS1, 2a.AS2, 3a.AS3, 2b.AS2, 2c.AS2]
 
         """
         LOG.info("Loading")

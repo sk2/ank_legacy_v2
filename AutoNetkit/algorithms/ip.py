@@ -222,9 +222,8 @@ def ip_to_net_ent_title(ip):
     """
     LOG.debug("Converting IP to OSI ENT format")
     area_id = "49.0001"
-    ip_octets = str(ip.ip).split(".")
 # Pad with leading zeros, eg 1->001, 12->012, 123->123
-    ip_octets = ["%03d" % int(octet) for octet in ip_octets]
+    ip_octets = ["%03d" % int(octet) for octet in ip.words]
 # Condense to single string
     ip_octets = "".join(ip_octets)
 # and split into bytes
@@ -241,9 +240,8 @@ def ip_to_net_ent_title_ios(ip):
     """
     LOG.debug("Converting IP to OSI ENT format")
     area_id = "49"
-    ip_octets = str(ip.ip).split(".")
 # Pad with leading zeros, eg 1->001, 12->012, 123->123
-    ip_octets = ["%03d" % int(octet) for octet in ip_octets]
+    ip_octets = ["%03d" % int(octet) for octet in ip.words]
 # Condense to single string
     ip_octets = "".join(ip_octets)
 # and split into bytes
