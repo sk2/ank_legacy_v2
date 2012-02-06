@@ -139,3 +139,20 @@ def test_olive():
             master_file.splitlines(True)))
         LOG.warn(message)
         raise AssertionError
+
+
+def test_cbgp():
+    master_dir = (resource_filename(__name__, "cbgp"))
+    inet = AutoNetkit.internet.Internet("multias", cbgp=True) 
+    inet.compile()
+
+    f_test = os.path.join(config.cbgp_dir, "cbgp.cli")
+    test_file = open(f_test, "r").read()
+    master_file = open(os.path.join(master_dir, "cbgp.cli"), "r").read()
+    try:
+        assert(test_file == master_file)
+    except AssertionError:
+        message = ''.join(difflib.ndiff(test_file.splitlines(True),
+            master_file.splitlines(True)))
+        LOG.warn(message)
+        raise AssertionError

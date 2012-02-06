@@ -37,7 +37,7 @@ net domain ${asn} compute
 # Setup iBGP sessions
 % for router, peers in sorted(ibgp_topology.items()):  
 bgp router ${router.lo_ip.ip}
-	% for peer in peers:
+	% for peer in sorted(peers):
 	add peer ${peer.asn} ${peer.lo_ip.ip} 
 	peer ${peer.lo_ip.ip} up
 	% endfor      

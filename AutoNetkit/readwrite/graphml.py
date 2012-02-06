@@ -32,7 +32,8 @@ def load_graphml(net_file, default_asn = 1):
     path =  os.path.abspath(path)
     pickle_dir = path + os.sep + "cache"
     if not os.path.isdir(pickle_dir):
-        os.mkdir(pickle_dir)
+        #os.mkdir(pickle_dir)
+        pass
     pickle_file = "{0}/{1}.pickle".format(pickle_dir, net_name)
 #TODO: re-enable pickle
     if (False and os.path.isfile(pickle_file) and
@@ -56,8 +57,11 @@ def load_graphml(net_file, default_asn = 1):
         nx.relabel_nodes(input_graph, 
                 dict( (n, "%s_%s" % (n[0], n[1])) for n in input_graph), copy=False)
     
-    if 'ASN' in input_graph.graph.get("node_default"):
-        LOG.warn("Graph has ASN attribute set: did you mean 'asn'?")
+    try:
+        if 'ASN' in input_graph.graph.get("node_default"):
+            LOG.warn("Graph has ASN attribute set: did you mean 'asn'?")
+    except TypeError:
+        pass
 
     try:
         if input_graph.graph['node_default']['asn'] != "None":

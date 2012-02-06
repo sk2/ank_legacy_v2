@@ -2,7 +2,7 @@
 	   net add node 10.0.0.32
 	   net add node 10.0.0.33
 	   net add node 10.0.0.34
-	   net add link 10.0.0.32 10.0.0.33
+	   net add link 10.0.0.33 10.0.0.32
 	   net add link 10.0.0.34 10.0.0.32
 	   net add link 10.0.0.34 10.0.0.33
 	
@@ -17,13 +17,13 @@
 	   net add link 10.1.0.67 10.1.0.66
 	
 # "physical" topology for AS3
-	   net add node 10.2.0.4
+	   net add node 10.2.0.0
 	
 
 # Interdomain links
    net add link 10.1.0.65 10.0.0.34
-   net add link 10.2.0.4 10.0.0.33
-   net add link 10.2.0.4 10.1.0.64
+   net add link 10.2.0.0 10.0.0.32
+   net add link 10.2.0.0 10.1.0.64
                        
 # IGP configuration for AS1
 net add domain 1 igp         
@@ -56,7 +56,7 @@ net domain 2 compute
                 
 # IGP configuration for AS3
 net add domain 3 igp         
-   net node 10.2.0.4 domain 3
+   net node 10.2.0.0 domain 3
 net domain 3 compute                
                 
                  
@@ -68,26 +68,26 @@ net domain 3 compute
    bgp add router 2 10.1.0.65
    bgp add router 2 10.1.0.66
    bgp add router 2 10.1.0.67
-   bgp add router 3 10.2.0.4
+   bgp add router 3 10.2.0.0
        
 # Setup iBGP sessions
-bgp router 10.0.0.33
-	add peer 1 10.0.0.32 
-	peer 10.0.0.32 up
-	add peer 1 10.0.0.34 
-	peer 10.0.0.34 up
-	
 bgp router 10.0.0.32
 	add peer 1 10.0.0.33 
 	peer 10.0.0.33 up
 	add peer 1 10.0.0.34 
 	peer 10.0.0.34 up
 	
+bgp router 10.0.0.33
+	add peer 1 10.0.0.32 
+	peer 10.0.0.32 up
+	add peer 1 10.0.0.34 
+	peer 10.0.0.34 up
+	
 bgp router 10.1.0.64
-	add peer 2 10.1.0.66 
-	peer 10.1.0.66 up
 	add peer 2 10.1.0.65 
 	peer 10.1.0.65 up
+	add peer 2 10.1.0.66 
+	peer 10.1.0.66 up
 	add peer 2 10.1.0.67 
 	peer 10.1.0.67 up
 	
@@ -98,43 +98,43 @@ bgp router 10.0.0.34
 	peer 10.0.0.33 up
 	
 bgp router 10.1.0.65
+	add peer 2 10.1.0.64 
+	peer 10.1.0.64 up
 	add peer 2 10.1.0.66 
 	peer 10.1.0.66 up
 	add peer 2 10.1.0.67 
 	peer 10.1.0.67 up
-	add peer 2 10.1.0.64 
-	peer 10.1.0.64 up
 	
 bgp router 10.1.0.66
+	add peer 2 10.1.0.64 
+	peer 10.1.0.64 up
 	add peer 2 10.1.0.65 
 	peer 10.1.0.65 up
 	add peer 2 10.1.0.67 
 	peer 10.1.0.67 up
-	add peer 2 10.1.0.64 
-	peer 10.1.0.64 up
 	
 bgp router 10.1.0.67
-	add peer 2 10.1.0.66 
-	peer 10.1.0.66 up
-	add peer 2 10.1.0.65 
-	peer 10.1.0.65 up
 	add peer 2 10.1.0.64 
 	peer 10.1.0.64 up
+	add peer 2 10.1.0.65 
+	peer 10.1.0.65 up
+	add peer 2 10.1.0.66 
+	peer 10.1.0.66 up
 	
 
 # eBGP static routes
-net node 10.0.0.33 route add --oif=10.2.0.4 10.2.0.4/32 1
+net node 10.0.0.32 route add --oif=10.2.0.0 10.2.0.0/32 1
 net node 10.0.0.34 route add --oif=10.1.0.65 10.1.0.65/32 1
-net node 10.1.0.64 route add --oif=10.2.0.4 10.2.0.4/32 1
+net node 10.1.0.64 route add --oif=10.2.0.0 10.2.0.0/32 1
 net node 10.1.0.65 route add --oif=10.0.0.34 10.0.0.34/32 1
-net node 10.2.0.4 route add --oif=10.1.0.64 10.1.0.64/32 1
-net node 10.2.0.4 route add --oif=10.0.0.33 10.0.0.33/32 1
+net node 10.2.0.0 route add --oif=10.1.0.64 10.1.0.64/32 1
+net node 10.2.0.0 route add --oif=10.0.0.32 10.0.0.32/32 1
 
 # Setup eBGP sessions
-bgp router 10.0.0.33
-	add peer 3 10.2.0.4      	
-	peer 10.2.0.4 next-hop-self
-	peer 10.2.0.4 up
+bgp router 10.0.0.32
+	add peer 3 10.2.0.0      	
+	peer 10.2.0.0 next-hop-self
+	peer 10.2.0.0 up
 	exit       
 bgp router 10.0.0.34
 	add peer 2 10.1.0.65      	
@@ -142,30 +142,30 @@ bgp router 10.0.0.34
 	peer 10.1.0.65 up
 	exit       
 bgp router 10.1.0.64
-	add peer 3 10.2.0.4      	
-	peer 10.2.0.4 next-hop-self
-	peer 10.2.0.4 up
+	add peer 3 10.2.0.0      	
+	peer 10.2.0.0 next-hop-self
+	peer 10.2.0.0 up
 	exit       
 bgp router 10.1.0.65
 	add peer 1 10.0.0.34      	
 	peer 10.0.0.34 next-hop-self
 	peer 10.0.0.34 up
 	exit       
-bgp router 10.2.0.4
+bgp router 10.2.0.0
 	add peer 2 10.1.0.64      	
 	peer 10.1.0.64 next-hop-self
 	peer 10.1.0.64 up
-	add peer 1 10.0.0.33      	
-	peer 10.0.0.33 next-hop-self
-	peer 10.0.0.33 up
+	add peer 1 10.0.0.32      	
+	peer 10.0.0.32 next-hop-self
+	peer 10.0.0.32 up
 	exit       
 	
 # Originate own prefixes
-	bgp router 10.0.0.33 add network 10.0.0.0/16
+	bgp router 10.0.0.32 add network 10.0.0.0/16
 	bgp router 10.0.0.34 add network 10.0.0.0/16
 	bgp router 10.1.0.64 add network 10.1.0.0/16
 	bgp router 10.1.0.65 add network 10.1.0.0/16
-	bgp router 10.2.0.4 add network 10.2.0.0/16
+	bgp router 10.2.0.0 add network 10.2.0.0/16
 
 
 sim run               

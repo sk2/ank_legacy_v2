@@ -148,7 +148,7 @@ class Internet:
         #TODO: check that loaded network has at least one node, if not throw exception
         self.network.instantiate_nodes()
     
-    def plot(self): 
+    def plot(self, matplotlib=False): 
         """Plot the network topology
 
         Args:
@@ -164,7 +164,8 @@ class Internet:
 
         """              
         LOG.info("Plotting")      
-        if config.settings['Plotting']['matplotlib']:
+        matplotlib = matplotlib or config.settings['Plotting']['matplotlib']
+        if matplotlib:
             ank.plot(self.network)        
         ank.jsplot(self.network)        
         ank.summarydoc(self.network)
