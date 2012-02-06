@@ -45,13 +45,13 @@ def default_route(node):
 
 def debug_nodes(graph):
     import pprint
-    debug_data = dict( (node.fqdn, data) for node, data in graph.nodes(data=True))
+    debug_data = dict( (node.fqdn, data) for node, data in sorted(graph.nodes(data=True)))
     return pprint.pformat(debug_data)
 
 def debug_edges(graph):
     import pprint
     debug_data = dict( ((src.fqdn, dst.fqdn), data) 
-            for src, dst, data in graph.edges(data=True))
+            for src, dst, data in sorted(graph.edges(data=True)))
     return pprint.pformat(debug_data)
 
 def dump_identifiers(network, filename):
