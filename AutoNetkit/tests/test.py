@@ -22,10 +22,4 @@ def test_dumps():
     test_phys = open(f_phys, "r").read()
     master_phys = open(os.path.join(master_dir, "physical.txt"), "r").read()
 
-    try:
-        assert(test_phys == master_phys)
-    except AssertionError:
-        message = ''.join(difflib.ndiff(test_phys.splitlines(True),
-            master_phys.splitlines(True)))
-        LOG.warn(message)
-        raise AssertionError
+    assert(test_phys == master_phys)
