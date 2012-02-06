@@ -15,9 +15,7 @@ def test_netkit():
     try:
         assert(test_lab_conf == master_lab_conf)
     except AssertionError:
-         message = ''.join(difflib.ndiff(test_lab_conf.splitlines(True),
                                                 master_lab_conf.splitlines(True)))
          print message
-         print "AAA"
 
     raise

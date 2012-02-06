@@ -49,7 +49,7 @@ def allocate_subnets(network, address_block=IPNetwork("10.0.0.0/8")):
     subnet_list = address_block.subnet(16)
 
     single_edge_ebgp_graph = nx.Graph(ank.get_ebgp_graph(network) )
-    for src, dst in single_edge_ebgp_graph.edges():
+    for src, dst in sorted(single_edge_ebgp_graph.edges()):
         # Add the dst (external peer) to AS of src node so they are allocated
         # a subnet. (The AS choice is arbitrary)
         src_as = asgraphs[network.asn(src)]
@@ -95,7 +95,7 @@ def allocate_subnets(network, address_block=IPNetwork("10.0.0.0/8")):
             link_subnet = ptp_subnet.subnet(30)
 
             # Now iterate over edges in this as and apply
-            for src, dst in my_as.edges():
+            for src, dst in sorted(my_as.edges()):
                 # Note we apply this back to the main graph
                 # not to the as graph!
 
@@ -117,7 +117,7 @@ def allocate_subnets(network, address_block=IPNetwork("10.0.0.0/8")):
         #TODO: check if next step is necessary
         loopback_ips = loopback_subnet.subnet(32)
     
-        for rtr in as_internal_nodes:
+        for rtr in sorted(as_internal_nodes):
             lo_ip = loopback_ips.next()
             network.graph.node[rtr]['lo_ip'] = lo_ip
 
@@ -126,7 +126,7 @@ def allocate_subnets(network, address_block=IPNetwork("10.0.0.0/8")):
 def alloc_interfaces(network):
     """Allocated interface IDs for each link in network"""
     LOG.debug("Allocating interfaces")
-    for rtr in network.graph:
+    for rtr in sorted(network.graph):
         for index, (src, dst) in enumerate(network.graph.edges(rtr)):
             network.graph[src][dst]['id'] = index
 
