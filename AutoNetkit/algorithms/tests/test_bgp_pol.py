@@ -17,4 +17,3 @@ def test_bgp_pol():
     master_bgp = open(os.path.join(master_dir, "bgp_dump.txt"), "r").read()
 
     assert(test_bgp == master_bgp)
-
