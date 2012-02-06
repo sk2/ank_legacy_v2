@@ -64,7 +64,10 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
         rcParams['figure.figsize'] = 20, 10
 
     if not pos:
-        pos=nx.spring_layout(graph)
+        try:
+            pos=nx.spring_layout(graph)
+        except ImportError:
+            pos=nx.random_layout(graph)
 
     # If none, filename based on title
     if not filename:
