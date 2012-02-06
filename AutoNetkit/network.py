@@ -45,6 +45,9 @@ to pass through to the netx graph methods for quick access
 # TODO: abstract eBGP etc to be subgraph by property,
 # with eBGP just being split on the 'asn' property
 
+class DeviceNotFoundException(Exception):
+    pass
+
 #TODO: make these access network attribute directly rather than calling the network.label() etc
 class device (namedtuple('node', "network, id")):
     __slots = ()
@@ -348,11 +351,40 @@ class Network(object):
         """ syntactic sugar for accessing asn of a node
 
         >>> network = ank.example_multi_as()
+        >>> network.asn("1a.AS1")
+        1
+
         >>> [network.asn(node) for node in sorted(network.devices())]
         [1, 1, 1, 2, 2, 2, 2, 3]
         
         """
-        return int(self.graph.node[node].get('asn'))
+        #TODO: extend this automatic lookup logic
+        try:
+            return int(self.graph.node[node].get('asn'))
+        except KeyError:
+            try:
+                return self.asn(self.find_device_by_fqdn(node))
+            except DeviceNotFoundException:
+                LOG.debug("Unable to find device %s" % node)
+
+
+    def find_device_by_fqdn(self, fqdn):
+        """
+        Note: this is O(N) in number of nodes
+
+        >>> network = ank.example_multi_as()
+        >>> network.find_device_by_fqdn("1a.AS1")
+        1a.AS1
+        >>> network.find_device_by_fqdn("1a.AS4")
+        Traceback (most recent call last):
+        ...
+        DeviceNotFoundException
+        """
+        try:
+            return (device for device in self.devices() if device.fqdn == fqdn).next()
+        except StopIteration:
+            #TODO: throw DeviceNotFound exception here
+            raise DeviceNotFoundException
 
     def lo_ip(self, node):
         """ syntactic sugar for accessing loopback IP of a node """
