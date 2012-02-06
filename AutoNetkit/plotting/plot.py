@@ -30,13 +30,14 @@ def plot(network, show=False, save=True):
     """ Plot the network """
     try:
         import matplotlib.pyplot as plt
-    except:
+    except ImportError:
         LOG.warn("Matplotlib not found, not plotting using Matplotlib")
         return
     try:
         import numpy
     except ImportError:
         LOG.warn("Matplotlib plotting requires numpy for graph layout")
+        return
 
     plot_dir = config.plot_dir
     if not os.path.isdir(plot_dir):
@@ -65,6 +66,17 @@ def plot(network, show=False, save=True):
 def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
         node_color=None,
         show=False, save=True):
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError:
+        LOG.warn("Matplotlib not found, not plotting using Matplotlib")
+        return
+    try:
+        import numpy
+    except ImportError:
+        LOG.warn("Matplotlib plotting requires numpy for graph layout")
+        return
+
     if graph.number_of_nodes() == 0:
         LOG.debug("{0} graph is empty, not plotting".format(title))
 
