@@ -9,12 +9,9 @@ include AutoNetkit/lib/shadow
 
 prune examples
 prune doc
-
                                       
 global-exclude *~
 global-exclude *.pyc
-global-exclude .svn
 
 global-exclude *.sh        
-global-exclude todo.txt
 
