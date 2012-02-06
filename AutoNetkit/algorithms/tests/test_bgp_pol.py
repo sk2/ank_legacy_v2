@@ -11,7 +11,6 @@ def test_bgp_pol():
     inet = AutoNetkit.internet.Internet("multias", netkit=True, policy_file=pol_file) 
     inet.compile()
     inet.dump()
-    LOG.warn( inet.network.g_session.nodes(data=True))
 
     f_bgp = os.path.join(config.log_dir, "bgp.txt")
     test_bgp = open(f_bgp, "r").read()
