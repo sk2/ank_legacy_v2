@@ -301,8 +301,19 @@ class BgpPolicyParser:
                 | self.set_definition.setResultsName("set_definition")
                 )
 
+
+        #TODO: allow shorthand of (1) -> (2) for (asn=1) -> (asn=2)
+
     def apply_bgp_policy(self, qstring):
         """Applies policy to network 
+
+
+        >>> inet = ank.internet.Internet("2routers") 
+        >>> inet.compile()
+        >>> pol_parser = ank.BgpPolicyParser(inet.network)
+        >>> pol_parser.apply_bgp_policy("(asn=1) ->ingress (asn=2): (setMED 200)")
+
+        inet.network.g_session['a.AS1']['b.AS2']
 
         >>> pol_parser = ank.BgpPolicyParser(ank.network.Network(ank.load_example("multias")))
 
