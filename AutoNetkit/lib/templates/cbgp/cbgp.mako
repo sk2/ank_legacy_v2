@@ -54,7 +54,7 @@ net node ${router} route add --oif=${peer} ${peer}/32 1
 # Setup eBGP sessions
 % for router, peers in sorted(ebgp_topology.items()):              
 bgp router ${router}
-% for peer_asn, peer in peers:
+% for peer_asn, peer in sorted(peers, key = lambda x: x[1]):
 	add peer ${peer_asn} ${peer}      	
 	peer ${peer} next-hop-self
 	peer ${peer} up
