@@ -37,7 +37,7 @@ net domain ${asn} compute
 # Setup iBGP sessions
 % for router, peers in sorted(ibgp_topology.items()):  
 bgp router ${router.lo_ip.ip}
-	% for peer in sorted(peers):
+	% for peer in sorted(peers, key = lambda x: x.lo_ip.ip):
 	add peer ${peer.asn} ${peer.lo_ip.ip} 
 	peer ${peer.lo_ip.ip} up
 	% endfor      
@@ -46,7 +46,7 @@ bgp router ${router.lo_ip.ip}
 
 # eBGP static routes
 % for router, peers in sorted(ebgp_topology.items()):              
-% for peer_asn, peer in peers:       
+% for peer_asn, peer in sorted(peers):       
 net node ${router} route add --oif=${peer} ${peer}/32 1
 % endfor
 % endfor
