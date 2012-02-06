@@ -36,51 +36,59 @@ def allocate_subnets(network, address_block=IPNetwork("10.0.0.0/8")):
     Example usage:
     >>> network = ank.example_multi_as()
     >>> allocate_subnets(network)
-    >>> print ank.debug_nodes(network.graph)
-    {'1a.AS1': {'asn': 1, 'lo_ip': IPNetwork('10.0.0.32/32')},
-     '1b.AS1': {'asn': 1, 'lo_ip': IPNetwork('10.0.0.33/32')},
-     '1c.AS1': {'asn': 1, 'lo_ip': IPNetwork('10.0.0.34/32')},
-     '2a.AS2': {'asn': 2, 'lo_ip': IPNetwork('10.1.0.32/32')},
-     '2b.AS2': {'asn': 2, 'lo_ip': IPNetwork('10.1.0.33/32')},
-     '2c.AS2': {'asn': 2, 'lo_ip': IPNetwork('10.1.0.34/32')},
-     '2d.AS2': {'asn': 2, 'lo_ip': IPNetwork('10.1.0.35/32')},
-     '3a.AS3': {'asn': 3, 'lo_ip': IPNetwork('10.2.0.0/32')}}
+    >>> print ank.debug_nodes(network.graph, "lo_ip")
+    {'1a.AS1': IPNetwork('10.0.0.32/32'),
+     '1b.AS1': IPNetwork('10.0.0.33/32'),
+     '1c.AS1': IPNetwork('10.0.0.34/32'),
+     '2a.AS2': IPNetwork('10.1.0.64/32'),
+     '2b.AS2': IPNetwork('10.1.0.65/32'),
+     '2c.AS2': IPNetwork('10.1.0.66/32'),
+     '2d.AS2': IPNetwork('10.1.0.67/32'),
+     '3a.AS3': IPNetwork('10.2.0.0/32')}
     
-    >>> print ank.debug_edges(network.graph)
-    {('1a.AS1', '1b.AS1'): {'ip': IPAddress('10.0.0.10'),
-                            'sn': IPNetwork('10.0.0.8/30')},
-     ('1a.AS1', '1c.AS1'): {'ip': IPAddress('10.0.0.18'),
-                            'sn': IPNetwork('10.0.0.16/30')},
-     ('1b.AS1', '1a.AS1'): {'ip': IPAddress('10.0.0.9'),
-                            'sn': IPNetwork('10.0.0.8/30')},
-     ('1b.AS1', '1c.AS1'): {'ip': IPAddress('10.0.0.22'),
-                            'sn': IPNetwork('10.0.0.20/30')},
-     ('1b.AS1', '3a.AS3'): {},
-     ('1c.AS1', '1a.AS1'): {'ip': IPAddress('10.0.0.17'),
-                            'sn': IPNetwork('10.0.0.16/30')},
-     ('1c.AS1', '1b.AS1'): {'ip': IPAddress('10.0.0.21'),
-                            'sn': IPNetwork('10.0.0.20/30')},
-     ('1c.AS1', '2a.AS2'): {},
-     ('2a.AS2', '1c.AS1'): {},
-     ('2a.AS2', '2b.AS2'): {'ip': IPAddress('10.1.0.10'),
-                            'sn': IPNetwork('10.1.0.8/30')},
-     ('2a.AS2', '2d.AS2'): {'ip': IPAddress('10.1.0.26'),
-                            'sn': IPNetwork('10.1.0.24/30')},
-     ('2b.AS2', '2a.AS2'): {'ip': IPAddress('10.1.0.9'),
-                            'sn': IPNetwork('10.1.0.8/30')},
-     ('2b.AS2', '2c.AS2'): {'ip': IPAddress('10.1.0.18'),
-                            'sn': IPNetwork('10.1.0.16/30')},
-     ('2c.AS2', '2b.AS2'): {'ip': IPAddress('10.1.0.17'),
-                            'sn': IPNetwork('10.1.0.16/30')},
-     ('2c.AS2', '2d.AS2'): {'ip': IPAddress('10.1.0.30'),
-                            'sn': IPNetwork('10.1.0.28/30')},
-     ('2d.AS2', '2a.AS2'): {'ip': IPAddress('10.1.0.25'),
-                            'sn': IPNetwork('10.1.0.24/30')},
-     ('2d.AS2', '2c.AS2'): {'ip': IPAddress('10.1.0.29'),
-                            'sn': IPNetwork('10.1.0.28/30')},
-     ('2d.AS2', '3a.AS3'): {},
-     ('3a.AS3', '1b.AS1'): {},
-     ('3a.AS3', '2d.AS2'): {}}
+    >>> print ank.debug_edges(network.graph, "ip")
+    {('1a.AS1', '1b.AS1'): IPAddress('10.0.0.10'),
+     ('1a.AS1', '1c.AS1'): IPAddress('10.0.0.22'),
+     ('1b.AS1', '1a.AS1'): IPAddress('10.0.0.9'),
+     ('1b.AS1', '1c.AS1'): IPAddress('10.0.0.26'),
+     ('1b.AS1', '3a.AS3'): IPAddress('10.0.0.17'),
+     ('1c.AS1', '1a.AS1'): IPAddress('10.0.0.21'),
+     ('1c.AS1', '1b.AS1'): IPAddress('10.0.0.25'),
+     ('1c.AS1', '2a.AS2'): IPAddress('10.0.0.29'),
+     ('2a.AS2', '1c.AS1'): IPAddress('10.0.0.30'),
+     ('2a.AS2', '2b.AS2'): IPAddress('10.1.0.10'),
+     ('2a.AS2', '2d.AS2'): IPAddress('10.1.0.26'),
+     ('2b.AS2', '2a.AS2'): IPAddress('10.1.0.9'),
+     ('2b.AS2', '2c.AS2'): IPAddress('10.1.0.18'),
+     ('2c.AS2', '2b.AS2'): IPAddress('10.1.0.17'),
+     ('2c.AS2', '2d.AS2'): IPAddress('10.1.0.30'),
+     ('2d.AS2', '2a.AS2'): IPAddress('10.1.0.25'),
+     ('2d.AS2', '2c.AS2'): IPAddress('10.1.0.29'),
+     ('2d.AS2', '3a.AS3'): IPAddress('10.1.0.33'),
+     ('3a.AS3', '1b.AS1'): IPAddress('10.0.0.18'),
+     ('3a.AS3', '2d.AS2'): IPAddress('10.1.0.34')}
+    
+    >>> print ank.debug_edges(network.graph, "sn")
+    {('1a.AS1', '1b.AS1'): IPNetwork('10.0.0.8/30'),
+     ('1a.AS1', '1c.AS1'): IPNetwork('10.0.0.20/30'),
+     ('1b.AS1', '1a.AS1'): IPNetwork('10.0.0.8/30'),
+     ('1b.AS1', '1c.AS1'): IPNetwork('10.0.0.24/30'),
+     ('1b.AS1', '3a.AS3'): IPNetwork('10.0.0.16/30'),
+     ('1c.AS1', '1a.AS1'): IPNetwork('10.0.0.20/30'),
+     ('1c.AS1', '1b.AS1'): IPNetwork('10.0.0.24/30'),
+     ('1c.AS1', '2a.AS2'): IPNetwork('10.0.0.28/30'),
+     ('2a.AS2', '1c.AS1'): IPNetwork('10.0.0.28/30'),
+     ('2a.AS2', '2b.AS2'): IPNetwork('10.1.0.8/30'),
+     ('2a.AS2', '2d.AS2'): IPNetwork('10.1.0.24/30'),
+     ('2b.AS2', '2a.AS2'): IPNetwork('10.1.0.8/30'),
+     ('2b.AS2', '2c.AS2'): IPNetwork('10.1.0.16/30'),
+     ('2c.AS2', '2b.AS2'): IPNetwork('10.1.0.16/30'),
+     ('2c.AS2', '2d.AS2'): IPNetwork('10.1.0.28/30'),
+     ('2d.AS2', '2a.AS2'): IPNetwork('10.1.0.24/30'),
+     ('2d.AS2', '2c.AS2'): IPNetwork('10.1.0.28/30'),
+     ('2d.AS2', '3a.AS3'): IPNetwork('10.1.0.32/30'),
+     ('3a.AS3', '1b.AS1'): IPNetwork('10.0.0.16/30'),
+     ('3a.AS3', '2d.AS2'): IPNetwork('10.1.0.32/30')}
     
     """
     LOG.debug("Allocating subnets")
@@ -183,7 +191,19 @@ def get_tap_host(network):
     return network.tap_host
 
 def alloc_tap_hosts(network, address_block=IPNetwork("172.16.0.0/16")):
-    """Allocates TAP IPs for connecting using Netkit"""
+    """Allocates TAP IPs for connecting using Netkit
+    >>> network = ank.example_multi_as()
+    >>> alloc_tap_hosts(network)
+    >>> print ank.debug_nodes(network.graph, "tap_ip")
+    {'1a.AS1': IPAddress('172.16.1.1'),
+     '1b.AS1': IPAddress('172.16.1.2'),
+     '1c.AS1': IPAddress('172.16.1.3'),
+     '2a.AS2': IPAddress('172.16.2.1'),
+     '2b.AS2': IPAddress('172.16.2.2'),
+     '2c.AS2': IPAddress('172.16.2.3'),
+     '2d.AS2': IPAddress('172.16.2.4'),
+     '3a.AS3': IPAddress('172.16.3.1')}
+    """
     LOG.debug("Allocating TAP hosts")
     network.tap_sn = address_block
 
