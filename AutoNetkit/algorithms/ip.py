@@ -40,22 +40,22 @@ def allocate_subnets(network, address_block=IPNetwork("10.0.0.0/8")):
     {'1a.AS1': IPNetwork('10.0.0.32/32'),
      '1b.AS1': IPNetwork('10.0.0.33/32'),
      '1c.AS1': IPNetwork('10.0.0.34/32'),
-     '2a.AS2': IPNetwork('10.1.0.64/32'),
-     '2b.AS2': IPNetwork('10.1.0.65/32'),
-     '2c.AS2': IPNetwork('10.1.0.66/32'),
-     '2d.AS2': IPNetwork('10.1.0.67/32'),
-     '3a.AS3': IPNetwork('10.2.0.0/32')}
+     '2a.AS2': IPNetwork('10.1.0.32/32'),
+     '2b.AS2': IPNetwork('10.1.0.33/32'),
+     '2c.AS2': IPNetwork('10.1.0.34/32'),
+     '2d.AS2': IPNetwork('10.1.0.35/32'),
+     '3a.AS3': IPNetwork('10.2.0.8/32')}
     
     >>> print ank.debug_edges(network.graph, "ip")
     {('1a.AS1', '1b.AS1'): IPAddress('10.0.0.10'),
-     ('1a.AS1', '1c.AS1'): IPAddress('10.0.0.22'),
+     ('1a.AS1', '1c.AS1'): IPAddress('10.0.0.18'),
      ('1b.AS1', '1a.AS1'): IPAddress('10.0.0.9'),
-     ('1b.AS1', '1c.AS1'): IPAddress('10.0.0.26'),
-     ('1b.AS1', '3a.AS3'): IPAddress('10.0.0.17'),
-     ('1c.AS1', '1a.AS1'): IPAddress('10.0.0.21'),
-     ('1c.AS1', '1b.AS1'): IPAddress('10.0.0.25'),
-     ('1c.AS1', '2a.AS2'): IPAddress('10.0.0.29'),
-     ('2a.AS2', '1c.AS1'): IPAddress('10.0.0.30'),
+     ('1b.AS1', '1c.AS1'): IPAddress('10.0.0.22'),
+     ('1b.AS1', '3a.AS3'): IPAddress('10.2.0.2'),
+     ('1c.AS1', '1a.AS1'): IPAddress('10.0.0.17'),
+     ('1c.AS1', '1b.AS1'): IPAddress('10.0.0.21'),
+     ('1c.AS1', '2a.AS2'): IPAddress('10.0.0.25'),
+     ('2a.AS2', '1c.AS1'): IPAddress('10.0.0.26'),
      ('2a.AS2', '2b.AS2'): IPAddress('10.1.0.10'),
      ('2a.AS2', '2d.AS2'): IPAddress('10.1.0.26'),
      ('2b.AS2', '2a.AS2'): IPAddress('10.1.0.9'),
@@ -64,20 +64,20 @@ def allocate_subnets(network, address_block=IPNetwork("10.0.0.0/8")):
      ('2c.AS2', '2d.AS2'): IPAddress('10.1.0.30'),
      ('2d.AS2', '2a.AS2'): IPAddress('10.1.0.25'),
      ('2d.AS2', '2c.AS2'): IPAddress('10.1.0.29'),
-     ('2d.AS2', '3a.AS3'): IPAddress('10.1.0.33'),
-     ('3a.AS3', '1b.AS1'): IPAddress('10.0.0.18'),
-     ('3a.AS3', '2d.AS2'): IPAddress('10.1.0.34')}
+     ('2d.AS2', '3a.AS3'): IPAddress('10.2.0.6'),
+     ('3a.AS3', '1b.AS1'): IPAddress('10.2.0.1'),
+     ('3a.AS3', '2d.AS2'): IPAddress('10.2.0.5')}
     
     >>> print ank.debug_edges(network.graph, "sn")
     {('1a.AS1', '1b.AS1'): IPNetwork('10.0.0.8/30'),
-     ('1a.AS1', '1c.AS1'): IPNetwork('10.0.0.20/30'),
+     ('1a.AS1', '1c.AS1'): IPNetwork('10.0.0.16/30'),
      ('1b.AS1', '1a.AS1'): IPNetwork('10.0.0.8/30'),
-     ('1b.AS1', '1c.AS1'): IPNetwork('10.0.0.24/30'),
-     ('1b.AS1', '3a.AS3'): IPNetwork('10.0.0.16/30'),
-     ('1c.AS1', '1a.AS1'): IPNetwork('10.0.0.20/30'),
-     ('1c.AS1', '1b.AS1'): IPNetwork('10.0.0.24/30'),
-     ('1c.AS1', '2a.AS2'): IPNetwork('10.0.0.28/30'),
-     ('2a.AS2', '1c.AS1'): IPNetwork('10.0.0.28/30'),
+     ('1b.AS1', '1c.AS1'): IPNetwork('10.0.0.20/30'),
+     ('1b.AS1', '3a.AS3'): IPNetwork('10.2.0.0/30'),
+     ('1c.AS1', '1a.AS1'): IPNetwork('10.0.0.16/30'),
+     ('1c.AS1', '1b.AS1'): IPNetwork('10.0.0.20/30'),
+     ('1c.AS1', '2a.AS2'): IPNetwork('10.0.0.24/30'),
+     ('2a.AS2', '1c.AS1'): IPNetwork('10.0.0.24/30'),
      ('2a.AS2', '2b.AS2'): IPNetwork('10.1.0.8/30'),
      ('2a.AS2', '2d.AS2'): IPNetwork('10.1.0.24/30'),
      ('2b.AS2', '2a.AS2'): IPNetwork('10.1.0.8/30'),
@@ -86,9 +86,10 @@ def allocate_subnets(network, address_block=IPNetwork("10.0.0.0/8")):
      ('2c.AS2', '2d.AS2'): IPNetwork('10.1.0.28/30'),
      ('2d.AS2', '2a.AS2'): IPNetwork('10.1.0.24/30'),
      ('2d.AS2', '2c.AS2'): IPNetwork('10.1.0.28/30'),
-     ('2d.AS2', '3a.AS3'): IPNetwork('10.1.0.32/30'),
-     ('3a.AS3', '1b.AS1'): IPNetwork('10.0.0.16/30'),
-     ('3a.AS3', '2d.AS2'): IPNetwork('10.1.0.32/30')}
+     ('2d.AS2', '3a.AS3'): IPNetwork('10.2.0.4/30'),
+     ('3a.AS3', '1b.AS1'): IPNetwork('10.2.0.0/30'),
+     ('3a.AS3', '2d.AS2'): IPNetwork('10.2.0.4/30')}
+
     
     """
     LOG.debug("Allocating subnets")
@@ -180,10 +181,35 @@ def allocate_subnets(network, address_block=IPNetwork("10.0.0.0/8")):
     network.ip_as_allocs = ip_as_allocs
 
 def alloc_interfaces(network):
-    """Allocated interface IDs for each link in network"""
+    """Allocated interface IDs for each link in network
+    >>> network = ank.example_multi_as()
+    >>> alloc_interfaces(network)
+    >>> print ank.debug_edges(network.graph, "id")
+    {('1a.AS1', '1b.AS1'): 0,
+     ('1a.AS1', '1c.AS1'): 1,
+     ('1b.AS1', '1a.AS1'): 0,
+     ('1b.AS1', '1c.AS1'): 1,
+     ('1b.AS1', '3a.AS3'): 2,
+     ('1c.AS1', '1a.AS1'): 0,
+     ('1c.AS1', '1b.AS1'): 1,
+     ('1c.AS1', '2a.AS2'): 2,
+     ('2a.AS2', '1c.AS1'): 0,
+     ('2a.AS2', '2b.AS2'): 1,
+     ('2a.AS2', '2d.AS2'): 2,
+     ('2b.AS2', '2a.AS2'): 0,
+     ('2b.AS2', '2c.AS2'): 1,
+     ('2c.AS2', '2b.AS2'): 0,
+     ('2c.AS2', '2d.AS2'): 1,
+     ('2d.AS2', '2a.AS2'): 0,
+     ('2d.AS2', '2c.AS2'): 1,
+     ('2d.AS2', '3a.AS3'): 2,
+     ('3a.AS3', '1b.AS1'): 0,
+     ('3a.AS3', '2d.AS2'): 1}
+    
+    """
     LOG.debug("Allocating interfaces")
     for rtr in sorted(network.graph):
-        for index, (src, dst) in enumerate(network.graph.edges(rtr)):
+        for index, (src, dst) in enumerate(sorted(network.graph.edges(rtr))):
             network.graph[src][dst]['id'] = index
 
 def get_tap_host(network):

@@ -4,7 +4,6 @@ import AutoNetkit.config as config
 from pkg_resources import resource_filename
 import logging
 LOG = logging.getLogger("ANK")
-import difflib
 
 def test_dumps():
     master_dir = (resource_filename(__name__, "comparisons"))
@@ -23,4 +22,4 @@ def test_dumps():
     master_phys = open(os.path.join(master_dir, "physical.txt"), "r").read()
 
 #TODO: fix IP allocation to make less stochastic, so can check physical allocations
-    #assert(test_phys == master_phys)
+    assert(test_phys == master_phys)
