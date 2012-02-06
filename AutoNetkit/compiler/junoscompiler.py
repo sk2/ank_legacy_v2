@@ -139,7 +139,6 @@ class JunosCompiler:
             return retval
 
         for device in sorted(self.network.devices(), key = lambda x: x.fqdn):
-            print "junos for device", device
             hostname = device.hostname
             topology_data[hostname] = {
                     'image': image.alias,
@@ -152,7 +151,6 @@ class JunosCompiler:
                         ank.fqdn(self.network, src), 
                         ank.fqdn(self.network, dst))
 # Bridge information for topology config
-                print "int for ", description
                 if subnet in collision_to_bridge_mapping:
 # Use bridge allocated for this subnet
                     bridge_id = collision_to_bridge_mapping[subnet]
