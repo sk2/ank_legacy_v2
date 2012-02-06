@@ -329,22 +329,44 @@ class BgpPolicyParser:
         [[if [] then [setMED 200] reject: False]]
 
         >>> pol_parser.clear_policies()
+        >>> pol_parser.apply_bgp_policy("(asn=1) ->ingress (*): (setMED 200)")
+        >>> inet.network.g_session[node_a][node_b]['ingress']
+        [[if [] then [setMED 200] reject: False]]
+
+        >>> pol_parser.clear_policies()
         >>> pol_parser.apply_bgp_policy("(asn=1) ->ingress (asn=2): (if tag = test then setLP 100)")
         >>> inet.network.g_session[node_a][node_b]['ingress']
         [[if [tag = test] then [setLP 100] reject: False]]
 
         >>> pol_parser.clear_policies()
-        >>> pol_parser.apply_bgp_policy("(asn=1) ->ingress (asn=2): (setMED 200)")
+        >>> pol_parser.apply_bgp_policy("(asn=1) ->ingress (asn=2): (if tags contain test then setLP 100)")
         >>> inet.network.g_session[node_a][node_b]['ingress']
+        [[if [tag = test] then [setLP 100] reject: False]]
 
         >>> pol_parser.clear_policies()
-        >>> pol_parser.apply_bgp_policy("(asn=1) ->ingress (asn=2): (setMED 200)")
+        >>> pol_parser.apply_bgp_policy("(asn=1) ->ingress (asn=2): (if prefix_list = pl_asn_eq_2 then addTag cl_asn_eq_2))")
         >>> inet.network.g_session[node_a][node_b]['ingress']
+        [[if [prefix_list = pl_asn_eq_2] then [addTag cl_asn_eq_2] reject: False]]
+        
+        >>> pol_parser.clear_policies()
+        >>> pol_parser.apply_bgp_policy("(asn=1) ->ingress (asn=2): (addTag ABC & setLP 90))")
+        >>> inet.network.g_session[node_a][node_b]['ingress']
+        [[if [] then [addTag ABC, setLP 90] reject: False]]
 
         >>> pol_parser.clear_policies()
-        >>> pol_parser.apply_bgp_policy("(asn=1) ->ingress (asn=2): (setMED 200)")
+        >>> pol_parser.apply_bgp_policy("(asn=1) ->ingress (asn=2): (if Origin(asn=2) then addTag a100 ))")
         >>> inet.network.g_session[node_a][node_b]['ingress']
+        [[if [tag = origin_cl_asn_eq_2] then [addTag a100] reject: False]]
 
+        >>> pol_parser.clear_policies()
+        >>> pol_parser.apply_bgp_policy("(asn=1) ->ingress (asn=2): (if Transit(asn=2) then addTag a100 ))")
+        >>> inet.network.g_session[node_a][node_b]['ingress']
+        [[if [tag = transit_cl_asn_eq_2] then [addTag a100] reject: False]]
+
+        >>> pol_parser.clear_policies()
+        >>> pol_parser.apply_bgp_policy("(asn=1) ->ingress (asn=2): (if Transit(asn=2) then addTag a100 ))")
+        >>> inet.network.g_session[node_a][node_b]['ingress']
+        [[if [tag = transit_cl_asn_eq_2] then [addTag a100] reject: False]]
 
         >>> pol_parser = ank.BgpPolicyParser(ank.network.Network(ank.load_example("multias")))
 
@@ -354,12 +376,6 @@ class BgpPolicyParser:
 
         >>> attributestring = "2a.as1"
         >>> result = pol_parser.attribute.parseString(attributestring)
-
-
-        These are equivalent::
-
-        >>> result = pol_parser.bgpMatchQuery.parseString("tag = test")
-        >>> result = pol_parser.bgpMatchQuery.parseString("tags contain test")
 
         Node and edge queries::
 
@@ -376,7 +392,7 @@ class BgpPolicyParser:
         >>> pol_parser.apply_bgp_policy("(asn = 1) egress-> (asn = 1): (if Origin(asn=2) then addTag a100 )")
         >>> pol_parser.apply_bgp_policy("(asn = 1) egress-> (asn = 1): (if Transit(asn=2) then addTag a100 )")
         >>> pol_parser.apply_bgp_policy("(node = a_b ) ->ingress (Network = AS2): (addTag ABC & setLP 90) ")
-        >>> pol_parser.apply_bgp_policy("(node = a_b ) ->ingress (Network = AS2): (if tags contain abc then addTag ABC & setLP 90) ")
+        >>> pol_parser.apply_bgp_policy("(node = a_b ) ->ingress (Network = AS2): (if Transit(asn=2) then addTag a100 ) ")
         """
         LOG.debug("Applying BGP policy %s" % qstring)
         result = self.bgpPolicyLine.parseString(qstring)
