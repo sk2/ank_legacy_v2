@@ -17,6 +17,7 @@ import math
 import networkx as nx
 import logging
 LOG = logging.getLogger("ANK")
+import pprint
 
 def get_ip_as_allocs(network):
     """ Returns list of Subnets allocated, by network"""
@@ -33,7 +34,54 @@ def allocate_subnets(network, address_block=IPNetwork("10.0.0.0/8")):
         ip_as_allocs
 
     Example usage:
-
+    >>> network = ank.example_multi_as()
+    >>> allocate_subnets(network)
+    >>> print ank.debug_nodes(network.graph)
+    {'1a.AS1': {'asn': 1, 'lo_ip': IPNetwork('10.0.0.32/32')},
+     '1b.AS1': {'asn': 1, 'lo_ip': IPNetwork('10.0.0.33/32')},
+     '1c.AS1': {'asn': 1, 'lo_ip': IPNetwork('10.0.0.34/32')},
+     '2a.AS2': {'asn': 2, 'lo_ip': IPNetwork('10.1.0.32/32')},
+     '2b.AS2': {'asn': 2, 'lo_ip': IPNetwork('10.1.0.33/32')},
+     '2c.AS2': {'asn': 2, 'lo_ip': IPNetwork('10.1.0.34/32')},
+     '2d.AS2': {'asn': 2, 'lo_ip': IPNetwork('10.1.0.35/32')},
+     '3a.AS3': {'asn': 3, 'lo_ip': IPNetwork('10.2.0.0/32')}}
+    
+    >>> print ank.debug_edges(network.graph)
+    {('1a.AS1', '1b.AS1'): {'ip': IPAddress('10.0.0.10'),
+                            'sn': IPNetwork('10.0.0.8/30')},
+     ('1a.AS1', '1c.AS1'): {'ip': IPAddress('10.0.0.18'),
+                            'sn': IPNetwork('10.0.0.16/30')},
+     ('1b.AS1', '1a.AS1'): {'ip': IPAddress('10.0.0.9'),
+                            'sn': IPNetwork('10.0.0.8/30')},
+     ('1b.AS1', '1c.AS1'): {'ip': IPAddress('10.0.0.22'),
+                            'sn': IPNetwork('10.0.0.20/30')},
+     ('1b.AS1', '3a.AS3'): {},
+     ('1c.AS1', '1a.AS1'): {'ip': IPAddress('10.0.0.17'),
+                            'sn': IPNetwork('10.0.0.16/30')},
+     ('1c.AS1', '1b.AS1'): {'ip': IPAddress('10.0.0.21'),
+                            'sn': IPNetwork('10.0.0.20/30')},
+     ('1c.AS1', '2a.AS2'): {},
+     ('2a.AS2', '1c.AS1'): {},
+     ('2a.AS2', '2b.AS2'): {'ip': IPAddress('10.1.0.10'),
+                            'sn': IPNetwork('10.1.0.8/30')},
+     ('2a.AS2', '2d.AS2'): {'ip': IPAddress('10.1.0.26'),
+                            'sn': IPNetwork('10.1.0.24/30')},
+     ('2b.AS2', '2a.AS2'): {'ip': IPAddress('10.1.0.9'),
+                            'sn': IPNetwork('10.1.0.8/30')},
+     ('2b.AS2', '2c.AS2'): {'ip': IPAddress('10.1.0.18'),
+                            'sn': IPNetwork('10.1.0.16/30')},
+     ('2c.AS2', '2b.AS2'): {'ip': IPAddress('10.1.0.17'),
+                            'sn': IPNetwork('10.1.0.16/30')},
+     ('2c.AS2', '2d.AS2'): {'ip': IPAddress('10.1.0.30'),
+                            'sn': IPNetwork('10.1.0.28/30')},
+     ('2d.AS2', '2a.AS2'): {'ip': IPAddress('10.1.0.25'),
+                            'sn': IPNetwork('10.1.0.24/30')},
+     ('2d.AS2', '2c.AS2'): {'ip': IPAddress('10.1.0.29'),
+                            'sn': IPNetwork('10.1.0.28/30')},
+     ('2d.AS2', '3a.AS3'): {},
+     ('3a.AS3', '1b.AS1'): {},
+     ('3a.AS3', '2d.AS2'): {}}
+    
     """
     LOG.debug("Allocating subnets")
     # Initialise IP list to be graph edge format
@@ -50,7 +98,7 @@ def allocate_subnets(network, address_block=IPNetwork("10.0.0.0/8")):
 
     single_edge_ebgp_graph = nx.Graph(ank.get_ebgp_graph(network) )
     for src, dst in sorted(single_edge_ebgp_graph.edges()):
-        # Add the dst (external peer) to AS of src node so they are allocated
+      # Add the dst (external peer) to AS of src node so they are allocated
         # a subnet. (The AS choice is arbitrary)
         src_as = asgraphs[network.asn(src)]
         src_as.add_edge(src, dst)
