@@ -2,6 +2,8 @@ import os
 import AutoNetkit
 import AutoNetkit.config as config
 from pkg_resources import resource_filename
+import logging
+LOG = logging.getLogger("ANK")
 import difflib
 
 def test_netkit():
@@ -12,10 +14,13 @@ def test_netkit():
     f_lab = os.path.join(config.ank_main_dir, "netkit_lab", "lab.conf")
     test_lab_conf = open(f_lab, "r").read()
     master_lab_conf = open(os.path.join(master_dir, "lab.conf"), "r").read()
-    try:
-        assert(test_lab_conf == master_lab_conf)
-    except AssertionError:
-                                                master_lab_conf.splitlines(True)))
-         print message
 
-    raise
+
+    def remove_skiplines(conf, skiplines):
+        return "\n".join(line for line in conf.split("\n") if
+            not any(line.startswith(skip) for skip in skiplines))
+
+    test_lab_conf = remove_skiplines(test_lab_conf, ["LAB_VERSION", "LAB_AUTHOR"])
+    master_lab_conf = remove_skiplines(master_lab_conf, ["LAB_VERSION", "LAB_AUTHOR"])
+
+    assert(test_lab_conf == master_lab_conf)
