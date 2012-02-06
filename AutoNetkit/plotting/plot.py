@@ -28,12 +28,22 @@ def cmap_index(network, subgraph, attr='asn'):
 
 def plot(network, show=False, save=True):
     """ Plot the network """
+    try:
+        import matplotlib.pyplot as plt
+    except:
+        LOG.warn("Matplotlib not found, not plotting using Matplotlib")
+        return
+    try:
+        import numpy
+    except ImportError:
+        LOG.warn("Matplotlib plotting requires numpy for graph layout")
+
     plot_dir = config.plot_dir
     if not os.path.isdir(plot_dir):
         os.mkdir(plot_dir)
 
     graph = network.graph
-    pos = nx.spring_layout(graph)
+    pos=nx.spring_layout(graph)
 
 # Different node color for each AS. Use heatmap based on ASN
 
@@ -64,10 +74,7 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
         rcParams['figure.figsize'] = 20, 10
 
     if not pos:
-        try:
-            pos=nx.spring_layout(graph)
-        except ImportError:
-            pos=nx.random_layout(graph)
+        pos=nx.spring_layout(graph)
 
     # If none, filename based on title
     if not filename:
@@ -76,11 +83,7 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
         # Remove any spaces etc from filename
         filename.replace(" ", "_")
 
-    try:
-        import matplotlib.pyplot as plt
-    except:
-        LOG.debug("Matplotlib not found, not plotting using Matplotlib")
-        return
+
 
     # Colors
     if not node_color:
