@@ -6,7 +6,7 @@ LAB_WEB="${lab_web}"
 
 % for router, dataList in sorted(conf.items()):   
 
-%for (key,val) in dataList:
+%for (key,val) in sorted(dataList):
 ${router}[${key}]=${val}
 %endfor
 %endfor   
