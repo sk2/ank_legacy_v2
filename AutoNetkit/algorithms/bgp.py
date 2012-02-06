@@ -84,6 +84,8 @@ def ebgp_edges(network):
     Returns eBGP edges once configured from initialise_ebgp
 
     """
+    if not network.g_session.graph.get('ebgp_initialised'):
+        initialise_ebgp(network)
     return ( (s,t) for s,t in network.g_session.edges() if s.asn != t.asn)
 
 def ibgp_edges(network):
@@ -91,11 +93,12 @@ def ibgp_edges(network):
 #TODO: use sets here
 
     >>> network = ank.example_single_as()
-    >>> initialise_ibgp(network)
     >>> list(sorted(ibgp_edges(network)))
     [(1a.AS1, 1b.AS1), (1a.AS1, 1c.AS1), (1a.AS1, 1d.AS1), (1b.AS1, 1a.AS1), (1b.AS1, 1c.AS1), (1b.AS1, 1d.AS1), (1c.AS1, 1a.AS1), (1c.AS1, 1b.AS1), (1c.AS1, 1d.AS1), (1d.AS1, 1a.AS1), (1d.AS1, 1b.AS1), (1d.AS1, 1c.AS1)]
 
     """
+    if not network.g_session.graph.get('ibgp_initialised'):
+        initialise_ibgp(network)
     return ( (s,t) for s,t in network.g_session.edges() if s.asn == t.asn)
 
 def configure_ibgp_rr(network):
@@ -237,21 +240,26 @@ def initialise_bgp(network):
     initialise_bgp_attributes(network)
 
 def bgp_routers(network):
+    if not network.g_session.graph.get('ebgp_initialised'):
+        initialise_ebgp(network)
     return (n for n in network.g_session)
 
 def ebgp_routers(network):
     """List of all routers with an eBGP link
 
     >>> network = ank.example_multi_as()
-    >>> initialise_ebgp(network)
     >>> sorted(ebgp_routers(network))
     [1b.AS1, 1c.AS1, 2a.AS2, 2d.AS2, 3a.AS3]
 
     """
+    if not network.g_session.graph.get('ebgp_initialised'):
+        initialise_ebgp(network)
     return list(set(item for pair in ebgp_edges(network) for item in pair))
 
 def ibgp_routers(network):
     """List of all routers with an iBGP link"""
+    if not network.g_session.graph.get('ibgp_initialised'):
+        initialise_ibgp(network)
     return list(set(item for pair in ibgp_edges(network) for item in pair))
 
 def get_ebgp_graph(network):
