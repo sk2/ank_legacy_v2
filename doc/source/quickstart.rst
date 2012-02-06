@@ -50,17 +50,19 @@ Windows:
 
 open a cmd session (run ``cmd.exe``) cd into the scripts directory where autonetkit has been installed (``C:\Python27\scripts``), then::
 
-  autonetkit -f <path to .graphml file> --junosphere [--ospf|--isis]
+  autonetkit -f <path to .graphml file> --junosphere [--ospf|--isis] [ --plot]
 
 Mac:
 
 cd into the directory where you have the graphml file and then::
 
-  autonetkit -f ./test.graphml --junosphere [--ospf|--isis]
+  autonetkit -f ./test.graphml --junosphere [--ospf|--isis] [--plot]
 
 -----
 
 The ``--ospf`` option will create an IGP configuration for OSPF where as ``--isis`` will create an IGP configuration for ISIS. BGP configuration will be created automatically if the asn properties field is present for a node (as described above).
+
+The "--plot" option will generate network graphs in an html format and place them in the directory "\ank_lab\plots".
 
 The script will place all of the files it creates in a directory called ank_lab. It generate a .gz file which can be uploaded into the Junosphere 'Library' where it will be unpacked ready for use. A subdirectory will be created called ``junos_lab``. This will contain the resulting ``Topology.vmm`` and ``configset`` directory, in which you will find the per-router configuration files. Previous configuration files are stored in the ``ank_lab/archive`` directory.
 
