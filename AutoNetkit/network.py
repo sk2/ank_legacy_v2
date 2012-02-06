@@ -348,7 +348,6 @@ class Network(object):
         """ syntactic sugar for accessing asn of a node
 
         >>> network = ank.example_multi_as()
-        >>> list(network.devices())
         >>> [network.asn(node) for node in sorted(network.devices())]
         [1, 1, 1, 2, 2, 2, 2, 3]
         
