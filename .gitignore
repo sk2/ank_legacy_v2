@@ -28,3 +28,5 @@ AutoNetkit/algorithms/output.png
 AutoNetkit/lib/examples/topologies/example.graphml
 
 AutoNetkit/compiler/tests/ank_lab/*
+htmlCov/*
+.coverage

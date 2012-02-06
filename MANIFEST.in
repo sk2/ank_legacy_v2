@@ -4,11 +4,10 @@ exclude AutoNetkit.egg-info
 
 recursive-include AutoNetkit/lib *.mako                    
 recursive-include AutoNetkit/lib *.js
-include AutoNetkit/lib/autonetkit.cfg
+include AutoNetkit/lib/configspec.cfg
 include AutoNetkit/lib/shadow
 
 prune examples
-prune doc
                                       
 global-exclude *~
 global-exclude *.pyc
