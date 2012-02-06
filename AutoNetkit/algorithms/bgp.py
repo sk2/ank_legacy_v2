@@ -69,6 +69,7 @@ __author__ = "\n".join(['Simon Knight'])
 #    Copyright (C) 2009-2011 by Simon Knight, Hung Nguyen
 
 __all__ = ['ebgp_routers', 'get_ebgp_graph',
+        'ebgp_edges',
            'ibgp_routers', 'get_ibgp_graph',
            'bgp_routers',
            'initialise_bgp']
