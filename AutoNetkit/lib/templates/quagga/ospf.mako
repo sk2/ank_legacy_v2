@@ -4,7 +4,7 @@ password ${password}
 banner motd file /etc/quagga/motd.txt
 !
 #Setup interfaces         
-% for i in interface_list:
+% for i in sorted(interface_list, key = lambda x: x['id']):
 interface ${i['id']}
 	#Link to ${i['remote_router']}
 	ip ospf cost ${i['weight']}        
@@ -12,7 +12,7 @@ interface ${i['id']}
 %endfor
 ##Setup networks             
 router ospf    
-% for n in network_list:
+% for n in sorted(network_list, key = lambda x: x['cidr']):
 	network ${n['cidr']} area ${n['area']}
 ## TODO: check if this is needed  ${n['remote_ip']}
 %endfor           

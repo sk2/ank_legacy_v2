@@ -47,7 +47,7 @@ system {
     }
 }
 interfaces {
-    % for i in interfaces:
+    % for i in sorted(interfaces, key = lambda x: x['id']):
     ${i['id']} {
         unit 0 {          
 	        description "${i['description']}";
@@ -75,7 +75,7 @@ protocols {
 	% if igp_protocol == 'ospf':
 	ospf {
 	        area 0.0.0.0 {
-			% for i in igp_interfaces:
+			% for i in sorted(igp_interfaces, key = lambda x: x['id']):
 			  % if 'passive' or 'weight' in i:   
 				interface ${i['id']}  {
 			    % if 'passive' in i:   
@@ -95,7 +95,7 @@ protocols {
 	isis {               
 		level 2 wide-metrics-only;
 		level 1 disable;
-		% for i in igp_interfaces:   
+		% for i in sorted(igp_interfaces, key = lambda x: x['id']):
 		% if i['id'].startswith('lo'):
 		interface ${i['id']};
 		% else:
@@ -122,7 +122,7 @@ protocols {
 			    % if 'cluster' in group_data:
 			    cluster ${group_data['cluster']}
 			    % endif
-			    % for neighbor in group_data['neighbors']: 
+			    % for neighbor in sorted(group_data['neighbors'], key = lambda x: x['id']): 
 				   % if 'peer_as' in neighbor or len(neighbor['route_maps_in']) or len(neighbor['route_maps_out']):      
 			    neighbor  ${neighbor['id']} {  
 				 % if 'peer_as' in neighbor:

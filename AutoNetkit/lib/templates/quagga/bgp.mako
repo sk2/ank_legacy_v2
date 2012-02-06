@@ -6,12 +6,12 @@ banner motd file /etc/quagga/motd.txt
 ! 
 router bgp ${asn}
  no synchronization
-% for i in interfaces:
+% for i in sorted(interfaces, key = lambda x: x['network']):
  network ${i['network']} mask ${i['netmask']}
 % endfor
 % for groupname, group_data in bgp_groups.items():     
  % if group_data['type'] == 'internal' or group_data['type'] == 'external':   
-  % for neighbor in group_data['neighbors']:
+  % for neighbor in sorted(group_data['neighbors'], key = lambda x: x['id']):
    % if group_data['type'] == 'internal':
  neighbor ${neighbor['id']} remote-as ${asn}
  neighbor ${neighbor['id']} update-source ${identifying_loopback.ip}

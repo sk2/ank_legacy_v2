@@ -138,19 +138,21 @@ class JunosCompiler:
                 private_bridges.append(retval)
             return retval
 
-        for device in self.network.devices():
+        for device in sorted(self.network.devices(), key = lambda x: x.fqdn):
+            print "junos for device", device
             hostname = device.hostname
             topology_data[hostname] = {
                     'image': image.alias,
                     'config': router_conf_file(self.network, device),
                     'interfaces': [],
                     }
-            for src, dst, data in self.network.graph.edges(device, data=True):
+            for src, dst, data in sorted(self.network.graph.edges(device, data=True), key = lambda (s,t,d): t.fqdn):
                 subnet = data['sn']
                 description = 'Interface %s -> %s' % (
                         ank.fqdn(self.network, src), 
                         ank.fqdn(self.network, dst))
 # Bridge information for topology config
+                print "int for ", description
                 if subnet in collision_to_bridge_mapping:
 # Use bridge allocated for this subnet
                     bridge_id = collision_to_bridge_mapping[subnet]
