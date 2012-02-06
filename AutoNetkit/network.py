@@ -363,19 +363,19 @@ class Network(object):
             return int(self.graph.node[node].get('asn'))
         except KeyError:
             try:
-                return self.asn(self.find_device_by_fqdn(node))
+                return self.asn(self.find(node))
             except DeviceNotFoundException:
                 LOG.debug("Unable to find device %s" % node)
 
 
-    def find_device_by_fqdn(self, fqdn):
+    def find(self, fqdn):
         """
         Note: this is O(N) in number of nodes
 
         >>> network = ank.example_multi_as()
-        >>> network.find_device_by_fqdn("1a.AS1")
+        >>> network.find("1a.AS1")
         1a.AS1
-        >>> network.find_device_by_fqdn("1a.AS4")
+        >>> network.find("1a.AS4")
         Traceback (most recent call last):
         ...
         DeviceNotFoundException

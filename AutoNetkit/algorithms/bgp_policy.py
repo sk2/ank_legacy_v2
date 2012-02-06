@@ -304,16 +304,30 @@ class BgpPolicyParser:
 
         #TODO: allow shorthand of (1) -> (2) for (asn=1) -> (asn=2)
 
+    def clear_policies(self):
+        for src, dst in self.network.g_session.edges():
+            self.network.g_session[src][dst]['ingress'] = []
+            self.network.g_session[src][dst]['egress'] = []
+
+
     def apply_bgp_policy(self, qstring):
         """Applies policy to network 
 
-
         >>> inet = ank.internet.Internet("2routers") 
         >>> inet.compile()
+        >>> node_a = inet.network.find("a.AS1")
+        >>> node_b = inet.network.find("b.AS2")
         >>> pol_parser = ank.BgpPolicyParser(inet.network)
-        >>> pol_parser.apply_bgp_policy("(asn=1) ->ingress (asn=2): (setMED 200)")
 
-        inet.network.g_session['a.AS1']['b.AS2']
+        >>> pol_parser.apply_bgp_policy("(asn=1) ->ingress (asn=2): (setLP 200)")
+        >>> inet.network.g_session[node_a][node_b]['ingress']
+        [[if [] then [setLP 200] reject: False]]
+        >>> pol_parser.clear_policies()
+
+        >>> pol_parser.apply_bgp_policy("(asn=1) ->ingress (asn=2): (setMED 200)")
+        >>> inet.network.g_session[node_a][node_b]['ingress']
+        [[if [] then [setMED 200] reject: False]]
+        >>> pol_parser.clear_policies()
 
         >>> pol_parser = ank.BgpPolicyParser(ank.network.Network(ank.load_example("multias")))
 
