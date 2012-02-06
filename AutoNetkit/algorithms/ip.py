@@ -34,6 +34,7 @@ def allocate_subnets(network, address_block=IPNetwork("10.0.0.0/8")):
         ip_as_allocs
 
     Example usage:
+
     >>> network = ank.example_multi_as()
     >>> allocate_subnets(network)
     >>> print ank.debug_nodes(network.graph, "lo_ip")
@@ -185,6 +186,7 @@ def allocate_subnets(network, address_block=IPNetwork("10.0.0.0/8")):
 
 def alloc_interfaces(network):
     """Allocated interface IDs for each link in network
+
     >>> network = ank.example_multi_as()
     >>> alloc_interfaces(network)
     >>> print ank.debug_edges(network.graph, "id")
@@ -221,6 +223,7 @@ def get_tap_host(network):
 
 def alloc_tap_hosts(network, address_block=IPNetwork("172.16.0.0/16")):
     """Allocates TAP IPs for connecting using Netkit
+
     >>> network = ank.example_multi_as()
     >>> alloc_tap_hosts(network)
     >>> print ank.debug_nodes(network.graph, "tap_ip")
