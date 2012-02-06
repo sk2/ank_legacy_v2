@@ -152,12 +152,12 @@ bgp router 10.1.0.65
 	peer 10.0.0.34 up
 	exit       
 bgp router 10.2.0.0
-	add peer 2 10.1.0.64      	
-	peer 10.1.0.64 next-hop-self
-	peer 10.1.0.64 up
 	add peer 1 10.0.0.32      	
 	peer 10.0.0.32 next-hop-self
 	peer 10.0.0.32 up
+	add peer 2 10.1.0.64      	
+	peer 10.1.0.64 next-hop-self
+	peer 10.1.0.64 up
 	exit       
 	
 # Originate own prefixes
