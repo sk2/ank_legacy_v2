@@ -4,6 +4,7 @@ import AutoNetkit.config as config
 from pkg_resources import resource_filename
 import logging
 LOG = logging.getLogger("ANK")
+import difflib
 
 def test_netkit():
     master_dir = (resource_filename(__name__, "netkit"))
@@ -20,4 +21,7 @@ def test_netkit():
 
     test_lab_conf = remove_skiplines(test_lab_conf, ["LAB_VERSION", "LAB_AUTHOR"])
     master_lab_conf = remove_skiplines(master_lab_conf, ["LAB_VERSION", "LAB_AUTHOR"])
+    message = ''.join(difflib.ndiff(test_lab_conf.splitlines(True),
+        master_lab_conf.splitlines(True)))
+    LOG.warn(message)
     assert(test_lab_conf == master_lab_conf)
