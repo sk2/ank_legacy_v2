@@ -22,12 +22,24 @@ def test_netkit():
     skiplines = ["LAB_VERSION", "LAB_AUTHOR"] 
     test_file = remove_skiplines(test_file, skiplines)
     master_file = remove_skiplines(master_file, skiplines)
-    assert(test_file == master_file)
+    try:
+        assert(test_file == master_file)
+    except AssertionError:
+        message = ''.join(difflib.ndiff(test_file.splitlines(True),
+            master_file.splitlines(True)))
+        LOG.warn(message)
+        raise AssertionError
 
     f_test = os.path.join(config.ank_main_dir, "netkit_lab", "shared.startup")
     test_file = open(f_test, "r").read()
     master_file = open(os.path.join(master_dir, "shared.startup"), "r").read()
-    assert(test_file == master_file)
+    try:
+        assert(test_file == master_file)
+    except AssertionError:
+        message = ''.join(difflib.ndiff(test_file.splitlines(True),
+            master_file.splitlines(True)))
+        LOG.warn(message)
+        raise AssertionError
 
     zebra_files = ["bgpd.conf", "daemons", "ospfd.conf", "zebra.conf"]
     for z_file in zebra_files:
