@@ -43,15 +43,24 @@ def default_route(node):
         if link.remote_host.is_router:
             return link.remote_ip
 
-def debug_nodes(graph):
+def debug_nodes(graph, attr=None):
     import pprint
-    debug_data = dict( (node.fqdn, data) for node, data in sorted(graph.nodes(data=True)))
+    if attr:
+        debug_data = dict( (node.fqdn, data.get(attr)) 
+                for node, data in sorted(graph.nodes(data=True)))
+    else:
+        debug_data = dict( (node.fqdn, data)
+                for node, data in sorted(graph.nodes(data=True)))
     return pprint.pformat(debug_data)
 
-def debug_edges(graph):
+def debug_edges(graph, attr=None):
     import pprint
-    debug_data = dict( ((src.fqdn, dst.fqdn), data) 
-            for src, dst, data in sorted(graph.edges(data=True)))
+    if attr:
+        debug_data = dict( ((src.fqdn, dst.fqdn), data.get(attr))
+                for src, dst, data in sorted(graph.edges(data=True)))
+    else:
+        debug_data = dict( ((src.fqdn, dst.fqdn), data
+            ) for src, dst, data in sorted(graph.edges(data=True)))
     return pprint.pformat(debug_data)
 
 def dump_identifiers(network, filename):
