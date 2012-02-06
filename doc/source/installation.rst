@@ -39,7 +39,7 @@ Install the package
 
 #. Once complete, install AutoNetkit as follows::
 
-	pip install AutoNetkit
+	pip.exe install AutoNetkit
 
 AutoNetkit is now installed in the 'scripts' directory
 
@@ -72,7 +72,7 @@ Windows:
 
 open a cmd session (run ``cmd.exe``) cd into the scripts directory where Python has been installed (``C:\Python27\Scripts``), then::
 
-  pip install --upgrade AutoNetkit
+  pip.exe install --upgrade AutoNetkit
 
 Mac::
 
