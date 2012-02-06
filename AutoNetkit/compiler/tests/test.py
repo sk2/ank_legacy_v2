@@ -87,3 +87,55 @@ def test_junosphere():
             master_file.splitlines(True)))
         LOG.warn(message)
         raise AssertionError
+
+def test_junosphere_olive():
+    config.settings['Junosphere']['platform'] = "Olive"
+    
+    master_dir = (resource_filename(__name__, "junosphere_olive"))
+    inet = AutoNetkit.internet.Internet("multias", junosphere=True) 
+    inet.compile()
+
+    f_test = os.path.join(config.ank_main_dir, "junos_lab", "topology.vmm")
+    test_file = open(f_test, "r").read()
+    master_file = open(os.path.join(master_dir, "topology.vmm"), "r").read()
+    try:
+        assert(test_file == master_file)
+    except AssertionError:
+        message = ''.join(difflib.ndiff(test_file.splitlines(True),
+            master_file.splitlines(True)))
+        LOG.warn(message)
+        raise AssertionError
+
+
+    f_test = os.path.join(config.junos_dir, "configset", "1c_AS1.conf")
+    test_file = open(f_test, "r").read()
+    master_file = open(os.path.join(master_dir, "1c_AS1.conf"), "r").read()
+    skiplines = ["message"] 
+    test_file = remove_skiplines(test_file, skiplines)
+    master_file = remove_skiplines(master_file, skiplines)
+    try:
+        assert(test_file == master_file)
+    except AssertionError:
+        message = ''.join(difflib.ndiff(test_file.splitlines(True),
+            master_file.splitlines(True)))
+        LOG.warn(message)
+        raise AssertionError
+
+def test_olive():
+    master_dir = (resource_filename(__name__, "olive"))
+    inet = AutoNetkit.internet.Internet("multias", olive=True) 
+    inet.compile()
+
+    f_test = os.path.join(config.junos_dir, "configset", "1c_AS1.conf")
+    test_file = open(f_test, "r").read()
+    master_file = open(os.path.join(master_dir, "1c_AS1.conf"), "r").read()
+    skiplines = ["message"] 
+    test_file = remove_skiplines(test_file, skiplines)
+    master_file = remove_skiplines(master_file, skiplines)
+    try:
+        assert(test_file == master_file)
+    except AssertionError:
+        message = ''.join(difflib.ndiff(test_file.splitlines(True),
+            master_file.splitlines(True)))
+        LOG.warn(message)
+        raise AssertionError

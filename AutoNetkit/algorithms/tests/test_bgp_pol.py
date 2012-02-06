@@ -4,6 +4,7 @@ import AutoNetkit.config as config
 from pkg_resources import resource_filename
 import logging
 LOG = logging.getLogger("ANK")
+import difflib
 
 def test_bgp_pol():
     master_dir = (resource_filename(__name__, "comparisons"))
@@ -13,7 +14,13 @@ def test_bgp_pol():
     inet.dump()
 
     f_bgp = os.path.join(config.log_dir, "bgp.txt")
-    test_bgp = open(f_bgp, "r").read()
-    master_bgp = open(os.path.join(master_dir, "bgp_dump.txt"), "r").read()
+    test_file = open(f_bgp, "r").read()
+    master_file = open(os.path.join(master_dir, "bgp_dump.txt"), "r").read()
 
-    assert(test_bgp == master_bgp)
+    try:
+        assert(test_file == master_file)
+    except AssertionError:
+        message = ''.join(difflib.ndiff(test_file.splitlines(True),
+            master_file.splitlines(True)))
+        LOG.warn(message)
+        raise AssertionError

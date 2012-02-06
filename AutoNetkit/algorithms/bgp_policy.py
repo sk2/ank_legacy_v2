@@ -378,7 +378,7 @@ class BgpPolicyParser:
             return (u in dst_set and v in src_set)
 
         def select_fn_v_to_from_u( (u, v), src_set, dst_set):
-            """ u <- v"""
+            """ u <-> v"""
             return (u in src_set and v in dst_set) or (u in dst_set and v in src_set)
 
         if select_type in [self.u_egress, self.v_ingress]:
@@ -478,7 +478,7 @@ class BgpPolicyParser:
         LOG.debug("Allocating community values to tags")
         tag_id = itertools.count(1)
         generic_asn = "1234"
-        for tag in self.tags_to_allocate:
+        for tag in sorted(self.tags_to_allocate):
             self.allocated_tags[tag] = "%s:%s" % (generic_asn, tag_id.next() * 10)
 
 
