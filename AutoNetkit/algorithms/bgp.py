@@ -198,10 +198,12 @@ def initialise_ebgp(network):
             if network.asn(src) != network.asn(dst))
     edges_to_add = list(edges_to_add)
     network.g_session.add_edges_from(edges_to_add)
+    network.g_session.graph['ebgp_initialised'] = True
 
 def initialise_ibgp(network):
     LOG.debug("Initialising iBGP")
     configure_ibgp_rr(network)
+    network.g_session.graph['ibgp_initialised'] = True
 
 def initialise_bgp_sessions(network):
     """ add empty ingress/egress lists to each session.
@@ -255,6 +257,8 @@ def ibgp_routers(network):
 def get_ebgp_graph(network):
     """Returns graph of eBGP routers and links between them."""
 #TODO: see if just use subgraph here for efficiency
+    if not network.g_session.graph.get('ebgp_initialised'):
+        initialise_ebgp(network)
     ebgp_graph = network.g_session.subgraph(ebgp_routers(network))
     ebgp_graph.remove_edges_from( ibgp_edges(network))
     return ebgp_graph
@@ -262,6 +266,8 @@ def get_ebgp_graph(network):
 def get_ibgp_graph(network):
     """Returns iBGP graph (full mesh currently) for an AS."""
 #TODO: see if just use subgraph here for efficiency
+    if not network.g_session.graph.get('ibgp_initialised'):
+        initialise_ibgp(network)
     ibgp_graph = network.g_session.subgraph(ibgp_routers(network))
     ibgp_graph.remove_edges_from( ebgp_edges(network))
     return ibgp_graph
