@@ -322,12 +322,29 @@ class BgpPolicyParser:
         >>> pol_parser.apply_bgp_policy("(asn=1) ->ingress (asn=2): (setLP 200)")
         >>> inet.network.g_session[node_a][node_b]['ingress']
         [[if [] then [setLP 200] reject: False]]
-        >>> pol_parser.clear_policies()
 
+        >>> pol_parser.clear_policies()
         >>> pol_parser.apply_bgp_policy("(asn=1) ->ingress (asn=2): (setMED 200)")
         >>> inet.network.g_session[node_a][node_b]['ingress']
         [[if [] then [setMED 200] reject: False]]
+
         >>> pol_parser.clear_policies()
+        >>> pol_parser.apply_bgp_policy("(asn=1) ->ingress (asn=2): (if tag = test then setLP 100)")
+        >>> inet.network.g_session[node_a][node_b]['ingress']
+        [[if [tag = test] then [setLP 100] reject: False]]
+
+        >>> pol_parser.clear_policies()
+        >>> pol_parser.apply_bgp_policy("(asn=1) ->ingress (asn=2): (setMED 200)")
+        >>> inet.network.g_session[node_a][node_b]['ingress']
+
+        >>> pol_parser.clear_policies()
+        >>> pol_parser.apply_bgp_policy("(asn=1) ->ingress (asn=2): (setMED 200)")
+        >>> inet.network.g_session[node_a][node_b]['ingress']
+
+        >>> pol_parser.clear_policies()
+        >>> pol_parser.apply_bgp_policy("(asn=1) ->ingress (asn=2): (setMED 200)")
+        >>> inet.network.g_session[node_a][node_b]['ingress']
+
 
         >>> pol_parser = ank.BgpPolicyParser(ank.network.Network(ank.load_example("multias")))
 
