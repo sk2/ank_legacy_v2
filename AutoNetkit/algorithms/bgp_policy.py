@@ -919,6 +919,7 @@ class BgpPolicyParser:
                     self.parse_user_def_functions(library_file)
                 elif line.startswith(include):
                     include_file = line.replace(include, "").strip()
+                    include_file = os.path.join(pol_path, include_file) # relative import
                     file_contents = self.load_include_file(include_file)
                     policy_lines += file_contents
                 else:
