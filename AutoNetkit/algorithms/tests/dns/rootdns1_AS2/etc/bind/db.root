@@ -9,7 +9,7 @@ $TTL 1D
                 )
                  
 @			IN	NS	ROOT-SERVER.
-ROOT-SERVER.		IN	A	10.0.0.69    
+ROOT-SERVER.		IN	A	10.1.0.70    
 
 AS1.				IN	NS	NS.AS1.
 0.10.in-addr.arpa.		IN	NS	NS.AS1.
@@ -17,7 +17,7 @@ NS.AS1.		  	  IN	A 	10.0.0.22
 
 AS2.				IN	NS	NS.AS2.
 1.10.in-addr.arpa.		IN	NS	NS.AS2.
-NS.AS2.		  	  IN	A 	10.1.0.30
+NS.AS2.		  	  IN	A 	10.1.0.22
 
 AS3.				IN	NS	NS.AS3.
 2.10.in-addr.arpa.		IN	NS	NS.AS3.

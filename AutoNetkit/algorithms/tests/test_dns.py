@@ -18,9 +18,9 @@ def test_dns():
 
     root_files = ["db.root", "named.conf"]
     for root_file in root_files:
-        f_test = os.path.join(config.lab_dir, "rootdns1_AS1", "etc", "bind", root_file)
+        f_test = os.path.join(config.lab_dir, "rootdns1_AS2", "etc", "bind", root_file)
         test_file = open(f_test, "Ur").read()
-        master_file = open(os.path.join(master_dir, "rootdns1_AS1", "etc", "bind", root_file), "Ur").read()
+        master_file = open(os.path.join(master_dir, "rootdns1_AS2", "etc", "bind", root_file), "Ur").read()
         try:
             assert(test_file == master_file)
         except AssertionError:

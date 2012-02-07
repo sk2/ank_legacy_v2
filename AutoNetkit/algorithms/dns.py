@@ -102,7 +102,9 @@ def allocate_dns_servers(network):
 # need to crop the global shortest paths otherwise get 
 #NetworkXError: Graph not connected: infinite path length
         eccentricities = nx.eccentricity(graph)
-        return sorted(eccentricities.keys(), key = lambda n: eccentricities[n])
+# sort nodes by name, stability sort ensures that lexical order is used as tie-breaker for equal eccen.
+        nodes_sorted = sorted(graph.nodes(), key = lambda x: x.fqdn)
+        return sorted(nodes_sorted, key = lambda n: eccentricities[n])
 
     def format_asn(asn):
         """Returns unique format for asn, so don't confuse with property of the same,
