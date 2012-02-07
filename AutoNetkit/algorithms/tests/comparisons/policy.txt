@@ -20,5 +20,7 @@ set1 = {AS1}
 set2 = {AS2}        
 set3 = {} 
 apply test(set1, set3)
+apply test(set1, set2)
+apply gao_rexford(set1, set2, set3, set3)
 
 
