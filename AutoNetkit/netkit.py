@@ -19,9 +19,8 @@ LOG = logging.getLogger("ANK")
 try:
     import pexpect
     import pxssh
-except:
+except ImportError:
     LOG.error("Netkit deployment requires pexpect")
-    raise
 
 import os  
 import sys
