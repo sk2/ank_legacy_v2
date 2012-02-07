@@ -15,5 +15,5 @@ def test_plot():
     for js_file in js_plot_files:
         assert(os.path.exists(os.path.join(config.plot_dir, "jsplot", js_file)))
 
-    #inet.plot(matplotlib=True)
+    inet.plot(matplotlib=True)
 

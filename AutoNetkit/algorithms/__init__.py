@@ -4,11 +4,8 @@ from AutoNetkit.algorithms.bgp_policy import *
 from AutoNetkit.algorithms.dns import *
 from AutoNetkit.algorithms.graph_product import *
 from AutoNetkit.algorithms.housekeeping import *
-from AutoNetkit.algorithms.inv_cap import *
 from AutoNetkit.algorithms.ip import *
 from AutoNetkit.algorithms.naming import *
-from AutoNetkit.algorithms.optimise_igp import *
-#from AutoNetkit.algorithms.query import *
 
 import AutoNetkit.algorithms.autonomous_system 
 import AutoNetkit.algorithms.bgp 
@@ -16,8 +13,5 @@ import AutoNetkit.algorithms.bgp_policy
 import AutoNetkit.algorithms.dns 
 import AutoNetkit.algorithms.graph_product
 import AutoNetkit.algorithms.housekeeping
-import AutoNetkit.algorithms.inv_cap
 import AutoNetkit.algorithms.ip 
 import AutoNetkit.algorithms.naming 
-import AutoNetkit.algorithms.optimise_igp
-#import AutoNetkit.algorithms.query
