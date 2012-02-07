@@ -26,7 +26,10 @@ import threading
 import Queue
 
 # Used for EOF and TIMEOUT variables
-import pexpect
+try:
+    import pexpect
+except ImportError:
+    LOG.error("Netkit deployment requires pexpect")
 
 LINUX_PROMPT = "~#"   
 
