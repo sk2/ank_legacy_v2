@@ -11,8 +11,10 @@ def test_dns():
     return
     config.settings['DNS']['hierarchical'] = True
     master_dir = (resource_filename(__name__, "netkit"))
-    inet = AutoNetkit.internet.Internet("multias", netkit=True) 
+    inet = AutoNetkit.internet.Internet("multias") 
     inet.compile()
+    config.settings['DNS']['hierarchical'] = False
+    #TODO: see why DNS persists across multiple instances, if compiling for Netkit
 
     return
 

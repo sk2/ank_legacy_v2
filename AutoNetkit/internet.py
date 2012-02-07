@@ -322,7 +322,6 @@ class Internet:
                 self.compile_targets['netkit'] = True
         if self.compile_targets['netkit']:
             nk_comp = ank.NetkitCompiler(self.network, self.services)
-            # Need to allocate DNS servers so they can be configured in Netkit
             nk_comp.initialise()     
             nk_comp.configure()
 
