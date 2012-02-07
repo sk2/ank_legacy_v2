@@ -102,7 +102,6 @@ def add_logging(console_debug=False):
             'error': logging.ERROR,
             'critical': logging.CRITICAL}
 
-
 #TODO: load logger settings from config file
     logger = logging.getLogger("ANK")
     logger.setLevel(logging.DEBUG)

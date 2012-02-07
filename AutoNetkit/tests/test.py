@@ -37,3 +37,6 @@ def test_dumps():
         raise AssertionError
 
 
+def test_config():
+    from AutoNetkit import config
+    config.add_logging()
