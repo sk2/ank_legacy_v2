@@ -31,7 +31,6 @@ import threading
 import Queue
 
 # Used for EOF and TIMEOUT variables
-import pexpect
 
 LINUX_PROMPT = "~#"   
 
