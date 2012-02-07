@@ -58,7 +58,6 @@ def test_netkit():
             raise AssertionError
 
 def test_junosphere():
-    return
     master_dir = (resource_filename(__name__, "junosphere_vjx"))
     inet = AutoNetkit.internet.Internet("multias", junosphere=True) 
     inet.compile()
@@ -90,7 +89,6 @@ def test_junosphere():
         raise AssertionError
 
 def test_junosphere_olive():
-    return
     config.settings['Junosphere']['platform'] = "Olive"
     
     master_dir = (resource_filename(__name__, "junosphere_olive"))
@@ -124,7 +122,6 @@ def test_junosphere_olive():
         raise AssertionError
 
 def test_olive():
-    return
     master_dir = (resource_filename(__name__, "olive"))
     inet = AutoNetkit.internet.Internet("multias", olive=True) 
     inet.compile()
@@ -145,7 +142,6 @@ def test_olive():
 
 
 def test_cbgp():
-    return
     master_dir = (resource_filename(__name__, "cbgp"))
     inet = AutoNetkit.internet.Internet("multias", cbgp=True) 
     inet.compile()
