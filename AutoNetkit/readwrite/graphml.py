@@ -43,7 +43,7 @@ def load_graphml(net_file, default_asn = 1):
     else:
         # No pickle file, or is outdated
         input_graph = nx.read_graphml(net_file)
-        nx.write_gpickle(input_graph, pickle_file)
+        #nx.write_gpickle(input_graph, pickle_file)
 
     nodes_with_H_set = sum(1 for n in input_graph if input_graph.node[n].get('H'))
     if nodes_with_H_set == len(input_graph):
