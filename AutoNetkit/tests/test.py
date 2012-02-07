@@ -13,8 +13,8 @@ def test_dumps():
     inet.dump()
 
     f_test = os.path.join(config.log_dir, "bgp.txt")
-    test_file = open(f_test, "r").read()
-    master_file = open(os.path.join(master_dir, "bgp.txt"), "r").read()
+    test_file = open(f_test, "Ur").read()
+    master_file = open(os.path.join(master_dir, "bgp.txt"), "Ur").read()
 
     try:
         assert(test_file == master_file)
@@ -25,8 +25,8 @@ def test_dumps():
         raise AssertionError
 
     f_test = os.path.join(config.log_dir, "physical.txt")
-    test_file = open(f_test, "r").read()
-    master_file = open(os.path.join(master_dir, "physical.txt"), "r").read()
+    test_file = open(f_test, "Ur").read()
+    master_file = open(os.path.join(master_dir, "physical.txt"), "Ur").read()
 
     try:
         assert(test_file == master_file)
