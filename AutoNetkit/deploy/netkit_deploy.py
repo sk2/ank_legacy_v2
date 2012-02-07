@@ -15,7 +15,10 @@ import AutoNetkit.config as config
 import AutoNetkit as ank
 
 # Used for EOF and TIMEOUT variables
-import pexpect
+try:
+    import pexpect
+except ImportError:
+    LOG.error("Netkit deployment requires pexpect")
 
 class NetkitDeploy():  
     """ Deploy a given Netkit lab to a Netkit server"""

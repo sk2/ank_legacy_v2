@@ -15,7 +15,12 @@ import time
 import AutoNetkit.config as config
 import re
 import datetime
-import pxssh
+try:
+    import pexpect
+    import pxssh
+except ImportError:
+    LOG.error("Netkit deployment requires pexpect")
+
 import sys
 import AutoNetkit as ank
 import itertools
