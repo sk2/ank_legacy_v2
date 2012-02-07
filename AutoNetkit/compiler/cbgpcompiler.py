@@ -166,7 +166,7 @@ class CbgpCompiler:
         tags = self.network.g_session.graph['tags']
         prefixes = self.network.g_session.graph['prefixes']
 
-        with open( cbgp_file(), 'w') as f_cbgp:
+        with open( cbgp_file(), 'wb') as f_cbgp:
                 f_cbgp.write( template.render(
                    physical_topology = physical_topology,
                    interdomain_links = interdomain_links,
