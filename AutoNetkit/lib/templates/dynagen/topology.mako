@@ -9,14 +9,14 @@ autostart = True
 		%for option, value in sorted(options.items()):
 		${option} = ${value}
 		%endfor  
-   		%for slot, wic in sorted(slots.items()):
+   		%for slot, wic in sorted(slots.items(), key = lambda x: x[0]):
 		${slot} = ${wic}
 		%endfor           
 % for id, data in sorted(all_router_info.items(), key = lambda x: x[1]['hostname']):           
       [[ROUTER ${data['hostname']}]]     
 			console = ${data['console']}           
 			cnfg = ${data['cnfg']}           
-         % for int_id, dst_int_id, dst_label in data['links']:  
+         % for int_id, dst_int_id, dst_label in sorted(data['links'], key = lambda x: x[0]):  
 			${int_id} = ${dst_label} ${dst_int_id}          
          %endfor              
 %endfor              

@@ -463,7 +463,7 @@ class dynagenCompiler:
             # todo: check symmetric
             router_links = []
             router_info['slot1'] = "NM-4E"
-            for src, dst, data in graph.edges(router, data=True):
+            for src, dst, data in sorted(graph.edges(router, data=True)):
                 if dst.is_router:
                     # Src is node, dst is router connected to. Link data in data
                     local_id = data['id']
