@@ -64,7 +64,7 @@ def test_junosphere():
 
     f_test = os.path.join(config.ank_main_dir, "junos_lab", "topology.vmm")
     test_file = open(f_test, "Ur").read()
-    master_file = open(os.path.join(master_dir, "topology.vmm"), "r").read()
+    master_file = open(os.path.join(master_dir, "topology.vmm"), "Ur").read()
     try:
         assert(test_file == master_file)
     except AssertionError:
