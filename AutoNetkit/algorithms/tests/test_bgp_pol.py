@@ -14,8 +14,8 @@ def test_bgp_pol():
     inet.dump()
 
     f_bgp = os.path.join(config.log_dir, "bgp.txt")
-    test_file = open(f_bgp, "r").read()
-    master_file = open(os.path.join(master_dir, "bgp_dump.txt"), "r").read()
+    test_file = open(f_bgp, "Ur").read()
+    master_file = open(os.path.join(master_dir, "bgp_dump.txt"), "Ur").read()
 
     try:
         assert(test_file == master_file)

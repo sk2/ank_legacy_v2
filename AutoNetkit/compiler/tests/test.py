@@ -17,8 +17,8 @@ def test_netkit():
     inet.compile()
 
     f_lab = os.path.join(config.ank_main_dir, "netkit_lab", "lab.conf")
-    test_file = open(f_lab, "r").read()
-    master_file = open(os.path.join(master_dir, "lab.conf"), "r").read()
+    test_file = open(f_lab, "Ur").read()
+    master_file = open(os.path.join(master_dir, "lab.conf"), "Ur").read()
     skiplines = ["LAB_VERSION", "LAB_AUTHOR"] 
     test_file = remove_skiplines(test_file, skiplines)
     master_file = remove_skiplines(master_file, skiplines)
@@ -31,8 +31,8 @@ def test_netkit():
         raise AssertionError
 
     f_test = os.path.join(config.ank_main_dir, "netkit_lab", "shared.startup")
-    test_file = open(f_test, "r").read()
-    master_file = open(os.path.join(master_dir, "shared.startup"), "r").read()
+    test_file = open(f_test, "Ur").read()
+    master_file = open(os.path.join(master_dir, "shared.startup"), "Ur").read()
     try:
         assert(test_file == master_file)
     except AssertionError:
@@ -44,9 +44,9 @@ def test_netkit():
     zebra_files = ["bgpd.conf", "daemons", "ospfd.conf", "zebra.conf"]
     for z_file in zebra_files:
         f_test = os.path.join(config.ank_main_dir, "netkit_lab", "1c_AS1", "etc", "zebra", z_file)
-        test_file = open(f_test, "r").read()
+        test_file = open(f_test, "Ur").read()
         LOG.info(test_file)
-        master_file = open(os.path.join(master_dir, "1c_as1_zebra", z_file), "r").read()
+        master_file = open(os.path.join(master_dir, "1c_as1_zebra", z_file), "Ur").read()
         try:
             assert(test_file == master_file)
         except AssertionError:
@@ -63,7 +63,7 @@ def test_junosphere():
     inet.compile()
 
     f_test = os.path.join(config.ank_main_dir, "junos_lab", "topology.vmm")
-    test_file = open(f_test, "r").read()
+    test_file = open(f_test, "Ur").read()
     master_file = open(os.path.join(master_dir, "topology.vmm"), "r").read()
     try:
         assert(test_file == master_file)
@@ -75,8 +75,8 @@ def test_junosphere():
 
 
     f_test = os.path.join(config.junos_dir, "configset", "1c_AS1.conf")
-    test_file = open(f_test, "r").read()
-    master_file = open(os.path.join(master_dir, "1c_AS1.conf"), "r").read()
+    test_file = open(f_test, "Ur").read()
+    master_file = open(os.path.join(master_dir, "1c_AS1.conf"), "Ur").read()
     skiplines = ["message"] 
     test_file = remove_skiplines(test_file, skiplines)
     master_file = remove_skiplines(master_file, skiplines)
@@ -96,8 +96,8 @@ def test_junosphere_olive():
     inet.compile()
 
     f_test = os.path.join(config.ank_main_dir, "junos_lab", "topology.vmm")
-    test_file = open(f_test, "r").read()
-    master_file = open(os.path.join(master_dir, "topology.vmm"), "r").read()
+    test_file = open(f_test, "Ur").read()
+    master_file = open(os.path.join(master_dir, "topology.vmm"), "Ur").read()
     try:
         assert(test_file == master_file)
     except AssertionError:
@@ -108,8 +108,8 @@ def test_junosphere_olive():
 
 
     f_test = os.path.join(config.junos_dir, "configset", "1c_AS1.conf")
-    test_file = open(f_test, "r").read()
-    master_file = open(os.path.join(master_dir, "1c_AS1.conf"), "r").read()
+    test_file = open(f_test, "Ur").read()
+    master_file = open(os.path.join(master_dir, "1c_AS1.conf"), "Ur").read()
     skiplines = ["message"] 
     test_file = remove_skiplines(test_file, skiplines)
     master_file = remove_skiplines(master_file, skiplines)
@@ -127,8 +127,8 @@ def test_olive():
     inet.compile()
 
     f_test = os.path.join(config.junos_dir, "configset", "1c_AS1.conf")
-    test_file = open(f_test, "r").read()
-    master_file = open(os.path.join(master_dir, "1c_AS1.conf"), "r").read()
+    test_file = open(f_test, "Ur").read()
+    master_file = open(os.path.join(master_dir, "1c_AS1.conf"), "Ur").read()
     skiplines = ["message"] 
     test_file = remove_skiplines(test_file, skiplines)
     master_file = remove_skiplines(master_file, skiplines)
@@ -147,8 +147,8 @@ def test_cbgp():
     inet.compile()
 
     f_test = os.path.join(config.cbgp_dir, "cbgp.cli")
-    test_file = open(f_test, "r").read()
-    master_file = open(os.path.join(master_dir, "cbgp.cli"), "r").read()
+    test_file = open(f_test, "Ur").read()
+    master_file = open(os.path.join(master_dir, "cbgp.cli"), "Ur").read()
     try:
         assert(test_file == master_file)
     except AssertionError:

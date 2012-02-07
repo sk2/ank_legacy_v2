@@ -15,8 +15,8 @@ def test_graph_product():
     inet.dump()
 
     f_bgp = os.path.join(config.log_dir, "physical.txt")
-    test_file = open(f_bgp, "r").read()
-    master_file = open(os.path.join(master_dir, "graph_prod_physical.txt"), "r").read()
+    test_file = open(f_bgp, "Ur").read()
+    master_file = open(os.path.join(master_dir, "graph_prod_physical.txt"), "Ur").read()
 
     try:
         assert(test_file == master_file)
