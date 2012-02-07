@@ -12,7 +12,7 @@ autostart = True
    		%for slot, wic in slots.items():
 		${slot} = ${wic}
 		%endfor           
-% for id, data in sorted(all_router_info.items()):           
+% for id, data in sorted(all_router_info.items(), key = lambda x: x[1]['hostname']):           
       [[ROUTER ${data['hostname']}]]     
 			console = ${data['console']}           
 			cnfg = ${data['cnfg']}           

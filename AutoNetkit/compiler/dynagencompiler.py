@@ -440,7 +440,7 @@ class dynagenCompiler:
         all_router_info = {}
 
         #TODO: make this use dynagen tagged nodes
-        for router in self.network.routers():
+        for router in sorted(self.network.routers()):
             router_info = {}
 
             data = graph.node[router]

@@ -9,7 +9,7 @@ no aaa new-model
 !
 ip cef
 !
-% for i in interfaces:
+% for i in sorted(interfaces, key = lambda x: x['id']):
 interface ${i['id']}
  description ${i['description']}
  ip address ${i['ip']} ${i['netmask']} 
@@ -30,19 +30,19 @@ interface ${i['id']}
 !
 % if len(igp_interfaces) > 0:
  % if igp_protocol == 'isis':
-   % for i in interfaces:
+   % for i in sorted(interfaces):
      % if 'net_ent_title' in i:
 router isis ${i['net_ent_title']}
      % endif
    % endfor
-   % for i in igp_interfaces:
+   % for i in sorted(igp_interfaces, key = lambda x: x['id']):
      % if i.get('passive'):
  passive-interface ${i['id']}
      % endif
    % endfor
  % elif igp_protocol == 'ospf':
 router ospf 1
-   % for i in igp_interfaces:
+	% for i in sorted(igp_interfaces, key = lambda x: x['id']):
  network ${i['network']} ${i['wildcard']} area ${i['area']}
      % if i.get('passive'):
  passive-interface ${i['id']}
@@ -59,7 +59,7 @@ router bgp ${asn}
 % endfor
 % for groupname, group_data in bgp_groups.items():     
  % if group_data['type'] == 'internal' or group_data['type'] == 'external':   
-  % for neighbor in group_data['neighbors']:
+  % for neighbor in sorted(group_data['neighbors'], key = lambda x: x['id']):
    % if group_data['type'] == 'internal':
  neighbor ${neighbor['id']} remote-as ${asn}
  neighbor ${neighbor['id']} update-source loopback 0
