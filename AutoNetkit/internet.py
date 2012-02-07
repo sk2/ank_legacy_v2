@@ -49,7 +49,7 @@ class Internet:
     """
     
     def __init__(self, filename=None, tapsn=IPNetwork("172.16.0.0/16"),
-            netkit=True, cbgp=False, dynagen=False,
+            netkit=False, cbgp=False, dynagen=False,
             junosphere=False, junosphere_olive=False, olive=False,
             policy_file=None, olive_qemu_patched=False, deploy = False,
             igp='ospf'): 
