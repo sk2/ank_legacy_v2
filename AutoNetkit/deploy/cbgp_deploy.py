@@ -15,7 +15,6 @@ import time
 import AutoNetkit.config as config
 import re
 import datetime
-import pxssh
 import sys
 import AutoNetkit as ank
 import itertools
@@ -28,6 +27,7 @@ import Queue
 # Used for EOF and TIMEOUT variables
 try:
     import pexpect
+    import pxssh
 except ImportError:
     LOG.error("Netkit deployment requires pexpect")
 
