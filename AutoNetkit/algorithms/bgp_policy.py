@@ -904,6 +904,7 @@ class BgpPolicyParser:
         policy_lines = []
         import_library = "importLibrary"
         include = "includePolicy"
+        pol_path = os.path.split(policy_in_file)[0]
         with open( policy_in_file, 'r') as f_pol:
             for line in f_pol.readlines():
                 line = line.strip()
@@ -914,6 +915,7 @@ class BgpPolicyParser:
                     continue
                 if line.startswith(import_library):
                     library_file = line.replace(import_library, "").strip()
+                    library_file = os.path.join(pol_path, library_file) # relative import
                     self.parse_user_def_functions(library_file)
                 elif line.startswith(include):
                     include_file = line.replace(include, "").strip()
