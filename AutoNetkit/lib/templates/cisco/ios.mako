@@ -54,7 +54,7 @@ router ospf 1
 !
 router bgp ${asn}
  no synchronization
-% for i in interfaces:
+% for i in sorted(interfaces, key = lambda x: x['network']):
  network ${i['network']} mask ${i['netmask']}
 % endfor
 % for groupname, group_data in bgp_groups.items():     

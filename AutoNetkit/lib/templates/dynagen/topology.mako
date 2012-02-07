@@ -6,10 +6,10 @@ autostart = True
         image = ${image}
         ghostios = True
         chassis = ${chassis}   
-		%for option, value in options.items():
+		%for option, value in sorted(options.items()):
 		${option} = ${value}
 		%endfor  
-   		%for slot, wic in slots.items():
+   		%for slot, wic in sorted(slots.items()):
 		${slot} = ${wic}
 		%endfor           
 % for id, data in sorted(all_router_info.items(), key = lambda x: x[1]['hostname']):           
