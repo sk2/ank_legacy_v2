@@ -10,6 +10,11 @@
 
 
 importLibrary library.txt
+
+# bad files
+includePolicy nonexistent.txt
+importLibrary nonexistent.txt
+
         
 (asn =1 ) ->ingress (asn=2): (setLP 200)         
 (asn = 1) egress-> (asn = 3): (if Transit(asn = 2) then addTag t_test)
@@ -22,5 +27,8 @@ set3 = {}
 apply test(set1, set3)
 apply test(set1, set2)
 apply gao_rexford(set1, set2, set3, set3)
+
+# bad cases
+apply test(set1)
 
 
