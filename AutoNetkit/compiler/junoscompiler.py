@@ -178,7 +178,7 @@ class JunosCompiler:
                     })
             
         vmm_file = os.path.join(lab_dir(), "topology.vmm")
-        with open( vmm_file, 'w') as f_vmm:
+        with open( vmm_file, 'wb') as f_vmm:
             f_vmm.write( vmm_template.render(
                 topology_data = topology_data,
                 private_bridges = private_bridges,
@@ -393,7 +393,7 @@ class JunosCompiler:
                 network_list.append(adv_subnet)
 
             juniper_filename = router_conf_path(self.network, router)
-            with open( juniper_filename, 'w') as f_jun:
+            with open( juniper_filename, 'wb') as f_jun:
                 f_jun.write( junos_template.render(
                     hostname = router.rtr_folder_name,
                     username = 'autonetkit',

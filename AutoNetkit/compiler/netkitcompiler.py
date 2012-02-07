@@ -191,7 +191,7 @@ class NetkitCompiler:
             #chown root:root /root
             use_ssh_key = True
 
-        f_startup = open( os.path.join(lab_dir(), "shared.startup"), 'w')
+        f_startup = open( os.path.join(lab_dir(), "shared.startup"), 'wb')
         f_startup.write(startup_template.render(
             interfaces=[],
             add_localhost=True,
@@ -206,7 +206,7 @@ class NetkitCompiler:
 # Files for indvidual node configuration
 
         #TODO: this needs to be created for each netkit host machine
-        f_lab = open(os.path.join(lab_dir(), "lab.conf"), 'w')
+        f_lab = open(os.path.join(lab_dir(), "lab.conf"), 'wb')
 
         lab_conf = {}
         tap_list_strings = {}
@@ -224,7 +224,7 @@ class NetkitCompiler:
             rtr_folder_name = ank.rtr_folder_name(self.network, node)
 
             # sshd options
-            f_sshd = open( os.path.join(sshd_dir(self.network, node), "sshd_config"), 'w')
+            f_sshd = open( os.path.join(sshd_dir(self.network, node), "sshd_config"), 'wb')
             f_sshd.write(sshd_template.render())
             f_sshd.close()
 
@@ -247,14 +247,14 @@ class NetkitCompiler:
                 lab_conf[rtr_folder_name].append( ('mem', dns_memory))
 
             if config.settings['Netkit']['ssh key']:
-                f_auth_keys = open(os.path.join(dot_ssh_dir(self.network, node), "authorized_keys"), "w")
+                f_auth_keys = open(os.path.join(dot_ssh_dir(self.network, node), "authorized_keys"), "wb")
                 f_auth_keys.write(config.settings['Netkit']['ssh key'])
                 f_auth_keys.close()
 
             # Zebra Daemons
             zebra_daemon_list = []
             f_zdaemons = open( os.path.join(zebra_dir(self.network, node),
-                                            "daemons"), 'w')
+                                            "daemons"), 'wb')
 # Always start Zebra
             zebra_daemon_list.append("zebra")
 
@@ -269,7 +269,7 @@ class NetkitCompiler:
             f_zdaemons.close()
 # MOTD
             f_zmotd = open( os.path.join(zebra_dir(self.network, node),
-                                            "motd.txt"), 'w')
+                                            "motd.txt"), 'wb')
 
             f_zmotd.write(motd_template.render(
                 date = date,
@@ -279,7 +279,7 @@ class NetkitCompiler:
 
             # Main Zebra config
             f_z = open( os.path.join(zebra_dir(self.network, node),
-                                     "zebra.conf"), 'w')
+                                     "zebra.conf"), 'wb')
             f_z.write( zebra_template.render(
                 hostname = node.device_hostname,
                 password = self.zebra_password,
@@ -325,7 +325,7 @@ class NetkitCompiler:
 
             #Write startup file for this router
             f_startup = open( os.path.join(netkit_dir(self.network, node),
-                "{0}.startup".format(rtr_folder_name)), 'w')
+                "{0}.startup".format(rtr_folder_name)), 'wb')
 
             f_startup.write(startup_template.render(
                 interfaces=startup_int_list,
@@ -401,7 +401,7 @@ class NetkitCompiler:
 
                 #TODO: see if need to use router-id for ospfd in quagga
                 f_handle = open( os.path.join(zebra_dir(self.network, router),
-                        "ospfd.conf"), 'w')
+                        "ospfd.conf"), 'wb')
 
                 f_handle.write(template.render
                                (
@@ -578,7 +578,7 @@ class NetkitCompiler:
                 }
             
                 f_handle = open(os.path.join(zebra_dir(self.network, router),
-                                                "bgpd.conf"),'w')
+                                                "bgpd.conf"),'wb')
 
                 #TODO: remove community_lists and prefix_lists as they are put into policy_options
                 f_handle.write(template.render(
@@ -661,13 +661,13 @@ class NetkitCompiler:
                 advertise_block = ip_as_allocs[child.asn]
                 reverse_identifier = ank.rev_dns_identifier(advertise_block)
                 child_servers.append( (child.domain, reverse_identifier, ank.server_ip(child)))
-            f_root_db = open(os.path.join(bind_dir(self.network, server), "db.root"), 'w') 
+            f_root_db = open(os.path.join(bind_dir(self.network, server), "db.root"), 'wb') 
             f_root_db.write( root_dns_template.render(
                 dns_servers = child_servers,
                 server = server,
             ))
 
-            f_named = open( os.path.join(bind_dir(self.network, server), "named.conf"), 'w')
+            f_named = open( os.path.join(bind_dir(self.network, server), "named.conf"), 'wb')
             f_named.write(root_dns_named_template.render(
                 logging = False,
             ))
@@ -677,9 +677,9 @@ class NetkitCompiler:
             root_db_hint = ( ("ROOT-SERVER", ank.server_ip(n)) for n in root_servers)
             root_db_hint = list(root_db_hint)
 #TODO: make caching use parent rather than global root
-            f_root = open( os.path.join(bind_dir(self.network, server), "db.root"), 'w')
+            f_root = open( os.path.join(bind_dir(self.network, server), "db.root"), 'wb')
             f_root.write( root_template.render( root_servers = root_db_hint))
-            f_named = open( os.path.join(bind_dir(self.network, server), "named.conf"), 'w')
+            f_named = open( os.path.join(bind_dir(self.network, server), "named.conf"), 'wb')
             f_named.write(named_template.render(
                 entry_list = [],
                 bind_dir = linux_bind_dir,
@@ -699,7 +699,7 @@ class NetkitCompiler:
 #TODO: look at using advertise_block.network.reverse_dns - check what Bind needs
             named_list.append(reverse_identifier)
 
-            f_named = open( os.path.join(bind_dir(self.network, server), "named.conf"), 'w')
+            f_named = open( os.path.join(bind_dir(self.network, server), "named.conf"), 'wb')
             f_named.write(named_template.render(
                 domain = server.domain,
                 entry_list = named_list,
@@ -747,7 +747,7 @@ class NetkitCompiler:
             for_entry_list = sorted(for_entry_list)
             for_entry_list = sorted(for_entry_list, key = lambda x: x[1])
             
-            f_forward = open ( os.path.join(bind_dir(self.network, server), "db.%s" % server.domain), 'w')
+            f_forward = open ( os.path.join(bind_dir(self.network, server), "db.%s" % server.domain), 'wb')
             f_forward.write(forward_template.render(
                         domain = server.domain,
                         entry_list = for_entry_list,
@@ -756,7 +756,7 @@ class NetkitCompiler:
                         dns_server_ip = ank.server_ip(server),
                 ))
 
-            f_reverse = open(os.path.join(bind_dir(self.network, server), "db.%s" % reverse_identifier), 'w')
+            f_reverse = open(os.path.join(bind_dir(self.network, server), "db.%s" % reverse_identifier), 'wb')
 
             f_reverse.write(reverse_template.render(
                 domain = server.domain,
@@ -769,11 +769,11 @@ class NetkitCompiler:
 #TODO: ROOT-SERVER can't be part of a domain...  - need to correctly handle case of multiple root servers
 # and also need to handle this for case of single root server (ie no hiearchy) probably ok as /etc/resolv.conf points to server itself, not through dns hints
             root_db_hint = ( ("ROOT-SERVER", ank.server_ip(n)) for n in ank.dns_hiearchy_parents(server))
-            f_root = open( os.path.join(bind_dir(self.network, server), "db.root"), 'w')
+            f_root = open( os.path.join(bind_dir(self.network, server), "db.root"), 'wb')
             f_root.write( root_template.render( root_servers = root_db_hint))
 
         for server in dns_servers:
-            f_resolv = open( os.path.join(etc_dir(self.network, server), "resolv.conf"), 'w')
+            f_resolv = open( os.path.join(etc_dir(self.network, server), "resolv.conf"), 'wb')
             f_resolv.write ( resolve_template.render(
                 nameservers = [ank.server_ip(server)],
                 domain = server.domain))
@@ -781,7 +781,7 @@ class NetkitCompiler:
 # Configure clients
         for client in clients:
             server_ips = (ank.server_ip(server) for server in ank.dns_hiearchy_parents(client))
-            f_resolv = open( os.path.join(etc_dir(self.network, client), "resolv.conf"), 'w')
+            f_resolv = open( os.path.join(etc_dir(self.network, client), "resolv.conf"), 'wb')
             f_resolv.write ( resolve_template.render(
                 nameservers = server_ips,
                 domain = client.domain))

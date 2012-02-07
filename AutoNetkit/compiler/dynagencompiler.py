@@ -367,7 +367,7 @@ class dynagenCompiler:
                 network_list.append(adv_subnet)
 
             juniper_filename = router_conf_path(self.network, router)
-            with open( juniper_filename, 'w') as f_jun:
+            with open( juniper_filename, 'wb') as f_jun:
                 f_jun.write( ios_template.render(
                     hostname = router.rtr_folder_name,
                     username = 'autonetkit',
@@ -482,7 +482,7 @@ class dynagenCompiler:
 
         #pprint.pprint(all_router_info)
         lab_file = os.path.join(lab_dir(), "lab.net")
-        with open( lab_file, 'w') as f_lab:
+        with open( lab_file, 'wb') as f_lab:
             f_lab.write( lab_template.render(
                 image = self.image,
                 hypervisor_port = self.hypervisor_port,
