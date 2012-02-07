@@ -13,11 +13,11 @@ $TTL 1D
 
 ## Entries               
 ns		IN	A	${dns_server_ip}
-% for (interface_id, host, ip) in entry_list:
+% for (interface_id, host, ip) in sorted(entry_list, key = lambda x: x[2]):
 ${interface_id}.${host}	IN	A	${ip}	     
 %endfor                      
 
 ## CNAME Entries  (note lo:0 is invalid dns name so use lo0 instead )
-% for alias, host in host_cname_list:
+% for alias, host in sorted(host_cname_list):
 ${alias}	IN	CNAME	${host}      
 %endfor

@@ -10,28 +10,35 @@ import difflib
 def test_dns():
     try:
         config.settings['DNS']['hierarchical'] = True
-        master_dir = (resource_filename(__name__, "netkit"))
+        master_dir = (resource_filename(__name__, "dns"))
         inet = AutoNetkit.internet.Internet("multias", netkit=True) 
         inet.compile()
     finally:
         config.settings['DNS']['hierarchical'] = False
-    #TODO: see why DNS persists across multiple instances, if compiling for Netkit
 
-    return
-
-    zebra_files = ["bgpd.conf", "daemons", "ospfd.conf", "zebra.conf"]
-    for z_file in zebra_files:
-        f_test = os.path.join(config.ank_main_dir, "netkit_lab", "1c_AS1", "etc", "zebra", z_file)
+    root_files = ["db.root", "named.conf"]
+    for root_file in root_files:
+        f_test = os.path.join(config.lab_dir, "rootdns1_AS1", "etc", "bind", root_file)
         test_file = open(f_test, "Ur").read()
-        LOG.info(test_file)
-        master_file = open(os.path.join(master_dir, "1c_as1_zebra", z_file), "Ur").read()
+        master_file = open(os.path.join(master_dir, "rootdns1_AS1", "etc", "bind", root_file), "Ur").read()
         try:
             assert(test_file == master_file)
         except AssertionError:
             message = ''.join(difflib.ndiff(test_file.splitlines(True),
                 master_file.splitlines(True)))
             LOG.warn(message)
-            LOG.warn(f_test)
-            LOG.warn(os.path.join(master_dir, "1c_as1_zebra", z_file))
+            raise AssertionError
+
+    l3_files = ["db.0.10.in-addr.arpa", "db.AS1", "db.root", "named.conf"]
+    for l3_file in l3_files:
+        f_test = os.path.join(config.lab_dir, "l31dns1_AS1", "etc", "bind", l3_file)
+        test_file = open(f_test, "Ur").read()
+        master_file = open(os.path.join(master_dir, "l31dns1_AS1", "etc", "bind", l3_file), "Ur").read()
+        try:
+            assert(test_file == master_file)
+        except AssertionError:
+            message = ''.join(difflib.ndiff(test_file.splitlines(True),
+                master_file.splitlines(True)))
+            LOG.warn(message)
             raise AssertionError
 

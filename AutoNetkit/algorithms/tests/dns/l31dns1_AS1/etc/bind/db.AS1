@@ -1,0 +1,39 @@
+$ORIGIN AS1.
+$TTL 1D
+@	IN	SOA	ns.AS1.	info.AS1 (
+		2008080101      ;serial
+		8H           	;refresh
+		4H           	;retry
+		4W         		;expire
+		1D          	;negative cache TTL
+		)
+@       IN      NS       ns.AS1.
+        
+
+ns		IN	A	10.0.0.22
+eth2.1b	IN	A	10.0.0.17	     
+eth2.3a	IN	A	10.0.0.18	     
+eth0.1a	IN	A	10.0.0.21	     
+eth0.l31dns1	IN	A	10.0.0.22	     
+eth1.1a	IN	A	10.0.0.25	     
+eth0.l2asn1dns1	IN	A	10.0.0.26	     
+eth2.1a	IN	A	10.0.0.29	     
+eth0.1b	IN	A	10.0.0.30	     
+eth0.1c	IN	A	10.0.0.41	     
+eth1.1b	IN	A	10.0.0.42	     
+eth1.1c	IN	A	10.0.0.45	     
+eth3.1a	IN	A	10.0.0.46	     
+eth2.1c	IN	A	10.0.0.49	     
+eth1.2a	IN	A	10.0.0.50	     
+eth0.rootdns1	IN	A	10.0.0.53	     
+eth4.1a	IN	A	10.0.0.54	     
+lo0.1b	IN	A	10.0.0.66	     
+lo0.1a	IN	A	10.0.0.67	     
+lo0.1c	IN	A	10.0.0.68	     
+
+1a	IN	CNAME	lo0.1a      
+1b	IN	CNAME	lo0.1b      
+1c	IN	CNAME	lo0.1c      
+l2asn1dns1	IN	CNAME	eth0.l2asn1dns1      
+l31dns1	IN	CNAME	eth0.l31dns1      
+rootdns1	IN	CNAME	eth0.rootdns1      

@@ -1,0 +1,30 @@
+$TTL 1D
+@	IN	SOA	ns.AS1.	hostmaster.AS1 (
+		2008080101      ;serial
+		8H           	;refresh
+		4H           	;retry
+		4W         		;expire
+		1D          	;negative cache TTL
+		)
+
+      	IN      NS       ns.AS1.
+                       
+17.0		PTR	eth2.1b.AS1.	     
+18.0		PTR	eth2.3a.AS3.	     
+21.0		PTR	eth0.1a.AS1.	     
+22.0		PTR	eth0.l31dns1.AS1.	     
+25.0		PTR	eth1.1a.AS1.	     
+26.0		PTR	eth0.l2asn1dns1.AS1.	     
+29.0		PTR	eth2.1a.AS1.	     
+30.0		PTR	eth0.1b.AS1.	     
+41.0		PTR	eth0.1c.AS1.	     
+42.0		PTR	eth1.1b.AS1.	     
+45.0		PTR	eth1.1c.AS1.	     
+46.0		PTR	eth3.1a.AS1.	     
+49.0		PTR	eth2.1c.AS1.	     
+50.0		PTR	eth1.2a.AS2.	     
+53.0		PTR	eth0.rootdns1.AS1.	     
+54.0		PTR	eth4.1a.AS1.	     
+66.0		PTR	lo0.1b.	     
+67.0		PTR	lo0.1a.	     
+68.0		PTR	lo0.1c.	     

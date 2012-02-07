@@ -10,6 +10,6 @@ $TTL 1D
       	IN      NS       ns.${domain}.
                        
 ## Entries
-% for (reverse, int_id, host) in entry_list:
+% for (reverse, int_id, host) in sorted(entry_list):
 ${reverse}		PTR	${int_id}.${host}.	     
 %endfor
