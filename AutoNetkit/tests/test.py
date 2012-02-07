@@ -8,7 +8,7 @@ import difflib
 
 def test_dumps():
     master_dir = (resource_filename(__name__, "comparisons"))
-    inet = AutoNetkit.internet.Internet("multias", netkit=True) 
+    inet = AutoNetkit.internet.Internet("multias") 
     inet.compile()
     inet.dump()
 
