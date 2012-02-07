@@ -156,7 +156,7 @@ class NetkitCompiler:
                     if not os.path.isdir(test_dir):
                         os.mkdir(test_dir)
 
-                if "DNS" in self.services and device in dns_servers:
+                if device in dns_servers:
                     b_dir = bind_dir(self.network, device)
                     if not os.path.isdir(b_dir):
                         os.mkdir(b_dir)
