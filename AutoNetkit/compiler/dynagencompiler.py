@@ -429,7 +429,9 @@ class dynagenCompiler:
 
         #TODO: need nice way to map ANK graph into feasible hardware graph
 
+#TODO: see what chassis is used for
         chassis = config.settings['Dynagen']['model']
+        model = config.settings['Dynagen']['model']
         slots = config.settings['Dynagen']['Slots']
         options = config.settings['Dynagen']['Options']
 
@@ -490,6 +492,7 @@ class dynagenCompiler:
                 all_router_info = all_router_info,   
                 working_dir = working_dir,
                 chassis = chassis,
+                model = model,
                 slots = slots,
                 options = options,
                 ))

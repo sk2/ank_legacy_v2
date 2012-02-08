@@ -442,6 +442,7 @@ class Internet:
             dynagen_deploy = ank.deploy.dynagen_deploy.DynagenDeploy(host = data['host'],
                     username = data['username'], 
                     host_alias = host_alias,
+                    dynagen_binary = data['dynagen binary'],
                     network = self.network)
             dynagen_deploy.deploy()
             if data['verify']:
