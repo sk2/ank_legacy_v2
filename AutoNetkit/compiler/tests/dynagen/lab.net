@@ -1,8 +1,8 @@
 autostart = True
-[127.0.0.1]
+[127.0.0.1:7202]
     workingdir = /tmp
     udp = 10000
-    [[7202]]
+    [[7200]]
         image = /space/c7200-is-mz.124-19.image
         ghostios = True
         chassis = 7200   

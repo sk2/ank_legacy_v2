@@ -13,7 +13,9 @@ import os
 import pprint
 import logging
 import validate
-
+import ConfigParser
+from configobj import ConfigObj, flatten_errors
+validator = validate.Validator()
 
 """TODO:
     Document that configs files in (order of overwriting)
@@ -24,39 +26,63 @@ import validate
 
 #**************************************************************
 # Settings
-import ConfigParser
-settings = ConfigParser.RawConfigParser()
-
 ank_user_dir = os.path.expanduser("~") + os.sep + ".autonetkit"
-from configobj import ConfigObj, flatten_errors
+
+def load_config():
+    settings = ConfigParser.RawConfigParser()
 
 # load defaults
-spec_file = pkg_resources.resource_filename(__name__,"/lib/configspec.cfg")
-settings = ConfigObj(configspec=spec_file, encoding='UTF8')
+    spec_file = pkg_resources.resource_filename(__name__,"/lib/configspec.cfg")
+    settings = ConfigObj(configspec=spec_file, encoding='UTF8')
 
 # Try in ~/.autonetkit/autonetkit.cfg
-user_config_file = os.path.join(ank_user_dir, "autonetkit.cfg")
-settings.merge(ConfigObj(user_config_file))
+    user_config_file = os.path.join(ank_user_dir, "autonetkit.cfg")
+    settings.merge(ConfigObj(user_config_file))
 
 #TODO: look at using configspec validation
 
 # also try from current directory
-settings.merge(ConfigObj("autonetkit.cfg"))
+    settings.merge(ConfigObj("autonetkit.cfg"))
 
-validator = validate.Validator()
-results = settings.validate(validator)
-if results != True:
-    for (section_list, key, _) in flatten_errors(settings, results):
-        if key is not None:
-            print "Error loading configuration file:"
-            print 'Invalid key "%s" in section "%s"' % (key, ', '.join(section_list))
-            sys.exit(0)
-        else:
+    results = settings.validate(validator)
+    if results != True:
+        for (section_list, key, _) in flatten_errors(settings, results):
+            if key is not None:
+                print "Error loading configuration file:"
+                print 'Invalid key "%s" in section "%s"' % (key, ', '.join(section_list))
+#TODO: throw exception here?
+                sys.exit(0)
+            else:
 # ignore missing sections - use defaults
-            #print 'The following section was missing:%s ' % ', '.join(section_list)
-            pass
+                #print 'The following section was missing:%s ' % ', '.join(section_list)
+                pass
+    return settings
+#load on import
+settings = load_config()
+print settings
+
+
+def reload_config():
+# explicit reloading
+    return load_config()
 
 ank_main_dir = settings['Lab']['autonetkit_dir']
+
+def merge_config(user_config_file):
+    print "merged", user_config_file
+    settings.merge(ConfigObj(user_config_file))
+    results = settings.validate(validator)
+    if results != True:
+        for (section_list, key, _) in flatten_errors(settings, results):
+            if key is not None:
+                print "Error loading configuration file:"
+                print 'Invalid key "%s" in section "%s"' % (key, ', '.join(section_list))
+                sys.exit(0)
+            else:
+# ignore missing sections - use defaults
+                #print 'The following section was missing:%s ' % ', '.join(section_list)
+                pass
+
 
 if not os.path.isdir(ank_main_dir):
     os.mkdir(ank_main_dir)
