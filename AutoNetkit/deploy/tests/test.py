@@ -13,7 +13,7 @@ def test_netkit_deploy():
                 "username": "autonetkit",
                 "active": True,
                 'collect data': True,
-                'collect data commands': ['zebra: show ip route'],
+                'collect data commands': ['zebra: show ip route', 'ssh: uname -a'],
                 }
             }
     inet = AutoNetkit.internet.Internet("2routers", netkit=True, deploy=True) 
