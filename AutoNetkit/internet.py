@@ -411,7 +411,8 @@ class Internet:
 
             # Get the deployment plugin
             netkit_dir = config.lab_dir
-            nkd = ank.deploy.netkit_deploy.NetkitDeploy(netkit_server, netkit_dir, self.network, data['xterm'], host_alias=host_alias)
+            xterm = data.get("xterm")
+            nkd = ank.deploy.netkit_deploy.NetkitDeploy(netkit_server, netkit_dir, self.network, xterm, host_alias=host_alias)
             # Need to tell deploy plugin where the netkit files are
             nkd.deploy()
 
