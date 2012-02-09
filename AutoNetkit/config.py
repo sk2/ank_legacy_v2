@@ -59,7 +59,6 @@ def load_config():
     return settings
 #load on import
 settings = load_config()
-print settings
 
 
 def reload_config():
@@ -69,7 +68,6 @@ def reload_config():
 ank_main_dir = settings['Lab']['autonetkit_dir']
 
 def merge_config(user_config_file):
-    print "merged", user_config_file
     settings.merge(ConfigObj(user_config_file))
     results = settings.validate(validator)
     if results != True:
