@@ -184,12 +184,12 @@ class BgpPolicyParser:
         singleQuery.setFailAction(parse_fail_action)
         self.nodeQuery = singleQuery + ZeroOrMore(boolean + singleQuery)
 
-# edges
         self.u_egress = Literal("egress->").setResultsName("u_egress") 
         self.v_ingress = Literal("->ingress").setResultsName("v_ingress")
         self.u_ingress = Literal("ingress<-").setResultsName("u_ingress")
         self.v_egress = Literal("<-egress").setResultsName("v_egress") 
-        edgeType = ( self.u_egress | self.u_ingress | self.v_egress | self.v_ingress).setResultsName("edgeType").setFailAction(parse_fail_action)
+        edgeType = ( self.u_egress | self.u_ingress | self.v_egress
+                | self.v_ingress).setResultsName("edgeType").setFailAction(parse_fail_action)
         self.edgeQuery = ("(" + self.nodeQuery.setResultsName("query_a") + ")"
                 + edgeType
                 + "(" + self.nodeQuery.setResultsName("query_b")
