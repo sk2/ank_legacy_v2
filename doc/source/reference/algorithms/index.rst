@@ -11,8 +11,6 @@ Algorithms to perform tasks on router graph.
    bgp_policy
    dns     
    graph_product
-   inv_cap
    ip   
    housekeeping
    naming 
-   optimise_igp
