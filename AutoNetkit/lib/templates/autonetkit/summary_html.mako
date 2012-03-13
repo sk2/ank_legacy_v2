@@ -45,7 +45,7 @@
   <h3>${node}</h3>
   ${len(node_data['interface_list'])} interfaces
 
-  <table>
+ <table>
     <tr><td>Interfaces</td><td>iBGP Peers</td><td>eBGP Peers</td></tr>
     <tr><td>
 	<table>
@@ -76,8 +76,26 @@
   </table>
 </td>
 </tr>
+
+
+
+
 </table>
   % endfor
+
+  <h2>Virtual Nodes</h2>
+
+  % for node, node_data in sorted(as_data['virtual_nodes'].items()):
+  <h3>${node}</h3>
+
+    <table>
+      <tr> <th>Local IP</th> <th>Neighbour</th> <th>Neighbour IP </th></tr>     
+    %for local_ip, remote_ip, destination in node_data['links']:
+    <tr> <td>${local_ip}</td> <td>${destination}</ td> <td> ${remote_ip} </td> </tr>       
+      % endfor
+    </table>
+
+%endfor
 
   <hr>
 

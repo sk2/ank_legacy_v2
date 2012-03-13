@@ -85,6 +85,15 @@ def load_graphml(net_file, default_asn = 1):
     mapping = dict( (n, letters.next()) for n in empty_label_nodes)
     input_graph = nx.relabel_nodes(input_graph, mapping)
 
+
+    # search for virtual nodes
+    virtual_nodes = set(n for n, d in input_graph.nodes(data=True) if d.get("virtual"))
+    print "virtual nodes", virtual_nodes
+    non_virtual_nodes = [n for n in input_graph if n not in virtual_nodes]
+    for n in non_virtual_nodes:
+        input_graph.node[n]['virtual'] = False
+    
+
     # set node and edge defaults
     try:
         for node, data in input_graph.nodes(data=True):

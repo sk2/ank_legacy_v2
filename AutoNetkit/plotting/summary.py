@@ -80,6 +80,7 @@ def summarydoc(network):
         #print asn
         node_list = {}
         loopbacks = []
+        virtual_nodes = {}
         for router in network.routers(asn):
             node_label = network.fqdn(router)
             loopbacks.append( (node_label, network.lo_ip(router).ip))
@@ -97,14 +98,20 @@ def summarydoc(network):
                 ibgp_list.append( (ank.fqdn(network, dst), network.lo_ip(dst).ip))
             node_list[node_label]['ibgp_list'] = ibgp_list
 
+        for virtual_node in network.virtual_nodes(asn):
+            links = []
+            for link in network.links(virtual_node):
+                links.append( (link.local_ip, link.remote_ip, link.dst))
+            virtual_nodes[virtual_node] = {
+                'links': links,
+                }
 
         as_stats[my_as.name] = {
                 'asn': asn,
                 'loopbacks': loopbacks,
                 'node_list': node_list,
+                'virtual_nodes': virtual_nodes,
                 }
-
-    
 
     plot_dir = config.plot_dir
     if not os.path.isdir(plot_dir):

@@ -328,10 +328,21 @@ class Network(object):
     def devices(self, asn=None):
         """return devices in a network"""
         if asn:
-            return (n for n in self.graph if self.asn(n) == asn)
+            return (n for n in self.graph.nodes_iter()
+                    if self.asn(n) == asn and not self.graph.node[n].get("virtual"))
         else:
 # return all nodes
-            return self.graph.nodes_iter()
+            return (n for n in self.graph.nodes_iter() if not self.graph.node[n].get("virtual"))
+
+    
+    def virtual_nodes(self, asn=None):
+        """return devices in a network"""
+        if asn:
+            return (n for n in self.graph.nodes_iter()
+                    if self.asn(n) == asn and self.graph.node[n].get("virtual"))
+        else:
+# return all nodes
+            return (n for n in self.graph.nodes_iter() if self.graph.node[n].get("virtual"))
 
 
     def device_type(self, node):
@@ -454,11 +465,11 @@ class Network(object):
     def igp_links(self, node):
         return (link for link in self.links(node) if link.remote_host.asn == node.asn)
 
-    def links(self, router=None, graph=None):
+    def links(self, device=None, graph=None):
         if graph:
-            return ( link_namedtuple(self, src, dst) for (src, dst) in graph.edges(router))
+            return ( link_namedtuple(self, src, dst) for (src, dst) in graph.edges(device))
         else:
-            return ( link_namedtuple(self, src, dst) for (src, dst) in self.graph.edges(router))
+            return ( link_namedtuple(self, src, dst) for (src, dst) in self.graph.edges(device))
 
     def ebgp_graph(self):
         return ank.ebgp_graph(self)
