@@ -113,6 +113,10 @@ class device (namedtuple('node', "network, id")):
         return self.device_type == "router"
 
     @property
+    def is_virtual(self):
+        return self.virtual
+
+    @property
     def rtr_folder_name(self):
         return ank.rtr_folder_name(self.network, self)
 
