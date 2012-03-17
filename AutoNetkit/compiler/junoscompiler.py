@@ -231,9 +231,9 @@ class JunosCompiler:
 		if neighbor == virtual_hostname:
 		    subnet = data['sn']
 		    static_routes.append({
-		        'network':	str(subnet.network)
-			'prefixlen':	str(subnet.prefixlen)
-			'ip':		str(data['ip'])
+		        'network':	str(subnet.network),
+			'prefixlen':	str(subnet.prefixlen),
+			'ip':		str(data['ip']),
 		    })
 		return static_routes
 
