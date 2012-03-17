@@ -70,9 +70,9 @@ routing-options {
 % if len(static_routes):
 static {
 % for i in sorted(static_routes, key = lambda x: x['network']):
-    route ${i['network']}/${i['prefixlen']} next-hop ${i['ip']}
+    route ${i['network']}/${i['prefixlen']} next-hop ${i['ip']};
 % endfor
-}
+       }
 % endif
     router-id ${router_id};
     autonomous-system ${asn};
