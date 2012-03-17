@@ -221,7 +221,7 @@ class JunosCompiler:
 
 
 #static routes to the dummy nodes
-    def static_routes(self,device):
+    def configure_static_routes(self,device):
         LOG.debug("Configuring static routes for %s" %self.network.fqdn(device))
 	static_routes = []
 	for src,dst,data in self.network.graph.edges(device, data=True):
@@ -406,6 +406,7 @@ class JunosCompiler:
             lo_ip = self.network.lo_ip(router)
 
             interfaces = self.configure_interfaces(router)
+	    static_routes = self.configure_static_routes(router)
             igp_interfaces = self.configure_igp(router, igp_graph,ebgp_graph)
             (bgp_groups, policy_options) = self.configure_bgp(router, physical_graph, ibgp_graph, ebgp_graph)
 
