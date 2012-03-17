@@ -219,6 +219,25 @@ class JunosCompiler:
 
         return interfaces
 
+
+#static routes to the dummy nodes
+    def static_routes(self,device):
+        LOG.debug("Configuring static routes for %s" %self.network.fqdn(device))
+	static_routes = []
+	for src,dst,data in self.network.graph.edges(device, data=True):
+	    neighbor = ank.fqdn(self.network, dst)
+	    for virtual in sorted(self.network.virtual_nodes(), key = lambda x: x.fqdn):
+		virtual_hostname = virtual.hostname
+		if neighbor == virtual_hostname:
+		    subnet = data['sn']
+		    static_routes.append({
+		        'network':	str(subnet.network)
+			'prefixlen':	str(subnet.prefixlen)
+			'ip':		str(data['ip'])
+		    })
+		return static_routes
+
+
     def configure_igp(self, router, igp_graph, ebgp_graph):
         """igp configuration"""
         LOG.debug("Configuring IGP for %s" % self.network.label(router))
@@ -401,6 +420,7 @@ class JunosCompiler:
                     hostname = router.rtr_folder_name,
                     username = 'autonetkit',
                     interfaces=interfaces,
+		    static_routes=static_routes,
                     igp_interfaces=igp_interfaces,
                     igp_protocol = self.igp,
                     asn = asn,
