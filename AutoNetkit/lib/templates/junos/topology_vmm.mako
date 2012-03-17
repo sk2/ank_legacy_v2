@@ -3,8 +3,7 @@
 #include "/vmm/bin/common.defs"    
 
 % if image.basedisk:
-#define ${image.alias} \ 
-	basedisk "${image.basedisk}" ;         
+#define ${image.alias} basedisk "${image.basedisk}" ;         
 % endif 
 % if private_bridges:
 #define LOCAL_BRIDGES \   
