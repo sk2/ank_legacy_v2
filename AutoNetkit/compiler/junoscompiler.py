@@ -191,7 +191,7 @@ class JunosCompiler:
         """Interface configuration"""
         lo_ip = self.network.lo_ip(device)
         interfaces = []
-
+	static_routes = []
         interfaces.append({
             'id':          'lo0',
             'ip':           str(lo_ip.ip),
@@ -202,6 +202,7 @@ class JunosCompiler:
         })
 
         for src, dst, data in self.network.graph.edges(device, data=True):
+	    neighbor = ank.fqdn(self.network, dst)
             subnet = data['sn']
             int_id = self.int_id(data['id'])
             description = 'Interface %s -> %s' % (
@@ -216,16 +217,7 @@ class JunosCompiler:
                 'broadcast':    str(subnet.broadcast),
                 'description':  description,
             })
-
-        return interfaces
-
-
-#static routes to the dummy nodes
-    def configure_static_routes(self,device):
-        LOG.debug("Configuring static routes for %s" %self.network.fqdn(device))
-	static_routes = []
-	for src,dst,data in self.network.graph.edges(device, data=True):
-	    neighbor = ank.fqdn(self.network, dst)
+#static routes for the dummy nodes
 	    for virtual in sorted(self.network.virtual_nodes(), key = lambda x: x.fqdn):
 		virtual_hostname = virtual.hostname
 		if neighbor == virtual_hostname:
@@ -235,8 +227,8 @@ class JunosCompiler:
 			'prefixlen':	str(subnet.prefixlen),
 			'ip':		str(data['ip']),
 		    })
-		return static_routes
 
+        return interfaces,static_routes
 
     def configure_igp(self, router, igp_graph, ebgp_graph):
         """igp configuration"""
@@ -405,8 +397,7 @@ class JunosCompiler:
             network_list = []
             lo_ip = self.network.lo_ip(router)
 
-            interfaces = self.configure_interfaces(router)
-	    static_routes = self.configure_static_routes(router)
+            interfaces,static_routes = self.configure_interfaces(router)
             igp_interfaces = self.configure_igp(router, igp_graph,ebgp_graph)
             (bgp_groups, policy_options) = self.configure_bgp(router, physical_graph, ibgp_graph, ebgp_graph)
 
