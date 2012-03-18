@@ -79,7 +79,7 @@ static {
 } 
      
 protocols {             
-	% if igp_protocol == 'ospf':
+	% if igp_protocol == 'ospf' and len(igp_interfaces):
 	ospf {
 	        area 0.0.0.0 {
 			% for i in sorted(igp_interfaces, key = lambda x: x['id']):
@@ -98,7 +98,7 @@ protocols {
 			%endfor
 	    }
 	}                      
-	% elif igp_protocol == 'isis':
+	% elif igp_protocol == 'isis' and len(igp_interfaces):
 	isis {               
 		level 2 wide-metrics-only;
 		level 1 disable;

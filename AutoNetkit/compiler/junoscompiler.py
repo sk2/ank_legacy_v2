@@ -341,6 +341,9 @@ class JunosCompiler:
         if router in ebgp_graph:
             external_peers = []
             for peer in ebgp_graph.neighbors(router):
+                if not peer.is_router:
+#no eBGP peering to non-routers
+                    continue
                 route_maps_in = [route_map for route_map in 
                         self.network.g_session[peer][router]['ingress']]
                 route_maps_out = [route_map for route_map in 
