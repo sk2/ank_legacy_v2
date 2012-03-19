@@ -35,7 +35,11 @@ config "config" {
 	  interface "${i['id']}" { bridge "${i['bridge_id']}";};
 	   % endfor
 	  // description - configuration file to load on the router
-	  install "ENV(HOME)/active/configset/${host_data['config']}" %if olive_based:"/root/junos.conf" %else:"/root/olive.conf";
+	  % if olive_based:
+	  install "ENV(HOME)/active/configset/${host_data['config']}" "/root/junos.conf"
+	  % else:
+	  install "ENV(HOME)/active/configset/${host_data['config']}" "/root/olive.conf"
+	  %endif
 	};
 	% endfor
     
