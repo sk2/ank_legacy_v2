@@ -67,12 +67,19 @@ interfaces {
 }            
 
 routing-options {
+% if len(static_routes):
+static {
+% for i in sorted(static_routes, key = lambda x: x['network']):
+    route ${i['network']}/${i['prefixlen']} next-hop ${i['ip']};
+% endfor
+       }
+% endif
     router-id ${router_id};
     autonomous-system ${asn};
 } 
      
 protocols {             
-	% if igp_protocol == 'ospf':
+	% if igp_protocol == 'ospf' and len(igp_interfaces):
 	ospf {
 	        area 0.0.0.0 {
 			% for i in sorted(igp_interfaces, key = lambda x: x['id']):
@@ -91,7 +98,7 @@ protocols {
 			%endfor
 	    }
 	}                      
-	% elif igp_protocol == 'isis':
+	% elif igp_protocol == 'isis' and len(igp_interfaces):
 	isis {               
 		level 2 wide-metrics-only;
 		level 1 disable;

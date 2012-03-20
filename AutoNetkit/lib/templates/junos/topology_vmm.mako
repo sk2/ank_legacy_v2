@@ -3,8 +3,7 @@
 #include "/vmm/bin/common.defs"    
 
 % if image.basedisk:
-#define ${image.alias} \ 
-	basedisk "${image.basedisk}" ;         
+#define ${image.alias} basedisk "${image.basedisk}" ;         
 % endif 
 % if private_bridges:
 #define LOCAL_BRIDGES \   
@@ -36,7 +35,11 @@ config "config" {
 	  interface "${i['id']}" { bridge "${i['bridge_id']}";};
 	   % endfor
 	  // description - configuration file to load on the router
-	  install "ENV(HOME)/active/configset/${host_data['config']}" "/root/junos.conf";
+	  % if olive_based:
+	  install "ENV(HOME)/active/configset/${host_data['config']}" "/root/junos.conf"
+	  % else:
+	  install "ENV(HOME)/active/configset/${host_data['config']}" "/root/olive.conf"
+	  %endif
 	};
 	% endfor
     

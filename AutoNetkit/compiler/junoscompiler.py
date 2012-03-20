@@ -191,7 +191,7 @@ class JunosCompiler:
         """Interface configuration"""
         lo_ip = self.network.lo_ip(device)
         interfaces = []
-
+	static_routes = []
         interfaces.append({
             'id':          'lo0',
             'ip':           str(lo_ip.ip),
@@ -202,6 +202,7 @@ class JunosCompiler:
         })
 
         for src, dst, data in self.network.graph.edges(device, data=True):
+	    neighbor = ank.fqdn(self.network, dst)
             subnet = data['sn']
             int_id = self.int_id(data['id'])
             description = 'Interface %s -> %s' % (
@@ -216,8 +217,18 @@ class JunosCompiler:
                 'broadcast':    str(subnet.broadcast),
                 'description':  description,
             })
+#static routes for the dummy nodes
+	    for virtual in sorted(self.network.virtual_nodes(), key = lambda x: x.fqdn):
+		virtual_hostname = virtual.hostname
+		if neighbor == virtual_hostname:
+		    subnet = data['sn']
+		    static_routes.append({
+		        'network':	str(subnet.network),
+			'prefixlen':	str(subnet.prefixlen),
+			'ip':		str(data['ip']),
+		    })
 
-        return interfaces
+        return interfaces,static_routes
 
     def configure_igp(self, router, igp_graph, ebgp_graph):
         """igp configuration"""
@@ -330,6 +341,9 @@ class JunosCompiler:
         if router in ebgp_graph:
             external_peers = []
             for peer in ebgp_graph.neighbors(router):
+                if not peer.is_router:
+#no eBGP peering to non-routers
+                    continue
                 route_maps_in = [route_map for route_map in 
                         self.network.g_session[peer][router]['ingress']]
                 route_maps_out = [route_map for route_map in 
@@ -386,7 +400,7 @@ class JunosCompiler:
             network_list = []
             lo_ip = self.network.lo_ip(router)
 
-            interfaces = self.configure_interfaces(router)
+            interfaces,static_routes = self.configure_interfaces(router)
             igp_interfaces = self.configure_igp(router, igp_graph,ebgp_graph)
             (bgp_groups, policy_options) = self.configure_bgp(router, physical_graph, ibgp_graph, ebgp_graph)
 
@@ -401,6 +415,7 @@ class JunosCompiler:
                     hostname = router.rtr_folder_name,
                     username = 'autonetkit',
                     interfaces=interfaces,
+		    static_routes=static_routes,
                     igp_interfaces=igp_interfaces,
                     igp_protocol = self.igp,
                     asn = asn,
