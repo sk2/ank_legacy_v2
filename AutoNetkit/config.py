@@ -170,7 +170,6 @@ def add_logging(console_debug=False):
 
     logging.getLogger('').addHandler(fh)
 
-add_logging()
 LOG = logging.getLogger("ANK")
 
 # Cache directory for templates
