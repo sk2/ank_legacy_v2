@@ -77,13 +77,21 @@ def load_graphml(net_file, default_asn = 1):
     letters = (chr(x) for x in range(97,123)) 
 
 # set any blank labels to be letter for gh-122
-    empty_label_nodes = [n for n, d in input_graph.nodes(data=True) if not d.get("label")]
+    no_label_nodes = [n for n, d in input_graph.nodes(data=True) if not d.get("label")]
+    whitespace_labels = [n for n, d in input_graph.nodes(data=True)
+            if n not in no_label_nodes and d.get("label").strip() == ""]
+    empty_label_nodes = no_label_nodes + whitespace_labels
     if len(empty_label_nodes) > 26:
 # use aa, ab, ac, etc
         single_letters = list(letters)
         letters = ("%s%s" % (a, b) for a in single_letters for b in single_letters)
     mapping = dict( (n, letters.next()) for n in empty_label_nodes)
     input_graph = nx.relabel_nodes(input_graph, mapping)
+# Update the label also
+    for n in whitespace_labels:
+        remapped_id = mapping[n] # need to refer to ID after mapping
+        input_graph.node[remapped_id]['label'] = remapped_id
+
 
 
     # search for virtual nodes
