@@ -19,7 +19,7 @@ setup (
 
      author = 'Simon Knight, Hung Nguyen',
      author_email = "simon.knight@adelaide.edu.au",
-     url = "http://packages.python.org/AutoNetkit/",
+     url = "http://autonetkit.org",
      packages = ['AutoNetkit', 'AutoNetkit.algorithms', 'AutoNetkit.compiler',
          'AutoNetkit.tests', 'AutoNetkit.examples',
          'AutoNetkit.deploy', 'AutoNetkit.internal',
