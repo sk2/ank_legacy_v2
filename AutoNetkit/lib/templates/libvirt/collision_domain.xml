@@ -1,0 +1,13 @@
+<!--
+WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE 
+OVERWRITTEN AND LOST. Changes to this xml configuration should be made using:
+  virsh net-edit ank-1
+or other application using the libvirt API.
+-->
+
+<network>
+  <name>ank-1</name>
+  <uuid>1f25fac7-aeae-2f1e-0a4e-1398bbfde56b</uuid>
+  <bridge name='ank1' stp='off' delay='0' />
+  <mac address='52:54:00:1C:C4:2C'/>
+</network>

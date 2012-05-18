@@ -9,6 +9,7 @@ import pkg_resources
 
 import os
 import networkx as nx
+import sys
 
 #import network as network
 
@@ -17,8 +18,11 @@ LOG = logging.getLogger("ANK")
 
 import shutil
 import glob
-import itertools
-from collections import namedtuple
+
+try:
+    import xml.etree.cElementTree as ET
+except ImportError:
+    import xml.etree.ElementTree as ET
 
 import AutoNetkit as ank
 from AutoNetkit import config
@@ -35,11 +39,6 @@ template_cache_dir = config.template_cache_dir
 
 #TODO: use os.path.join here in lib/templates
 template_dir =  resource_filename("AutoNetkit","lib/templates")
-lookup = TemplateLookup(directories=[ template_dir ],
-        module_directory= template_cache_dir,
-        #cache_type='memory',
-        #cache_enabled=True,
-        )
 
 def lab_dir():
     """Lab directory for junos configs"""
@@ -61,16 +60,9 @@ def router_conf_path(network, router):
 class LibvirtCompiler:
     """Compiler main"""
 
-    def __init__(self, network, services, igp="ospf", target=None, olive_qemu_patched=False):
+    def __init__(self, network, services):
         self.network = network
         self.services = services
-        self.igp = igp
-        self.target = target
-        self.olive_qemu_patched = olive_qemu_patched
-        self.interface_limit = 0
-
-#TODO: tidy up platform: Olive/Junosphere between the vmm and the device configs
-
      
     def initialise(self):
         """Creates lab folder structure"""
@@ -89,41 +81,41 @@ class LibvirtCompiler:
         return
 
     def configure_topology(self):
-        """Configure Junosphere topology structure"""
-        LOG.debug("Configuring Junosphere") 
-        topology_data = {}
-        # Generator for private0, private1, etc
+        """Configure Libvirt topology structure"""
+        LOG.debug("Configuring Libvirt") 
+        default_vm = ET.parse(os.path.join(template_dir, "libvirt", "vm.xml"))
+        default_collision_domain = ET.parse(os.path.join(template_dir, "libvirt", "collision_domain.xml"))
+        #print ET.dump(default_vm)
+        #print ET.dump(default_collision_domain)
+
+        root = default_vm.getroot()
+        for elem in root.iterfind('devices'):
+            print elem.tag, elem.attrib
+
+        elem = root.find('devices')
+        print "elem", elem.tag, elem.attrib
+        for elem in elem.iterfind('interface'):
+            print "bb", elem.tag, elem.attrib
+
         for device in sorted(self.network.devices(), key = lambda x: x.fqdn):
-            hostname = device.hostname
             host_file = os.path.join(lab_dir(), "%s.xml" % device.folder_name)
-            with open( host_file, 'wb') as f_vmm:
-                f_vmm.write("")
+            device = root.find("devices")
+
+            interface = ET.SubElement(device, "interface", type="network")
+            ET.SubElement(interface, "mac", address = "aaaaaaxda")
+            ET.SubElement(interface, "source_network", address = "ank-1")
+            ET.SubElement(interface, "address", type='pci', 
+                    domain='0x0000', bus='0x00', slot='0x05', function='0x0')
+
+            tree = ET.ElementTree(root)
+            tree.write(host_file)
 
         for link in self.network.links():
             subnet = link.subnet
             collision_domain = "%s.%s" % (subnet.ip, subnet.prefixlen)
             collision_domain_file = os.path.join(networks_dir(), "%s.xml" % collision_domain)
             
-            with open( collision_domain_file, 'wb') as f_vmm:
-                f_vmm.write("")
-
         return
-
-        for device in sorted(self.network.devices(), key = lambda x: x.fqdn):
-            hostname = device.hostname
-            topology_data[hostname] = {
-                    'config': router_conf_file(self.network, device),
-                    'interfaces': [],
-                    }
-            for src, dst, data in sorted(self.network.graph.edges(device, data=True), key = lambda (s,t,d): t.fqdn):
-                subnet = data['sn']
-                description = 'Interface %s -> %s' % (
-                        ank.fqdn(self.network, src), 
-                        ank.fqdn(self.network, dst))
-
-                topology_data[hostname]['interfaces'].append({
-                    'description': description,
-                    })
 
 
 
