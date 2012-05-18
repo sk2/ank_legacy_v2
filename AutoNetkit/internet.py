@@ -50,6 +50,7 @@ class Internet:
     
     def __init__(self, filename=None, tapsn=IPNetwork("172.16.0.0/16"),
             netkit=False, cbgp=False, dynagen=False,
+            libvirt = False,
             junosphere=False, junosphere_olive=False, olive=False,
             policy_file=None, olive_qemu_patched=False, deploy = False,
             igp='ospf'): 
@@ -67,6 +68,7 @@ class Internet:
                 'cbgp': cbgp,
                 'dynagen': dynagen,
                 'junosphere': junosphere,
+                'libvirt': libvirt,
                 'junosphere_olive': junosphere_olive,
                 'olive': olive,
                 'olive_qemu_patched': olive_qemu_patched,
@@ -324,6 +326,17 @@ class Internet:
             nk_comp = ank.NetkitCompiler(self.network, self.services)
             nk_comp.initialise()     
             nk_comp.configure()
+
+        if self.will_deploy and not self.compile_targets['libvirt']:
+            auto_compile = any( data.get("active") 
+                    for data in config.settings['Libvirt Hosts'].values())
+            if auto_compile:
+                LOG.info("Active Netkit deployment target, automatically compiling")
+                self.compile_targets['libvirt'] = True
+        if self.compile_targets['libvirt']:
+            libvirt_comp = ank.LibvirtCompiler(self.network, self.services)
+            libvirt_comp.initialise()     
+            libvirt_comp.configure()
 
         auto_compile = any( data.get("active") 
                 for data in config.settings['Dynagen Hosts'].values())

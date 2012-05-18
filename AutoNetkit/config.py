@@ -94,6 +94,9 @@ lab_dir = os.path.join(ank_main_dir, lab_dir)
 cbgp_dir = settings['Lab']['cbgp_dir']
 cbgp_dir = os.path.join(ank_main_dir, cbgp_dir)
 
+libvirt_dir = settings['Lab']['libvirt_dir']
+libvirt_dir = os.path.join(ank_main_dir, libvirt_dir)
+
 dynagen_dir = settings['Lab']['dynagen_dir']
 dynagen_dir = os.path.join(ank_main_dir, dynagen_dir)
 

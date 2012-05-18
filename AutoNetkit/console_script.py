@@ -35,6 +35,7 @@ def main():
 
 # Deployment environments
     opt.add_option('--netkit',  action="store_true", default=False, help="Compile Netkit")
+    opt.add_option('--libvirt',  action="store_true", default=False, help="Compile Libvirt")
     opt.add_option('--cbgp',  action="store_true", default=False, help="Compile cBGP")
     opt.add_option('--dynagen',  action="store_true", default=False, help="Compile dynagen")
     opt.add_option('--junos',  action="store_true", default=False, help="Compile Junosphere  (legacy command)")
@@ -70,6 +71,7 @@ def main():
             cbgp=options.cbgp, dynagen=options.dynagen, junosphere=use_junosphere,
             junosphere_olive=options.junosphere_olive, olive=options.olive, 
             policy_file = options.bgp_policy, deploy = options.deploy,
+            libvirt = options.libvirt,
             olive_qemu_patched=options.olive_qemu_patched, igp=igp)
     inet.load(f_name)
 
