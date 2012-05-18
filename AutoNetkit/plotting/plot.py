@@ -56,27 +56,29 @@ def plot(network, show=False, save=True):
         x -= x.min()
         x *= 1.0/x.max() 
         y -= y.min()
-        y *= 1.0/y.max() 
+        y *= -1.0/y.max() # invert
+        y += 1 # rescale from 0->1 not 1->0
 #TODO: see if can use reshape-type commands here
         co_ords = zip(list(x), list(y))
         co_ords = [numpy.array([x, y]) for x, y in co_ords]
         nodes = [n for n in network.graph.nodes()]
         pos = dict( zip(nodes, co_ords))
-        pprint.pprint(pos)
     except:
         pos=nx.spring_layout(graph)
-    pprint.pprint(pos)
 
 # Different node color for each AS. Use heatmap based on ASN
-    #path = nx.shortest_path(network.graph, network.find("1a.AS1"), network.find("2c.AS2"))
-    path1 = nx.shortest_path(network.graph, network.find("1a.AS1"), network.find("1c.AS1"))
-    path2 = nx.shortest_path(network.graph, network.find("1b.AS1"), network.find("1c.AS1"))
+    paths = []
+    #paths.append( nx.shortest_path(network.graph, network.find("1a.AS1"), network.find("1c.AS1")))
+    #paths.append( nx.shortest_path(network.graph, network.find("1b.AS1"), network.find("1c.AS1")))
+    #paths.append(nx.shortest_path(network.graph, network.find("1a.AS1"), network.find("2c.AS2")))
+    paths.append( nx.shortest_path(network.graph, network.find("as100r3.AS100"), network.find("as300r1.AS300")))
+    paths.append(nx.shortest_path(network.graph, network.find("as100r2.AS100"), network.find("as30r1.AS30")))
 
     plot_graph(graph, title="Network", pos=pos, show=show, save=save,
             node_color=cmap_index(network, graph))
 
     plot_graph(graph, title="Paths", pos=pos, show=show, save=save,
-            paths = [path1, path2],
+            paths = paths,
             node_color=cmap_index(network, graph))
 
     graph = ank.get_ebgp_graph(network)
@@ -129,6 +131,7 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
         node_color = "#336699"
     font_color = "k"
     edge_color = "#348ABD"
+    edge_color = "#888888"
     title_color = "k"
 
     # Easier reference
@@ -141,11 +144,16 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
     ax.set_axis_off() 
 
     if paths:
-        PathDrawer.draw_many_paths(graph, pos, paths)
+        try:
+            PathDrawer.draw_many_paths(graph, pos, paths)
+        except ValueError:
+            #TODO: work out why PathDrawer throws this for multias
+            LOG.warn("Unable to draw paths. Please refer github issue gh-256")
+            pass
 
 
     nx.draw_networkx_nodes(graph, pos, 
-                           node_size = 120, 
+                           node_size = 200, 
                            alpha = 0.8, linewidths = (0,0),
                            node_color = node_color,
                            cmap=plt.cm.jet)
