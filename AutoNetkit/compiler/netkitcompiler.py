@@ -349,7 +349,7 @@ class NetkitCompiler:
             lab_email = "autonetkit@googlegroups.com",
             lab_author = "AutoNetkit %s" % ank_version,
             #TODO: get this from config file
-            lab_web =  "packages.python.org/AutoNetkit/",
+            lab_web =  "www.autonetkit.org",
         ))
 
     def configure_igp(self):
