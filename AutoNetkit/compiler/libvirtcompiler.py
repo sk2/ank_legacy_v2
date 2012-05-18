@@ -89,10 +89,6 @@ class LibvirtCompiler:
         LOG.debug("Configuring Libvirt") 
         default_vm = ET.parse(os.path.join(template_dir, "libvirt", "vm.xml"))
 
-        root = default_vm.getroot()
-        for elem in root.iterfind('devices'):
-            print elem.tag, elem.attrib
-
         for device in sorted(self.network.devices(), key = lambda x: x.fqdn):
             root = default_vm.getroot()
             host_file = os.path.join(lab_dir(), "%s.xml" % device.folder_name)
