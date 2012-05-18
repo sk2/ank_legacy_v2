@@ -95,15 +95,16 @@ class LibvirtCompiler:
         # Generator for private0, private1, etc
         for device in sorted(self.network.devices(), key = lambda x: x.fqdn):
             hostname = device.hostname
-            print hostname
             host_file = os.path.join(lab_dir(), "%s.xml" % device.folder_name)
             with open( host_file, 'wb') as f_vmm:
                 f_vmm.write("")
 
         for link in self.network.links():
-            print link
-            host_file = os.path.join(lab_dir(), "%s.xml" % device.folder_name)
-            with open( host_file, 'wb') as f_vmm:
+            subnet = link.subnet
+            collision_domain = "%s.%s" % (subnet.ip, subnet.prefixlen)
+            collision_domain_file = os.path.join(networks_dir(), "%s.xml" % collision_domain)
+            
+            with open( collision_domain_file, 'wb') as f_vmm:
                 f_vmm.write("")
 
         return
