@@ -57,6 +57,10 @@ def router_conf_path(network, router):
     r_file = router_conf_file(network, router)
     return os.path.join(networks_dir(), r_file)
 
+def get_collision_domain_id(link):
+    """Returns formatted collision domain for a link"""
+    return "%s.%s" % (link.subnet.ip, link.subnet.prefixlen)
+
 class LibvirtCompiler:
     """Compiler main"""
 
@@ -84,36 +88,40 @@ class LibvirtCompiler:
         """Configure Libvirt topology structure"""
         LOG.debug("Configuring Libvirt") 
         default_vm = ET.parse(os.path.join(template_dir, "libvirt", "vm.xml"))
-        default_collision_domain = ET.parse(os.path.join(template_dir, "libvirt", "collision_domain.xml"))
-        #print ET.dump(default_vm)
-        #print ET.dump(default_collision_domain)
 
         root = default_vm.getroot()
         for elem in root.iterfind('devices'):
             print elem.tag, elem.attrib
 
-        elem = root.find('devices')
-        print "elem", elem.tag, elem.attrib
-        for elem in elem.iterfind('interface'):
-            print "bb", elem.tag, elem.attrib
-
         for device in sorted(self.network.devices(), key = lambda x: x.fqdn):
+            root = default_vm.getroot()
             host_file = os.path.join(lab_dir(), "%s.xml" % device.folder_name)
-            device = root.find("devices")
+            root.find("name").text = device.hostname
 
-            interface = ET.SubElement(device, "interface", type="network")
-            ET.SubElement(interface, "mac", address = "aaaaaaxda")
-            ET.SubElement(interface, "source_network", address = "ank-1")
-            ET.SubElement(interface, "address", type='pci', 
-                    domain='0x0000', bus='0x00', slot='0x05', function='0x0')
+            for link in self.network.links(device):
+                collision_domain = get_collision_domain_id(link)
+                device = root.find("devices")
+                interface = ET.SubElement(device, "interface", type="network")
+                ET.SubElement(interface, "mac", address = "aaaaaaxda")
+                ET.SubElement(interface, "model", type = "e1000")
+                ET.SubElement(interface, "source", network = collision_domain)
+                ET.SubElement(interface, "address", type='pci', 
+                        domain='0x0000', bus='0x00', slot='0x05', function='0x0')
 
             tree = ET.ElementTree(root)
             tree.write(host_file)
 
         for link in self.network.links():
-            subnet = link.subnet
-            collision_domain = "%s.%s" % (subnet.ip, subnet.prefixlen)
+            collision_domain = get_collision_domain_id(link)
             collision_domain_file = os.path.join(networks_dir(), "%s.xml" % collision_domain)
+            elem_network = ET.Element("network")
+            ET.SubElement(elem_network, "name").text = collision_domain
+            ET.SubElement(elem_network, "uuid").text="aa"
+            ET.SubElement(elem_network, "bridge", name = "e1000", stp="off", delay="0")
+            ET.SubElement(elem_network, "mac", address = "e1000")
+            tree = ET.ElementTree(elem_network)
+            tree.write(collision_domain_file)
+
             
         return
 
