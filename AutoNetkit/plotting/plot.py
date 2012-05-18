@@ -11,6 +11,8 @@ import networkx as nx
 import AutoNetkit as ank
 import logging
 import os
+import pprint
+import PathDrawer
 
 from AutoNetkit import config
 settings = config.settings
@@ -44,14 +46,37 @@ def plot(network, show=False, save=True):
         os.mkdir(plot_dir)
 
     graph = network.graph
+
     try:
-        pos = dict((n, numpy.array([float(d['x']), float(d['y'])])) for n, d in network.graph.nodes(data=True))
+#Extract co-ordinates to normalize (needed for PathDrawer, desired for neatness in plots)
+        x, y = zip(*[(d['x'], d['y']) for n, d in network.graph.nodes(data=True)])
+        x = numpy.asarray(x, dtype=float)
+        y = numpy.asarray(y, dtype=float)
+#TODO: combine these two operations together
+        x -= x.min()
+        x *= 1.0/x.max() 
+        y -= y.min()
+        y *= 1.0/y.max() 
+#TODO: see if can use reshape-type commands here
+        co_ords = zip(list(x), list(y))
+        co_ords = [numpy.array([x, y]) for x, y in co_ords]
+        nodes = [n for n in network.graph.nodes()]
+        pos = dict( zip(nodes, co_ords))
+        pprint.pprint(pos)
     except:
         pos=nx.spring_layout(graph)
+    pprint.pprint(pos)
 
 # Different node color for each AS. Use heatmap based on ASN
+    #path = nx.shortest_path(network.graph, network.find("1a.AS1"), network.find("2c.AS2"))
+    path1 = nx.shortest_path(network.graph, network.find("1a.AS1"), network.find("1c.AS1"))
+    path2 = nx.shortest_path(network.graph, network.find("1b.AS1"), network.find("1c.AS1"))
 
     plot_graph(graph, title="Network", pos=pos, show=show, save=save,
+            node_color=cmap_index(network, graph))
+
+    plot_graph(graph, title="Paths", pos=pos, show=show, save=save,
+            paths = [path1, path2],
             node_color=cmap_index(network, graph))
 
     graph = ank.get_ebgp_graph(network)
@@ -65,9 +90,10 @@ def plot(network, show=False, save=True):
     graph = ank.get_dns_graph(network)
     labels = dict( (n, network.label(n)) for n in graph)
     plot_graph(graph, title="DNS", pos=pos, labels=labels, show=show, save=save)
+
     
 def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
-        node_color=None,
+        node_color=None, paths = [],
         show=False, save=True):
     try:
         import matplotlib.pyplot as plt
@@ -98,8 +124,6 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
         # Remove any spaces etc from filename
         filename.replace(" ", "_")
 
-
-
     # Colors
     if not node_color:
         node_color = "#336699"
@@ -115,6 +139,10 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
     ax=cf.add_axes((0,0,1,1))
     # Create axes to allow adding of text relative to map
     ax.set_axis_off() 
+
+    if paths:
+        PathDrawer.draw_many_paths(graph, pos, paths)
+
 
     nx.draw_networkx_nodes(graph, pos, 
                            node_size = 120, 
