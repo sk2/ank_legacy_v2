@@ -44,7 +44,10 @@ def plot(network, show=False, save=True):
         os.mkdir(plot_dir)
 
     graph = network.graph
-    pos=nx.spring_layout(graph)
+    try:
+        pos = dict((n, numpy.array([float(d['x']), float(d['y'])])) for n, d in network.graph.nodes(data=True))
+    except:
+        pos=nx.spring_layout(graph)
 
 # Different node color for each AS. Use heatmap based on ASN
 
