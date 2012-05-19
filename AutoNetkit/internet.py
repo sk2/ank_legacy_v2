@@ -510,7 +510,6 @@ class Internet:
                 if data['active'] and data['collect data']:
                     nkd.collect_data(data['collect data commands'])
                 if data['Traceroute']:
-                    print "trace routing"
                     nkd.traceroute(data['Traceroute']['pairs'])
 
             for host_alias, data in config.settings['Olive Hosts'].items():

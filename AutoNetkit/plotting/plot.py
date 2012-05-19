@@ -136,8 +136,6 @@ def plot_paths(network, show=False, save=True, paths = None):
     if not paths:
         paths = []
 
-    paths = []
-    paths.append(nx.shortest_path(network.graph, network.find("as100r2.AS100"), network.find("as30r1.AS30")))
 
     plot_dir = config.plot_dir
     if not os.path.isdir(plot_dir):

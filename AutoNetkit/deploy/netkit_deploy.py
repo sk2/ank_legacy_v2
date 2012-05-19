@@ -395,6 +395,7 @@ class NetkitDeploy():
 
 
     def traceroute(self, src_dst_list):
+        LOG.info("Performing Netkit traceroutes for %s" % self.server.host)
         shell = self.server.get_shell()
         shell.setecho(False)
         resultant_paths = defaultdict(dict) #indexed format for presenting/analysis
@@ -402,9 +403,9 @@ class NetkitDeploy():
 
         template_dir =  resource_filename("AutoNetkit","lib/templates")
         linux_traceroute_template = open(os.path.join(template_dir, "textfsm", "linux_traceroute"), "r")
-        re_table = textfsm.TextFSM(linux_traceroute_template)
 
 # build reverse-IP lookup
+#TODO: move this into seperate helper function
         ip_mappings = {}
 #TODO: see if netaddr has a better way other than casting to string
         ip_mappings.update( dict( (str(device.lo_ip.ip), device) 
@@ -437,18 +438,21 @@ class NetkitDeploy():
             command_output = shell.before
             self.server.disconnect_vm(shell)
             shell.prompt()
+            re_table = textfsm.TextFSM(linux_traceroute_template)
             route = re_table.ParseText(command_output)
 # conver to just the returned IPs
             route = [result[0] for result in route]
 # try lookups
 #TODO: put a try/except here, KeyError?
             resolved_route = [ip_mappings[host] for host in route]
+            print "resolved route", resolved_route
             resultant_paths[src_label][dst_label] = resolved_route
             resolved_route.insert(0, src)
             paths.append(resolved_route)
 
-        pprint.pprint( resultant_paths)
+        #pprint.pprint( resultant_paths)
 # format for plotting
 #TODO: enable/disable this from command line/function default
+        print "plotting paths", paths
         ank.plot_paths(self.network, paths = paths)
 
