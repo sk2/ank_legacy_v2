@@ -8,10 +8,13 @@ __author__ = "\n".join(['Simon Knight'])
 import logging
 LOG = logging.getLogger("ANK")
                                  
+import itertools
 import os     
 import re
 import time
 import AutoNetkit.config as config
+import pprint
+from pkg_resources import resource_filename
 import AutoNetkit as ank
 
 # Used for EOF and TIMEOUT variables
@@ -387,3 +390,49 @@ class NetkitDeploy():
                 with open( filename, 'w') as f_out:
                     f_out.write(command_output)
                 # check back at linux shell before continuing
+
+
+    def traceroute(self, src_dst_list):
+        shell = self.server.get_shell()
+        shell.setecho(False)
+
+        template_dir =  resource_filename("AutoNetkit","lib/templates")
+        linux_traceroute_template = os.path.join(template_dir, "textfsm", "linux_traceroute")
+        print linux_traceroute_template
+        
+
+# build reverse-IP lookup
+        ip_mappings = {}
+        ip_mappings.update( dict( (device.lo_ip.ip, device.hostname) 
+            for device in self.network.devices()))
+        for link in self.network.links():
+            ip_mappings[link.local_ip] = link.local_host
+            ip_mappings[link.remote_ip] = link.remote_host
+
+#convert pairs list into 2-tuples, eg [1, 2, 3, 4, ...] -> (1, 2), (3, 4), ...
+        label_pairs = [ (src_dst_list[i], src_dst_list[i+1])
+                for i in range(0, len(src_dst_list), 2)]
+        for src_label, dst_label in label_pairs:
+            try:
+                src = self.network.find(src_label)
+            except ank.network.DeviceNotFoundException:
+                LOG.warn("Unable to find device %s" % src_label)
+                continue
+            try:
+                dst = self.network.find(dst_label)
+            except ank.network.DeviceNotFoundException:
+                LOG.warn("Unable to find device %s" % dst_label)
+                continue
+
+            LOG.info("Tracing from %s to %s" % (src_label, dst_label))
+            self.server.connect_vm(src.tap_ip, shell)
+            #TODO: make this handle appropriate ID for servers (no lo_ip)
+# TODO: probably be st to integrate into the device namedtuple for consistency
+            shell.sendline("traceroute %s" % dst.lo_ip.ip)
+            shell.expect(self.server.NETKIT_PROMPT)
+            command_output = shell.before
+            self.server.disconnect_vm(shell)
+            shell.prompt()
+            print command_output
+            for line in command_output.splitlines():
+                print "line is", line

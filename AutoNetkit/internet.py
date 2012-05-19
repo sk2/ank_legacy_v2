@@ -484,12 +484,12 @@ class Internet:
                 os.mkdir(collected_data_dir)
 
             for host_alias, data in config.settings['Netkit Hosts'].items():
-                if not data['collect data']:
+                if not data['collect data'] and not data['Traceroute']:
                     LOG.debug("Data collection disabled for Netkit host %s" % host_alias)
                     continue
 
                 if not data['active']:
-                    LOG.debug("Skipping data collection for inactvie Netkit host %s" % host_alias)
+                    LOG.debug("Skipping data collection for inactive Netkit host %s" % host_alias)
                     continue
 
                 #TODO: merge netkit server and netkit deploy
@@ -507,7 +507,11 @@ class Internet:
                 xterm = data.get("xterm")
                 nkd = ank.deploy.netkit_deploy.NetkitDeploy(netkit_server, netkit_dir, self.network, xterm, host_alias=host_alias)
                 # Need to tell deploy plugin where the netkit files are
-                nkd.collect_data(data['collect data commands'])
+                if data['active'] and data['collect data']:
+                    nkd.collect_data(data['collect data commands'])
+                if data['Traceroute']:
+                    print "trace routing"
+                    nkd.traceroute(data['Traceroute']['pairs'])
 
             for host_alias, data in config.settings['Olive Hosts'].items():
                 if not data['collect data']:

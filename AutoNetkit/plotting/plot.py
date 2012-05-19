@@ -73,8 +73,8 @@ def plot(network, show=False, save=True):
     #paths.append( nx.shortest_path(network.graph, network.find("1a.AS1"), network.find("1c.AS1")))
     #paths.append( nx.shortest_path(network.graph, network.find("1b.AS1"), network.find("1c.AS1")))
     #paths.append(nx.shortest_path(network.graph, network.find("1a.AS1"), network.find("2c.AS2")))
-    paths.append( nx.shortest_path(network.graph, network.find("as100r3.AS100"), network.find("as300r1.AS300")))
-    paths.append(nx.shortest_path(network.graph, network.find("as100r2.AS100"), network.find("as30r1.AS30")))
+#paths.append( nx.shortest_path(network.graph, network.find("as100r3.AS100"), network.find("as300r1.AS300")))
+    #paths.append(nx.shortest_path(network.graph, network.find("as100r2.AS100"), network.find("as30r1.AS30")))
 
 #Node colors
     legend = {
@@ -181,7 +181,7 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
 
 
     nx.draw_networkx_nodes(graph, pos, 
-                           node_size = 200, 
+                           node_size = 50, 
                            alpha = 0.8, linewidths = (0,0),
                            node_color = node_color,
                            cmap=plt.cm.jet)
@@ -219,6 +219,7 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
                             transform=ax.transAxes)
 
     if legend_data:
+        #TODO: Add legend to plot
         legend = plt.legend(legend_data['shapes'], legend_data['labels'],
                 fancybox=True,
                 ncol=len(legend_data)/2,
