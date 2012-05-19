@@ -23,7 +23,6 @@ LOG = logging.getLogger("ANK")
 
 #TODO: add option to show plots, or save them
 
-
 def cmap_index(network, subgraph, attr='asn'):
     #TODO: see if more pythonic way to do this
 # List of attributes

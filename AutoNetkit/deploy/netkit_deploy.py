@@ -13,6 +13,7 @@ import os
 import re
 import time
 import AutoNetkit.config as config
+from collections import defaultdict
 import textfsm
 import pprint
 from pkg_resources import resource_filename
@@ -396,6 +397,7 @@ class NetkitDeploy():
     def traceroute(self, src_dst_list):
         shell = self.server.get_shell()
         shell.setecho(False)
+        resultant_paths = defaultdict(dict)
 
         template_dir =  resource_filename("AutoNetkit","lib/templates")
         linux_traceroute_template = open(os.path.join(template_dir, "textfsm", "linux_traceroute"), "r")
@@ -403,11 +405,12 @@ class NetkitDeploy():
 
 # build reverse-IP lookup
         ip_mappings = {}
-        ip_mappings.update( dict( (device.lo_ip.ip, device.hostname) 
+#TODO: see if netaddr has a better way other than casting to string
+        ip_mappings.update( dict( (str(device.lo_ip.ip), device) 
             for device in self.network.devices()))
         for link in self.network.links():
-            ip_mappings[link.local_ip] = link.local_host
-            ip_mappings[link.remote_ip] = link.remote_host
+            ip_mappings[str(link.local_ip)] = link.local_host
+            ip_mappings[str(link.remote_ip)] = link.remote_host
 
 #convert pairs list into 2-tuples, eg [1, 2, 3, 4, ...] -> (1, 2), (3, 4), ...
         label_pairs = [ (src_dst_list[i], src_dst_list[i+1])
@@ -433,5 +436,13 @@ class NetkitDeploy():
             command_output = shell.before
             self.server.disconnect_vm(shell)
             shell.prompt()
-            print command_output
-            print "result", re_table.ParseText(command_output)
+            route = re_table.ParseText(command_output)
+# conver to just the returned IPs
+            route = [result[0] for result in route]
+# try lookups
+#TODO: put a try/except here, KeyError?
+            resolved_route = [ip_mappings[host] for host in route]
+            resultant_paths[src_label][dst_label] = resolved_route
+
+        print resultant_paths
+
