@@ -5,7 +5,7 @@ Plotting
 __author__ = "\n".join(['Simon Knight'])
 #    Copyright (C) 2009-2011 by Simon Knight, Hung Nguyen
 
-__all__ = ['plot', 'plot_graph']
+__all__ = ['plot', 'plot_graph', 'plot_paths']
 
 import networkx as nx
 import AutoNetkit as ank
@@ -119,6 +119,76 @@ def plot(network, show=False, save=True):
     #    fc = edge_color))
     #legend['labels'].append( speed_labels[raw_speed])
 
+def plot_paths(network, show=False, save=True, paths = None):
+    """ Plot the network """
+#TODO: refactor out duplicated code from plot function
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError:
+        LOG.warn("Matplotlib not found, not plotting using Matplotlib")
+        return
+    try:
+        import numpy
+    except ImportError:
+        LOG.warn("Matplotlib plotting requires numpy for graph layout")
+        return
+
+    if not paths:
+        paths = []
+
+    paths = []
+    paths.append(nx.shortest_path(network.graph, network.find("as100r2.AS100"), network.find("as30r1.AS30")))
+
+    plot_dir = config.plot_dir
+    if not os.path.isdir(plot_dir):
+        os.mkdir(plot_dir)
+
+    graph = network.graph
+
+    try:
+#Extract co-ordinates to normalize (needed for PathDrawer, desired for neatness in plots)
+        x, y = zip(*[(d['x'], d['y']) for n, d in network.graph.nodes(data=True)])
+        x = numpy.asarray(x, dtype=float)
+        y = numpy.asarray(y, dtype=float)
+#TODO: combine these two operations together
+        x -= x.min()
+        x *= 1.0/x.max() 
+        y -= y.min()
+        y *= -1.0/y.max() # invert
+        y += 1 # rescale from 0->1 not 1->0
+#TODO: see if can use reshape-type commands here
+        co_ords = zip(list(x), list(y))
+        co_ords = [numpy.array([x, y]) for x, y in co_ords]
+        nodes = [n for n in network.graph.nodes()]
+        pos = dict( zip(nodes, co_ords))
+    except:
+        pos=nx.spring_layout(graph)
+
+# Different node color for each AS. Use heatmap based on ASN
+
+#Node colors
+    legend = {
+            'shapes': [],
+            'labels': [],
+            }
+    colormap = cm.jet
+    unique_asn = sorted(list(set(d.asn for d in network.devices())))
+    asn_norm = colors.normalize(0, len(unique_asn))
+    
+    asn_colors = dict.fromkeys(unique_asn)
+    for index, asn in enumerate(asn_colors.keys()):
+        asn_color = colormap(asn_norm(index)) #allocate based on index position
+        asn_colors[asn] = asn_color
+        legend['shapes'].append( plt.Rectangle((0, 0), 0.51, 0.51, 
+            fc = asn_color))
+        legend['labels'].append( asn)
+        
+    node_colors = [asn_colors[device.asn] for device in network.devices()]
+
+    plot_graph(graph, title="Paths", pos=pos, show=show, save=save,
+            paths = paths,
+            node_color=node_colors)
+
     
 def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
         node_color=None, paths = [],
@@ -170,15 +240,6 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
     # Create axes to allow adding of text relative to map
     ax.set_axis_off() 
 
-    if paths:
-        try:
-            PathDrawer.draw_many_paths(graph, pos, paths)
-        except ValueError:
-            #TODO: work out why PathDrawer throws this for multias
-            LOG.warn("Unable to draw paths. Please refer github issue gh-256")
-            pass
-
-
     nx.draw_networkx_nodes(graph, pos, 
                            node_size = 50, 
                            alpha = 0.8, linewidths = (0,0),
@@ -195,6 +256,14 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
     g_non_plotted = nx.Graph()
     g_non_plotted.add_nodes_from(n for n in pos if n not in graph)
     nx.draw_networkx_nodes(g_non_plotted, pos, alpha =0, visible=False)
+
+    if paths:
+        try:
+            PathDrawer.draw_many_paths(graph, pos, paths)
+        except ValueError:
+            #TODO: work out why PathDrawer throws this for multias
+            LOG.warn("Unable to draw paths. Please refer github issue gh-256")
+            pass
 
     if not labels:
         labels = {}

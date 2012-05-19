@@ -397,7 +397,8 @@ class NetkitDeploy():
     def traceroute(self, src_dst_list):
         shell = self.server.get_shell()
         shell.setecho(False)
-        resultant_paths = defaultdict(dict)
+        resultant_paths = defaultdict(dict) #indexed format for presenting/analysis
+        paths = [] # list format for plotting
 
         template_dir =  resource_filename("AutoNetkit","lib/templates")
         linux_traceroute_template = open(os.path.join(template_dir, "textfsm", "linux_traceroute"), "r")
@@ -443,6 +444,11 @@ class NetkitDeploy():
 #TODO: put a try/except here, KeyError?
             resolved_route = [ip_mappings[host] for host in route]
             resultant_paths[src_label][dst_label] = resolved_route
+            resolved_route.insert(0, src)
+            paths.append(resolved_route)
 
-        print resultant_paths
+        pprint.pprint( resultant_paths)
+# format for plotting
+#TODO: enable/disable this from command line/function default
+        ank.plot_paths(self.network, paths = paths)
 
