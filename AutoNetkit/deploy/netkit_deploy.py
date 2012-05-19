@@ -13,6 +13,7 @@ import os
 import re
 import time
 import AutoNetkit.config as config
+import textfsm
 import pprint
 from pkg_resources import resource_filename
 import AutoNetkit as ank
@@ -397,9 +398,8 @@ class NetkitDeploy():
         shell.setecho(False)
 
         template_dir =  resource_filename("AutoNetkit","lib/templates")
-        linux_traceroute_template = os.path.join(template_dir, "textfsm", "linux_traceroute")
-        print linux_traceroute_template
-        
+        linux_traceroute_template = open(os.path.join(template_dir, "textfsm", "linux_traceroute"), "r")
+        re_table = textfsm.TextFSM(linux_traceroute_template)
 
 # build reverse-IP lookup
         ip_mappings = {}
@@ -428,11 +428,10 @@ class NetkitDeploy():
             self.server.connect_vm(src.tap_ip, shell)
             #TODO: make this handle appropriate ID for servers (no lo_ip)
 # TODO: probably be st to integrate into the device namedtuple for consistency
-            shell.sendline("traceroute %s" % dst.lo_ip.ip)
+            shell.sendline("traceroute -n %s" % dst.lo_ip.ip)
             shell.expect(self.server.NETKIT_PROMPT)
             command_output = shell.before
             self.server.disconnect_vm(shell)
             shell.prompt()
             print command_output
-            for line in command_output.splitlines():
-                print "line is", line
+            print "result", re_table.ParseText(command_output)
