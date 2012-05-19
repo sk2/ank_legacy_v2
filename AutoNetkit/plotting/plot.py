@@ -13,6 +13,8 @@ import logging
 import os
 import pprint
 import PathDrawer
+import matplotlib.cm as cm
+import matplotlib.colors as colors
 
 from AutoNetkit import config
 settings = config.settings
@@ -74,12 +76,32 @@ def plot(network, show=False, save=True):
     paths.append( nx.shortest_path(network.graph, network.find("as100r3.AS100"), network.find("as300r1.AS300")))
     paths.append(nx.shortest_path(network.graph, network.find("as100r2.AS100"), network.find("as30r1.AS30")))
 
+#Node colors
+    legend = {
+            'shapes': [],
+            'labels': [],
+            }
+    colormap = cm.jet
+    unique_asn = sorted(list(set(d.asn for d in network.devices())))
+    asn_norm = colors.normalize(0, len(unique_asn))
+    
+    asn_colors = dict.fromkeys(unique_asn)
+    for index, asn in enumerate(asn_colors.keys()):
+        asn_color = colormap(asn_norm(index)) #allocate based on index position
+        asn_colors[asn] = asn_color
+        legend['shapes'].append( plt.Rectangle((0, 0), 0.51, 0.51, 
+            fc = asn_color))
+        legend['labels'].append( asn)
+        
+    node_colors = [asn_colors[device.asn] for device in network.devices()]
+
     plot_graph(graph, title="Network", pos=pos, show=show, save=save,
-            node_color=cmap_index(network, graph))
+            node_color=node_colors)
 
     plot_graph(graph, title="Paths", pos=pos, show=show, save=save,
+            legend_data = legend,
             paths = paths,
-            node_color=cmap_index(network, graph))
+            node_color=node_colors)
 
     graph = ank.get_ebgp_graph(network)
     labels = dict( (n, network.label(n)) for n in graph)
@@ -93,9 +115,15 @@ def plot(network, show=False, save=True):
     labels = dict( (n, network.label(n)) for n in graph)
     plot_graph(graph, title="DNS", pos=pos, labels=labels, show=show, save=save)
 
+# create legend
+    #legend['shapes'].append( plt.Rectangle((0, 0), 0.51, 0.51, 
+    #    fc = edge_color))
+    #legend['labels'].append( speed_labels[raw_speed])
+
     
 def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
         node_color=None, paths = [],
+        legend_data = None,
         show=False, save=True):
     try:
         import matplotlib.pyplot as plt
@@ -189,6 +217,14 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
                             weight='heavy', fontsize=16, color=title_color,
                             verticalalignment='top', 
                             transform=ax.transAxes)
+
+    if legend_data:
+        legend = plt.legend(legend_data['shapes'], legend_data['labels'],
+                fancybox=True,
+                ncol=len(legend_data)/2,
+                prop = {'size':20},
+                loc='upper center', bbox_to_anchor=(0.5, -0.05),
+                )
 
     if show:
         plt.show()
