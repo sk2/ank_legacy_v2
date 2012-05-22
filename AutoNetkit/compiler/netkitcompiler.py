@@ -118,6 +118,7 @@ class NetkitCompiler:
 
     def initialise(self):
         """Creates lab folder structure"""
+        LOG.debug("Initialising Netkit lab")
 
         # TODO: clean out netkitdir
         # Don't just remove the whole folder

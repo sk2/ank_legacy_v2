@@ -299,6 +299,7 @@ def alloc_tap_hosts(network, address_block=IPNetwork("172.16.0.0/16")):
         #TODO: make consistent with previous section [1] vs .next()
         network.tap_host = tap_host_subnet[1]
         for my_as in as_graph:
+            LOG.debug("Setting tap IPs for %s" % my_as.asn)
             host_ips = sn_iter.next().iter_hosts()
             set_tap_ips(network, my_as.nodes(), host_ips)
         
