@@ -55,6 +55,11 @@ class device (namedtuple('node', "network, id")):
     def __repr__(self):
         return self.fqdn
 
+    def __getattr__(self, key):
+        """Returns node property
+        This is useful for accesing attributes passed through from graphml"""
+        return self.network.graph.node[self].get(key)
+
     @property
     def folder_name(self):
         return ank.rtr_folder_name(self.network, self)
@@ -131,6 +136,8 @@ class device (namedtuple('node', "network, id")):
     @property
     def igp_link_count(self):
         return self.network.igp_link_count(self)
+
+ 
 
 
 class link_namedtuple (namedtuple('link', "network, src, dst")):
