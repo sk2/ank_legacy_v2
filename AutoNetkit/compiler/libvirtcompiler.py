@@ -21,6 +21,8 @@ Example deployment:
 
 """
 from mako.lookup import TemplateLookup
+from mako.template import Template
+
 
 # TODO: merge these imports but make consistent across compilers
 import fnmatch
@@ -142,14 +144,23 @@ class LibvirtCompiler:
             LOG.warn("Unable to find libvirt fs: %s. Does the folder exist?" % fs_location)
             return
 
+        LOG.info("Locating mako templates inside fs")
 # walk the fs dirs, find any mako files
         fs_mako_templates = defaultdict(list)
         for fs_dir, fs_dir_path in fs_dirs.items():
+            fs_root = os.path.join(fs_location, fs_dir_path)
             for root, dirnames, filenames in os.walk(fs_dir_path):
                 for filename in fnmatch.filter(filenames, '*.mako'):
-                    fs_mako_templates[fs_dir].append(os.path.join(root, filename))
+                    rel_root = os.path.relpath(root, fs_root) # relative to fs root
+# strip off the fs_dir
+                    fs_mako_templates[fs_dir].append(os.path.join(rel_root, filename))
 
         print fs_mako_templates
+
+#TODO: batch load these templates/cache in memory for speed
+# use template lookup: set at base fs dir?
+        mako_tmp_dir = '/tmp/mako_modules'
+
 
 # set default vm type
         default_vm_type = self.file_structure['default']
@@ -158,6 +169,7 @@ class LibvirtCompiler:
                 device.vm_type = default_vm_type
 
         # check vm types all exist
+        LOG.info("Checking VM types have fs")
         vm_types = set(device.vm_type for device in self.network)
         if not vm_types.issubset(fs_dirs):
             missing_vms = vm_types - set(fs_dirs)
@@ -167,9 +179,25 @@ class LibvirtCompiler:
         for device in self.network:
             vm_dir = self.vm_dir(device)
 
-            LOG.debug("Copying fs %s for vm %s" % (device.vm_type, device))
-            shutil.copytree(fs_dirs[device.vm_type], vm_dir)
-            pass
+            LOG.info("Copying fs %s for vm %s" % (device.vm_type, device))
+            shutil.copytree(fs_dirs[device.vm_type], vm_dir, 
+                    ignore=shutil.ignore_patterns('*.mako'))
+# now use templates
+            LOG.info("Applying templates for vm %s" % str(device))
+            templates = fs_mako_templates[device.vm_type]
+            print "templates for", vm_dir, "are", templates
+            for template_file in templates:
+                template_file = os.path.normpath(os.path.join(fs_location, device.vm_type, template_file))
+                mytemplate = Template(filename=template_file, module_directory= mako_tmp_dir)
+                dst_file = os.path.normpath((os.path.join(vm_dir, template_file)))
+                dst_file, _ = os.path.splitext(dst_file)
+                with open( dst_file, 'wb') as dst_fh:
+                    dst_fh.write(mytemplate.render(
+                        vm = device,
+                        network = self.network,
+                        ))
+                
+# strip out mako extension
 
         for device in sorted(self.network, key = lambda x: x.fqdn):
             root = default_vm.getroot()

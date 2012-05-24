@@ -401,6 +401,9 @@ class Network(object):
             except DeviceNotFoundException:
                 LOG.debug("Unable to find device %s" % node)
 
+    def device(self, fqdn):
+# wrapper for find, is neater
+        return self.find(fqdn)
 
     def find(self, fqdn):
         """
