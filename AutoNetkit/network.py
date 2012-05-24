@@ -50,6 +50,8 @@ class DeviceNotFoundException(Exception):
 
 #TODO: make these access network attribute directly rather than calling the network.label() etc
 class device (namedtuple('node', "network, id")):
+    """API to access device in network"""
+
     __slots = ()
 
     def __repr__(self):
@@ -146,6 +148,7 @@ class device (namedtuple('node', "network, id")):
 
 
 class link_namedtuple (namedtuple('link', "network, src, dst")):
+    """API to access link in network"""
     __slots = ()
     def __repr__(self):
         return "(%s, %s)" % (self.src, self.dst)
