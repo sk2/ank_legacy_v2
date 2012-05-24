@@ -300,7 +300,8 @@ class Network(object):
     def dns_servers(self):
         return ank.dns_servers(self)
 
-    def q(self, nodes=None, **kwargs):
+    def q(self, nodes=None, *args, **kwargs):
+        #TODO: add support for args, eg vm means vm property exists
         if not nodes:
             nodes = self.graph.nodes_iter() # All nodes in graph
 

@@ -334,8 +334,15 @@ class Internet:
                 LOG.info("Active Netkit deployment target, automatically compiling")
                 self.compile_targets['libvirt'] = True
         if self.compile_targets['libvirt']:
-            libvirt_comp = ank.LibvirtCompiler(self.network, self.services)
-            libvirt_comp.initialise()     
+            #TODO: need to create per host machine, eg monster, lobster
+            active_hosts = [host for host, data in config.settings['Libvirt Hosts'].items()
+                    if data.get("active")]
+            for host in active_hosts:
+                data = config.settings['Libvirt Hosts'][host]
+                libvirt_comp = ank.LibvirtCompiler(self.network, self.services,
+                        host = host, file_structure = data['File Structure'],
+                        images = data['Images'])
+                libvirt_comp.initialise()
             libvirt_comp.configure()
 
         auto_compile = any( data.get("active") 
