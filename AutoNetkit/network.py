@@ -60,6 +60,11 @@ class device (namedtuple('node', "network, id")):
         This is useful for accesing attributes passed through from graphml"""
         return self.network.graph.node[self].get(key)
 
+    def __setattr__(self, key, val):
+        """Sets node property
+        This is useful for accesing attributes passed through from graphml"""
+        self.network.graph.node[self][key] = val
+
     @property
     def folder_name(self):
         return ank.rtr_folder_name(self.network, self)
@@ -285,6 +290,12 @@ class Network(object):
     @deprecated
     def get_edge_count(self, node):
         return self.graph.degree(node)
+
+
+    def __iter__(self):
+        """Iterate over the devices. Use the expression 'for device in  network'.
+        """
+        return iter(self.graph)     
 
     @deprecated
     def get_nodes_by_property(self, prop, value):
