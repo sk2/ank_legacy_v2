@@ -1,5 +1,24 @@
 """
-Generate Netkit configuration files for a network
+Generate Libvirt configuration files for a network
+
+Example deployment:
+
+|-- networks
+|    |- net-1.xml
+|    |- net-2.xml
+|    |- net-3.xml
+|-- scripts
+|    |- create.sh
+|    |- destroy.sh
+|    |- start.sh
+|-- vms
+     |- vm-name1
+     |   -- files-for-iso
+     |   -- name1.xml
+     |- vm-name2
+     |   -- files-for-iso
+     |   -- name2.xml
+
 """
 from mako.lookup import TemplateLookup
 
@@ -41,11 +60,11 @@ template_cache_dir = config.template_cache_dir
 template_dir =  resource_filename("AutoNetkit","lib/templates")
 
 def lab_dir():
-    """Lab directory for junos configs"""
+    """Lab directory for libvirt configs"""
     return config.libvirt_dir
 
 def networks_dir():
-    """Directory for individual Junos router configs"""
+    """Directory for individual libvirt router configs"""
     return os.path.join(lab_dir(), "networks")
 
 def router_conf_file(network, router):
@@ -86,8 +105,13 @@ class LibvirtCompiler:
 
     def configure_topology(self):
         """Configure Libvirt topology structure"""
+        pprint.pprint( self.network.graph.nodes(data=True))
         LOG.debug("Configuring Libvirt") 
         default_vm = ET.parse(os.path.join(template_dir, "libvirt", "vm.xml"))
+
+        for device in self.network.devices():
+            print device.vm_type
+            pass
 
         for device in sorted(self.network.devices(), key = lambda x: x.fqdn):
             root = default_vm.getroot()

@@ -10,3 +10,4 @@ Compile network to target platform
    cbgpcompiler
    dynagencompiler
    junoscompiler
+   libvirtcompiler
