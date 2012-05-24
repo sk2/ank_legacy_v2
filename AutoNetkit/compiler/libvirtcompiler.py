@@ -80,6 +80,12 @@ class LibvirtCompiler:
         """Directory for individual libvirt router configs"""
         return os.path.join(self.lab_dir(), "networks")
 
+    def vm_base_dir(self):
+        return os.path.join(self.lab_dir(), "vms")
+
+    def vm_dir(self, vm):
+        return os.path.join(self.vm_base_dir(), vm.label)
+
     def router_conf_file(network, router):
         """Returns filename for config file for router"""
         return "%s.conf" % ank.rtr_folder_name(network, router)
@@ -107,9 +113,13 @@ class LibvirtCompiler:
                 else:
                     os.unlink(item)
 
+#TODO: Abstract away the linking of graphml attribute and making the folder structure
+
         # Directory to put config files into
         if not os.path.isdir(self.networks_dir()):
             os.mkdir(self.networks_dir())
+        if not os.path.isdir(self.vm_base_dir()):
+            os.mkdir(self.vm_base_dir())
         return
 
     def configure_topology(self):
@@ -120,22 +130,36 @@ class LibvirtCompiler:
 
         fs_location = os.path.abspath(self.file_structure.get("location"))
         try:
-            fs_dirs = [ name for name in os.listdir(fs_location) if os.path.isdir(os.path.join(fs_location, name)) ]
+            fs_dirs = [ os.path.join(fs_location, name) for name in os.listdir(fs_location)]
+            fs_dirs = {}
+            for name in os.listdir(fs_location):
+                full_name = os.path.join(fs_location, name)
+                if os.path.isdir(full_name):
+                    fs_dirs[name] = full_name
         except OSError:
             LOG.warn("Unable to find libvirt fs: %s. Does the folder exist?" % fs_location)
             return
-        print fs_dirs
 
-# set default device type
+# set default vm type
+        default_vm_type = self.file_structure['default']
         for device in self.network:
             if not device.vm_type:
-                print "current", device.vm_type
-                device.vm_type = "aaa"
-                print "after", device.vm_type
+                device.vm_type = default_vm_type
+
+        # check vm types all exist
+        vm_types = set(device.vm_type for device in self.network)
+        if not vm_types.issubset(fs_dirs):
+            missing_vms = vm_types - set(fs_dirs)
+            LOG.warn("No VMs exist in fs for vms: %s" % ", ".join(missing_vms))
+            return
 
         for device in self.network:
-            print device.vm_type
-# need to look this type up in the fs folder 
+            vm_dir = self.vm_dir(device)
+            #if not os.path.isdir(vm_dir):
+                #os.mkdir(vm_dir)
+
+            LOG.debug("Copying fs %s for vm %s" % (device.vm_type, device))
+            shutil.copytree(fs_dirs[device.vm_type], vm_dir)
             pass
 
         for device in sorted(self.network, key = lambda x: x.fqdn):
@@ -173,8 +197,7 @@ class LibvirtCompiler:
 # create .tgz
         tar_filename = "libvirt_%s_%s.tar.gz" % (self.host, time.strftime("%Y%m%d_%H%M",
                 time.localtime()))
-        tar = tarfile.open(os.path.join(config.libvirt_dir,
-            tar_filename), "w:gz")
+        tar = tarfile.open(os.path.join(config.libvirt_dir, tar_filename), "w:gz")
         tar.add(self.lab_dir())
         self.network.compiled_labs['libvirt'] = tar_filename
         tar.close()
