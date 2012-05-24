@@ -118,12 +118,27 @@ class LibvirtCompiler:
         LOG.debug("Configuring Libvirt") 
         default_vm = ET.parse(os.path.join(template_dir, "libvirt", "vm.xml"))
 
-        for device in self.network.devices():
+        fs_location = os.path.abspath(self.file_structure.get("location"))
+        try:
+            fs_dirs = [ name for name in os.listdir(fs_location) if os.path.isdir(os.path.join(fs_location, name)) ]
+        except OSError:
+            LOG.warn("Unable to find libvirt fs: %s. Does the folder exist?" % fs_location)
+            return
+        print fs_dirs
+
+# set default device type
+        for device in self.network:
+            if not device.vm_type:
+                print "current", device.vm_type
+                device.vm_type = "aaa"
+                print "after", device.vm_type
+
+        for device in self.network:
             print device.vm_type
 # need to look this type up in the fs folder 
             pass
 
-        for device in sorted(self.network.devices(), key = lambda x: x.fqdn):
+        for device in sorted(self.network, key = lambda x: x.fqdn):
             root = default_vm.getroot()
             host_file = os.path.join(self.lab_dir(), "%s.xml" % device.folder_name)
             root.find("name").text = device.hostname
@@ -151,11 +166,7 @@ class LibvirtCompiler:
             ET.SubElement(elem_network, "mac", address = "e1000")
             tree = ET.ElementTree(elem_network)
             tree.write(collision_domain_file)
-
-            
         return
-
-
 
     def configure(self):
         self.configure_topology()
