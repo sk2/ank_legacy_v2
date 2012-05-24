@@ -23,8 +23,10 @@ Example deployment:
 from mako.lookup import TemplateLookup
 
 # TODO: merge these imports but make consistent across compilers
+import fnmatch
 from pkg_resources import resource_filename
 import pkg_resources
+from collections import defaultdict
 
 import os
 import networkx as nx
@@ -140,6 +142,15 @@ class LibvirtCompiler:
             LOG.warn("Unable to find libvirt fs: %s. Does the folder exist?" % fs_location)
             return
 
+# walk the fs dirs, find any mako files
+        fs_mako_templates = defaultdict(list)
+        for fs_dir, fs_dir_path in fs_dirs.items():
+            for root, dirnames, filenames in os.walk(fs_dir_path):
+                for filename in fnmatch.filter(filenames, '*.mako'):
+                    fs_mako_templates[fs_dir].append(os.path.join(root, filename))
+
+        print fs_mako_templates
+
 # set default vm type
         default_vm_type = self.file_structure['default']
         for device in self.network:
@@ -155,8 +166,6 @@ class LibvirtCompiler:
 
         for device in self.network:
             vm_dir = self.vm_dir(device)
-            #if not os.path.isdir(vm_dir):
-                #os.mkdir(vm_dir)
 
             LOG.debug("Copying fs %s for vm %s" % (device.vm_type, device))
             shutil.copytree(fs_dirs[device.vm_type], vm_dir)
