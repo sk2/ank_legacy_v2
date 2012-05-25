@@ -12,9 +12,12 @@ import AutoNetkit as ank
 import logging
 import os
 import pprint
-import PathDrawer
-import matplotlib.cm as cm
-import matplotlib.colors as colors
+try:
+    import PathDrawer
+    import matplotlib.cm as cm
+    import matplotlib.colors as colors
+except ImportError:
+    pass
 
 from AutoNetkit import config
 settings = config.settings
