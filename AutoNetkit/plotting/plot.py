@@ -13,9 +13,9 @@ import logging
 import os
 import pprint
 try:
-    import PathDrawer
     import matplotlib.cm as cm
     import matplotlib.colors as colors
+    import PathDrawer
 except ImportError:
     pass
 

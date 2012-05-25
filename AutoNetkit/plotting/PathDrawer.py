@@ -37,11 +37,11 @@ try:
     import matplotlib.path
 except ImportError:
     #raise ImportError, "Import Error: not able to import matplotlib."
+    MPath=matplotlib.path.Path
     pass
 except RuntimeError:
     pass # unable to open display
 
-MPath=matplotlib.path.Path
 
 
 import numpy
