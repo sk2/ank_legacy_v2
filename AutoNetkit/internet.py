@@ -32,7 +32,6 @@ import config
 import logging
 LOG = logging.getLogger("ANK")
 
-#.............................................................................
 class Internet:  
     """Create Internet, loading from filename.
     
@@ -435,6 +434,21 @@ class Internet:
             nkd = ank.deploy.netkit_deploy.NetkitDeploy(netkit_server, netkit_dir, self.network, xterm, host_alias=host_alias)
             # Need to tell deploy plugin where the netkit files are
             nkd.deploy()
+            
+        for host_alias, data in config.settings['Libvirt Hosts'].items():
+            if not data['active']:
+                LOG.debug("Not deploying inactive Libvirt host %s" % host_alias)
+                continue
+
+            LOG.info("Deploying to Libvirt host %s" % host_alias)   
+            libvirt_deploy = ank.deploy.libvirt_deploy.LibvirtDeploy(host = data['host'],
+                    username = data['username'], 
+                    script_data = data['Scripts'],
+                    network = self.network)
+            libvirt_deploy.transfer()
+            #libvirt_deploy.deploy()
+            if data['verify']:
+                LOG.info("Verification not yet supported for Libvirt")
 
         for host_alias, data in config.settings['Olive Hosts'].items():
             if not data['active']:

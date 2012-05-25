@@ -26,10 +26,15 @@ or other application using the libvirt API.
     <emulator>/usr/bin/kvm</emulator>
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2'/>
-      <source file='/exp/b/iain/vm-storage/tmpoeb707.qcow2'/>
+      <source file=''/>
       <target dev='hda' bus='ide'/>
       <address type='drive' controller='0' bus='0' unit='0'/>
     </disk>
+    <disk type='file' device='cdrom'>
+     <source file=''/>
+     <target dev='hdc' />
+     <readonly/>
+   </disk>
     <controller type='ide' index='0'>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x1'/>
     </controller>

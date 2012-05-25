@@ -232,5 +232,10 @@ class LibvirtCompiler:
                 time.localtime()))
         tar = tarfile.open(os.path.join(config.libvirt_dir, tar_filename), "w:gz")
         tar.add(self.lab_dir())
-        self.network.compiled_labs['libvirt'] = tar_filename
+        try:
+            self.network.compiled_labs['libvirt'][self.host] = tar_filename
+        except KeyError:
+            #TODO: use default dict in Internet module
+            self.network.compiled_labs['libvirt'] = {}
+            self.network.compiled_labs['libvirt'][self.host] = tar_filename
         tar.close()
