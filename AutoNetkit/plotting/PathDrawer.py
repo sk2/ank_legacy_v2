@@ -36,7 +36,8 @@ try:
     import matplotlib
     import matplotlib.path
 except ImportError:
-    raise ImportError, "Import Error: not able to import matplotlib."
+    #raise ImportError, "Import Error: not able to import matplotlib."
+    pass
 except RuntimeError:
     pass # unable to open display
 
