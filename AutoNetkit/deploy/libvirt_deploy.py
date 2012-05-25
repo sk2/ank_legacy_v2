@@ -12,7 +12,6 @@ import os
 import AutoNetkit.config as config
 
 import AutoNetkit as ank
-import subprocess
 
 from mako.lookup import TemplateLookup
 from mako.template import Template
@@ -47,5 +46,18 @@ class LibvirtDeploy():
         command =  mytemplate.render(
                 tar_file = tar_file,
                 **self.script_data['Transfer']) # pass in user defined variables
-        print command
         #result = os.system(command)
+
+        template_file = os.path.join(self.script_data['base dir'], self.script_data['Shell']['location'])
+        mytemplate = Template(filename=template_file, module_directory= mako_tmp_dir)
+        tar_file = os.path.join(config.libvirt_dir, self.network.compiled_labs['libvirt'][self.host])
+        shell =  mytemplate.render(
+                **self.script_data['Shell']) # pass in user defined variables
+        shell = shell.strip()
+        untarred_directory = os.path.join(config.libvirt_dir, self.host) 
+        dst_file, _ = os.path.splitext(self.script_data['Create']['location'])
+        dst_file = os.path.join(untarred_directory, dst_file)
+        run_command = "%s sh -x %s" % (shell, dst_file)
+        print run_command
+        result = os.system(run_command)
+
