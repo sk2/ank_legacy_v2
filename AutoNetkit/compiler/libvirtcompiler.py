@@ -88,6 +88,7 @@ class LibvirtCompiler:
     def vm_base_dir(self):
         return os.path.join(self.lab_dir(), "vms")
 
+#TODO: create named tuple to wrap around these, extending device to handle these cases for better programatic access
     def vm_dir(self, vm):
         return os.path.join(self.vm_base_dir(), vm.label)
 
@@ -103,6 +104,15 @@ class LibvirtCompiler:
     def get_collision_domain_id(self, link):
         """Returns formatted collision domain for a link"""
         return "%s.%s" % (link.subnet.ip, link.subnet.prefixlen)
+
+    def vm_disk(self, vm):
+        return "%s_%s.disk" % (vm.folder_name, vm.vm_type)
+
+    def vm_iso(self, vm):
+        return "%s_%s.iso" % (vm.folder_name, vm.vm_type)
+
+    def vm_xml(self, vm):
+        return "%s.xml" % vm.folder_name
         
     def initialise(self):
         """Creates lab folder structure"""
@@ -117,8 +127,6 @@ class LibvirtCompiler:
                     shutil.rmtree(item)
                 else:
                     os.unlink(item)
-
-#TODO: Abstract away the linking of graphml attribute and making the folder structure
 
         # Directory to put config files into
         if not os.path.isdir(self.networks_dir()):
@@ -197,11 +205,18 @@ class LibvirtCompiler:
                         ))
                 
 # strip out mako extension
-
+        vm_xml_files = []
+        deployment_image_folder = self.images['deployment']
+        source_image_folder = self.images['source']
         for device in vms:
             root = default_vm.getroot()
-            host_file = os.path.join(self.lab_dir(), "%s.xml" % device.folder_name)
+            host_file = os.path.join(self.lab_dir(), self.vm_xml(device))
+            vm_xml_files.append(host_file)
             root.find("name").text = device.hostname
+            root.find("devices/disk[@device='disk']/source").set('file', 
+                    os.path.join(deployment_image_folder, self.vm_disk(device)))
+            root.find("devices/disk[@device='cdrom']/source").set('file', 
+                    os.path.join(deployment_image_folder, self.vm_iso(device)))
 
             for link in self.network.links(device):
                 collision_domain = self.get_collision_domain_id(link)
@@ -216,9 +231,11 @@ class LibvirtCompiler:
             tree = ET.ElementTree(root)
             tree.write(host_file)
 
+        collision_domain_xml_files = []
         for link in self.network.links():
             collision_domain = self.get_collision_domain_id(link)
             collision_domain_file = os.path.join(self.networks_dir(), "%s.xml" % collision_domain)
+            collision_domain_xml_files.append(collision_domain_file)
             elem_network = ET.Element("network")
             ET.SubElement(elem_network, "name").text = collision_domain
             ET.SubElement(elem_network, "uuid").text="aa"
@@ -230,29 +247,52 @@ class LibvirtCompiler:
         LOG.info("Creating create script")
         template_file = os.path.join(self.script_data['base dir'], self.script_data['Create']['location'])
         mytemplate = Template(filename=template_file, module_directory= mako_tmp_dir)
-        #print mytemplate.render()
-        #command =  mytemplate.render(
-                #tar_file = tar_file,
-                #**self.script_data['Create']) # pass in user defined variables
+#TODO: use named_tuples here instead
+        vm_info = []
+        for vm in vms:
+            vm_info.append({
+                    'type': vm.vm_type,
+                    'disk': self.vm_disk(vm),
+                    'iso': self.vm_iso(vm),
+                    'xml': self.vm_xml(vm),
+                    })
+
+        dst_file, _ = os.path.splitext(self.script_data['Create']['location'])
+        dst_file = os.path.join(self.lab_dir(), dst_file)
+        with open( dst_file, 'wb') as dst_fh:
+            dst_fh.write(mytemplate.render(
+                vm_info = vm_info,
+                source_image_folder = source_image_folder,
+                deployment_image_folder = deployment_image_folder,
+                **self.script_data['Create']) # pass in user defined variables
+                )
         #print command
 
         LOG.info("Creating start script")
         template_file = os.path.join(self.script_data['base dir'], self.script_data['Start']['location'])
         mytemplate = Template(filename=template_file, module_directory= mako_tmp_dir)
         #print mytemplate.render()
-        #command =  mytemplate.render(
-                #tar_file = tar_file,
-                #**self.script_data['Start']) # pass in user defined variables
-        #print command
+        dst_file, _ = os.path.splitext(self.script_data['Start']['location'])
+        dst_file = os.path.join(self.lab_dir(), dst_file)
+        with open( dst_file, 'wb') as dst_fh:
+            dst_fh.write(mytemplate.render(
+                vm_xml_files = vm_xml_files,
+                collision_domain_files = collision_domain_xml_files,
+                **self.script_data['Start']) # pass in user defined variables
+                )
 
         LOG.info("Creating destroy script")
         template_file = os.path.join(self.script_data['base dir'], self.script_data['Destroy']['location'])
         mytemplate = Template(filename=template_file, module_directory= mako_tmp_dir)
         #print mytemplate.render()
-        #command =  mytemplate.render(
-                #tar_file = tar_file,
-                #**self.script_data['Destroy']) # pass in user defined variables
-        #print command
+        dst_file, _ = os.path.splitext(self.script_data['Destroy']['location'])
+        dst_file = os.path.join(self.lab_dir(), dst_file)
+        with open( dst_file, 'wb') as dst_fh:
+            dst_fh.write(mytemplate.render(
+                vm_xml_files = vm_xml_files,
+                collision_domain_files = collision_domain_xml_files,
+                **self.script_data['Destroy']) # pass in user defined variables
+                )
         #result = os.system(command)
 #TODO: write to tarball directory
 
