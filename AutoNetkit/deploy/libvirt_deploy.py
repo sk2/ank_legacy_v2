@@ -41,7 +41,6 @@ class LibvirtDeploy():
     def transfer(self):
         """Transfers file to remote host using script"""
         LOG.info("Transferring libvirt to remote host")
-        print self.network.compiled_labs
         template_file = os.path.join(self.script_data['base dir'], self.script_data['Transfer']['location'])
         mytemplate = Template(filename=template_file, module_directory= mako_tmp_dir)
         tar_file = os.path.join(config.libvirt_dir, self.network.compiled_labs['libvirt'][self.host])

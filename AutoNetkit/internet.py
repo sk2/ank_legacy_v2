@@ -340,6 +340,7 @@ class Internet:
                 data = config.settings['Libvirt Hosts'][host]
                 libvirt_comp = ank.LibvirtCompiler(self.network, self.services,
                         host = host, file_structure = data['File Structure'],
+                        script_data = data['Scripts'],
                         images = data['Images'])
                 libvirt_comp.initialise()
             libvirt_comp.configure()

@@ -66,12 +66,13 @@ template_dir =  resource_filename("AutoNetkit","lib/templates")
 class LibvirtCompiler:
     """Compiler main"""
 
-    def __init__(self, network, services, host, file_structure, images):
+    def __init__(self, network, services, host, file_structure, images, script_data):
         self.network = network
         self.services = services
         self.host = host
         self.file_structure = file_structure
         self.images = images
+        self.script_data = script_data
 
     def libvirt_dir(self):
         return config.libvirt_dir
@@ -173,7 +174,9 @@ class LibvirtCompiler:
             LOG.warn("No VMs exist in fs for vms: %s" % ", ".join(missing_vms))
             return
 
-        for device in self.network:
+        vms = [device for device in self.network] #TODO: filter this based on vm attribute
+
+        for device in vms:
             vm_dir = self.vm_dir(device)
 
             LOG.debug("Copying fs %s for vm %s" % (device.vm_type, device))
@@ -195,7 +198,7 @@ class LibvirtCompiler:
                 
 # strip out mako extension
 
-        for device in sorted(self.network, key = lambda x: x.fqdn):
+        for device in vms:
             root = default_vm.getroot()
             host_file = os.path.join(self.lab_dir(), "%s.xml" % device.folder_name)
             root.find("name").text = device.hostname
@@ -223,7 +226,35 @@ class LibvirtCompiler:
             ET.SubElement(elem_network, "mac", address = "e1000")
             tree = ET.ElementTree(elem_network)
             tree.write(collision_domain_file)
-        return
+
+        LOG.info("Creating create script")
+        template_file = os.path.join(self.script_data['base dir'], self.script_data['Create']['location'])
+        mytemplate = Template(filename=template_file, module_directory= mako_tmp_dir)
+        #print mytemplate.render()
+        #command =  mytemplate.render(
+                #tar_file = tar_file,
+                #**self.script_data['Create']) # pass in user defined variables
+        #print command
+
+        LOG.info("Creating start script")
+        template_file = os.path.join(self.script_data['base dir'], self.script_data['Start']['location'])
+        mytemplate = Template(filename=template_file, module_directory= mako_tmp_dir)
+        #print mytemplate.render()
+        #command =  mytemplate.render(
+                #tar_file = tar_file,
+                #**self.script_data['Start']) # pass in user defined variables
+        #print command
+
+        LOG.info("Creating destroy script")
+        template_file = os.path.join(self.script_data['base dir'], self.script_data['Destroy']['location'])
+        mytemplate = Template(filename=template_file, module_directory= mako_tmp_dir)
+        #print mytemplate.render()
+        #command =  mytemplate.render(
+                #tar_file = tar_file,
+                #**self.script_data['Destroy']) # pass in user defined variables
+        #print command
+        #result = os.system(command)
+#TODO: write to tarball directory
 
     def configure(self):
         self.configure_topology()
