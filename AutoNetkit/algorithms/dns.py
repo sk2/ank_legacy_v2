@@ -135,6 +135,7 @@ def allocate_dns_servers(network):
     root_dns_servers = config.settings['DNS']['Server Count']['root'] 
     global_eccentricities = nodes_by_eccentricity(network.graph)
 
+#TODO: if single server per AS, or servers co-incident, then put on same VM
 
 #TODO: add count of each cluster occurence so can round servers down - dont want 3 servers in a one router network!
 
