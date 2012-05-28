@@ -156,12 +156,12 @@ def allocate_dns_servers(network):
         l2_clusters = list(set(dns_graph.node[n].get("dns_l2_cluster") for n in my_as))
         for l2_cluster in l2_clusters:
             for index in range(servers_per_l2_cluster):
-                label = "l2_%s_dns_%s" % (l2_cluster, index+1)
+                label = "dns_l2_%s_%s" % (l2_cluster, index+1)
                 if l2_cluster == format_asn(asn):
 # Don't put asn into server name twice "AS2_asn_2_l2dns_1" vs "asn_2_l2dns_1"
-                    server_name = "%s_l2dns" 
+                    server_name = "dns_l2" 
                 else:
-                    server_name = "AS%s_%s_l2dns" 
+                    server_name = "dns_l2_AS%s_" % asn
                 if servers_per_l2_cluster > 1:
                     server_name += "_%s" % (index+1)
 #TODO: see what other properties to retain
@@ -171,8 +171,8 @@ def allocate_dns_servers(network):
                         asn = asn, dns_l3_cluster = format_asn(asn))
 
         for index in range(servers_per_l3_cluster):
-                label = "l3_%s_dns" % (asn)
-                server_name = "AS%s_l3dns" % (asn)
+                label = "dns_l3_%s" % (asn)
+                server_name = "dns_l3_AS%s" % (asn)
                 if servers_per_l3_cluster > 1:
                     server_name += "_%s" % (index+1)
                 node_name = network.add_device(server_name, asn=asn, 
@@ -311,6 +311,7 @@ def dns_auth_parents(node):
         return []
 
 def dns_auth_children(node):
+    print "Looking for auth children of", node
     return node.network.g_dns_auth.predecessors(node)
 
 def root_dns_servers(network):
