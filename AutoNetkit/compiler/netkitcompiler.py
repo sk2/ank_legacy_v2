@@ -782,6 +782,7 @@ class NetkitCompiler:
 # Configure clients
         for client in clients:
             server_ips = (ank.server_ip(server) for server in ank.dns_hiearchy_parents(client))
+            server_ips = list(server_ips)
             f_resolv = open( os.path.join(etc_dir(self.network, client), "resolv.conf"), 'wb')
             f_resolv.write ( resolve_template.render(
                 nameservers = server_ips,

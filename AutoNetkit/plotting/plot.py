@@ -269,7 +269,7 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
     if not labels:
         labels = {}
         for n, data in graph.nodes(data = True):
-            label = "\n" + data.get('label')
+            label = "\n%s" % data.get('label')
             if title == 'Network' and 'lo_ip' in data:
                 label += " (%s)" % data['lo_ip'].ip
             labels[n] = label 

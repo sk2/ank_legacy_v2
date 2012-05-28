@@ -157,14 +157,16 @@ def allocate_dns_servers(network):
         for l2_cluster in l2_clusters:
             for index in range(servers_per_l2_cluster):
                 label = "dns_l2_%s_%s" % (l2_cluster, index+1)
-                if l2_cluster == format_asn(asn):
+                #if l2_cluster == format_asn(asn):
 # Don't put asn into server name twice "AS2_asn_2_l2dns_1" vs "asn_2_l2dns_1"
-                    server_name = "dns_l2" 
-                else:
-                    server_name = "dns_l2_AS%s_" % asn
+                    #server_name = "dns_l2" 
+                #else:
+                server_name = "dns_l2_AS%s_" % asn
                 if servers_per_l2_cluster > 1:
                     server_name += "_%s" % (index+1)
 #TODO: see what other properties to retain
+#TODO: this should be a node returned rather than a label
+                LOG.debug("Adding %s" % server_name)
                 node_name = network.add_device(server_name, asn=asn, 
                         device_type='server', label=label)
                 dns_graph.add_node(node_name, level=2, dns_l2_cluster=l2_cluster,
