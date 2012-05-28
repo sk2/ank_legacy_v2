@@ -30,8 +30,6 @@ __all__ = ['is_valid_edge_path',
            'draw_path',
            'draw_many_paths']
 
-
-
 try:
     import matplotlib
     import matplotlib.path
@@ -42,15 +40,9 @@ except ImportError:
 except RuntimeError:
     pass # unable to open display
 
-
-
 import numpy
 import random
 import math
-
-
-
-
 
 #####################
 def is_valid_edge_path(path, G):
