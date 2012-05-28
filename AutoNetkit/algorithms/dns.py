@@ -25,7 +25,7 @@ There are four levels.
     Records:
 
     =========   ================================
-    Level       Responsibility          
+    Level       Responsibility       o  
     ---------   -------------------------------- 
     1           None
     2           Caching for clients 
@@ -92,16 +92,23 @@ def allocate_dns_servers(network):
         dns_levels = 1
         LOG.debug("Non-hierarchical DNS not yet implemented")
 #TODO: do "flat" dns - one root server, add all other devices as children for both resolving and authoritative
-
         return
-
 
     def nodes_by_eccentricity(graph):
         if len(graph) == 1:
             return graph.nodes()
 # need to crop the global shortest paths otherwise get 
 #NetworkXError: Graph not connected: infinite path length
-        eccentricities = nx.eccentricity(graph)
+        eccentricities = {}
+        try:
+            eccentricities = nx.eccentricity(graph)
+        except nx.exception.NetworkXError:
+# If not strongly connected, perform eccentricities per connected component
+            if not nx.is_strongly_connected(graph):
+                #TODO: provide this function inside ANK, add memoization for intensive operation
+                for component_nodes in nx.strongly_connected_components(graph):
+                    eccentricities.update(nx.eccentricity(graph.subgraph(component_nodes)))
+
 # sort nodes by name, stability sort ensures that lexical order is used as tie-breaker for equal eccen.
         nodes_sorted = sorted(graph.nodes(), key = lambda x: x.fqdn)
         return sorted(nodes_sorted, key = lambda n: eccentricities[n])
@@ -152,9 +159,11 @@ def allocate_dns_servers(network):
                 label = "l2_%s_dns_%s" % (l2_cluster, index+1)
                 if l2_cluster == format_asn(asn):
 # Don't put asn into server name twice "AS2_asn_2_l2dns_1" vs "asn_2_l2dns_1"
-                    server_name = "%s_l2dns_%s" % (l2_cluster, index+1)
+                    server_name = "%s_l2dns" 
                 else:
-                    server_name = "AS%s_%s_l2dns_%s" % (asn, l2_cluster, index+1)
+                    server_name = "AS%s_%s_l2dns" 
+                if servers_per_l2_cluster > 1:
+                    server_name += "_%s" % (index+1)
 #TODO: see what other properties to retain
                 node_name = network.add_device(server_name, asn=asn, 
                         device_type='server', label=label)
@@ -162,8 +171,10 @@ def allocate_dns_servers(network):
                         asn = asn, dns_l3_cluster = format_asn(asn))
 
         for index in range(servers_per_l3_cluster):
-                label = "l3_%s_dns_%s" % (asn, index+1)
-                server_name = "AS%s_l3dns_%s" % (asn, index+1)
+                label = "l3_%s_dns" % (asn)
+                server_name = "AS%s_l3dns" % (asn)
+                if servers_per_l3_cluster > 1:
+                    server_name += "_%s" % (index+1)
                 node_name = network.add_device(server_name, asn=asn, 
                         device_type='server', label=label)
 #TODO: check if need to add l2 here - was coded before, possible mistake?
@@ -174,7 +185,9 @@ def allocate_dns_servers(network):
 #TODO: need to determine the right place to put the server - order issue between allocating for root as need an ASN for the device before  know best place - for now use asn = 1, and move if needed
     for index in range(root_dns_servers):
         attach_point = global_eccentricities.pop()
-        server_name = "root_dns_%s" % (index+1)
+        server_name = "root_dns"
+        if root_dns_servers > 1:
+            server_name += "_%s" % (index+1)
         asn = ank.asn(attach_point)
         LOG.debug("Attaching %s to %s in %s" % (server_name, ank.label(attach_point), asn))
         node_name = network.add_device(server_name, asn=asn, device_type='server')
