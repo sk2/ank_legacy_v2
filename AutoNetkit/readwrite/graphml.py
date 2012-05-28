@@ -86,7 +86,8 @@ def load_graphml(net_file, default_asn = 1):
         single_letters = list(letters)
         letters = ("%s%s" % (a, b) for a in single_letters for b in single_letters)
 # remove lowercase labels already used - conflicts in file naming
-    existing_labels = set(data.get("label").lower() for node, data in input_graph.nodes(data=True))
+    existing_labels = set(data["label"].lower() for node, data in input_graph.nodes(data=True)
+            if data.get("label"))
     letters = iter(set(letters) - existing_labels)
 
     mapping = dict( (n, letters.next()) for n in empty_label_nodes)
