@@ -234,7 +234,10 @@ def dns_host_portion_only(device):
 
 def domain(device):
     """ Returns domain for device"""
-    as_name = "AS%s" % device.asn
+    if device.network_name:
+        as_name = device.network_name
+    else:
+        as_name = "AS%s" % device.asn
     domain_elements = [as_name]
     if device.pop:
         domain_elements = [device.pop, as_name]

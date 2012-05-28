@@ -144,7 +144,9 @@ class device (namedtuple('node', "network, id")):
     def igp_link_count(self):
         return self.network.igp_link_count(self)
 
- 
+    @property
+    def network_name(self):
+        return self.network.graph.node[self].get("Network")
 
 
 class link_namedtuple (namedtuple('link', "network, src, dst")):
