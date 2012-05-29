@@ -16,7 +16,11 @@ LOG = logging.getLogger("ANK")
 
 def main():
 
-    version=pkg_resources.get_distribution("AutoNetkit").version
+    version="git-current"
+    try:
+        version=pkg_resources.get_distribution("AutoNetkit").version
+    except:
+        pass
 # make it easy to turn on and off plotting and deploying from command line 
     usage = ("\nNetkit: %prog -f filename.graphml --netkit\n"
             "Junosphere: %prog -f filename.graphml --junos\n"
