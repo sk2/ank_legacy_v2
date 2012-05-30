@@ -274,7 +274,7 @@ class BgpPolicyParser:
         self.bgpApplicationQuery = self.edgeQuery + Suppress(":") + self.bgpSessionQuery
 
 # Library stuff
-        set_values = Suppress("{") + delimitedList( attribute, delim=',').setResultsName("set_values") + Suppress("}")
+        set_values = Suppress("{") + delimitedList( stringValues, delim=',').setResultsName("set_values") + Suppress("}")
 #Set to empty set, rather than empty list as empty list is processed differently somewhere in parser
         empty_set = Literal("{}").setResultsName("set_values").setParseAction(lambda x: set())
         self.set_definition = attribute.setResultsName("set_name") + Suppress("=") + (empty_set | set_values)
