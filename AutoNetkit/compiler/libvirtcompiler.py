@@ -186,6 +186,7 @@ class LibvirtCompiler:
 
         for device in vms:
             vm_dir = self.vm_dir(device)
+            LOG.debug("Writing to VM directory: %s" % vm_dir)
 
             LOG.debug("Copying fs %s for vm %s" % (device.vm_type, device))
             shutil.copytree(fs_dirs[device.vm_type], vm_dir, 
@@ -194,10 +195,11 @@ class LibvirtCompiler:
             LOG.debug("Applying templates for vm %s" % str(device))
             templates = fs_mako_templates[device.vm_type]
             for template_file in templates:
-                template_file = os.path.normpath(os.path.join(fs_location, device.vm_type, template_file))
-                mytemplate = Template(filename=template_file, module_directory= mako_tmp_dir)
+                template_file_path = os.path.normpath(os.path.join(fs_location, device.vm_type, template_file))
+                mytemplate = Template(filename=template_file_path, module_directory= mako_tmp_dir)
                 dst_file = os.path.normpath((os.path.join(vm_dir, template_file)))
                 dst_file, _ = os.path.splitext(dst_file)
+                LOG.debug("Writing %s"% dst_file)
                 with open( dst_file, 'wb') as dst_fh:
                     dst_fh.write(mytemplate.render(
                         device = device,
