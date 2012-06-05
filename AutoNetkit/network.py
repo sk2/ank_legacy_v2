@@ -48,6 +48,43 @@ to pass through to the netx graph methods for quick access
 class DeviceNotFoundException(Exception):
     pass
 
+class overlay_node(namedtuple('node', "graph, node")):
+    """API to access overlay graph node in network"""
+    __slots = ()
+
+    def __repr__(self):
+        return "Overlay for %s in %s" % (self.node.fqdn, self.graph)
+
+    def __getattr__(self, key):
+        """Returns node property
+        This is useful for accesing attributes passed through from graphml"""
+#TODO: make this log to debug on a miss, ie if key not found: do a try/except for KeyError for this
+        return self.node.network._graphs[self.graph].node[self.node][key]
+
+    def __setattr__(self, key, val):
+        """Sets node property
+        This is useful for accesing attributes passed through from graphml"""
+        self.node.network._graphs[self.graph].node[self.node][key] = val
+
+    def keys(self):
+        #TODO: make this proper iterable
+        return self.node.network._graphs[self.graph].node[self.node].keys()
+
+class overlay(namedtuple('node', "node")):
+    """API to access overlay graph in network"""
+    __slots = ()
+
+    def __repr__(self):
+        return self.fqdn
+
+    @property
+    def bgp(self):
+        return overlay_node("bgp_session", self.node)
+
+    def __getattr__(self, key):
+        """Returns node property"""
+        return overlay_node(key, self.node)
+
 #TODO: make these access network attribute directly rather than calling the network.label() etc
 class device (namedtuple('node', "network, id")):
     """API to access device in network"""
@@ -60,12 +97,17 @@ class device (namedtuple('node', "network, id")):
     def __getattr__(self, key):
         """Returns node property
         This is useful for accesing attributes passed through from graphml"""
+#TODO: make this log to debug on a miss, ie if key not found: do a try/except for KeyError for this
         return self.network.graph.node[self].get(key)
 
     def __setattr__(self, key, val):
         """Sets node property
         This is useful for accesing attributes passed through from graphml"""
         self.network.graph.node[self][key] = val
+
+    @property
+    def overlay(self):
+        return overlay(self)
 
     @property
     def folder_name(self):
@@ -154,6 +196,18 @@ class link_namedtuple (namedtuple('link', "network, src, dst")):
     __slots = ()
     def __repr__(self):
         return "(%s, %s)" % (self.src, self.dst)
+
+    def __getattr__(self, key):
+        """Returns link property
+        This is useful for accesing attributes passed through from graphml"""
+#TODO: make this log to debug on a miss, ie if key not found: do a try/except for KeyError for this
+        return self.network.graph.node[self].get(key)
+        return self.network.graph[self.src][self.dst].get(key)
+
+    def __setattr__(self, key, val):
+        """Sets link property
+        This is useful for accesing attributes passed through from graphml"""
+        self.network.graph[self.src][self.dst][key] = val
 
     @property
     def id(self):
@@ -251,6 +305,7 @@ class Network(object):
     # or write functional library like in networkx function.py file
 
     #TODO: deprecate these in future, allow for .physical_graph property
+#TODO: return namedtuple that wraps around nx graph: graph is in _graph
     @property
     def graph(self):
         return self._graphs['physical']

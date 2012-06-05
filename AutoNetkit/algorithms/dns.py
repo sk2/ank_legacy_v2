@@ -314,7 +314,6 @@ def dns_auth_parents(node):
         return []
 
 def dns_auth_children(node):
-    print "Looking for auth children of", node
     return node.network.g_dns_auth.predecessors(node)
 
 def root_dns_servers(network):
