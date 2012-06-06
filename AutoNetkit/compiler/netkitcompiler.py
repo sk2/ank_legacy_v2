@@ -477,15 +477,6 @@ class NetkitCompiler:
             # get ibgp graph that contains only nodes from this AS
 
             for router in self.network.routers(asn):
-                print "LEVEL", router.overlay.dns.level
-                print self.network._graphs['dns'].node[router]
-                router.overlay.dns.level = 2
-                print self.network._graphs['dns'].node[router]
-                aa =  router.overlay.bgp
-                print aa.keys()
-                bb = router.overlay.dns
-                print bb.keys()
-                #TODO: look at making this a set for greater comparison efficiency
                 bgp_groups = {}
                 route_maps = []
                 ibgp_neighbor_list = []

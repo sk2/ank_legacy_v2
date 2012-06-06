@@ -293,6 +293,9 @@ class Internet:
         #No handlers could be found for logger "ANK"
         LOG.info("Compiling")
 
+        print "nodes in network", len(self.network)
+        print "nodes", [n for n in self.network]
+
         # Sanity check
         if self.network.graph.number_of_nodes() == 0:
             LOG.warn("Cannot compile empty network")

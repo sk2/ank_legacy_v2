@@ -59,7 +59,11 @@ class overlay_node(namedtuple('node', "graph, node")):
         """Returns node property
         This is useful for accesing attributes passed through from graphml"""
 #TODO: make this log to debug on a miss, ie if key not found: do a try/except for KeyError for this
-        return self.node.network._graphs[self.graph].node[self.node][key]
+        try:
+            return self.node.network._graphs[self.graph].node[self.node].get(key)
+        except KeyError:
+            LOG.warn("Node %s not present in overlay graph %s" % (self.node, self.graph))
+
 
     def __setattr__(self, key, val):
         """Sets node property
@@ -201,7 +205,6 @@ class link_namedtuple (namedtuple('link', "network, src, dst")):
         """Returns link property
         This is useful for accesing attributes passed through from graphml"""
 #TODO: make this log to debug on a miss, ie if key not found: do a try/except for KeyError for this
-        return self.network.graph.node[self].get(key)
         return self.network.graph[self.src][self.dst].get(key)
 
     def __setattr__(self, key, val):
@@ -263,6 +266,9 @@ class Network(object):
         self._graphs['dns'] = nx.DiGraph()
         self._graphs['dns_authoritative'] = nx.DiGraph()
         self.compiled_labs = {} # Record compiled lab filenames, and configs
+
+    def __len__(self):
+        return len(self.graph)
 
     def __repr__(self):
         return "AutoNetkit network: %s nodes, %s edges" % (self.graph.number_of_nodes(), self.graph.number_of_edges())
