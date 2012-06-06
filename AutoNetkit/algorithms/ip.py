@@ -7,7 +7,7 @@ __author__ = "\n".join(['Simon Knight'])
 
 __all__ = ['get_ip_as_allocs', 'allocate_subnets', 'alloc_interfaces',
            'alloc_tap_hosts', 'get_tap_host', 'int_id', 'ip_addr',
-           'ip_to_net_ent_title_ios',
+           'ip_to_net_ent_title_ios', 'create_ip_overlay',
            'ip_to_net_ent_title']
 
 #toDo: add docstrings
@@ -18,6 +18,9 @@ import networkx as nx
 import logging
 LOG = logging.getLogger("ANK")
 import pprint
+
+def create_ip_overlay(network):
+    print "creating ip overlay"
 
 def get_ip_as_allocs(network):
     """ Returns list of Subnets allocated, by network"""
