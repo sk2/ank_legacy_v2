@@ -293,7 +293,7 @@ class Internet:
         #No handlers could be found for logger "ANK"
         LOG.info("Compiling")
 
-        ank.create_ip_overlay(network)
+        ank.create_ip_overlay(self.network)
 
         # Sanity check
         if self.network.graph.number_of_nodes() == 0:

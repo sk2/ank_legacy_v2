@@ -21,6 +21,10 @@ import pprint
 
 def create_ip_overlay(network):
     print "creating ip overlay"
+    overlay = nx.Graph(network.graph)
+    #print [n.device_type for n in overlay.nodes(data=True)]
+    for edge in overlay.edges(data=True):
+        print edge
 
 def get_ip_as_allocs(network):
     """ Returns list of Subnets allocated, by network"""

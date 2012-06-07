@@ -99,6 +99,7 @@ def plot(network, show=False, save=True):
 
     plot_graph(graph, title="Network", pos=pos, show=show, save=save,
             node_color=node_colors)
+    return
 
     plot_graph(graph, title="Paths", pos=pos, show=show, save=save,
             legend_data = legend,
@@ -197,6 +198,7 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
         show=False, save=True):
     try:
         import matplotlib.pyplot as plt
+        import matplotlib.image as image
     except ImportError:
         LOG.warn("Matplotlib not found, not plotting using Matplotlib")
         return
@@ -241,7 +243,7 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
     # Create axes to allow adding of text relative to map
     ax.set_axis_off() 
 
-    nx.draw_networkx_nodes(graph, pos, 
+    nodes = nx.draw_networkx_nodes(graph, pos, 
                            node_size = 50, 
                            alpha = 0.8, linewidths = (0,0),
                            node_color = node_color,
@@ -295,6 +297,30 @@ def plot_graph(graph, title=None, filename=None, pos=None, labels=None,
                 prop = {'size':20},
                 loc='upper center', bbox_to_anchor=(0.5, -0.05),
                 )
+
+
+# image plotting adapted from http://stackoverflow.com/questions/2318288/how-to-use-custom-marker-with-plot
+    print pos.values()
+    print nodes
+    print nodes.get_paths()
+    im = image.imread('router.png')
+    dpi = 72; imageSize = (32,32)
+    for co_ords in pos.values():
+            # place image at point, centering it
+            print "plotting at", co_ords[0], co_ords[1]
+            plt.figimage(im,co_ords[0]-imageSize[0]/2,co_ords[1]-imageSize[1]/2,origin="upper")
+    """
+    
+    line, = ax.plot((1,2,3,4),(1,2,3,4),"bo",mfc="None",mec="None",markersize=imageSize[0] * (dpi/ 96))
+    line._transform_path()
+    path, affine = line._transformed_path.get_transformed_points_and_affine()
+    path = affine.transform_path(path)
+    for pixelPoint in path.vertices:
+        # place image at point, centering it
+        plt.figimage(im,pixelPoint[0]-imageSize[0]/2,pixelPoint[1]-imageSize[1]/2,origin="upper")
+
+    """
+
 
     if show:
         plt.show()
