@@ -3,6 +3,11 @@ AutoNetkit
 .. image:: images/splash_network.*
 
 AutoNetkit allows you to create and deploy large-scale emulated networks based on the `Netkit <http://www.netkit.org>`_ emulation platform.
+
+AutoNetkit is Open-Source and available under a BSD licence.
+The licence can be found on our `GitHub repository <https://github.com/sk2/autonetkit>`_.
+
+
 It also has support for `Junosphere <http://www.juniper.net/as/en/products-services/software/junos-platform/junosphere/>`_,
 `C-BGP <http://c-bgp.sourceforge.net/>`_,
 and limited support for `GNS3 <http://www.gns3.net/>`_/`Dynagen <http://dynagen.org/>`_ 

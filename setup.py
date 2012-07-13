@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup (
      name = "AutoNetkit",
-     version = "0.6.0",
+     version = "0.6.1",
      description = 'Automated configuration generator for cBGP, Netkit and Junosphere',
      long_description = 'Automated configuration generator for cBGP, Netkit and Junosphere',
 
@@ -47,7 +47,7 @@ setup (
          "Intended Audience :: Science/Research",
          "Intended Audience :: System Administrators",
          "Intended Audience :: Telecommunications Industry",
-         "License :: Other/Proprietary License",
+         "License :: OSI Approved :: BSD License",
          "Operating System :: MacOS :: MacOS X",
          "Operating System :: POSIX :: Linux",
          "Topic :: System :: Networking",
