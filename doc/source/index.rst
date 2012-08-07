@@ -2,6 +2,8 @@ AutoNetkit
 ======================================
 .. image:: images/splash_network.*
 
+This is the AutoNetkit API documentation. For general information about the AutoNetkit project please see `ww.autonetkit.org <http://www.autonetkit.org>`_
+
 AutoNetkit allows you to create and deploy large-scale emulated networks based on the `Netkit <http://www.netkit.org>`_ emulation platform.
 
 AutoNetkit is Open-Source and available under a BSD licence.
