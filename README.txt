@@ -1,2 +1,2 @@
-AutoNetkit.
-Please note that a new version will be released shortly. For more information please see www.autonetkit.org
+AutoNetkit Version 2 (Legacy Edition).
+This version has been replaced with AutoNetkit version 3, available at https://github.com/sk2/autonetkit
